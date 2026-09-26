@@ -269,7 +269,7 @@ const NODES=[
 {id:'quik',name:['QUIKSTOP'],icon:'⛽',type:'CORPORATE',shape:'logo',band:'#c05621',income:2,cost:5,x:350,y:430,rot:2,sub:'the storefront · fuel, snacks & shopping bags',sp:'Collects $1 from every rival on OIL SPIKES; +$4 on PROFIT WARNING.'},
 {id:'market',name:['MARKETPLACE','LEICHARDT'],icon:'🛍️',type:'CORPORATE',shape:'logo',band:'#b0342e',income:2,cost:5,x:170,y:660,rot:1,sub:'shopping centre · interior & exterior',sp:'+$2 income while you also own QUIKSTOP (the anchor tenant).'},
 {id:'f1',name:['FORMULA 1','RACING CAR'],icon:'🏎️',type:'CORPORATE',shape:'photo',income:2,cost:6,x:380,y:760,rot:-3,sub:'sponsorship pays',sp:'Unlocks THE SLIPSTREAM ($2, during movement, once per turn): +2 steps and your next seizure this turn costs $2 less.'},
-{id:'qantas',name:['QANTAS','THE FLYING KANGAROO'],icon:'✈️',type:'CORPORATE',shape:'logo',band:'#e0001b',income:2,cost:6,x:575,y:975,rot:2,sub:'the spirit of australia',sp:'Unlocks FLY THE JET ($3, during movement): teleport to any node.'},
+{id:'qantas',name:['QANTAS','THE FLYING KANGAROO'],icon:'✈️',type:'CORPORATE',shape:'logo',band:'#e0001b',income:2,cost:10,x:575,y:975,rot:2,sub:'the spirit of australia',sp:'Unlocks FLY THE JET ($3, during movement): teleport to any node.'},
 {id:'office',name:['THE HEAD OFFICE'],icon:'🏢',type:'CORPORATE',shape:'logo',band:'#34506b',income:2,cost:5,x:170,y:850,rot:2,sub:'the modern tower',sp:'+$1 income per CORPORATE node you own.'},
 {id:'unid1',name:['UNIDENTIFIED','LOGO №1'],icon:'❓',type:'CORPORATE',shape:'logo',band:'#555555',income:1,cost:2,x:380,y:930,rot:-2,sub:'nobody knows',sp:'Whenever MADE pays out, you gain $3 and pay nothing (kindred mysteries).'},
 {id:'unid2',name:['UNIDENTIFIED','LOGO №2'],icon:'❓',type:'CORPORATE',shape:'logo',band:'#555555',income:1,cost:2,x:2240,y:1000,rot:2,sub:'still nobody',sp:'Whenever MADE pays out, you gain $3 and pay nothing (kindred mysteries).'},
@@ -312,7 +312,7 @@ const NODES=[
 {id:'rock',name:['THE ROCK','CAN SMELL IT'],icon:'💪',type:'WILD',shape:'photo',income:1,cost:7,x:660,y:450,rot:2,sub:'final boss energy',sp:'Unlocks COOK THE BOOKS ($3): −3 Cortisol. +$1 income per DIFFERENT node type you own.'},
 {id:'brad',name:['BRAD PITT','“THE BIG SHORT”'],icon:'😎',type:'WILD',shape:'photo',income:1,cost:5,x:1630,y:1120,rot:-2,sub:'explained it in the movie',sp:'+$2 whenever a BOND event runs (he had it explained to him).'},
 {id:'jt',name:['JTPORTAL','QUITE FRANKLY'],icon:'🌐',type:'WILD',shape:'photo',income:1,cost:9,x:1150,y:540,rot:-1,sub:'the legend of the board',sp:'+1 Intel each turn AND you are shown the next Market Event at the start of your turn. ONCE PER GAME: cancel a Market Event as it is revealed — “quite frankly, it never happened.”'},
-{id:'made',name:['MADE','(???)'],type:'WILD',shape:'made',income:2,cost:7,x:1000,y:1380,rot:-2,sub:'the purple graphic',sp:'Start of your turn: 50% chance MADE pays out — +$6 and +1 Intel to you, +$3 to each UNIDENTIFIED LOGO, and every other player pays $2 and gains +1 Cortisol. Nobody knows why. NOBODY.'},
+{id:'made',name:['MADE','(???)'],type:'WILD',shape:'made',income:2,cost:7,x:1000,y:1380,rot:-2,sub:'the purple graphic',sp:'Start of your turn: 50% chance MADE pays out — +$10 and +1 Intel to you, +$3 to each UNIDENTIFIED LOGO, and every other player pays $2 and gains +1 Cortisol. Nobody knows why. NOBODY.'},
 {id:'asics',name:['THE RUNNING SHOE','ASICS'],icon:'👟',type:'WILD',shape:'photo',income:1,cost:3,x:430,y:1360,rot:3,sub:'circled in red · why is this here',sp:'+1 movement step (you are always jogging). Stand here (once owned) to JOG: free −1 Cortisol.'},
 {id:'toktimer',name:['TOKTIMER'],icon:'⏱️',type:'WILD',shape:'photo',income:1,cost:5,x:1920,y:1020,rot:-2,sub:'the clock is running',sp:'+1 Intel whenever a Market Event is revealed. Time is information.'}
 ];
@@ -561,7 +561,7 @@ function raid(i){
  payVoid(i,fine,'the enforcement penalty');
  if(p.intel>1){const lost=p.intel-1;p.intel=1;log('🛈 '+pname(i)+' loses '+lost+' Intel — every contact stops answering.');fxAt(i,'🛈−'+lost,'#55c1ff')}
  p.raided=1;
- p.cortisol=3;log('🚨 '+pname(i)+' is under caution: Cortisol sits at 3, and next turn brings no income and a single step.');
+ p.cortisol=2;log('🚨 '+pname(i)+' is under caution: Cortisol sits at 2, and next turn brings no income and a single step.');
  fxAt(i,'🚨 RAIDED','#ff6b5e',true);
  S.players.forEach((pl,j)=>{if(S.owner.hedge===j)gain(j,3,'somebody was short the whole time');if(S.owner.group===j)giveIntel(j,1,'the group photo pays')});
  announceAll('🚨 REGULATOR RAID',
@@ -569,15 +569,15 @@ function raid(i){
   +'<div class="etext">Cameras on the driveway. Boxes out the front door.</div></div>'
   +'<ul><li>'+(seized.length?'Seized: <b>'+seized.map(n=>esc(n.name.join(' '))).join('</b> and <b>')+'</b>':'Nothing worth seizing — the accounts took it instead')+'</li>'
   +'<li>Fine of <b>$'+fine+'</b>, Intel burned down to 1, every planted bug pulled</li>'
-  +'<li>Cortisol resets to <b>3</b>; next turn brings no income and a single step</li></ul>');
+  +'<li>Cortisol resets to <b>2</b>; next turn brings no income and a single step</li></ul>');
 }
 /* MADE moves money off the rest of the table, not out of thin air. */
 function madePay(){
  const m=S.owner.made;const kin=['unid1','unid2'].map(u=>S.owner[u]).filter(o=>o!=null);
  if(m==null&&!kin.length)return;
- if(m!=null){gain(m,6,'MADE pays out — nobody knows why');giveIntel(m,1,'the purple graphic tells you something')}
- kin.forEach(o=>gain(o,3,'the kindred mystery pays too'));
- S.players.forEach((pl,j)=>{if(j===m||kin.indexOf(j)>=0)return;payVoid(j,2,'the purple graphic takes its cut');addCortisol(j,1,'nobody can explain where the money went')});
+ if(m!=null){gain(m,10,'MADE pays out — nobody knows why');giveIntel(m,1,'the purple graphic tells you something')}
+ kin.forEach(o=>gain(o,5,'the kindred mystery pays too'));
+ S.players.forEach((pl,j)=>{if(j===m||kin.indexOf(j)>=0)return;payVoid(j,3,'the purple graphic takes its cut');addCortisol(j,1,'nobody can explain where the money went')});
 }
 
 /* ============ NET: state sync & prompts (host-authoritative) ============ */
@@ -682,7 +682,7 @@ function initGame(defs){
   Net.myIdx=order.indexOf(hostWas);
  }
  const goal=clampGoal(Net.goal);
- S={players:seated.map((d,i)=>({name:d.name,color:PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',dc:false})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot};
+ S={players:seated.map((d,i)=>({name:d.name,color:PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',dc:false})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot};
  applyLayoutFromState();
  Net.started=true;
  const slot=QUIK_SLOTS[quikSlot];
@@ -855,6 +855,12 @@ async function applyIntent(pi,m){
    else log('🧹 '+pname(pi)+' sweeps the office — nothing found. Paranoia is free; the sweep cost 2 Intel.');
    await endOfTurn();
   }
+  else if(act==='masspanic'&&S.phase==='action'&&!S.mode&&p.intel>=5){
+    p.intel-=5;fxAt(pi,'🛈−5','#55c1ff');
+    log('🔥 '+pname(pi)+' unleashes MASS PANIC — everyone gains +2 Cortisol.');
+    S.players.forEach((pl,j)=>addCortisol(j,2,'mass panic'));
+    await endOfTurn();
+   }
   else if(act==='sell'&&S.phase==='action'&&!S.mode&&m.n>0){
    const rate=MOODS[S.mood].rate;const n=Math.min(+m.n,p.intel);
    if(n<=0){sysTo(pi,'No Intel to sell.');return}
@@ -916,7 +922,7 @@ async function doSeize(pi){
  if(n.type==='CHART'){if(S.owner.nab===pi)base=Math.max(1,base-1);if(S.owner.econ===pi)base=Math.max(1,base-1)}
  if(S.slipped&&S.owner.f1===pi){base=Math.max(1,base-2);S.slipped='spent';log('🏎️ The slipstream carries '+pname(pi)+' into the deal — $2 off.')}
  const isTake=prev!=null;
- const cost=isTake?(S.dossier?base:base*2):base;
+ const priorSeizures=S.seizeCount[nid]||0;const cost=isTake?(S.dossier?base:base*Math.pow(2,priorSeizures)):base;
  if(isTake&&S.dossier)log('📂 The Dossier does its work — list price, not double.');
  const maxPay=p.money+(S.owner.back===pi?Math.min(3,p.intel):0);
  if(maxPay<cost){sysTo(pi,"You can't afford that.");return}
@@ -935,6 +941,7 @@ async function doSeize(pi){
   if(S.owner.accc===prev&&p.money>=2){p.money-=2;S.players[prev].money+=2;log('🧐 ACCC review fee: '+pname(pi)+' pays '+pname(prev)+' $2.')}
  }
  S.owner[nid]=pi;
+ S.seizeCount[nid]=(S.seizeCount[nid]||0)+1;
  const via=useInt>0?' (paid $'+cash+' + '+useInt+' 🛈)':'';
  log('📝 '+pname(pi)+(isTake?' muscles in on ':' seizes ')+n.name.join(' ')+via+'.');
  fx(n.x,n.y-64,'📝 SEIZED',S.players[pi].color);
@@ -993,7 +1000,7 @@ async function endOfTurn(){
 function nextTurn(){if(!S||S.over)return;S.cur=(S.cur+1)%S.players.length;if(S.cur===0)S.turn++;Promise.resolve(startTurn()).catch(e=>console.error(e))}
 function goalAmount(){return clampGoal(S&&S.goal?S.goal:Net.goal)}
 /* Money alone no longer takes it: the con needs a finished portfolio. */
-const WIN_TYPES=['BANK','REGULATOR','CHART','WILD','CORPORATE','COMMODITY'];
+const WIN_TYPES=['BANK','REGULATOR','CHART','WILD','CORPORATE','COMMODITY','MEDIA'];
 function hasType(i,t){return NODES.some(n=>n.type===t&&S.owner[n.id]===i)}
 function missingTypes(i){return WIN_TYPES.filter(t=>!hasType(i,t))}
 async function winCheck(){
@@ -1005,8 +1012,10 @@ async function winCheck(){
  S.over=true;S.phase='over';sync(true);
  const w=S.players[win];
  log('🏆 '+pname(win)+' banks $'+w.money+' with the full set of node types — the target was $'+goal+'. The con is complete.');
- const board=S.players.map((pl,i)=>esc(pl.name)+' — $'+pl.money).join(' · ');
- await revealAll('🏆 THE BIG CON PAYS OUT','<div class="winname" style="color:'+w.color+'">'+esc(w.name)+'</div><p>walks away with <b>$'+w.money+'</b>, past the table’s target of <b>$'+goal+'</b>, holding one of every node type — '+WIN_TYPES.join(' · ')+'. The market was rigged. It was rigged by <b>them</b>.</p><div class="winlist">'+board+'</div>');
+ const wc=charMeta(w.char);
+ const charHtml=wc?'<div style="margin:10px 0 14px;text-align:center"><img src="'+charSrc(w.char)+'" alt="'+esc(wc.name)+'" style="width:96px;height:96px;object-fit:contain;border-radius:12px;border:2px solid '+w.color+';background:#111;padding:4px"><div style="font-weight:800;margin-top:5px">'+esc(wc.name)+'</div></div>':'';
+ const board=S.players.map((pl,i)=>{const c=charMeta(pl.char);return esc(pl.name)+' ('+(c?esc(c.name):'No character')+') — $'+pl.money}).join(' · ');
+ await revealAll('🏆 THE BIG CON PAYS OUT','<div class="winname" style="color:'+w.color+'">'+esc(w.name)+'</div>'+charHtml+'<p>walks away with <b>$'+w.money+'</b>, past the table’s target of <b>$'+goal+'</b>, holding one of every node type — '+WIN_TYPES.join(' · ')+'. The market was rigged. It was rigged by <b>them</b>.</p><div class="winlist">'+board+'</div>');
  sendAll({t:'reload'});setTimeout(()=>location.reload(),400);return true;
 }
 function addChat(pi,text){
@@ -1019,13 +1028,13 @@ function showRules(){
  modal({title:'HOW TO PULL THE BIG CON',html:
  '<h4>Online play (2–8 players)</h4><p>One player <b>hosts</b> and shares the room code — a jt portal <b>buzzword</b> (NESA, HORNSBY HEIGHTS, JAKE TOMKINS…), every one of them straight off the jt portal news ticker; the others <b>join</b> by typing it — the table seats up to <b>eight</b>. Each player sees only their own secret prompts. If someone drops, their seat auto-plays “lay low” — rejoin with the <b>same name</b> to reclaim your empire. Chat in the <b>lobby</b> before the con starts, and in the sidebar once it does.</p>'
  +'<h4>The market mood — events you can feel</h4><p>Every market event shifts the mood of the whole board — watch the <b>ticker</b> across the top, the <b>tint</b> of the board and the <b>glowing nodes</b>: <b style="color:#f5c542">BOOM</b> (commodities +$1/turn), <b style="color:#ff6b5e">PANIC</b> (banks −$1/turn, intel dearer), <b style="color:#e19bff">MEDIA FRENZY</b> (media +$1/turn), <b style="color:#8fbf7f">CALM</b>. Yields go vertical in a panic; the oil graph spikes in a boom. Money, Cortisol and Intel changes pop up on the board as they happen.</p>'
- +'<h4>Intel ops (🛈)</h4><ul><li><b>Burn a favor</b> (1 🛈, while moving) — +1 step this turn.</li><li><b>Spy on the deck</b> (2 🛈, free action) — privately see the next event card, anywhere.</li><li><b>The Dossier</b> (3 🛈, free action) — your hostile takeovers this turn cost <b>list price, not double</b>.</li><li><b>Sweep for bugs</b> (2 🛈, your action) — remove every bug on your nodes.</li><li><b>Sell intel</b> (your action) — at the Rumor Exchange: 1 🛈 = <b>$2</b> calm/boom, <b>$3</b> frenzy, <b>$4</b> panic. Bad news is good news.</li></ul>'
+ +'<h4>Intel ops (🛈)</h4><ul><li><b>Burn a favor</b> (1 🛈, while moving) — +1 step this turn.</li><li><b>Spy on the deck</b> (2 🛈, free action) — privately see the next event card, anywhere.</li><li><b>The Dossier</b> (3 🛈, free action) — your hostile takeovers this turn cost <b>list price, not double</b>.</li><li><b>Sweep for bugs</b> (2 🛈, your action) — remove every bug on your nodes.</li><li><b>Mass panic</b> (5 🛈, your action) — every player gains +2 Cortisol.</li><li><b>Sell intel</b> (your action) — at the Rumor Exchange: 1 🛈 = <b>$2</b> calm/boom, <b>$3</b> frenzy, <b>$4</b> panic. Bad news is good news.</li></ul>'
  +'<h4>The board is the whole collage</h4><p><b>83 exhibits.</b> Charts are no longer stacked in one corner — US yields sit by Trump, Japan by the tankers, Germany by Davos, UK by the papers, Australia by the coat of arms, Canada by the vault, the 10-year master in the middle. Each game <b>Quikstop opens in a different neighbourhood</b>, so the first moves change. New pins from the collage: <b>Westpac</b>, <b>BHP</b>, <b>Herald Sun / The Jim Reaper</b>, <b>the bullet train</b>, the circled <b>ASICS shoe</b>, and <b>Toktimer</b>. Red threads are the paths — long ones dash. <i>Drag to pan, scroll to zoom.</i></p>'
- +'<h4>Winning</h4><p><b>Money <i>and</i> a finished portfolio.</b> The host sets a cash target in the lobby (anything from $'+GOAL_MIN+' to $'+GOAL_MAX+'); to take the con you must reach it <b>while holding at least one '+WIN_TYPES.join(', one ')+' node</b> — the six-type set is tracked in your sidebar. There are only four REGULATORS on the whole board, so the set is a race of its own. Nodes, synergies, bugs and the mood are all just ways of getting there faster — the board banner and the sidebar show the target and who is closest.</p>'
+ +'<h4>Winning</h4><p><b>Money <i>and</i> a finished portfolio.</b> The host sets a cash target in the lobby (anything from $'+GOAL_MIN+' to $'+GOAL_MAX+'); to take the con you must reach it <b>while holding at least one '+WIN_TYPES.join(', one ')+' node</b> — the seven-type set is tracked in your sidebar, including MEDIA. There are only four REGULATORS on the whole board, so the set is a race of its own. Nodes, synergies, bugs and the mood are all just ways of getting there faster — the board banner and the sidebar show the target and who is closest.</p>'
  +'<h4>Your turn</h4><p><b>1 · Income</b> — $3 salary (+$1 CPI-indexed with Inflation Compensation) + holdings &amp; powers &amp; mood. <b>2 · Move</b> — 3 steps (+1 with COAL CORP HQ, +1 with the Coal Train <i>or</i> the Bullet Train, +1 with the ASICS shoe, +1 by burning a favor). Tolls: $1 entering a rival’s node — $2 if they hold Albanese, free if you hold James Bond. <b>3 · One action</b> (plus free intel ops). <b>4 · Market event</b> for the whole table — and the mood moves.</p>'
  +'<h4>Actions</h4><ul><li><b>Seize</b> the node you stand on (+1 🔥). Hostile takeover: double cost (list price with the Dossier), old owner pockets list price, +2 🔥, +$2 ACCC fee if they own the ACCC.</li><li><b>Plant a bug</b> (1 🛈; free with INSIDER TRADING) — skim $1/turn ($2 with the WEF).</li><li><b>Leak dirt</b> (2 🛈) · <b>Audit</b> ($4, ASIC) · <b>The Tweet</b> ($2, Trump) — rivals gain Cortisol.</li><li><b>Spin</b> ($3 Press Room) / <b>Fox Spin</b> ($2 Fox Business) · <b>Cook the books</b> ($3, The Rock) · <b>Budget night</b> ($3, the Government).</li><li><b>Push the boulder</b> (+$3, +1 🔥, forever) · <b>Scrub</b> (Real Yield) · <b>Fly the Qantas jet</b> ($3, teleport) · <b>Slipstream</b> ($2, Formula 1: +2 steps and $2 off the next seizure) · <b>Lay low</b>.</li></ul>'
  +'<h4>Cortisol &amp; raids</h4><p>At 🔥8 the regulators raid you, and a raid hurts: your <b>two</b> highest-income nodes are seized, every bug you planted is pulled, you pay a fine of $5 or 30% of your cash (whichever is larger), your Intel is burned down to 1, Cortisol resets to 3 and your <b>next turn brings no income and a single step</b>. <b>The whole table sees the raid</b> — it pops up on every screen. The Hedge Fund pays $3 on every raid; the Group Photograph pays 1 🛈 Intel.</p>'
- +'<h4>MADE (???)</h4><p>Nobody knows what the purple graphic is, but it moves money: each turn there is a 50% chance MADE pays out — <b>+$6 and +1 Intel</b> to its owner, <b>+$3</b> to each UNIDENTIFIED LOGO, while <b>everyone else pays $2 and gains 🔥+1</b>.</p>'
+ +'<h4>MADE (???)</h4><p>Nobody knows what the purple graphic is, but it moves money: each turn there is a 50% chance MADE pays out — <b>+$10 and +1 Intel</b> to its owner, <b>+$5</b> to each UNIDENTIFIED LOGO, while <b>everyone else pays $3 and gains 🔥+1</b>.</p>'
  +'<p class="fine">No dice. The dice were rigged from the start.</p>',
  options:[{label:'Back to the con',v:1}]});
 }
@@ -1317,7 +1326,7 @@ function renderSide(){
     if(nid==='asics')btns.push('<button class="act primary" data-act="jog">Jog a lap — free −1 🔥</button>');
    }else{
     const afford=maxPay>=cost;
-    const lbl=isTake?('Hostile takeover — $'+cost+(S.dossier?' (DOSSIER: list price)':' (owner pockets $'+n.cost+')')):('Seize '+n.name.join(' ')+' — $'+cost);
+    const lbl=isTake?('Hostile takeover — $'+cost+(S.dossier?' (DOSSIER: list price)':' (takeover '+(S.seizeCount[nid]||0)+'×)')):('Seize '+n.name.join(' ')+' — $'+cost);
     btns.push('<button class="act primary" data-act="seize"'+(afford?'':' disabled')+'>'+lbl+(afford?'':' — can’t afford')+'</button>');
    }
    const bugCost=(S.owner.insider===me)?0:1;
@@ -1335,6 +1344,7 @@ function renderSide(){
    btns.push('<button class="act" data-act="spy"'+(p.intel>=2?'':' disabled')+' title="Free action — see the next event card, anywhere">🛈 Spy on the deck — 2 🛈 (see next event)</button>');
    btns.push('<button class="act" data-act="dossier"'+((p.intel>=3&&!S.dossier)?'':' disabled')+' title="Free action — hostile takeovers cost list price this turn">📂 The Dossier — 3 🛈 (takeovers at list price)</button>');
    btns.push('<button class="act" data-act="sweep"'+(p.intel>=2?'':' disabled')+' title="Your action — remove all bugs on your nodes">🧹 Sweep for bugs — 2 🛈 (cleanse your nodes)</button>');
+    btns.push('<button class="act" data-act="masspanic"'+(p.intel>=5?'':' disabled')+' title="Your action — every player gains 2 Cortisol">🔥 Mass panic — 5 🛈 (+2 Cortisol to everyone)</button>');
    for(let k=1;k<=3;k++){
     btns.push('<button class="act" data-act="sell" data-n="'+k+'"'+(p.intel>=k?'':' disabled')+' title="Your action — cash rumors at the exchange">💰 Sell '+k+' 🛈 → $'+(k*md.rate)+'</button>');
    }
