@@ -325,8 +325,8 @@ const BASE_EDGES=[
  ['tanker','port'],['tanker','petronas'],['petronas','trump'],
  ['train','coal'],['train','watson'],['train','port'],['train','rock'],['train','bhp'],['bhp','coal'],['bhp','watson'],['bhp','market'],
  /* corporates & the wandering servo */
- ['coal','watson'],['coal','quik'],['quik','market'],['quik','bond007'],['quik','watson'],['market','f1'],['market',],
- ['f1',],['f1','qantas'],['qantas','press'],['qantas','golf'],['golf'],['ib'],['bullet','school'],['bullet','albo'],['bullet','golf'],['bullet','asics'],
+ ['coal','watson'],['coal','quik'],['quik','market'],['quik','bond007'],['quik','watson'],['market','f1'],
+ ['f1','qantas'],['qantas','press'],['qantas','golf'],['bullet','school'],['bullet','albo'],['bullet','golf'],['bullet','asics'],
  /* media ring */
  ['back','press'],['back','leak'],['back','jt'],['iface','toktimer'],
  ['press','leak'],['press','fox'],['press','golf'],['press','news'],['leak','photo'],['photo','news'],['photo','bigshort'],['photo','made'],
@@ -752,7 +752,6 @@ function income(i){
  if(own('barrels')&&own('forklift'))syn+=1;
  if(own('forklift')&&comm)syn+=comm;
  if(own('market')&&own('quik'))syn+=2;
- if(own()&&corp)syn+=corp;
  if(own('rock'))syn+=new Set(owned.map(n=>n.type)).size;
  if(own('bessent')&&bank)syn+=bank;
  if(own('chalmers')&&reg)syn+=reg;
