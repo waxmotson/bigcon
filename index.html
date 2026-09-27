@@ -186,7 +186,7 @@ button.mini:hover{background:#168388}
    <button class="gobtn" id="btnJoinGo">JOIN GAME</button>
   </div>
   <div id="lobbyView">
-   <div class="codeline"><div class="cl">ROOM CODE — SHARE WITH YOUR CO-CONSPIRATORS</div><div class="cc" id="roomCodeBig">·····</div><button class="copybtn" id="btnCopy">📋 copy code</button></div>
+   <div class="codeline"><div class="cl">ROOM CODE — OR SEND A DISCORD INVITE FROM YOUR PROFILE / + IN CHAT</div><div class="cc" id="roomCodeBig">·····</div><button class="copybtn" id="btnCopy">📋 copy code</button><div class="gn" style="margin-top:8px;font-size:11px;color:#9ad;letter-spacing:0;text-transform:none">Desktop build: friends can Join from the Discord invite card. The buzzword still works on the website.</div></div>
    <div class="goalrow">
     <div class="cl">WIN TARGET — REACH THIS MUCH MONEY <i>AND</i> HOLD ONE OF EVERY NODE TYPE</div>
     <div class="goalctl"><span class="gd">$</span><input id="goalInput" type="number" min="20" max="999" step="5" value="100"><span class="gn" id="goalNote">the host sets the target</span></div>
@@ -247,20 +247,38 @@ const Presence=(function(){
   p.smallImageText=m?m.name:charId;
   return p;
  }
+ /* Join secret is what Discord hands the other client when they hit
+    Join on an invite card. It is NOT shown on the profile — the buzzword
+    stays in the lobby / website only. Same encoding on every seat so any
+    player in the room can send the invite. */
+ function joinSecretFor(code){
+  const slug=codeSlug(code||'');
+  return slug?('bc1.'+slug):'';
+ }
  return{
+  encodeJoinSecret:joinSecretFor,
+  decodeJoinSecret(secret){
+   let s=String(secret||'').trim();
+   try{s=decodeURIComponent(s)}catch(e){}
+   s=s.replace(/^secret=/i,'');
+   if(/^bc1[.:]/i.test(s))s=s.slice(4);
+   return matchBuzzword(s);
+  },
   menu(){
    startedAt=null;
    send({details:'In the menu',state:'Setting up the con',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON'});
   },
   lobby(asHost,code,have,max,charId){
-   const p={details:asHost?'Hosting a lobby':'Waiting in a lobby',state:'Room '+(code||'·····')+' · '+have+'/'+max+' seated',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON',partyId:'bigcon-'+(code||'solo'),partySize:have,partyMax:max};
+   const p={details:asHost?'Hosting a lobby':'Waiting in a lobby',state:have+'/'+max+' seated — send a Discord invite',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON',partyId:'bigcon-'+(codeSlug(code)||'solo'),partySize:have,partyMax:max,supportedPlatforms:['desktop']};
+   const secret=joinSecretFor(code);
+   if(secret&&have<max){p.joinSecret=secret;p.instance=true}
    send(withChar(p,charId));
   },
   inGame(turn,curName,isMe,myMoney,goal,connected,charId,code,curCharId){
    if(!startedAt)startedAt=Date.now();
    const large=curCharId?curCharId+'_big':'big_con_logo';
    const lm=(typeof charMeta==='function'&&curCharId)?charMeta(curCharId):null;
-   const p={details:'Turn '+turn+(' — '+curName+'’s move'),state:'$'+myMoney+' of $'+goal+' target',startTimestamp:startedAt,largeImageKey:large,largeImageText:lm?lm.name:'THE BIG CON',partyId:'bigcon-'+(code||'solo'),partySize:connected,partyMax:MAXPLAYERS};
+   const p={details:'Turn '+turn+(' — '+curName+'’s move'),state:'$'+myMoney+' of $'+goal+' target',startTimestamp:startedAt,largeImageKey:large,largeImageText:lm?lm.name:'THE BIG CON',partyId:'bigcon-'+(codeSlug(code)||'solo'),partySize:connected,partyMax:MAXPLAYERS};
    send(withChar(p,charId));
   },
   gameOver(winnerName,winnerChar){
@@ -1989,6 +2007,48 @@ function showLobby(asHost){
 document.querySelector('.setuplinks button[data-srules]').onclick=()=>showRules();
 if(typeof Peer==='undefined'){setNetStatus('⚠ Networking library failed to load — you need an internet connection the first time you connect.',true)}
 Presence.menu();
+
+/* Discord "Invite to join" — the desktop build delivers the join secret
+   here. The website never sees window.discordRPC, so this is a no-op there. */
+(function bindDiscordJoin(){
+ const b=(typeof window!=='undefined'&&window.discordRPC)||null;
+ if(!b)return;
+ function applySecret(secret){
+  const code=Presence.decodeJoinSecret(secret);
+  if(!code){setNetStatus('That Discord invite did not contain a room.',true);return}
+  if(Net.role||Net.begun){
+   toast('Already at a table. Buzzword for the invite was '+codeLabel(code)+'.');
+   return;
+  }
+  $('joinForm').classList.add('show');
+  $('hostForm').classList.remove('show');
+  $('lobbyView').style.display='none';
+  const box=$('joinCode');
+  if(box)box.value=codeLabel(code);
+  const existing=cleanName(($('joinName')&&$('joinName').value)||($('hostName')&&$('hostName').value)||'');
+  function go(nm){
+   const name=cleanName(nm);
+   if(!name){setNetStatus('Discord invite for “'+codeLabel(code)+'” — type a name and hit JOIN GAME.');return}
+   if($('joinName'))$('joinName').value=name;
+   $('btnJoinGo').disabled=true;
+   guestJoin(name,code);
+  }
+  if(existing){go(existing);return}
+  if(typeof b.getUser==='function'){
+   Promise.resolve(b.getUser()).then(u=>{
+    const fromDiscord=cleanName(u&&(u.username||''));
+    if(fromDiscord)go(fromDiscord);
+    else setNetStatus('Discord invite for “'+codeLabel(code)+'” — type a name and hit JOIN GAME.');
+   }).catch(()=>setNetStatus('Discord invite for “'+codeLabel(code)+'” — type a name and hit JOIN GAME.'));
+   return;
+  }
+  setNetStatus('Discord invite for “'+codeLabel(code)+'” — type a name and hit JOIN GAME.');
+ }
+ if(typeof b.onJoin==='function')b.onJoin(applySecret);
+ if(typeof b.takePendingJoin==='function'){
+  Promise.resolve(b.takePendingJoin()).then(s=>{if(s)applySecret(s)}).catch(()=>{});
+ }
+})();
 </script>
 </body>
 </html>
