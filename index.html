@@ -219,6 +219,60 @@ button.mini:hover{background:#168388}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
+
+/* ================= DISCORD RICH PRESENCE BRIDGE =================
+   window.discordRPC is injected ONLY by the desktop (Electron) build's
+   preload.js. When this exact file is opened as a plain website — the
+   original way this game runs, over PeerJS in any browser — that object
+   is simply undefined, so every call below quietly does nothing and the
+   web version behaves exactly as it always has. Nothing here ever talks
+   to Discord directly; it only ever talks to window.discordRPC. */
+const Presence=(function(){
+ let lastKey=null,startedAt=null;
+ function bridge(){return(typeof window!=='undefined'&&window.discordRPC)||null}
+ function send(activity){
+  const b=bridge();if(!b||!b.setActivity)return;
+  const key=JSON.stringify(activity);
+  if(key===lastKey)return;
+  lastKey=key;
+  try{b.setActivity(activity)}catch(e){}
+ }
+ /* Every uploaded Rich Presence asset for a character is named
+    "<characterId>_big" — exactly the id used in CHARS below — so no
+    separate lookup table is needed, just this one suffix rule. */
+ function withChar(p,charId){
+  if(!charId)return p;
+  p.smallImageKey=charId+'_big';
+  const m=(typeof charMeta==='function')?charMeta(charId):null;
+  p.smallImageText=m?m.name:charId;
+  return p;
+ }
+ return{
+  menu(){
+   startedAt=null;
+   send({details:'In the menu',state:'Setting up a con',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON'});
+  },
+  lobby(asHost,code,have,max,charId){
+   const p={details:asHost?'Hosting a lobby':'Waiting in a lobby',state:'Room '+(code||'·····')+' · '+have+'/'+max+' seated',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON',partyId:'bigcon-'+(code||'solo'),partySize:have,partyMax:max};
+   send(withChar(p,charId));
+  },
+  inGame(turn,curName,isMe,myMoney,goal,connected,charId,code){
+   if(!startedAt)startedAt=Date.now();
+   const p={details:'Turn '+turn+(isMe?' — your move':' — '+curName+'’s move'),state:'$'+myMoney+' of $'+goal+' target',startTimestamp:startedAt,largeImageKey:'big_con_logo',largeImageText:'THE BIG CON',partyId:'bigcon-'+(code||'solo'),partySize:connected,partyMax:MAXPLAYERS};
+   send(withChar(p,charId));
+  },
+  gameOver(winnerName,winnerChar){
+   const p={details:'Game over',state:winnerName+' pulled off the con',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON'};
+   send(withChar(p,winnerChar));
+  },
+  clear(){
+   const b=bridge();if(!b||!b.clearActivity)return;
+   try{b.clearActivity()}catch(e){}
+   lastKey=null;startedAt=null;
+  }
+ };
+})();
+
 /* ================= THE COMPLETE EVIDENCE BOARD — 82 exhibits ================= */
 const NODES=[
 {id:'citi',image:'./static/citi tower.webp',name:['CITI TOWER'],icon:'🏦',type:'BANK',shape:'logo',band:'#1a5fa8',income:3,cost:8,x:210,y:150,rot:-2,sub:'too big to fail · 007 on payroll',sp:'+$1 income per CORPORATE node you own (James Bond is on the payroll).'},
@@ -405,14 +459,6 @@ const CHARS=[
 ];
 function charMeta(id){return CHARS.find(c=>c.id===id)||null}
 function charSrc(id){const c=charMeta(id);return c?CHARURL+c.file:''}
-
-function charMeta(id){return CHARS.find(c=>c.id===id)||null}
-function charSrc(id){const c=charMeta(id);return c?CHARURL+c.file:''}
-// ADD THIS:
-function discordCharKey(charId) {
-  if (!charId) return undefined;
-  return charId + '_big'; 
-}
 /* ================= THE MARKET MOOD — set by every event, felt by everyone ================= */
 const MOODS={
  CALM:{label:'MARKET: CALM',color:'#8fbf7f',tint:'rgba(70,130,70,0.045)',rate:2,desc:'no modifiers · 1 🛈 = $2'},
@@ -1064,6 +1110,7 @@ async function winCheck(){
  if(win<0)return false;
  S.over=true;S.phase='over';sync(true);
  const w=S.players[win];
+ Presence.gameOver(w.name,w.char);
  log('🏆 '+pname(win)+' banks $'+w.money+' with the full set of node types — the target was $'+goal+'. The con is complete.');
  const wc=charMeta(w.char);
  const charHtml=wc?'<div style="margin:10px 0 14px;text-align:center"><img src="'+charSrc(w.char)+'" alt="'+esc(wc.name)+'" style="width:96px;height:96px;object-fit:contain;border-radius:12px;border:2px solid '+w.color+';background:#111;padding:4px"><div style="font-weight:800;margin-top:5px">'+esc(wc.name)+'</div></div>':'';
@@ -1094,7 +1141,14 @@ function showRules(){
 }
 
 /* ================= RENDERING (shared by host & guests) ================= */
-function render(){if(!S)return;applyLayoutFromState();renderBoard();renderSide()}
+function render(){
+ if(!S)return;
+ applyLayoutFromState();renderBoard();renderSide();
+ if(!S.over){
+  const me=S.players[Net.myIdx];
+  Presence.inGame(S.turn,pname(S.cur),S.cur===Net.myIdx,me?me.money:0,goalAmount(),S.players.filter(pl=>!pl.dc).length,me?me.char:null,Net.roomLabel||Net.roomCode);
+ }
+}
 function moodBoost(n){
  if(!S)return 0;
  if(S.mood==='BOOM'&&n.type==='COMMODITY')return 1;
@@ -1486,6 +1540,7 @@ function genCode(){return codeSlug(BUZZWORDS[Math.floor(Math.random()*BUZZWORDS.
 function setNetStatus(msg,err){const el=$('netStatus');el.textContent=msg||'';el.className=err?'err':''}
 function cleanName(s){return String(s||'').replace(/[<>&"'`]/g,'').trim().slice(0,16)}
 function showFatal(msg){
+ Presence.clear();
  const ov=document.createElement('div');ov.className='overlay';
  const card=document.createElement('div');card.className='mcard';
  card.innerHTML='<div class="mtitle">CONNECTION LOST</div><div class="mbody"><p>'+esc(msg)+'</p></div><div class="mopts"><button onclick="location.reload()">Reload</button></div>';
@@ -1712,6 +1767,8 @@ function renderLobbyList(){
  }).join('')
   +'<div class="lrow" style="background:transparent;border:1px dashed #168388;color:#9ad;font-size:12px"><span class="ln">'+rows.length+' of 8 seats filled</span></div>';
  renderCharGrid();
+ const meIdx=Net.role==='host'?0:Net.myIdx;
+ Presence.lobby(Net.role==='host',Net.roomLabel||Net.roomCode,rows.length,MAXPLAYERS,rows[meIdx]&&rows[meIdx].char);
 }
 /* ---- GUEST ---- */
 let guestReconnectTimer=null;
@@ -1927,6 +1984,7 @@ function showLobby(asHost){
 })();
 document.querySelector('.setuplinks button[data-srules]').onclick=()=>showRules();
 if(typeof Peer==='undefined'){setNetStatus('⚠ Networking library failed to load — you need an internet connection the first time you connect.',true)}
+Presence.menu();
 </script>
 </body>
 </html>
