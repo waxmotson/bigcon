@@ -10,7 +10,6 @@
 <meta property="og:image:height" content="1200" />
 <title>THE BIG CON</title>
 <link rel="icon" href="favicon.ico">
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -30,26 +29,16 @@ body{font-family:system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif;col
 .netform.show{display:flex}
 .namelab{display:flex;align-items:center;gap:10px}
 .namelab input{flex:1;font-family:inherit;font-size:15px;padding:9px 12px;border-radius:0;border:2px solid #168388;background:#000;color:#fff;min-width:0}
-.namelab input.code{text-transform:uppercase;letter-spacing:2px;font-weight:800;text-align:center;flex:0 0 220px}
+.namelab input.code{text-transform:uppercase;letter-spacing:4px;font-weight:800;text-align:center;flex:0 0 170px}
 .gobtn{font-family:inherit;font-size:16px;font-weight:900;letter-spacing:1px;padding:12px;border-radius:0;border:2px solid #000;background:#168388;color:#fff;cursor:pointer}
 .gobtn:hover{background:#0e5c60}
 .gobtn:disabled{opacity:.4;cursor:not-allowed}
 #netStatus{font-size:12.5px;color:aqua;min-height:18px;margin-top:8px;font-style:italic}
 #netStatus.err{color:#ff6b5e;font-weight:700}
 #lobbyView{display:none;margin:14px 0}
-.goalrow{margin:14px 0;padding:10px 12px;border:1px solid #168388;background:#04100f}
-.goalctl{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
-.goalctl .gd{font-size:22px;font-weight:900;color:#f5c542}
-.goalctl input{width:120px;background:#000;border:1px solid #168388;color:#f5c542;font:900 20px/1.2 inherit;padding:6px 8px}
-.goalctl input:disabled{opacity:.75}
-.goalctl .gn{font-size:11px;color:#9ad}
 .codeline{background:#000;color:aqua;border-radius:0;padding:12px;text-align:center;border:1px solid #168388}
 .codeline .cl{font-size:10px;letter-spacing:3px;color:#9ad}
-.codeline .cc{font-size:26px;font-weight:900;letter-spacing:4px;line-height:1.15;word-break:break-word}
-.lobbychat{margin:14px 0;padding:10px 12px;border:1px solid #168388;background:#04100f}
-.lobbychat .chatlist{height:120px}
-.setcard{background:#000;border:1px solid #168388;border-radius:0;padding:8px 11px;font-size:11px;letter-spacing:.5px;color:#cde;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.setcard .st{font-weight:800;letter-spacing:2px;color:#9ad}
+.codeline .cc{font-size:34px;font-weight:900;letter-spacing:10px}
 .copybtn{margin-top:6px;font-family:inherit;font-size:11px;background:none;border:1px solid #168388;color:#9ad;border-radius:0;padding:4px 12px;cursor:pointer}
 .lobbylist{margin-top:12px}
 .lrow{display:flex;align-items:center;gap:9px;background:#000;border:1px solid #333;border-radius:0;padding:8px 12px;font-size:14px;margin-top:6px}
@@ -118,10 +107,10 @@ button.act.primary:hover:not(:disabled){background:#0e5c60}
 .footbtns{display:flex;gap:8px}
 button.mini{flex:1;font-family:inherit;background:#000;border:1px solid #168388;color:#fff;border-radius:0;padding:7px;cursor:pointer;font-size:12px;letter-spacing:1px}
 button.mini:hover{background:#168388}
-.node{cursor:default}.node-image{display:block;pointer-events:all}
+.node{cursor:default}
 .node.click{cursor:pointer}
 .node .card{filter:drop-shadow(3px 5px 3px rgba(0,0,0,.55))}
-.node.click:hover .node-image{filter:drop-shadow(0 0 6px rgba(255,246,220,.75)) drop-shadow(3px 5px 3px rgba(0,0,0,.55))}
+.node.click:hover .card{filter:drop-shadow(0 0 6px rgba(255,246,220,.75)) drop-shadow(3px 5px 3px rgba(0,0,0,.55))}
 .halo{pointer-events:none;animation:halo 1.15s ease-in-out infinite}
 @keyframes halo{0%,100%{opacity:.2}50%{opacity:1}}
 .moodhalo{pointer-events:none;animation:moodpulse 2.2s ease-in-out infinite}
@@ -171,10 +160,10 @@ button.mini:hover{background:#168388}
  <div class="setupcard">
   <div class="bigtitle">THE BIG CON</div>
   <p class="tag">The complete evidence board — charts unstacked, Quikstop on the move. Seats 2–8.</p>
-  <p class="intro">The evidence board contains the exhibits shown below: Qantas, JTPortal, St Andrew's Cathedral School, the ACCC, the RBA, Citi, CommBank, NAB, ANZ, Westpac, ASIC, the coat of arms, PETRONAS, BHP, MarketPlace Leichhardt, Quikstop, MADE, the World Economic Forum, Fox Business, Herald Sun / The Jim Reaper, the charts now pinned all over the collage (10-year master in the middle; US by Trump; Japan by the tankers; UK by the papers; Australia by the coat of arms; Canada by the vault), the commodities (WTI pit, blue barrels, tanker fleet, gold coins, coal train, coal terminal, forklift, BHP), the headlines (“Quite frankly, JTPortal…”, “BONDMAGEDDON”, “Big Bessent”, “The Jim…”, INSIDER TRADING, CEO COAL, BRAD PITT, The Big Short) and the polaroids — Watson, Bessent, Chalmers, Albanese, Trump, Bullock, James Bond of Citibank, The Rock, the Whistleblower, Toktimer — plus the IB Diploma, the Sisyphus Boulder, the circled ASICS shoe, the bullet train and the Australian Monetary Policy Competition.<br><br>
+  <p class="intro">All 82 exhibits are on the board: JTPortal, St Andrew's Cathedral School, the ACCC, the RBA, Citi, CommBank, NAB, ANZ, Westpac, ASIC, the coat of arms, PETRONAS, BHP, MarketPlace Leichhardt, Quikstop, MADE, the World Economic Forum, Fox Business, Herald Sun / The Jim Reaper, the charts now pinned all over the collage (10-year master in the middle; US by Trump; Japan by the tankers; Germany by Davos; UK by the papers; Australia by the coat of arms; Canada by the vault), the commodities (WTI pit, blue barrels, tanker fleet, gold coins, banknotes, coal train, coal terminal, forklift, BHP), the headlines (“Quite frankly, JTPortal…”, “Bond Markets Revolt”, “Big Bessent”, “The Jim…”, INSIDER TRADING, CEO COAL, BRAD PITT, The Big Short) and the polaroids — Watson, Bessent, Chalmers, Albanese, Trump, Bullock, James Bond of Citibank, The Rock, the Whistleblower, Toktimer — plus the IB Diploma, the Sisyphus Boulder, the circled ASICS shoe, the bullet train and the Australian Monetary Policy Competition.<br><br>
   <b>Each game Quikstop opens in a different neighbourhood</b> — the inner west, the docks, across from the RBA, down by MarketPlace, or next to MADE — so the opening map is never the same.<br><br>
-  Every market event now <b>shifts the mood of the whole board</b> — watch the ticker, the tint and the glowing nodes — and money, Cortisol and Intel <b>pop up on the board as they happen</b>. Intel is a currency with teeth: <b>burn favors, spy on the event deck, open the Dossier, sweep for bugs, or sell rumors at the exchange</b> (rates rise when the market panics).<br><br>
-  <b>Online play (2–8 players):</b> one player hosts and gets a room code — a jt portal <b>buzzword</b> like NESA, HORNSBY HEIGHTS or WORLD ECONOMIC FORUM, each one straight off the jt portal ticker; everyone else joins by typing it, and the lobby has its own chat while you wait. Each screen sees only its own secret prompts. Everyone must run <b>this same file</b>.</p>
+  Every market event now <b>shifts the mood of the whole board</b> — watch the ticker, the tint and the glowing nodes — and money, Heat and Intel <b>pop up on the board as they happen</b>. Intel is a currency with teeth: <b>burn favors, spy on the event deck, open the Dossier, sweep for bugs, or sell rumors at the exchange</b> (rates rise when the market panics).<br><br>
+  <b>Online play (2–8 players):</b> one player hosts and gets a room code; everyone else joins with it. Players meet through ntfy.sh (a public message relay — not PeerJS). Each screen sees only its own secret prompts. Everyone must run <b>this same file</b> and keep the tab open.</p>
   <div class="chooserow">
    <button class="modebtn" id="btnHost">HOST</button>
    <button class="modebtn" id="btnJoin">JOIN</button>
@@ -184,23 +173,11 @@ button.mini:hover{background:#168388}
    <button class="gobtn" id="btnCreate">CREATE ROOM</button>
   </div>
   <div class="netform" id="joinForm">
-   <label class="namelab"><input id="joinName" maxlength="16" placeholder="Your name"><input id="joinCode" class="code" maxlength="28" list="buzzwords" placeholder="BUZZWORD" autocomplete="off"></label>
-   <datalist id="buzzwords"></datalist>
-   <div class="gn" style="font-size:11px;color:#9ad">Room codes are jt portal buzzwords — type the one the host read out (e.g. NESA, HORNSBY HEIGHTS, JAKE TOMKINS).</div>
+   <label class="namelab"><input id="joinName" maxlength="16" placeholder="Your name"><input id="joinCode" class="code" maxlength="5" placeholder="CODE"></label>
    <button class="gobtn" id="btnJoinGo">JOIN GAME</button>
   </div>
   <div id="lobbyView">
    <div class="codeline"><div class="cl">ROOM CODE — SHARE WITH YOUR CO-CONSPIRATORS</div><div class="cc" id="roomCodeBig">·····</div><button class="copybtn" id="btnCopy">📋 copy code</button></div>
-   <div class="goalrow">
-    <div class="cl">WIN TARGET — REACH THIS MUCH MONEY <i>AND</i> HOLD ONE OF EVERY NODE TYPE</div>
-    <div class="goalctl"><span class="gd">$</span><input id="goalInput" type="number" min="20" max="999" step="5" value="100"><span class="gn" id="goalNote">the host sets the target</span></div>
-    <div class="gn" style="margin-top:6px">THE FULL SET: BANK · REGULATOR · CHART · WILD · CORPORATE · COMMODITY</div>
-   </div>
-   <div class="lobbychat">
-    <div class="cl">THE WIRE — LOBBY CHAT</div>
-    <div class="chatlist" id="lobbyChatList"></div>
-    <div class="chatrow"><input id="lobbyChatInput" maxlength="140" placeholder="talk your book before the con starts…"><button id="lobbyChatSend">SEND</button></div>
-   </div>
    <div class="sublabel" style="margin-top:14px">PICK A FACE — one player per character</div>
    <div class="chargrid" id="charGrid"></div>
    <div class="lobbylist" id="lobbyList"></div>
@@ -223,125 +200,134 @@ button.mini:hover{background:#168388}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-/* ================= THE COMPLETE EVIDENCE BOARD — 83 exhibits ================= */
+/* ================= THE COMPLETE EVIDENCE BOARD — 82 exhibits ================= */
 const NODES=[
-{id:'citi',image:'./static/citi tower.webp',name:['CITI TOWER'],icon:'🏦',type:'BANK',shape:'logo',band:'#1a5fa8',income:3,cost:8,x:210,y:150,rot:-2,sub:'too big to fail · 007 on payroll',sp:'+$1 income per CORPORATE node you own (James Bond is on the payroll).'},
-{id:'commbank',image:'./static/cba.png',name:['COMMONWEALTH BANK'],icon:'🏦',type:'BANK',shape:'logo',band:'#d4a017',income:2,cost:6,x:400,y:95,rot:2,sub:'can’t be beat? we’ll see',sp:'+$2 income while you own any other BANK (the big four stick together).'},
-{id:'nab',image:'./static/nab.png',name:['NAB'],icon:'🏦',type:'BANK',shape:'logo',band:'#c0392b',income:2,cost:6,x:590,y:165,rot:-1,sub:'more than money',sp:'Seizing CHART nodes costs you $1 less (their analysts share screens).'},
-{id:'anz',image:'./static/anz.png',name:['ANZ'],icon:'🏦',type:'BANK',shape:'logo',band:'#2e7d64',income:2,cost:6,x:770,y:100,rot:2,sub:'the blue bank',sp:'+$1 income per CHART node you own (ANZ reads the data).'},
-{id:'westpac',image:'./static/westpac.png',name:['WESTPAC'],icon:'🏦',type:'BANK',shape:'logo',band:'#d21e2b',income:2,cost:6,x:500,y:270,rot:1,sub:'the red bank · the other fourth',sp:'+$1 income per REGULATOR you own (they have sat through every inquiry).'},
-{id:'bond',image:'./static/bond desk.png',name:['THE BOND DESK'],icon:'💼',type:'BANK',income:3,cost:8,x:1040,y:310,rot:1,sub:'“Government Bond: the collapse of the world’s safest investment.”',sp:'Gain 2 Intel when you seize it. Collects the tolls when BONDMAGEDDON.'},
-{id:'hedge',image:'./static/hedge fund.png',name:['THE HEDGE FUND'],icon:'🕶️',type:'BANK',income:2,cost:6,x:1260,y:300,rot:-2,sub:'somebody’s shorting',sp:'+$3 whenever ANY player is raided — even you.'},
-{id:'rba',image:'./static/rba.png',name:['RESERVE BANK','OF AUSTRALIA'],icon:'🏛️',type:'REGULATOR',shape:'logo',band:'#4a5a66',income:2,cost:10,x:960,y:145,rot:1,sub:'sets the price of money',sp:'−1 Cortisol at the start of each of your turns. The cash rate is whatever you say it is.'},
-{id:'asic',image:'./static/asic.png',name:['ASIC'],icon:'⚖️',type:'REGULATOR',shape:'logo',band:'#1f3a5f',income:1,cost:5,x:1160,y:95,rot:-1,sub:'the corporate cop',sp:'Unlocks AUDIT ($4): any rival +1 Cortisol, once per turn.'},
-{id:'accc',image:'./static/accc.png',name:['ACCC'],icon:'🧐',type:'REGULATOR',shape:'logo',band:'#233a8f',income:1,cost:5,x:1360,y:155,rot:1,sub:'reviews every merger',sp:'When a rival hostile-takes one of YOUR nodes, they pay you an extra $2 (ACCC review fee).'},
-{id:'gov',image:'./static/coat of arms.png',name:['AUSTRALIAN GOVERNMENT','COAT OF ARMS'],icon:'🦘',type:'REGULATOR',shape:'logo',band:'#1b3a2a',income:2,cost:8,x:1540,y:100,rot:-1,sub:'documents, logos & ribbons',sp:'Unlocks BUDGET NIGHT ($3): every rival pays you $1 and you gain +1 Intel.'},
+{id:'citi',name:['CITI TOWER'],icon:'🏦',type:'BANK',shape:'logo',band:'#1a5fa8',income:3,cost:8,x:210,y:150,rot:-2,sub:'too big to fail · 007 on payroll',sp:'+$1 income per CORPORATE node you own (James Bond is on the payroll).'},
+{id:'commbank',name:['COMMONWEALTH BANK'],icon:'🏦',type:'BANK',shape:'logo',band:'#d4a017',income:2,cost:6,x:400,y:95,rot:2,sub:'can’t be beat? we’ll see',sp:'+$2 income while you own any other BANK (the big four stick together).'},
+{id:'nab',name:['NAB'],icon:'🏦',type:'BANK',shape:'logo',band:'#c0392b',income:2,cost:6,x:590,y:165,rot:-1,sub:'more than money',sp:'Seizing CHART nodes costs you $1 less (their analysts share screens).'},
+{id:'anz',name:['ANZ'],icon:'🏦',type:'BANK',shape:'logo',band:'#2e7d64',income:2,cost:6,x:770,y:100,rot:2,sub:'the blue bank',sp:'+$1 income per CHART node you own (ANZ reads the data).'},
+{id:'westpac',name:['WESTPAC'],icon:'🏦',type:'BANK',shape:'logo',band:'#d21e2b',income:2,cost:6,x:500,y:270,rot:1,sub:'the red bank · the other fourth',sp:'+$1 income per REGULATOR you own (they have sat through every inquiry).'},
+{id:'bond',name:['THE BOND DESK'],icon:'💼',type:'BANK',income:3,cost:8,x:1040,y:310,rot:1,sub:'“Government Bond: the collapse of the world’s safest investment.”',sp:'Gain 2 Intel when you seize it. Collects the tolls when BOND MARKETS REVOLT.'},
+{id:'hedge',name:['THE HEDGE FUND'],icon:'🕶️',type:'BANK',income:2,cost:6,x:1260,y:300,rot:-2,sub:'somebody’s shorting',sp:'+$3 whenever ANY player is raided — even you.'},
+{id:'rba',name:['RESERVE BANK','OF AUSTRALIA'],icon:'🏛️',type:'REGULATOR',shape:'logo',band:'#4a5a66',income:2,cost:10,x:960,y:145,rot:1,sub:'sets the price of money',sp:'−1 Heat at the start of each of your turns. The cash rate is whatever you say it is.'},
+{id:'asic',name:['ASIC'],icon:'⚖️',type:'REGULATOR',shape:'logo',band:'#1f3a5f',income:1,cost:5,x:1160,y:95,rot:-1,sub:'the corporate cop',sp:'Unlocks AUDIT ($4): any rival +1 Heat, once per turn.'},
+{id:'accc',name:['ACCC'],icon:'🧐',type:'REGULATOR',shape:'logo',band:'#233a8f',income:1,cost:5,x:1360,y:155,rot:1,sub:'reviews every merger',sp:'When a rival hostile-takes one of YOUR nodes, they pay you an extra $2 (ACCC review fee).'},
+{id:'gov',name:['AUSTRALIAN GOVERNMENT','COAT OF ARMS'],icon:'🦘',type:'REGULATOR',shape:'logo',band:'#1b3a2a',income:2,cost:8,x:1540,y:100,rot:-1,sub:'documents, logos & ribbons',sp:'Unlocks BUDGET NIGHT ($3): every rival pays you $1 and you gain +1 Intel.'},
 /* — charts pinned across the collage, not stacked in one corner — */
-{id:'us',image:'./static/us treasury yeild.png',name:['US BOND','YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:1980,y:95,rot:1,sub:'the safe haven',sp:'+$1 while you own the 10-YEAR MASTER CHART; +$1 on BONDMAGEDDON; +$2 on TRUMP TWEETS TARIFFS.'},
-{id:'japan',image:'./static/debt japan.png',name:['JAPAN BOND','YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:2260,y:455,rot:-1,sub:'largest foreign holder, allegedly',sp:'+$1 while you own the MASTER CHART; +$3 on BONDMAGEDDON (curve control fails).'},
-{id:'uk',image:'./static/uk bond yield.png',name:['UK BOND','YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:980,y:1165,rot:1,sub:'gilts gone wild',sp:'+$1 while you own the MASTER CHART; +$1 on BONDMAGEDDON.'},
-{id:'aus',image:'./static/aus bond yield.png',name:['AUSTRALIAN','BOND YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:1325,y:85,rot:1,sub:'home soil',sp:'+$1 while you own the MASTER CHART; +$1 on BONDMAGEDDON.'},
-{id:'tenyear',image:'./static/government bond comparison.png',name:['10-YEAR GOVT','BOND YIELDS'],type:'CHART',shape:'chart',spark:'up',income:1,cost:4,x:1285,y:205,rot:1,sub:'the master chart — now in the middle of everything',sp:'THE MASTER CHART: +$1 income for every other CHART node you own.'},
-{id:'infl',image:'./static/inflation data.png',name:['INFLATION','COMPENSATION'],type:'CHART',shape:'chart',spark:'up',income:1,cost:3,x:1085,y:675,rot:-1,sub:'the hidden tax',sp:'Your salary is $4, not $3 — indexed to CPI.'},
-{id:'cash',image:'./static/cash rate graph.png',name:['CASH-RATE','CHART'],type:'CHART',shape:'chart',spark:'step',income:1,cost:3,x:880,y:210,rot:1,sub:'the RBA headline',sp:'+$2 whenever the RBA CASH-RATE DECISION is drawn (you set it).'},
-{id:'debt',image:'./static/government bond comparison.png',name:['GOVERNMENT DEBT','COMPARISON'],type:'CHART',shape:'chart',spark:'up',income:1,cost:3,x:1588,y:210,rot:-1,sub:'who owns all the bonds, anyway',sp:'+$1 income while you own the AUSTRALIAN GOVERNMENT (you own the debt).'},
-{id:'stock',image:'./static/stock market graph.png',name:['STOCK-MARKET','CHARTS'],type:'CHART',shape:'chart',spark:'vola',income:1,cost:3,x:1365,y:365,rot:1,sub:'green days, red days',sp:'+$1 while you own THE TERMINAL or FOX BUSINESS (fast data).'},
+{id:'us',name:['US BOND','YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:1980,y:95,rot:1,sub:'the safe haven',sp:'+$1 while you own the 10-YEAR MASTER CHART; +$1 on BOND MARKETS REVOLT; +$2 on TRUMP TWEETS TARIFFS.'},
+{id:'japan',name:['JAPAN BOND','YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:2260,y:455,rot:-1,sub:'largest foreign holder, allegedly',sp:'+$1 while you own the MASTER CHART; +$3 on BOND MARKETS REVOLT (curve control fails).'},
+{id:'ger',name:['GERMANY BOND','YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:1680,y:1425,rot:-1,sub:'the bund',sp:'+$1 while you own the MASTER CHART; +$1 on BOND MARKETS REVOLT.'},
+{id:'uk',name:['UK BOND','YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:980,y:1165,rot:1,sub:'gilts gone wild',sp:'+$1 while you own the MASTER CHART; +$1 on BOND MARKETS REVOLT.'},
+{id:'aus',name:['AUSTRALIAN','BOND YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:1325,y:85,rot:1,sub:'home soil',sp:'+$1 while you own the MASTER CHART; +$1 on BOND MARKETS REVOLT.'},
+{id:'can',name:['CANADIAN','BOND YIELDS'],type:'CHART',shape:'chart',spark:'up',income:0,cost:2,x:1765,y:755,rot:-1,sub:'the polite one',sp:'+$1 while you own the MASTER CHART; +$1 on BOND MARKETS REVOLT.'},
+{id:'tenyear',name:['10-YEAR GOVT','BOND YIELDS'],type:'CHART',shape:'chart',spark:'up',income:1,cost:4,x:1285,y:205,rot:1,sub:'the master chart — now in the middle of everything',sp:'THE MASTER CHART: +$1 income for every other CHART node you own.'},
+{id:'real',name:['REAL YIELD','CHART'],type:'CHART',shape:'chart',spark:'down',income:0,cost:3,x:255,y:1195,rot:-1,sub:'what things really cost',sp:'Stand here (once owned) to SCRUB: free −1 Heat — the real numbers calm everyone.'},
+{id:'infl',name:['INFLATION','COMPENSATION'],type:'CHART',shape:'chart',spark:'up',income:1,cost:3,x:1085,y:675,rot:-1,sub:'the hidden tax',sp:'Your salary is $4, not $3 — indexed to CPI.'},
+{id:'cash',name:['CASH-RATE','CHART'],type:'CHART',shape:'chart',spark:'step',income:1,cost:3,x:880,y:210,rot:1,sub:'the RBA headline',sp:'+$2 whenever the RBA CASH-RATE DECISION is drawn (you set it).'},
+{id:'debt',name:['GOVERNMENT DEBT','COMPARISON'],type:'CHART',shape:'chart',spark:'up',income:1,cost:3,x:1588,y:210,rot:-1,sub:'who owns all the bonds, anyway',sp:'+$1 income while you own the AUSTRALIAN GOVERNMENT (you own the debt).'},
+{id:'spend',name:['GOVERNMENT','SPENDING'],type:'CHART',shape:'chart',spark:'spike',income:1,cost:3,x:1488,y:815,rot:1,sub:'the graphic that keeps growing',sp:'Start of your turn: 50% chance of +$2 — spending finds its way to you.'},
+{id:'stock',name:['STOCK-MARKET','CHARTS'],type:'CHART',shape:'chart',spark:'vola',income:1,cost:3,x:1365,y:365,rot:1,sub:'green days, red days',sp:'+$1 while you own THE TERMINAL or FOX BUSINESS (fast data).'},
+{id:'timeline',name:['FINANCIAL','TIMELINE'],type:'CHART',shape:'chart',spark:'flat',income:0,cost:2,x:1090,y:1260,rot:-1,sub:'the diagram of everything',sp:'End movement here (once owned) to PEEK at the top Event card — history rhymes.'},
+{id:'econ',name:['ECONOMIC CHARTS','& GRAPHS'],type:'CHART',shape:'chart',spark:'vola',income:0,cost:2,x:790,y:1405,rot:1,sub:'all the rest of them',sp:'Seizing any CHART node costs $1 less (you’ve seen these before).'},
 /* — the commodities — */
-{id:'oil',image:'./static/wti crude.png',name:['CRUDE OIL PIT','WTI · USD/BBL'],icon:'🛢️',type:'COMMODITY',income:4,cost:9,x:1500,y:470,rot:-2,sub:'the ticker that never sleeps',sp:'$6 windfall whenever OIL SPIKES is drawn.'},
-{id:'oilgraph',image:'./static/oil price increease.png',name:['OIL PRICE','INCREASE'],type:'COMMODITY',shape:'chart',spark:'up',income:1,cost:3,x:1680,y:540,rot:2,sub:'the graph that called it',sp:'+$2 whenever OIL SPIKES (you drew the graph).'},
-{id:'barrels',image:'./static/blue oil barrels.png',name:['BLUE OIL','BARRELS'],icon:'🛢️',type:'COMMODITY',income:2,cost:4,x:1320,y:480,rot:1,sub:'stacked and photographed',sp:'+$1 income while you own THE FORKLIFT.'},
-{id:'tanker',image:'./static/tanker fleet.png',name:['THE TANKER FLEET'],icon:'🚢',type:'COMMODITY',income:2,cost:5,x:1850,y:430,rot:2,sub:'coal & crude by sea',sp:'+$3 on OIL SPIKES or COAL RUSH.'},
-{id:'petronas',image:'./static/petronas.png',name:['PETRONAS'],icon:'🛢️',type:'COMMODITY',shape:'logo',band:'#00a19b',income:3,cost:7,x:2000,y:530,rot:-1,sub:'the national oil company',sp:'+$3 on OIL SPIKES.'},
-{id:'gold',image:'./static/gold coloured coin.jpg',name:['GOLD-COLOURED','COINS'],icon:'🪙',type:'COMMODITY',income:2,cost:5,x:1330,y:620,rot:-2,sub:'shiny. suspiciously shiny.',sp:'+$5 whenever GOLD RUSH is drawn.'},
-{id:'train',image:'./static/coal train.png',name:['THE COAL TRAIN'],icon:'🚃',type:'COMMODITY',income:2,cost:5,x:770,y:700,rot:-2,sub:'tonnage by rail',sp:'+1 movement step each turn while owned (the express). Does not stack with THE BULLET TRAIN.'},
-{id:'port',image:'./static/coal terminal.png',name:['COAL TERMINAL','THE DOCKS'],icon:'⚓',type:'COMMODITY',income:3,cost:7,x:950,y:800,rot:2,sub:'ships in the night',sp:'+$5 on CEO PHOTO LEAKS if you also own COAL CORP HQ (shipped before the news).'},
-{id:'bhp',image:'./static/bhp.png',name:['BHP','THE BIG AUSTRALIAN'],icon:'⛏️',type:'COMMODITY',shape:'logo',band:'#ee3a23',income:3,cost:7,x:560,y:820,rot:-2,sub:'pit to port · ore and more',sp:'+$3 on COAL RUSH or GOLD RUSH. +$1 income while you own THE COAL TRAIN.'},
-{id:'forklift',image:'./static/forklift.png',name:['THE FORKLIFT'],icon:'🚜',type:'COMMODITY',income:1,cost:4,x:1520,y:650,rot:-1,sub:'it moves everything',sp:'+$1 income per COMMODITY node you own.'},
+{id:'oil',name:['CRUDE OIL PIT','WTI · USD/BBL'],icon:'🛢️',type:'COMMODITY',income:4,cost:9,x:1500,y:470,rot:-2,sub:'the ticker that never sleeps',sp:'$6 windfall whenever OIL SPIKES is drawn.'},
+{id:'oilgraph',name:['OIL PRICE','INCREASE'],type:'COMMODITY',shape:'chart',spark:'up',income:1,cost:3,x:1680,y:540,rot:2,sub:'the graph that called it',sp:'+$2 whenever OIL SPIKES (you drew the graph).'},
+{id:'barrels',name:['BLUE OIL','BARRELS'],icon:'🛢️',type:'COMMODITY',income:2,cost:4,x:1320,y:480,rot:1,sub:'stacked and photographed',sp:'+$1 income while you own THE FORKLIFT.'},
+{id:'tanker',name:['THE TANKER FLEET'],icon:'🚢',type:'COMMODITY',income:2,cost:5,x:1850,y:430,rot:2,sub:'coal & crude by sea',sp:'+$3 on OIL SPIKES or COAL RUSH.'},
+{id:'petronas',name:['PETRONAS'],icon:'🛢️',type:'COMMODITY',shape:'logo',band:'#00a19b',income:3,cost:7,x:2000,y:530,rot:-1,sub:'the national oil company',sp:'+$3 on OIL SPIKES.'},
+{id:'gold',name:['GOLD-COLOURED','COINS'],icon:'🪙',type:'COMMODITY',income:2,cost:5,x:1330,y:620,rot:-2,sub:'shiny. suspiciously shiny.',sp:'+$5 whenever GOLD RUSH is drawn.'},
+{id:'notes',name:['AUSTRALIAN','BANKNOTES'],icon:'💵',type:'COMMODITY',income:2,cost:5,x:1140,y:700,rot:2,sub:'currency images, all denominations',sp:'+$1 income per BANK node you own (deposits).'},
+{id:'train',name:['THE COAL TRAIN'],icon:'🚃',type:'COMMODITY',income:2,cost:5,x:770,y:700,rot:-2,sub:'tonnage by rail',sp:'+1 movement step each turn while owned (the express). Does not stack with THE BULLET TRAIN.'},
+{id:'port',name:['COAL TERMINAL','THE DOCKS'],icon:'⚓',type:'COMMODITY',income:3,cost:7,x:950,y:800,rot:2,sub:'ships in the night',sp:'+$5 on CEO PHOTO LEAKS if you also own COAL CORP HQ (shipped before the news).'},
+{id:'bhp',name:['BHP','THE BIG AUSTRALIAN'],icon:'⛏️',type:'COMMODITY',shape:'logo',band:'#ee3a23',income:3,cost:7,x:560,y:820,rot:-2,sub:'pit to port · ore and more',sp:'+$3 on COAL RUSH or GOLD RUSH. +$1 income while you own THE COAL TRAIN.'},
+{id:'forklift',name:['THE FORKLIFT'],icon:'🚜',type:'COMMODITY',income:1,cost:4,x:1520,y:650,rot:-1,sub:'it moves everything',sp:'+$1 income per COMMODITY node you own.'},
 /* — the corporates — */
-{id:'coal',image:'./static/coal corp hq.png',name:['COAL CORP HQ','CEO COAL'],icon:'🚂',type:'CORPORATE',shape:'logo',band:'#3f3f3f',income:3,cost:7,x:150,y:480,rot:-2,sub:'Mark Watson, Chief Executive',sp:'+1 movement step per turn. With THE COAL TRAIN too: 4 steps — the private express.'},
-{id:'quik',image:'./static/quikstop.png',name:['QUIKSTOP'],icon:'⛽',type:'CORPORATE',shape:'logo',band:'#c05621',income:2,cost:5,x:350,y:430,rot:2,sub:'the storefront · fuel, snacks & shopping bags',sp:'Collects $1 from every rival on OIL SPIKES; +$4 on PROFIT WARNING.'},
-{id:'market',image:'./static/marketplace.webp',name:['MARKETPLACE','LEICHARDT'],icon:'🛍️',type:'CORPORATE',shape:'logo',band:'#b0342e',income:2,cost:5,x:170,y:660,rot:1,sub:'shopping centre · interior & exterior',sp:'+$2 income while you also own QUIKSTOP (the anchor tenant).'},
-{id:'f1',image:'./static/f1.png',name:['FORMULA 1','RACING CAR'],icon:'🏎️',type:'CORPORATE',shape:'photo',income:2,cost:6,x:380,y:760,rot:-3,sub:'sponsorship pays',sp:'Unlocks THE SLIPSTREAM ($2, during movement, once per turn): +2 steps and your next seizure this turn costs $2 less.'},
-{id:'qantas',image:'./static/qantas.png',name:['QANTAS','THE FLYING KANGAROO'],icon:'✈️',type:'CORPORATE',shape:'logo',band:'#e0001b',income:2,cost:10,x:575,y:975,rot:2,sub:'the spirit of australia',sp:'Unlocks FLY THE JET ($3, during movement): teleport to any node.'},
-{id:'bullet',image:'./static/bullet train.png',name:['THE BULLET TRAIN'],icon:'🚄',type:'CORPORATE',income:2,cost:6,x:95,y:1240,rot:-1,sub:'fast enough to outrun a hearing',sp:'+1 movement step each turn. Does not stack with THE COAL TRAIN — pick the faster service.'},
+{id:'coal',name:['COAL CORP HQ','CEO COAL'],icon:'🚂',type:'CORPORATE',shape:'logo',band:'#3f3f3f',income:3,cost:7,x:150,y:480,rot:-2,sub:'Mark Watson, Chief Executive',sp:'+1 movement step per turn. With THE COAL TRAIN too: 4 steps — the private express.'},
+{id:'quik',name:['QUIKSTOP'],icon:'⛽',type:'CORPORATE',shape:'logo',band:'#c05621',income:2,cost:5,x:350,y:430,rot:2,sub:'the storefront · fuel, snacks & shopping bags',sp:'Collects $1 from every rival on OIL SPIKES; +$4 on PROFIT WARNING.'},
+{id:'market',name:['MARKETPLACE','LEICHARDT'],icon:'🛍️',type:'CORPORATE',shape:'logo',band:'#b0342e',income:2,cost:5,x:170,y:660,rot:1,sub:'shopping centre · interior & exterior',sp:'+$2 income while you also own QUIKSTOP (the anchor tenant).'},
+{id:'f1',name:['FORMULA 1','RACING CAR'],icon:'🏎️',type:'CORPORATE',shape:'photo',income:2,cost:6,x:380,y:760,rot:-3,sub:'sponsorship pays',sp:'Unlocks FLY THE JET ($3, during movement): teleport to any node.'},
+{id:'office',name:['THE HEAD OFFICE'],icon:'🏢',type:'CORPORATE',shape:'logo',band:'#34506b',income:2,cost:5,x:170,y:850,rot:2,sub:'the modern tower',sp:'+$1 income per CORPORATE node you own.'},
+{id:'unid1',name:['UNIDENTIFIED','LOGO №1'],icon:'❓',type:'CORPORATE',shape:'logo',band:'#555555',income:1,cost:2,x:380,y:930,rot:-2,sub:'nobody knows',sp:'Whenever MADE pays out, you gain the same (kindred mysteries).'},
+{id:'unid2',name:['UNIDENTIFIED','LOGO №2'],icon:'❓',type:'CORPORATE',shape:'logo',band:'#555555',income:1,cost:2,x:2240,y:1000,rot:2,sub:'still nobody',sp:'Whenever MADE pays out, you gain the same (kindred mysteries).'},
+{id:'bullet',name:['THE BULLET TRAIN'],icon:'🚄',type:'CORPORATE',income:2,cost:6,x:95,y:1240,rot:-1,sub:'fast enough to outrun a hearing',sp:'+1 movement step each turn. Does not stack with THE COAL TRAIN — pick the faster service.'},
 /* — the media — */
-{id:'press',image:'./static/jtportal quite frankly.png',name:['“QUITE FRANKLY,','JTPORTAL…” PRESS ROOM'],icon:'🗣️',type:'MEDIA',shape:'bubble',income:2,cost:6,x:760,y:900,rot:-1,sub:'narrative for sale',sp:'Unlocks SPIN ($3): −2 own Cortisol or +1 rival Cortisol.'},
-{id:'fox',image:'./static/fox business.png',name:['FOX BUSINESS'],icon:'🦊',type:'MEDIA',shape:'logo',band:'#1a2f6b',income:2,cost:6,x:980,y:1000,rot:2,sub:'fair & furious',sp:'Unlocks FOX SPIN ($2): −3 own Cortisol or +1 rival’s. Deflects the CEO photo leak.'},
-{id:'leak',image:'./static/bondmageddon 2.png',name:['“BOND MARKETS','REVOLT” — THE LEAK'],icon:'📰',type:'MEDIA',shape:'bubble',income:2,cost:6,x:1200,y:930,rot:2,sub:'someone talked',sp:'+1 Intel when you seize it; +$2 whenever BONDMAGEDDON runs.'},
-{id:'jim',image:'./static/jim chalmers breaking news.jpg',name:['“THE JIM…”','TREASURY EXCLUSIVE'],icon:'🗞️',type:'MEDIA',shape:'news',income:1,cost:4,x:1420,y:880,rot:-2,sub:'bond-market news graphic',sp:'+$2 whenever a GOVERNMENT event runs (budgets & rate decisions).'},
-{id:'herald',image:'./static/the jim reaper.png',name:['HERALD SUN','THE JIM REAPER'],icon:'📰',type:'MEDIA',shape:'news',income:1,cost:4,x:1725,y:265,rot:2,sub:'front page, every page',sp:'+$2 whenever a GOVERNMENT event runs. +1 Intel whenever any rival gains Cortisol from an event.'},
-{id:'bess',image:'./static/big bessent breaking news.jpg',name:['“BIG BESSENT”','BREAKING'],icon:'📣',type:'MEDIA',shape:'bubble',income:1,cost:4,x:1630,y:930,rot:-1,sub:'the big man speaks',sp:'+$2 whenever BOND or RATE events run — he moves markets by talking.'},
-{id:'insider',image:'./static/insider trading graphic.png',name:['“INSIDER TRADING”','THE GRAPHIC'],icon:'⚠️',type:'MEDIA',shape:'news',income:1,cost:4,x:1830,y:860,rot:2,sub:'circled in red marker',sp:'Your BUG actions cost 0 Intel (it’s only insider trading if you’re on the outside).'},
-{id:'photo',image:'./static/the big con.png',name:['THE BIG CON'],icon:'📷',type:'MEDIA',income:1,cost:5,x:1220,y:1210,rot:-2,sub:'faces pinned to cork',sp:'+1 Intel whenever any rival seizes a node — the wall sees everything.'},
-{id:'bigshort',image:'./static/the big short.png',name:['THE BIG SHORT','THE CINEMA'],icon:'🎬',type:'MEDIA',shape:'logo',band:'#8a1f11',income:1,cost:4,x:1420,y:1080,rot:1,sub:'they explained it with a Jenga tower',sp:'+$3 whenever a crash event runs (BONDMAGEDDON, CRACKDOWN).'},
-{id:'news',image:'./static/all the newspapers.jpg',name:['THE NEWSPAPERS','ALL OF THEM'],icon:'🗞️',type:'MEDIA',shape:'news',income:1,cost:3,x:860,y:1250,rot:-1,sub:'interest-rate clippings & small headlines',sp:'+1 Intel at the start of your turn while you own 2+ MEDIA nodes.'},
-{id:'wef',image:'./static/world economic forum.webp',name:['WORLD ECONOMIC','FORUM'],icon:'🏔️',type:'MEDIA',shape:'logo',band:'#0b3d91',income:2,cost:6,x:1750,y:1300,rot:-2,sub:'the conference stage',sp:'Your bugs skim $2 instead of $1 (global networks, ski trips).'},
+{id:'press',name:['“QUITE FRANKLY,','JTPORTAL…” PRESS ROOM'],icon:'🗣️',type:'MEDIA',shape:'bubble',income:2,cost:6,x:760,y:900,rot:-1,sub:'narrative for sale',sp:'Unlocks SPIN ($3): −2 own Heat or +1 rival Heat.'},
+{id:'fox',name:['FOX BUSINESS'],icon:'🦊',type:'MEDIA',shape:'logo',band:'#1a2f6b',income:2,cost:6,x:980,y:1000,rot:2,sub:'fair & furious',sp:'Unlocks FOX SPIN ($2): −3 own Heat or +1 rival’s. Deflects the CEO photo leak.'},
+{id:'leak',name:['“BOND MARKETS','REVOLT” — THE LEAK'],icon:'📰',type:'MEDIA',shape:'bubble',income:2,cost:6,x:1200,y:930,rot:2,sub:'someone talked',sp:'+1 Intel when you seize it; +$2 whenever BOND MARKETS REVOLT runs.'},
+{id:'jim',name:['“THE JIM…”','TREASURY EXCLUSIVE'],icon:'🗞️',type:'MEDIA',shape:'news',income:1,cost:4,x:1420,y:880,rot:-2,sub:'bond-market news graphic',sp:'+$2 whenever a GOVERNMENT event runs (budgets & rate decisions).'},
+{id:'herald',name:['HERALD SUN','THE JIM REAPER'],icon:'📰',type:'MEDIA',shape:'news',income:1,cost:4,x:1725,y:265,rot:2,sub:'front page, every page',sp:'+$2 whenever a GOVERNMENT event runs. +1 Intel whenever any rival gains Heat from an event.'},
+{id:'bess',name:['“BIG BESSENT”','BREAKING'],icon:'📣',type:'MEDIA',shape:'bubble',income:1,cost:4,x:1630,y:930,rot:-1,sub:'the big man speaks',sp:'+$2 whenever BOND or RATE events run — he moves markets by talking.'},
+{id:'insider',name:['“INSIDER TRADING”','THE GRAPHIC'],icon:'⚠️',type:'MEDIA',shape:'news',income:1,cost:4,x:1830,y:860,rot:2,sub:'circled in red marker',sp:'Your BUG actions cost 0 Intel (it’s only insider trading if you’re on the outside).'},
+{id:'tv',name:['THE TV INTERVIEW','PRIME TIME'],icon:'📺',type:'MEDIA',shape:'bubble',income:1,cost:4,x:2050,y:800,rot:-2,sub:'soft lights, soft questions',sp:'Event Heat you gain is reduced by 1.'},
+{id:'photo',name:['THE PHOTO WALL'],icon:'📷',type:'MEDIA',income:1,cost:5,x:1220,y:1210,rot:-2,sub:'faces pinned to cork',sp:'+1 Intel whenever any rival seizes a node — the wall sees everything.'},
+{id:'bigshort',name:['THE BIG SHORT','THE CINEMA'],icon:'🎬',type:'MEDIA',shape:'logo',band:'#8a1f11',income:1,cost:4,x:1420,y:1080,rot:1,sub:'they explained it with a Jenga tower',sp:'+$3 whenever a crash event runs (BOND MARKETS REVOLT, CRACKDOWN).'},
+{id:'news',name:['THE NEWSPAPERS','ALL OF THEM'],icon:'🗞️',type:'MEDIA',shape:'news',income:1,cost:3,x:860,y:1250,rot:-1,sub:'interest-rate clippings & small headlines',sp:'+1 Intel at the start of your turn while you own 2+ MEDIA nodes.'},
+{id:'wef',name:['WORLD ECONOMIC','FORUM'],icon:'🏔️',type:'MEDIA',shape:'logo',band:'#0b3d91',income:2,cost:6,x:1750,y:1300,rot:-2,sub:'the conference stage',sp:'Your bugs skim $2 instead of $1 (global networks, ski trips).'},
 /* — the backrooms — */
-{id:'back',image:'./static/backroom deals.png',name:['BACKROOM DEALS'],icon:'🤝',type:'WILD',income:1,cost:4,x:960,y:430,rot:-3,sub:'cash · intel · favors',sp:'Pay up to $3 of any seizure shortfall with Intel (1 🛈 = $1).'},
-{id:'term',image:'./static/bloomberg terminal.png',name:['THE TERMINAL'],icon:'📈',type:'WILD',income:1,cost:4,x:1440,y:255,rot:1,sub:'the screens never sleep',sp:'End movement here to PEEK at the top Event card — keep it or bury it.'},
-{id:'golf',image:'./static/golf club.jpg',name:['THE GOLF CLUB'],icon:'⛳',type:'WILD',income:2,cost:6,x:170,y:960,rot:3,sub:'deals on the back nine',sp:'All your seizure costs are $1 cheaper.'},
-{id:'whistle',image:'./static/whistelblower.png',name:['THE WHISTLEBLOWER','KNOWS TOO MUCH'],icon:'🕵️',type:'WILD',shape:'photo',income:0,cost:6,x:1980,y:640,rot:-2,sub:'half a confession ready',sp:'+1 Intel at the start of each of your turns.'},
-{id:'iface',image:'./static/bloomberg terminal.png',name:['THE MARKET','INTERFACE'],icon:'🖥️',type:'WILD',income:1,cost:4,x:2060,y:1100,rot:2,sub:'computer & website screenshots',sp:'Your TERMINAL peek works wherever you end movement — everything is online.'},
+{id:'back',name:['BACKROOM DEALS'],icon:'🤝',type:'WILD',income:1,cost:4,x:960,y:430,rot:-3,sub:'cash · intel · favors',sp:'Pay up to $3 of any seizure shortfall with Intel (1 🛈 = $1).'},
+{id:'term',name:['THE TERMINAL'],icon:'📈',type:'WILD',income:1,cost:4,x:1440,y:255,rot:1,sub:'the screens never sleep',sp:'End movement here to PEEK at the top Event card — keep it or bury it.'},
+{id:'vault',name:['OFFSHORE VAULT'],icon:'🏝️',type:'WILD',income:2,cost:7,x:1690,y:680,rot:1,sub:'what audit?',sp:'Event fines & fees you pay are reduced by $1.'},
+{id:'golf',name:['THE GOLF CLUB'],icon:'⛳',type:'WILD',income:2,cost:6,x:170,y:960,rot:3,sub:'deals on the back nine',sp:'All your seizure costs are $1 cheaper.'},
+{id:'whistle',name:['THE WHISTLEBLOWER','KNOWS TOO MUCH'],icon:'🕵️',type:'WILD',shape:'photo',income:0,cost:6,x:1980,y:640,rot:-2,sub:'half a confession ready',sp:'+1 Intel at the start of each of your turns.'},
+{id:'iface',name:['THE MARKET','INTERFACE'],icon:'🖥️',type:'WILD',income:1,cost:4,x:2060,y:1100,rot:2,sub:'computer & website screenshots',sp:'Your TERMINAL peek works wherever you end movement — everything is online.'},
 /* — school & fate — */
-{id:'school',image:'./static/st andrews cathedral school.png',name:['ST ANDREW’S','CATHEDRAL SCHOOL'],icon:'🏫',type:'WILD',shape:'logo',band:'#1b2a5e',income:1,cost:5,x:170,y:1080,rot:-1,sub:'the crest & the tower',sp:'+1 Intel at the start of your turn if you own 3+ CHART nodes (the research department).'},
-{id:'ib',image:'./static/ibdp.png',name:['THE IB DIPLOMA','PROGRAMME'],icon:'📚',type:'WILD',income:1,cost:5,x:380,y:1050,rot:2,sub:'HL Economics, allegedly',sp:'Your CHART nodes pay DOUBLE income (Higher Level Economics).'},
-{id:'mpc',image:'./static/monetary policy competition.png',name:['THE AUSTRALIAN','MONETARY POLICY','COMPETITION'],icon:'🏆',type:'WILD',shape:'mpc',income:1,cost:6,x:390,y:1200,rot:-2,sub:'the trophy of trophies',sp:'+$1 income per CHART node; +1 Intel each turn. +$2 more each turn while you also hold the SCHOOL and the IB DIPLOMA.'},
-{id:'sisy',image:'./static/sisyphus.webp',name:['THE SISYPHUS','BOULDER'],icon:'🪨',type:'WILD',income:0,cost:4,x:600,y:1150,rot:2,sub:'it always rolls back down',sp:'Stand here (once owned) to PUSH: +$3 and +1 Cortisol. Repeatable. Forever.'},
-{id:'group',image:'./static/the outdoors.png',name:['THE OUTDOOR','GROUP PHOTOGRAPH'],icon:'👥',type:'WILD',shape:'wide',income:1,cost:4,x:820,y:1120,rot:-1,sub:'everyone smiled',sp:'Whenever ANY player is raided, gain +1 Intel (you have photos of everyone).'},
-{id:'sat',image:'./static/the outback.jpg',name:['SATELLITE IMAGE','THE OUTBACK'],icon:'🛰️',type:'WILD',shape:'sat',income:1,cost:4,x:610,y:1300,rot:1,sub:'landscape · the dry country',sp:'−1 Cortisol at the start of each of your turns (hiding out bush).'},
+{id:'school',name:['ST ANDREW’S','CATHEDRAL SCHOOL'],icon:'🏫',type:'WILD',shape:'logo',band:'#1b2a5e',income:1,cost:5,x:170,y:1080,rot:-1,sub:'the crest & the tower',sp:'+1 Intel at the start of your turn if you own 3+ CHART nodes (the research department).'},
+{id:'ib',name:['THE IB DIPLOMA','PROGRAMME'],icon:'📚',type:'WILD',income:1,cost:5,x:380,y:1050,rot:2,sub:'HL Economics, allegedly',sp:'Your CHART nodes pay DOUBLE income (Higher Level Economics).'},
+{id:'mpc',name:['THE AUSTRALIAN','MONETARY POLICY','COMPETITION'],icon:'🏆',type:'WILD',shape:'mpc',income:1,cost:6,x:390,y:1200,rot:-2,sub:'the trophy of trophies',sp:'+$1 income per CHART node; +1 Intel each turn. ALT WIN: hold this + SCHOOL + IB + any 4 CHARTS.'},
+{id:'sisy',name:['THE SISYPHUS','BOULDER'],icon:'🪨',type:'WILD',income:0,cost:4,x:600,y:1150,rot:2,sub:'it always rolls back down',sp:'Stand here (once owned) to PUSH: +$3 and +1 Heat. Repeatable. Forever.'},
+{id:'group',name:['THE OUTDOOR','GROUP PHOTOGRAPH'],icon:'👥',type:'WILD',shape:'wide',income:1,cost:4,x:820,y:1120,rot:-1,sub:'everyone smiled',sp:'Whenever ANY player is raided, gain +1 Intel (you have photos of everyone).'},
+{id:'sat',name:['SATELLITE IMAGE','THE OUTBACK'],icon:'🛰️',type:'WILD',shape:'sat',income:1,cost:4,x:610,y:1300,rot:1,sub:'landscape · the dry country',sp:'−1 Heat at the start of each of your turns (hiding out bush).'},
 /* — the people (polaroids) — */
-{id:'watson',image:'./static/ceo of coal.png',name:['MARK WATSON','CEO OF COAL'],icon:'🕴️',type:'WILD',shape:'photo',income:0,cost:6,x:330,y:590,rot:3,sub:'the face of the company',sp:'+$2/turn while you also own COAL CORP HQ. Personally deflects the CEO PHOTO LEAK.'},
-{id:'bessent',image:'./static/scott bessent.png',name:['SCOTT BESSENT','“BIG BESSENT”'],icon:'👔',type:'WILD',shape:'photo',income:1,cost:7,x:1600,y:310,rot:-2,sub:'US Treasury · moves markets',sp:'+$1 income per BANK node you own.'},
-{id:'chalmers',image:'./static/jim chalmers.png',name:['JIM CHALMERS','“THE JIM”'],icon:'👨‍💼',type:'WILD',shape:'photo',income:1,cost:8,x:1720,y:180,rot:2,sub:'the Treasurer',sp:'+$1 income per REGULATOR node you own (the Treasurer’s friends).'},
-{id:'albo',image:'./static/albo.png',name:['ANTHONY ALBANESE','THE PM'],icon:'🫡',type:'WILD',shape:'photo',income:1,cost:8,x:1875,y:105,rot:-2,sub:'the motorcade',sp:'Tolls rivals pay to enter YOUR nodes are $2 (the PM closes the road).'},
-{id:'trump',image:'./static/trump.png',name:['DONALD TRUMP','TARIFF MAN'],icon:'🦅',type:'WILD',shape:'photo',income:1,cost:7,x:2020,y:185,rot:2,sub:'the tweets move markets',sp:'Unlocks THE TWEET ($2): any rival +1 Cortisol.'},
-{id:'bullock',image:'./static/michelle bullock.png',name:['MICHELE BULLOCK','RBA GOVERNOR'],icon:'👩‍💼',type:'WILD',shape:'photo',income:1,cost:7,x:880,y:265,rot:-3,sub:'she decides the cash rate',sp:'Rate events never charge you; +1 Intel each turn (the Governor briefs you).'},
-{id:'bond007',image:'./static/james bond.png',name:['JAMES BOND','CITIBANK · 007'],icon:'🤵',type:'WILD',shape:'photo',income:1,cost:6,x:300,y:330,rot:-2,sub:'banker. sort of.',sp:'You pay NO tolls (he has… credentials).'},
-{id:'rock',image:'./static/the rock.gif',name:['THE ROCK','CAN SMELL IT'],icon:'💪',type:'WILD',shape:'photo',income:1,cost:7,x:660,y:450,rot:2,sub:'final boss energy',sp:'Unlocks COOK THE BOOKS ($3): −3 Cortisol. +$1 income per DIFFERENT node type you own.'},
-{id:'brad',image:'./static/brad pitt.png',name:['BRAD PITT','“THE BIG SHORT”'],icon:'😎',type:'WILD',shape:'photo',income:1,cost:5,x:1630,y:1120,rot:-2,sub:'explained it in the movie',sp:'+$2 whenever a BOND event runs (he had it explained to him).'},
-{id:'jt',image:'./static/jt portal.png',name:['JTPORTAL','QUITE FRANKLY'],icon:'🌐',type:'WILD',shape:'photo',income:1,cost:9,x:1150,y:540,rot:-1,sub:'the legend of the board',sp:'+1 Intel each turn AND you are shown the next Market Event at the start of your turn. ONCE PER GAME: cancel a Market Event as it is revealed — “quite frankly, it never happened.”'},
-{id:'made',image:'./static/made logo.png',name:['MADE','(???)'],type:'WILD',shape:'made',income:2,cost:7,x:1000,y:1380,rot:-2,sub:'the purple graphic',sp:'Start of your turn: 50% chance MADE pays out — +$10 and +1 Intel to you, +$3 to each UNIDENTIFIED LOGO, and every other player pays $2 and gains +1 Cortisol. Nobody knows why. NOBODY.'},
-{id:'asics',image:'./static/running shoe.jpg',name:['THE RUNNING SHOE','ASICS'],icon:'👟',type:'WILD',shape:'photo',income:1,cost:3,x:430,y:1360,rot:3,sub:'circled in red · why is this here',sp:'+1 movement step (you are always jogging). Stand here (once owned) to JOG: free −1 Cortisol.'},
-{id:'toktimer',image:'./static/toktimer.png',name:['TOKTIMER'],icon:'⏱️',type:'WILD',shape:'photo',income:1,cost:5,x:1920,y:1020,rot:-2,sub:'the clock is running',sp:'+1 Intel whenever a Market Event is revealed. Time is information.'}
+{id:'watson',name:['MARK WATSON','CEO OF COAL'],icon:'🕴️',type:'WILD',shape:'photo',income:0,cost:6,x:330,y:590,rot:3,sub:'the face of the company',sp:'+$2/turn while you also own COAL CORP HQ. Personally deflects the CEO PHOTO LEAK.'},
+{id:'bessent',name:['SCOTT BESSENT','“BIG BESSENT”'],icon:'👔',type:'WILD',shape:'photo',income:1,cost:7,x:1600,y:310,rot:-2,sub:'US Treasury · moves markets',sp:'+$1 income per BANK node you own.'},
+{id:'chalmers',name:['JIM CHALMERS','“THE JIM”'],icon:'👨‍💼',type:'WILD',shape:'photo',income:1,cost:8,x:1720,y:180,rot:2,sub:'the Treasurer',sp:'+$1 income per REGULATOR node you own (the Treasurer’s friends).'},
+{id:'albo',name:['ANTHONY ALBANESE','THE PM'],icon:'🫡',type:'WILD',shape:'photo',income:1,cost:8,x:1875,y:105,rot:-2,sub:'the motorcade',sp:'Tolls rivals pay to enter YOUR nodes are $2 (the PM closes the road).'},
+{id:'trump',name:['DONALD TRUMP','TARIFF MAN'],icon:'🦅',type:'WILD',shape:'photo',income:1,cost:7,x:2020,y:185,rot:2,sub:'the tweets move markets',sp:'Unlocks THE TWEET ($2): any rival +1 Heat.'},
+{id:'bullock',name:['MICHELE BULLOCK','RBA GOVERNOR'],icon:'👩‍💼',type:'WILD',shape:'photo',income:1,cost:7,x:880,y:265,rot:-3,sub:'she decides the cash rate',sp:'Rate events never charge you; +1 Intel each turn (the Governor briefs you).'},
+{id:'bond007',name:['JAMES BOND','CITIBANK · 007'],icon:'🤵',type:'WILD',shape:'photo',income:1,cost:6,x:300,y:330,rot:-2,sub:'banker. sort of.',sp:'You pay NO tolls (he has… credentials).'},
+{id:'rock',name:['THE ROCK','CAN SMELL IT'],icon:'💪',type:'WILD',shape:'photo',income:1,cost:7,x:660,y:450,rot:2,sub:'final boss energy',sp:'Unlocks COOK THE BOOKS ($3): −3 Heat. +$1 income per DIFFERENT node type you own.'},
+{id:'brad',name:['BRAD PITT','“THE BIG SHORT”'],icon:'😎',type:'WILD',shape:'photo',income:1,cost:5,x:1630,y:1120,rot:-2,sub:'explained it in the movie',sp:'+$2 whenever a BOND event runs (he had it explained to him).'},
+{id:'jt',name:['JTPORTAL','QUITE FRANKLY'],icon:'🌐',type:'WILD',shape:'photo',income:1,cost:9,x:1150,y:540,rot:-1,sub:'the legend of the board',sp:'+1 Intel each turn. ONCE PER GAME: cancel a Market Event as it is revealed — “quite frankly, it never happened.”'},
+{id:'made',name:['MADE','(???)'],type:'WILD',shape:'made',income:1,cost:3,x:1000,y:1380,rot:-2,sub:'the purple graphic',sp:'Start of your turn: 50% chance of +$3. Nobody knows why. NOBODY.'},
+{id:'asics',name:['THE RUNNING SHOE','ASICS'],icon:'👟',type:'WILD',shape:'photo',income:1,cost:3,x:430,y:1360,rot:3,sub:'circled in red · why is this here',sp:'+1 movement step (you are always jogging). Stand here (once owned) to JOG: free −1 Heat.'},
+{id:'toktimer',name:['TOKTIMER'],icon:'⏱️',type:'WILD',shape:'photo',income:1,cost:5,x:1920,y:1020,rot:-2,sub:'the clock is running',sp:'+1 Intel whenever a Market Event is revealed. Time is information.'}
 ];
 const NMAP={};NODES.forEach(n=>NMAP[n.id]=n);
-const COUNTRY=['us','japan','uk','aus'];
+const COUNTRY=['us','japan','ger','uk','aus','can'];
 const BASE_EDGES=[
  /* banks & the missing fourth */
  ['citi','commbank'],['commbank','nab'],['nab','anz'],['nab','westpac'],['westpac','commbank'],['westpac','citi'],['anz','rba'],['citi','bond007'],['citi','coal'],
  /* regulators row */
  ['rba','bullock'],['rba','asic'],['asic','accc'],['accc','gov'],['gov','chalmers'],['chalmers','albo'],['albo','trump'],['rba','bond'],['gov','herald'],
  /* desks & screens */
- ['bond','hedge'],['bond','bessent'],['bond','back'],['hedge','term'],['hedge','stock'],['term','bessent'],['term','stock'],
+ ['bond','hedge'],['bond','bessent'],['bond','back'],['hedge','term'],['hedge','stock'],['term','vault'],['term','bessent'],['term','stock'],
  /* charts — each lives in a different neighbourhood, linked to neighbours AND the master */
  ['rba','cash'],['cash','bullock'],['cash','tenyear'],['aus','gov'],['aus','accc'],['aus','tenyear'],['debt','gov'],['debt','chalmers'],['debt','tenyear'],
- ['us','trump'],['us','albo'],['us','tenyear'],['japan','petronas'],['japan','tanker'],['japan','tenyear'],
- ['uk','press'],['uk','news'],['uk','tenyear'],['tenyear','bessent'],['tenyear','bond'],
- ['infl','jt'],['infl','back'],
- ['stock','oilgraph'],
- 
+ ['us','trump'],['us','albo'],['us','tenyear'],['japan','petronas'],['japan','tanker'],['japan','tenyear'],['can','vault'],['can','gold'],['can','tenyear'],
+ ['ger','wef'],['ger','brad'],['ger','tenyear'],['uk','press'],['uk','news'],['uk','tenyear'],['tenyear','bessent'],['tenyear','bond'],
+ ['real','school'],['real','ib'],['real','mpc'],['infl','notes'],['infl','jt'],['infl','back'],
+ ['spend','jim'],['spend','herald'],['spend','port'],['stock','oilgraph'],['timeline','photo'],['timeline','news'],['timeline','econ'],
+ ['econ','made'],['econ','sat'],['econ','unid2'],
  /* commodities */
  ['oil','oilgraph'],['oil','tanker'],['oil','petronas'],['oil','barrels'],['oil','jt'],['barrels','forklift'],['forklift','port'],['forklift','gold'],
- ['tanker','port'],['tanker','petronas'],['petronas','trump'],
+ ['tanker','port'],['tanker','petronas'],['petronas','trump'],['gold','notes'],['gold','vault'],['notes','back'],['notes','jt'],
  ['train','coal'],['train','watson'],['train','port'],['train','rock'],['train','bhp'],['bhp','coal'],['bhp','watson'],['bhp','market'],
  /* corporates & the wandering servo */
- ['coal','watson'],['coal','quik'],['quik','market'],['quik','bond007'],['quik','watson'],['market','f1'],
- ['f1','qantas'],['qantas','press'],['qantas','golf'],['bullet','school'],['bullet','albo'],['bullet','golf'],['bullet','asics'],
+ ['coal','watson'],['coal','quik'],['quik','market'],['quik','bond007'],['quik','watson'],['market','f1'],['market','office'],
+ ['f1','office'],['f1','unid1'],['office','unid1'],['office','golf'],['office','ib'],['bullet','school'],['bullet','albo'],['bullet','golf'],['bullet','asics'],
  /* media ring */
- ['back','press'],['back','leak'],['back','jt'],['iface','toktimer'],
+ ['back','press'],['back','leak'],['back','jt'],['vault','whistle'],['vault','iface'],['iface','tv'],['iface','unid2'],['iface','toktimer'],
  ['press','leak'],['press','fox'],['press','golf'],['press','news'],['leak','photo'],['photo','news'],['photo','bigshort'],['photo','made'],
  ['news','fox'],['news','made'],['fox','jim'],['jim','bess'],['jim','herald'],['bess','insider'],['bess','wef'],['bess','herald'],
- ['insider','whistle'],['wef','brad'],['wef','iface'],['bigshort','brad'],['hedge','bigshort'],
+ ['insider','tv'],['insider','whistle'],['tv','whistle'],['tv','toktimer'],['wef','brad'],['wef','iface'],['bigshort','brad'],['hedge','bigshort'],
  /* school, fate, shoes, the clock */
- ['school','ib'],['school','mpc'],['school','golf'],['ib','mpc'],['mpc','sisy'],['sisy','group'],['sisy','sat'],
+ ['school','ib'],['school','mpc'],['school','golf'],['ib','mpc'],['ib','unid1'],['mpc','sisy'],['sisy','group'],['sisy','sat'],
  ['group','sat'],['group','press'],['group','news'],['sat','made'],['sat','asics'],['asics','mpc'],['asics','sisy'],
- ['toktimer','whistle'],['toktimer','brad'],
+ ['toktimer','whistle'],['toktimer','brad'],['toktimer','unid2'],
  /* people bridges */
  ['bullock','rock'],['rock','jt'],['jt','press'],['watson','golf'],['chalmers','herald']
 ];
-const REMOVED_NODE_IDS=new Set(['notes','vault','unid1','unid2','real','spend','can','tv','ger','timeline','econ']);
-const CLEAN_EDGES=BASE_EDGES.filter(e=>!REMOVED_NODE_IDS.has(e[0])&&!REMOVED_NODE_IDS.has(e[1]));
-let EDGES=CLEAN_EDGES.map(e=>e.slice());
+let EDGES=BASE_EDGES.map(e=>e.slice());
 const ADJ={};
 function rebuildAdj(){
  Object.keys(ADJ).forEach(k=>delete ADJ[k]);
@@ -356,10 +342,10 @@ rebuildAdj();
 const QUIK_HOME={x:350,y:430,rot:2};
 const QUIK_SLOTS=[
  {x:350,y:430,rot:2,links:['coal','watson','bond007','market','train'],label:'the original servo · inner west'},
- {x:1540,y:1210,rot:-2,links:['photo','bigshort','market','news'],label:'down by MarketPlace · the late shift'},
- {x:2060,y:680,rot:1,links:['forklift','petronas','whistle'],label:'the docks servo · petrol & crude'},
+ {x:1540,y:1210,rot:-2,links:['photo','bigshort','market','news','timeline'],label:'down by MarketPlace · the late shift'},
+ {x:2060,y:680,rot:1,links:['forklift','petronas','tv','whistle','can'],label:'the docks servo · petrol & crude'},
  {x:700,y:280,rot:-1,links:['rba','bullock','rock','westpac','cash'],label:'across from the Reserve Bank'},
- {x:1120,y:1410,rot:2,links:['made','sat','news','photo'],label:'the unexplained servo · next to MADE'}
+ {x:1120,y:1410,rot:2,links:['made','sat','news','econ','photo'],label:'the unexplained servo · next to MADE'}
 ];
 function nodeBox(n){
  const sizes={photo:[140,92],wide:[170,100],bubble:[150,80],logo:[150,80],chart:[130,64],news:[150,84],made:[140,74],mpc:[164,96],sat:[170,90]};
@@ -435,10 +421,10 @@ const CARDS=[
  run(){setMood('BOOM','coal rush — everything on rails makes money');[['port',4,'the docks work overtime'],['train',2,'the train runs all night'],['tanker',3,'freight rates through the roof'],['coal',2,'COAL Corp books all of it'],['forklift',1,'pallets upon pallets'],['bhp',3,'the Big Australian books the tonnes']].forEach(a=>{const o=S.owner[a[0]];if(o!=null)gain(o,a[1],a[2])});}},
 {id:'rates',icon:'🏛️',title:'RBA CASH-RATE DECISION',text:'Governor Bullock leans into the microphone. Money gets expensive — for everyone but the insiders.',
  run(){setMood('CALM','the RBA decides — the market holds its breath, then exhales');const r=S.owner.rba,b=S.owner.bullock;S.players.forEach((pl,i)=>{if(i===r||i===b)return;payFee(i,2,'the cost of money')});if(r!=null)log('🏛️ '+pname(r)+' set the rate — pays nothing.');if(b!=null)log('👩‍💼 The Governor takes '+pname(b)+'’s calls — pays nothing.');const c=S.owner.cash;if(c!=null)gain(c,2,'you literally set it');const j=S.owner.jim;if(j!=null)gain(j,2,'the headline sells papers');const be=S.owner.bess;if(be!=null)gain(be,2,'“BIG BESSENT” reacts live');const hs=S.owner.herald;if(hs!=null)gain(hs,2,'THE JIM REAPER reprints the decision');}},
-{id:'bondrevolt',icon:'💥',title:'BONDMAGEDDON',text:'“Government Bond: the collapse of the world’s safest investment.” Yields go vertical from Tokyo to Toronto.',
+{id:'bondrevolt',icon:'💥',title:'BOND MARKETS REVOLT',text:'“Government Bond: the collapse of the world’s safest investment.” Yields go vertical from Tokyo to Toronto.',
  run(){setMood('PANIC','“the collapse of the world’s safest investment”');const bd=S.owner.bond;S.players.forEach((pl,i)=>{const banks=NODES.filter(n=>n.type==='BANK'&&S.owner[n.id]===i).length;if(!banks)return;const amt=banks*2;if(bd!=null)payTo(i,amt,bd,'the revolt eats '+banks+' bank position'+(banks>1?'s':'')+' → The Bond Desk');else payVoid(i,amt,'the revolt eats the banking book')});COUNTRY.forEach(c=>{const o=S.owner[c];if(o!=null)gain(o,c==='japan'?3:1,NMAP[c].name.join(' ')+' pays its reader')});const t=S.owner.tenyear;if(t!=null)gain(t,2,'the master chart was right');const be=S.owner.bess;if(be!=null)gain(be,2,'Big Bessent called it on air');const br=S.owner.brad;if(br!=null)gain(br,2,'he had it explained in the movie');const bs=S.owner.bigshort;if(bs!=null)gain(bs,3,'the cinema saw it coming');const lk=S.owner.leak;if(lk!=null)gain(lk,2,'the leak was first with it');}},
 {id:'ceophoto',icon:'📸',title:'CEO PHOTO LEAKS — COAL CORP',text:'Mark Watson, photographed exactly where he should not have been. Someone is holding matches.',
- run(){setMood('FRENZY','CEO photo leaks — the front pages feed');const c=S.owner.coal;if(c==null){log('🚂 COAL CORP HQ is unowned — Watson denies everything to an empty room.');return}if(S.owner.watson===c){log('🕴️ Watson fronts the cameras himself — the photos are dismissed as “old”. No Cortisol.');return}if(S.owner.port===c)gain(c,5,'shipped the coal before the news broke');if(S.owner.press===c||S.owner.fox===c){gain(c,3,'the press room spins it beautifully');return}addCortisol(c,3,'the photos run on every front page','event');}},
+ run(){setMood('FRENZY','CEO photo leaks — the front pages feed');const c=S.owner.coal;if(c==null){log('🚂 COAL CORP HQ is unowned — Watson denies everything to an empty room.');return}if(S.owner.watson===c){log('🕴️ Watson fronts the cameras himself — the photos are dismissed as “old”. No Heat.');return}if(S.owner.port===c)gain(c,5,'shipped the coal before the news broke');if(S.owner.press===c||S.owner.fox===c){gain(c,3,'the press room spins it beautifully');return}addHeat(c,3,'the photos run on every front page','event');}},
 {id:'tariffs',icon:'🦅',title:'TRUMP TWEETS TARIFFS',text:'ALL CAPS. Exclamation points. Global markets do a synchronized swan dive.',
  async run(){setMood('PANIC','TARIFFS! ALL CAPS! markets swan-dive');const t=S.owner.trump;let chain;const opts=[{label:'🛢️ OIL chain +$3 each',v:'oil'},{label:'🚂 COAL chain +$3 each',v:'coal'}];
  if(t!=null)chain=await askPlayer(t,{title:'TRUMP TWEETS TARIFFS',body:'You own THE DONALD — which chain gets the windfall?',options:opts,def:Math.random()<.5?'oil':'coal'});
@@ -459,11 +445,11 @@ const CARDS=[
 {id:'goldrush',icon:'🪙',title:'GOLD RUSH',text:'The gold-coloured coins gleam. Paper money suddenly looks like a rumor.',
  run(){setMood('BOOM','gold gleams — paper looks like a rumor');const g=S.owner.gold;if(g!=null)gain(g,5,'everything gleams');const n=S.owner.notes;if(n!=null)gain(n,2,'collectors pay up');const bh=S.owner.bhp;if(bh!=null)gain(bh,3,'ore prices sneak up with the gold');S.players.forEach((pl,i)=>{if(i!==g&&i!==n&&i!==bh)payVoid(i,1,'inflation bites')});}},
 {id:'rockcooks',icon:'💪',title:'THE ROCK COOKS',text:'A gym, a blender, a set of books that needed cooking. The smell is unmistakable.',
- run(){setMood('CALM','the books are cooked; the gym is calm');const r=S.owner.rock;if(r!=null){gain(r,3,'ladder of opportunity');addCortisol(r,-1,'the calm after the cook')}else log('💪 Nobody owns The Rock. The books stay raw.');}},
+ run(){setMood('CALM','the books are cooked; the gym is calm');const r=S.owner.rock;if(r!=null){gain(r,3,'ladder of opportunity');addHeat(r,-1,'the calm after the cook')}else log('💪 Nobody owns The Rock. The books stay raw.');}},
 {id:'davos',icon:'🏔️',title:'DAVOS — THE CONFERENCE STAGE',text:'Lanyards, panels, fondue. Global networks tighten over canapés.',
  run(){setMood('FRENZY','Davos — lanyards, panels, fondue');const w=S.owner.wef;if(w!=null)gain(w,3,'the big table pays out');const b=S.owner.bessent;if(b!=null)gain(b,2,'a familiar face on the panel');Object.keys(S.bugs).forEach(nid=>{const o=S.bugs[nid];S.players[o].money+=1;log('🏔️ Global skim from '+NMAP[nid].name.join(' ')+': '+pname(o)+' +$1.')});}},
 {id:'quikrob',icon:'🎭',title:'QUIKSTOP ROBBERY',text:'A ski mask, a shopping bag, an empty register. The tapes are… missing.',
- run(){setMood('CALM','a ski mask, a shopping bag, an empty register');const q=S.owner.quik;if(q==null){S.players.forEach((pl,i)=>payVoid(i,1,'nobody was watching the till'));return}payVoid(q,2,'gone, just gone');const b=S.owner.bond007;if(b!=null)gain(b,2,'he was there in disguise (allegedly)');}},
+ run(){setMood('CALM','a ski mask, a shopping bag, an empty register');const q=S.owner.quik;const v=S.owner.vault;if(q==null){S.players.forEach((pl,i)=>payVoid(i,1,'nobody was watching the till'));return}if(v!=null)payTo(q,2,v,'laundered through the Offshore Vault');else payVoid(q,2,'gone, just gone');const b=S.owner.bond007;if(b!=null)gain(b,2,'he was there in disguise (allegedly)');}},
 {id:'ibexams',icon:'📝',title:'IB EXAMS',text:'Papers, calculators, despair. The Diploma Programme does not grade on charisma.',
  run(){setMood('CALM','IB exams — despair, indexed');const ib=S.owner.ib;if(ib!=null)giveIntel(ib,2,'HL Economics pays off');const sc=S.owner.school;if(sc!=null)giveIntel(sc,1,'the cohort crammed');S.players.forEach((pl,i)=>{const charts=NODES.filter(n=>n.type==='CHART'&&S.owner[n.id]===i).length;if(charts===0&&pl.intel>0){pl.intel-=1;fxAt(i,'🛈−1','#55c1ff');log('📝 '+pname(i)+' didn’t do the reading: −1 Intel.')}});}},
 {id:'profit',icon:'⛽',title:'PROFIT WARNING… FOR OTHERS',text:'Markets wobble, people stress-eat. Quikstop does just fine.',
@@ -471,13 +457,15 @@ const CARDS=[
 {id:'quiet',icon:'🌙',title:'A QUIET QUARTER',text:'No tweets, no leaks, no rate decisions. Everyone quietly pockets a little extra.',
  run(){setMood('CALM','a quiet quarter — no tweets, no leaks');S.players.forEach((pl,i)=>gain(i,2,'a quiet quarter'));}},
 {id:'snoop',icon:'🔍',title:'REGULATORS SNOOP AROUND',text:'Somebody asked one question too many. The sweatiest players get a second look.',
- run(){setMood('CALM','regulators asking one question too many');const mx=Math.max(0,...S.players.map(pl=>pl.cortisol));if(mx<=0){log('🔍 Nobody has any Cortisol — the regulators go for coffee.');return}S.players.forEach((pl,i)=>{if(pl.cortisol===mx)addCortisol(i,1,'regulators circling','event')});}},
+ run(){setMood('CALM','regulators asking one question too many');const mx=Math.max(0,...S.players.map(pl=>pl.heat));if(mx<=0){log('🔍 Nobody has any Heat — the regulators go for coffee.');return}S.players.forEach((pl,i)=>{if(pl.heat===mx)addHeat(i,1,'regulators circling','event')});}},
 {id:'tip',icon:'✉️',title:'ANONYMOUS TIP',text:'A brown envelope with no return address. Everyone learns something.',
  run(){setMood('CALM','a brown envelope, no return address');S.players.forEach((pl,i)=>giveIntel(i,1,'the envelope'));log('✉️ Every player gains 1 Intel.');}},
 {id:'frenzy',icon:'🗣️',title:'MEDIA FRENZY',text:'“Quite frankly…” The press needs a villain before deadline. Whoever owns the narrative picks one.',
- async run(){setMood('FRENZY','the press needs a villain before deadline');const pi=S.owner.press;if(pi==null){log('🗣️ The Press Room is unowned — the story dies in committee.');return}const rivals=S.players.map((pl,i)=>i).filter(i=>i!==pi);const opts=rivals.map(i=>({label:S.players[i].name+' +2 🔥',v:i}));opts.push({label:'Sit on the story',v:-1});const v=await askPlayer(pi,{title:'MEDIA FRENZY',body:'You control the PRESS ROOM — torch which rival?',options:opts,def:-1});if(v>=0)addCortisol(v,2,'front-page frenzy','event');}},
+ async run(){setMood('FRENZY','the press needs a villain before deadline');const pi=S.owner.press;if(pi==null){log('🗣️ The Press Room is unowned — the story dies in committee.');return}const rivals=S.players.map((pl,i)=>i).filter(i=>i!==pi);const opts=rivals.map(i=>({label:S.players[i].name+' +2 🔥',v:i}));opts.push({label:'Sit on the story',v:-1});const v=await askPlayer(pi,{title:'MEDIA FRENZY',body:'You control the PRESS ROOM — torch which rival?',options:opts,def:-1});if(v>=0)addHeat(v,2,'front-page frenzy','event');}},
+{id:'primetime',icon:'📺',title:'PRIME TIME',text:'Lights, camera, ambush. Whoever owns the interview decides how the segment goes.',
+ async run(){setMood('FRENZY','prime time — lights, camera, ambush');const t=S.owner.tv;if(t==null){log('📺 Nobody owns the TV Interview — dead air tonight.');return}const opts=[{label:'Ad revenue: +$3',v:'cash'}];S.players.forEach((pl,i)=>{if(i!==t)opts.push({label:S.players[i].name+' +1 🔥',v:'h'+i})});opts.push({label:'Polite questions only',v:'no'});const v=await askPlayer(t,{title:'PRIME TIME',body:'You own THE TV INTERVIEW — how does the segment go?',options:opts,def:'no'});if(v==='cash')gain(t,3,'a very sympathetic sponsor');else if(typeof v==='string'&&v[0]==='h')addHeat(+v.slice(1),1,'ambushed on live TV','event');}},
 {id:'crackdown',icon:'🚨',title:'CRACKDOWN!',text:'The regulator finally does something. The hottest player pays for it.',
- run(){setMood('PANIC','crackdown — the regulator finally does something');const mx=Math.max(0,...S.players.map(pl=>pl.cortisol));if(mx<=0){log('🚨 Nobody is hot — the crackdown hits an empty office.');return}S.players.forEach((pl,i)=>{if(pl.cortisol===mx)payFee(i,4,'crackdown fine')});const bs=S.owner.bigshort;if(bs!=null)gain(bs,3,'the cinema called it');}},
+ run(){setMood('PANIC','crackdown — the regulator finally does something');const mx=Math.max(0,...S.players.map(pl=>pl.heat));if(mx<=0){log('🚨 Nobody is hot — the crackdown hits an empty office.');return}S.players.forEach((pl,i)=>{if(pl.heat===mx)payFee(i,4,'crackdown fine')});const bs=S.owner.bigshort;if(bs!=null)gain(bs,3,'the cinema called it');}},
 {id:'tapes',icon:'🗑️',title:'THE TAPES GO MISSING',text:'A shredder runs all night. What you knew, you no longer know — unless you kept copies.',
  run(){setMood('CALM','the tapes go missing — a shredder runs all night');S.players.forEach((pl,i)=>{if(S.owner.whistle===i){giveIntel(i,2,'the Whistleblower kept copies')}else if(S.owner.jt===i){giveIntel(i,2,'JTPortal keeps backups')}else if(pl.intel>0){pl.intel-=1;fxAt(i,'🛈−1','#55c1ff');log('🗑️ '+pname(i)+' loses 1 Intel — the tapes are gone.')}});}},
 {id:'bigscreen',icon:'🎬',title:'THE BIG SHORT SCREENING',text:'Brad Pitt explains subprime with a Jenga tower. Everyone watches. Nobody learns.',
@@ -489,15 +477,13 @@ const CARDBYID={};CARDS.forEach(c=>CARDBYID[c.id]=c);
 
 /* ================= STATE, NET & HELPERS ================= */
 let S=null;
-const GOAL_MIN=20,GOAL_MAX=999,GOAL_DEF=100;
-const Net={role:null,peer:null,conn:null,conns:[],roster:[],myIdx:0,myName:'',playerId:null,roomCode:null,roomLabel:null,lobbyChat:[],lobbyPlayers:[],started:false,begun:false,lock:false,lockTimer:null,pendingPrompts:new Map(),acks:null,promptSeq:0,evSeq:0,autoT:null,goal:GOAL_DEF,hbTimer:null,lastSeen:0};
-function clampGoal(v){const n=Math.round(Number(v)||0);if(!n)return GOAL_DEF;return Math.max(GOAL_MIN,Math.min(GOAL_MAX,n))}
+const Net={role:null,mqtt:null,brokerUrl:null,hostId:null,conn:null,conns:[],roster:[],myIdx:0,myName:'',playerId:null,roomCode:null,started:false,begun:false,lock:false,lockTimer:null,pendingPrompts:new Map(),acks:null,promptSeq:0,evSeq:0,autoT:null,seen:Object.create(null),lastSeen:Object.create(null),watchT:null,hbT:null};
 let fxSeq=0;
 const shownFx=new Set();
 function pname(i){return S.players[i].name}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function shuffle(a){const r=a.slice();for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=r[i];r[i]=r[j];r[j]=t}return r}
-function log(t){S.log.push(t);S.logN=(S.logN|0)+1;if(S.log.length>250)S.log.shift()}
+function log(t){S.log.push(t);if(S.log.length>250)S.log.shift()}
 let toastTimer=null;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2400)}
 function modal(o){return new Promise(res=>{
@@ -525,135 +511,58 @@ function giveIntel(i,n,why){if(!S||!S.players[i]||n<=0)return;S.players[i].intel
 function gain(i,amt,why){S.players[i].money+=amt;log('💰 '+pname(i)+' gains $'+amt+(why?' — '+why:'')+'.');fxAt(i,'+$'+amt,'#7fe08d')}
 function payVoid(i,amt,why){const p=S.players[i];const real=Math.min(p.money,amt);p.money-=real;log('💸 '+pname(i)+' loses $'+real+' — '+why+'.');fxAt(i,'−$'+real,'#ff6b5e')}
 function payTo(i,amt,to,why){const p=S.players[i];const real=Math.min(p.money,amt);p.money-=real;S.players[to].money+=real;log('💸 '+pname(i)+' pays $'+real+' to '+pname(to)+' — '+why+'.');fxAt(i,'−$'+real,'#ff6b5e');fxAt(to,'+$'+real,'#7fe08d')}
-function payFee(i,amt,why){const p=S.players[i];const real=Math.min(p.money,amt);p.money-=real;log('💸 '+pname(i)+' pays $'+real+' — '+why+'.');fxAt(i,'−$'+real,'#ff6b5e')}
-function addCortisol(i,n,why,ev){
+function payFee(i,amt,why){let a=amt;if(S.owner.vault===i&&a>0)a=Math.max(0,a-1);const p=S.players[i];const real=Math.min(p.money,a);p.money-=real;log('💸 '+pname(i)+' pays $'+real+(a<amt?' (Offshore Vault discount)':'')+' — '+why+'.');fxAt(i,'−$'+real,'#ff6b5e')}
+function addHeat(i,n,why,ev){
  if(!n)return;
- if(ev&&n>0&&(S.owner.bess===i||S.owner.jim===i)){n-=1;if(n<=0){log('📺 Big Bessent / The Jim buries the story — '+pname(i)+' takes no Cortisol at all.');return}log('📺 Breaking news softens the story — '+pname(i)+' takes only +'+n+' Cortisol.')}
- if(ev&&n>0){const h=S.owner.herald;if(h!=null&&h!==i)giveIntel(h,1,'THE JIM REAPER files the cortisol')}
- const p=S.players[i];p.cortisol=Math.max(0,Math.min(10,p.cortisol+n));
- log('🔥 '+pname(i)+(n>0?' +'+n:' '+n)+' Cortisol (now '+p.cortisol+')'+(why?' — '+why:'')+'.');
+ if(ev&&n>0&&S.owner.tv===i){n-=1;if(n<=0){log('📺 The TV Interview buries the story — '+pname(i)+' takes no Heat at all.');return}log('📺 Soft questions soften the story — '+pname(i)+' takes only +'+n+' Heat.')}
+ if(ev&&n>0){const h=S.owner.herald;if(h!=null&&h!==i)giveIntel(h,1,'THE JIM REAPER files the heat')}
+ const p=S.players[i];p.heat=Math.max(0,Math.min(10,p.heat+n));
+ log('🔥 '+pname(i)+(n>0?' +'+n:' '+n)+' Heat (now '+p.heat+')'+(why?' — '+why:'')+'.');
  fxAt(i,(n>0?'🔥+'+n:'🔥'+n),'#ffa94d');
- if(p.cortisol>=8)raid(i);
+ if(p.heat>=8)raid(i);
 }
-/* The raid is the one thing on this board that can end a run: two assets seized,
-   the books fined, the intel network burned and a wasted turn under caution. */
 function raid(i){
- const p=S.players[i];
- const owned=NODES.filter(n=>S.owner[n.id]===i).sort((a,b)=>b.income-a.income||b.cost-a.cost);
- const seized=owned.slice(0,2);
- seized.forEach(n=>{delete S.owner[n.id];delete S.bugs[n.id];fx(n.x,n.y-70,'🚨 SEIZED','#ff6b5e')});
- if(seized.length)log('🚨 REGULATOR RAID! '+pname(i)+' is stripped of '+seized.map(n=>n.name.join(' ')).join(' and ')+' — cameras everywhere.');
- else log('🚨 REGULATOR RAID! '+pname(i)+' owns nothing worth seizing — the regulators take it out of the accounts instead.');
- Object.keys(S.bugs).forEach(id=>{if(S.bugs[id]===i)delete S.bugs[id]});
- const fine=Math.max(5,Math.floor(p.money*0.3));
- payVoid(i,fine,'the enforcement penalty');
- if(p.intel>1){const lost=p.intel-1;p.intel=1;log('🛈 '+pname(i)+' loses '+lost+' Intel — every contact stops answering.');fxAt(i,'🛈−'+lost,'#55c1ff')}
- p.raided=1;
- p.cortisol=2;log('🚨 '+pname(i)+' is under caution: Cortisol sits at 2, and next turn brings no income and a single step.');
+ const owned=NODES.filter(n=>S.owner[n.id]===i);const p=S.players[i];
+ if(owned.length){owned.sort((a,b)=>b.income-a.income||b.cost-a.cost);const n=owned[0];delete S.owner[n.id];delete S.bugs[n.id];log('🚨 REGULATOR RAID! '+pname(i)+' is stripped of '+n.name.join(' ')+' — cameras everywhere.');fx(n.x,n.y-70,'🚨 STRIPPED','#ff6b5e')}
+ p.heat=3;log('🚨 '+pname(i)+'’s Heat resets to 3. Damage-control mode.');
  fxAt(i,'🚨 RAIDED','#ff6b5e',true);
  S.players.forEach((pl,j)=>{if(S.owner.hedge===j)gain(j,3,'somebody was short the whole time');if(S.owner.group===j)giveIntel(j,1,'the group photo pays')});
- announceAll('🚨 REGULATOR RAID',
-  '<div class="eventcard"><div class="eicon">🚨</div><div class="etitle">'+esc(p.name)+' IS RAIDED</div>'
-  +'<div class="etext">Cameras on the driveway. Boxes out the front door.</div></div>'
-  +'<ul><li>'+(seized.length?'Seized: <b>'+seized.map(n=>esc(n.name.join(' '))).join('</b> and <b>')+'</b>':'Nothing worth seizing — the accounts took it instead')+'</li>'
-  +'<li>Fine of <b>$'+fine+'</b>, Intel burned down to 1, every planted bug pulled</li>'
-  +'<li>Cortisol resets to <b>2</b>; next turn brings no income and a single step</li></ul>');
 }
-/* MADE moves money off the rest of the table, not out of thin air. */
-function madePay(){
- const m=S.owner.made;
- if(m==null)return;
- gain(m,10,'MADE pays out — nobody knows why');
- giveIntel(m,1,'the purple graphic tells you something');
- S.players.forEach((pl,j)=>{
-  if(j===m)return;
-  payVoid(j,3,'the purple graphic takes its cut');
-  addCortisol(j,1,'nobody can explain where the money went');
- });
-}
+function madePay(){const m=S.owner.made;if(m!=null)gain(m,3,'MADE pays out — nobody knows why');['unid1','unid2'].forEach(u=>{const o=S.owner[u];if(o!=null)gain(o,3,'the kindred mystery pays too')})}
 
 /* ============ NET: state sync & prompts (host-authoritative) ============ */
-const LOG_TAIL=40,CHAT_TAIL=25,STATE_MIN_GAP=40;
-/* The wire carries only what changed: the deck stays home and the record/chat
-   travel as tails the guests splice onto what they already hold. */
-function pubState(full){
- const c={};
- for(const k in S){if(k==='deck'||k==='log'||k==='chat')continue;c[k]=S[k]}
- const out=JSON.parse(JSON.stringify(c));
- out.deckCount=S.deck.length;
- const lt=full?S.log.slice():S.log.slice(-LOG_TAIL);
- const ct=full?S.chat.slice():S.chat.slice(-CHAT_TAIL);
- out.log=lt;out.chat=ct;out.logN=S.logN|0;out.chatN=S.chatN|0;
- return out;
+function pubState(){const c=JSON.parse(JSON.stringify(S));c.deckCount=c.deck.length;delete c.deck;return c}
+function sendAll(msg){busSend(Object.assign({},msg,{to:'*'}))}
+function sendTo(pi,msg){
+ if(pi===Net.myIdx)return;
+ const row=Net.roster[pi];
+ if(row&&row.playerId)busSend(Object.assign({},msg,{to:row.playerId}));
 }
-function mergeTail(prev,prevN,tail,totalN){
- if(!prev||prevN==null)return tail.slice();
- const start=totalN-tail.length;
- const keep=prev.length-(prevN-start);
- if(!(keep>=0&&keep<=prev.length))return tail.slice();
- return prev.slice(0,keep).concat(tail);
+function sendState(){
+ clearTimeout(Net.stateT);
+ Net.stateT=setTimeout(function(){sendAll({t:'state',s:pubState()})},180);
 }
-function adoptState(ns){
- if(S){
-  ns.log=mergeTail(S.log,S.logN|0,ns.log||[],ns.logN|0);
-  ns.chat=mergeTail(S.chat,S.chatN|0,ns.chat||[],ns.chatN|0);
- }
- if(ns.log.length>250)ns.log=ns.log.slice(-250);
- if(ns.chat.length>60)ns.chat=ns.chat.slice(-60);
- S=ns;
-}
-function sendAll(msg){for(let i=0;i<Net.conns.length;i++){if(i===Net.myIdx)continue;const c=Net.conns[i];if(c&&c.open){try{c.send(msg)}catch(e){}}}}
-function sendTo(pi,msg){if(pi===Net.myIdx)return;const c=Net.conns[pi];if(c&&c.open){try{c.send(msg)}catch(e){}}}
-/* State goes out coalesced: a single turn touches the state dozens of times and
-   guests only need the result, not every intermediate frame. */
-let stateTimer=null,stateLastSend=0;
-function flushState(){
- if(stateTimer){clearTimeout(stateTimer);stateTimer=null}
- if(!S||Net.role!=='host')return;
- stateLastSend=Date.now();
- sendAll({t:'state',s:pubState(false)});
-}
-function sendState(now){
- if(Net.role!=='host'||!S)return;
- if(now){flushState();return}
- if(stateTimer)return;
- stateTimer=setTimeout(flushState,Math.max(0,STATE_MIN_GAP-(Date.now()-stateLastSend)));
-}
-let renderRaf=0;
-function scheduleRender(){
- if(renderRaf)return;
- renderRaf=requestAnimationFrame(()=>{renderRaf=0;render()});
-}
-function sync(now){if(Net.role==='host'){scheduleRender();sendState(now)}else scheduleRender()}
+function sync(){if(Net.role==='host'){render();sendState()}else render()}
 function sysTo(pi,msg){if(Net.role!=='host')return;if(pi===Net.myIdx){toast(msg);return}sendTo(pi,{t:'sys',msg})}
 function askPlayer(pi,opt){return new Promise(res=>{
  if(Net.role!=='host'){modal(opt).then(res);return}
  const def=opt.def!==undefined?opt.def:(opt.options&&opt.options[0]?opt.options[0].v:undefined);
  if(pi===Net.myIdx){modal(opt).then(res);return}
- const c=Net.conns[pi];
- if(!c||!c.open){res(def);return}
+ if(!Net.roster[pi]||!Net.roster[pi].playerId){res(def);return}
  const pid=++Net.promptSeq;
  Net.pendingPrompts.set(pid,{res,def,pi});
- flushState();
  sendTo(pi,{t:'prompt',pid,title:opt.title,html:opt.html,body:opt.body,options:opt.options});
- setTimeout(()=>{const p=Net.pendingPrompts.get(pid);if(p){Net.pendingPrompts.delete(pid);res(p.def)}},opt.timeout||45000);
+ setTimeout(()=>{const p=Net.pendingPrompts.get(pid);if(p){Net.pendingPrompts.delete(pid);res(p.def)}},120000);
 })}
-/* A table-wide bulletin nobody has to wait on: the raid is news, not a turn. */
-function announceAll(title,html){
- if(Net.role!=='host')return;
- const eid=++Net.evSeq;
- flushState();
- for(let i=0;i<S.players.length;i++){if(i===Net.myIdx)continue;const c=Net.conns[i];if(c&&c.open)sendTo(i,{t:'event',eid,title,html})}
- modal({title,html,options:[{label:'Continue',v:1}]});
-}
 async function revealAll(title,html){
  if(Net.role!=='host'){await modal({title,html,options:[{label:'Continue',v:1}]});return}
  const eid=++Net.evSeq;const need=new Set();
- flushState();
- for(let i=0;i<S.players.length;i++){if(i===Net.myIdx)continue;const c=Net.conns[i];if(c&&c.open){sendTo(i,{t:'event',eid,title,html});need.add(i)}}
+ for(let i=0;i<S.players.length;i++){
+  if(i===Net.myIdx)continue;
+  if(Net.roster[i]&&Net.roster[i].playerId){sendTo(i,{t:'event',eid,title,html});need.add(i)}
+ }
  await modal({title,html,options:[{label:'Continue',v:1}]});
- /* the table has already seen the card — a short grace, then play moves on */
- if(need.size){await new Promise(res=>{Net.acks={eid,set:need,res,timer:setTimeout(()=>{if(Net.acks){Net.acks=null;res()}},5000)}})}
+ if(need.size){await new Promise(res=>{Net.acks={eid,set:need,res,timer:setTimeout(()=>{if(Net.acks){Net.acks=null;res()}},25000)}})}
 }
 
 /* ================= GAME FLOW (host) ================= */
@@ -667,69 +576,52 @@ function initGame(defs){
  const order=defs.map((_,i)=>i);
  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=order[i];order[i]=order[j];order[j]=t}
  const seated=order.map(i=>defs[i]);
- if(Net.conns&&Net.conns.length){
+ if(Net.roster&&Net.roster.length){
   const hostWas=0;
-  Net.conns=order.map(i=>Net.conns[i]||null);
-  Net.roster=order.map(i=>Net.roster[i]).filter(Boolean);
+  Net.roster=order.map(i=>Net.roster[i]);
   Net.myIdx=order.indexOf(hostWas);
+  refreshPipes();
  }
- const goal=clampGoal(Net.goal);
- S={players:seated.map((d,i)=>({name:d.name,color:PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',dc:false})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot};
+ S={players:seated.map((d,i)=>({name:d.name,color:PCOLORS[i%PCOLORS.length],char:d.char||null,playerId:d.playerId||null,money:15,intel:2,heat:0,pos:'quik',dc:false})),cur:0,turn:1,phase:'move',steps:3,owner:{},bugs:{},deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:[],quikSlot};
  applyLayoutFromState();
  Net.started=true;
  const slot=QUIK_SLOTS[quikSlot];
  log('🌅 The board is pinned up — '+NODES.length+' exhibits, '+EDGES.length+' threads, '+S.players.length+' at the table.');
  log('🎲 Seating was shuffled. First to move: '+S.players[0].name+'.');
  log('⛽ Quikstop opened '+slot.label+' this game. Everyone starts there with $15 and 2 Intel.');
- log('🏆 WIN CONDITION: $'+goal+' in the bank AND one of every node type ('+WIN_TYPES.join(', ')+'). The host set the target.');
+ log('🏆 MAIN WIN: 8 connected nodes incl. BANK + COMMODITY + MEDIA + 2 CHARTS. SCHOOL: MPC + ST ANDREW’S + IB + 4 CHARTS. BANK RUN: own any 5 BANKS.');
  $('setup').style.display='none';$('app').style.display='flex';
- const pub=pubState(true);
- for(let i=0;i<Net.conns.length;i++){
-  const c=Net.conns[i];
-  if(c&&c.open){try{c.send({t:'begin',s:pub,idx:i})}catch(e){}}
+ const pub=pubState();
+ for(let i=0;i<Net.roster.length;i++){
+  if(i===Net.myIdx)continue;
+  sendTo(i,{t:'begin',s:pub,idx:i});
  }
  startTurn();
 }
-async function startTurn(){
+function startTurn(){
  if(!S||S.over)return;
  log('—— TURN '+S.turn+' · '+pname(S.cur)+' ——');
- S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.extraStep=false;S.slipped=false;S.dossier=false;
+ S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.extraStep=false;S.dossier=false;
  if(S.fx.length>30)S.fx=S.fx.slice(-30);
+ income(S.cur);
  const p=S.players[S.cur];const own=id=>S.owner[id]===S.cur;
- const underCaution=!!p.raided;S.caution=underCaution;
- if(underCaution)log('🚨 '+pname(S.cur)+' spends the turn with the regulators — no income and one step only.');
- else income(S.cur);
- if(own('rba')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🏛️ Inside the Reserve Bank: −1 Cortisol (now '+p.cortisol+').')}
- if(own('sat')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🛰️ Hiding out in the dry country: −1 Cortisol (now '+p.cortisol+').')}
+ if(own('rba')&&p.heat>0){p.heat--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🏛️ Inside the Reserve Bank: −1 Heat (now '+p.heat+').')}
+ if(own('sat')&&p.heat>0){p.heat--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🛰️ Hiding out in the dry country: −1 Heat (now '+p.heat+').')}
  if(own('whistle'))giveIntel(S.cur,1,'the dossier grows');
  if(own('bullock'))giveIntel(S.cur,1,'the Governor briefs you');
  if(own('jt'))giveIntel(S.cur,1,'JTPortal knows things');
- const jtHolder=own('jt');
  if(own('mpc'))giveIntel(S.cur,1,'the Competition feeds you data');
  const charts=NODES.filter(n=>n.type==='CHART'&&S.owner[n.id]===S.cur).length;
  if(own('school')&&charts>=3)giveIntel(S.cur,1,'the research department delivers');
  const media=NODES.filter(n=>n.type==='MEDIA'&&S.owner[n.id]===S.cur).length;
  if(own('news')&&media>=2)giveIntel(S.cur,1,'you read everything');
- if(own('made')&&Math.random()<.5)madePay();
- 
+ if((own('made')||own('unid1')||own('unid2'))&&Math.random()<.5)madePay();
+ if(own('spend')&&Math.random()<.5){p.money+=2;log('💸 Government spending finds its way to you: +$2.');fxAt(S.cur,'+$2','#7fe08d')}
  const rail=(S.owner.train===S.cur||S.owner.bullet===S.cur)?1:0;
- S.steps=underCaution?1:3+(S.owner.coal===S.cur?1:0)+rail+(S.owner.asics===S.cur?1:0);
- p.raided=0;
+ S.steps=3+(S.owner.coal===S.cur?1:0)+rail+(S.owner.asics===S.cur?1:0);
  sysTo(S.cur,'👁️ YOUR TURN, '+p.name.toUpperCase());
- sync(true);
- if(await winCheck())return;
- if(jtHolder&&!p.dc)await jtBriefing(S.cur);
- if(p.dc){log('💤 '+pname(S.cur)+' is away — plays it quiet.');gain(S.cur,1,'away');endOfTurn()}
-}
-/* JTPortal knows what runs tomorrow, and tells whoever holds it. */
-async function jtBriefing(pi){
- if(!S||S.over)return;
- if(!S.deck.length){S.deck=shuffle(S.discard.slice());S.discard=[];log('🎴 The rumor deck is reshuffled.')}
- if(!S.deck.length)return;
- const c=CARDBYID[S.deck[S.deck.length-1]];
- log('🌐 JTPortal briefs '+pname(pi)+' on what is coming next.');
  sync();
- await askPlayer(pi,{title:'JTPORTAL — “QUITE FRANKLY, HERE IS WHAT HAPPENS NEXT”',html:cardFace(c)+'<p class="fine">The event that lands at the end of your turn — for your eyes only.</p>',options:[{label:'Noted',v:1}],def:1,timeout:25000});
+ if(p.dc){log('💤 '+pname(S.cur)+' is away — plays it quiet.');gain(S.cur,1,'away');endOfTurn()}
 }
 function income(i){
  const p=S.players[i];const own=id=>S.owner[id]===i;
@@ -745,13 +637,13 @@ function income(i){
  if(own('bhp')&&own('train'))syn+=1;
  if(own('tenyear')&&chart>1)syn+=chart-1;
  COUNTRY.forEach(c=>{if(own(c)&&own('tenyear'))syn+=1});
- if(own('mpc')&&own('school')&&own('ib'))syn+=2;
  if(own('debt')&&own('gov'))syn+=1;
  if(own('stock')&&(own('term')||own('fox')))syn+=1;
  if(own('notes')&&bank)syn+=bank;
  if(own('barrels')&&own('forklift'))syn+=1;
  if(own('forklift')&&comm)syn+=comm;
  if(own('market')&&own('quik'))syn+=2;
+ if(own('office')&&corp)syn+=corp;
  if(own('rock'))syn+=new Set(owned.map(n=>n.type)).size;
  if(own('bessent')&&bank)syn+=bank;
  if(own('chalmers')&&reg)syn+=reg;
@@ -784,12 +676,7 @@ async function applyIntent(pi,m){
    fxAt(pi,'🛈−1 · +1 step','#55c1ff');sync();
   }
   else if(act==='endmove'&&S.phase==='move'){await endMovement()}
-  else if(act==='flymode'&&S.phase==='move'&&!S.mode&&S.owner.qantas===pi&&p.money>=3){S.mode='fly';sync()}
-  else if(act==='slip'&&S.phase==='move'&&!S.slipped&&S.owner.f1===pi&&p.money>=2){
-   p.money-=2;S.slipped=true;S.steps+=2;
-   log('🏎️ '+pname(pi)+' takes the slipstream — +2 steps and $2 off the next seizure.');
-   fxAt(pi,'−$2 · +2 steps','#f5c542');sync();
-  }
+  else if(act==='flymode'&&S.phase==='move'&&!S.mode&&S.owner.f1===pi&&p.money>=3){S.mode='fly';sync()}
   else if(act==='fly'&&S.phase==='move'&&S.mode==='fly'){await doFly(pi,m.id)}
   else if(act==='cancel'){S.mode=null;sync()}
   else if(act==='seize'&&S.phase==='action'&&!S.mode){await doSeize(pi)}
@@ -798,32 +685,32 @@ async function applyIntent(pi,m){
   else if(act==='leakmode'&&S.phase==='action'&&!S.mode&&p.intel>=2){S.mode='leak';sync()}
   else if(act==='leak'&&S.phase==='action'&&S.mode==='leak'&&m.target!==pi){
    if(p.intel<2){sysTo(pi,'Not enough Intel.');S.mode=null;sync();return}
-   p.intel-=2;fxAt(pi,'🛈−2','#55c1ff');log('🗣️ '+pname(pi)+' leaks dirt on '+pname(m.target)+'.');S.mode=null;addCortisol(m.target,2,'dirt in the morning paper');await endOfTurn()}
+   p.intel-=2;fxAt(pi,'🛈−2','#55c1ff');log('🗣️ '+pname(pi)+' leaks dirt on '+pname(m.target)+'.');S.mode=null;addHeat(m.target,2,'dirt in the morning paper');await endOfTurn()}
   else if(act==='auditmode'&&S.phase==='action'&&!S.mode&&S.owner.asic===pi&&p.money>=4&&!S.audited){S.mode='audit';sync()}
   else if(act==='audit'&&S.phase==='action'&&S.mode==='audit'&&m.target!==pi){
    if(p.money<4||S.audited){S.mode=null;sync();return}
-   p.money-=4;fxAt(pi,'−$4','#ff6b5e');S.audited=true;log('⚖️ '+pname(pi)+' sends the regulator after '+pname(m.target)+'.');S.mode=null;addCortisol(m.target,1,'a very thorough audit');await endOfTurn()}
+   p.money-=4;fxAt(pi,'−$4','#ff6b5e');S.audited=true;log('⚖️ '+pname(pi)+' sends the regulator after '+pname(m.target)+'.');S.mode=null;addHeat(m.target,1,'a very thorough audit');await endOfTurn()}
   else if(act==='tweetmode'&&S.phase==='action'&&!S.mode&&S.owner.trump===pi&&p.money>=2){S.mode='tweet';sync()}
   else if(act==='tweet'&&S.phase==='action'&&S.mode==='tweet'&&m.target!==pi){
    if(p.money<2){S.mode=null;sync();return}
-   p.money-=2;fxAt(pi,'−$2','#ff6b5e');log('🦅 '+pname(pi)+' tweets. Devastating.');S.mode=null;addCortisol(m.target,1,'a single tweet');await endOfTurn()}
+   p.money-=2;fxAt(pi,'−$2','#ff6b5e');log('🦅 '+pname(pi)+' tweets. Devastating.');S.mode=null;addHeat(m.target,1,'a single tweet');await endOfTurn()}
   else if(act==='spin'&&S.phase==='action'&&!S.mode){await doSpin(pi,m.kind==='fox'?'fox':'press')}
   else if(act==='roast'&&S.phase==='action'&&S.mode==='roast'&&m.target!==pi){
    const cost=S.spinKind==='fox'?2:3;
    if(p.money<cost){S.mode=null;sync();return}
-   p.money-=cost;fxAt(pi,'−$'+cost,'#ff6b5e');S.spun=true;log('🗞️ '+pname(pi)+' roasts '+pname(m.target)+' in the press.');S.mode=null;addCortisol(m.target,1,'unflattering coverage');await endOfTurn()}
+   p.money-=cost;fxAt(pi,'−$'+cost,'#ff6b5e');S.spun=true;log('🗞️ '+pname(pi)+' roasts '+pname(m.target)+' in the press.');S.mode=null;addHeat(m.target,1,'unflattering coverage');await endOfTurn()}
   else if(act==='cook'&&S.phase==='action'&&!S.mode&&S.owner.rock===pi&&p.money>=3&&!S.cooked){
-   p.money-=3;fxAt(pi,'−$3','#ff6b5e');S.cooked=true;log('💪 '+pname(pi)+' cooks the books. What numbers?');addCortisol(pi,-3,'a very warm kitchen');await endOfTurn()}
+   p.money-=3;fxAt(pi,'−$3','#ff6b5e');S.cooked=true;log('💪 '+pname(pi)+' cooks the books. What numbers?');addHeat(pi,-3,'a very warm kitchen');await endOfTurn()}
   else if(act==='budget'&&S.phase==='action'&&!S.mode&&S.owner.gov===pi&&p.money>=3&&!S.budgeted){
    p.money-=3;fxAt(pi,'−$3','#ff6b5e');S.budgeted=true;log('🦘 BUDGET NIGHT! '+pname(pi)+' reads the numbers.');
    S.players.forEach((pl,i)=>{if(i!==pi)payTo(i,1,pi,'the Treasurer collects')});
    giveIntel(pi,1,'you saw the budget first');await endOfTurn()}
   else if(act==='push'&&S.phase==='action'&&!S.mode&&p.pos==='sisy'&&S.owner.sisy===pi){
-   gain(pi,3,'pushed the boulder uphill');addCortisol(pi,1,'it rolls back down by morning');await endOfTurn()}
+   gain(pi,3,'pushed the boulder uphill');addHeat(pi,1,'it rolls back down by morning');await endOfTurn()}
   else if(act==='scrub'&&S.phase==='action'&&!S.mode&&p.pos==='real'&&S.owner.real===pi){
-   log('📉 The real yields calm everyone.');addCortisol(pi,-1,'real numbers, real calm');await endOfTurn()}
+   log('📉 The real yields calm everyone.');addHeat(pi,-1,'real numbers, real calm');await endOfTurn()}
   else if(act==='jog'&&S.phase==='action'&&!S.mode&&p.pos==='asics'&&S.owner.asics===pi){
-   log('👟 '+pname(pi)+' jogs a lap in the circled shoe. Why is it on the board? Irrelevant.');addCortisol(pi,-1,'a cooling lap');await endOfTurn()}
+   log('👟 '+pname(pi)+' jogs a lap in the circled shoe. Why is it on the board? Irrelevant.');addHeat(pi,-1,'a cooling lap');await endOfTurn()}
   /* ---- INTEL OPS ---- */
   else if(act==='spy'&&S.phase==='action'&&!S.mode&&p.intel>=2){
    p.intel-=2;fxAt(pi,'🛈−2','#55c1ff');log('🛈 '+pname(pi)+' buys a look at tomorrow.');
@@ -846,12 +733,6 @@ async function applyIntent(pi,m){
    else log('🧹 '+pname(pi)+' sweeps the office — nothing found. Paranoia is free; the sweep cost 2 Intel.');
    await endOfTurn();
   }
-  else if(act==='masspanic'&&S.phase==='action'&&!S.mode&&p.intel>=5){
-    p.intel-=5;fxAt(pi,'🛈−5','#55c1ff');
-    log('🔥 '+pname(pi)+' unleashes MASS PANIC — everyone gains +2 Cortisol.');
-    S.players.forEach((pl,j)=>addCortisol(j,2,'mass panic'));
-    await endOfTurn();
-   }
   else if(act==='sell'&&S.phase==='action'&&!S.mode&&m.n>0){
    const rate=MOODS[S.mood].rate;const n=Math.min(+m.n,p.intel);
    if(n<=0){sysTo(pi,'No Intel to sell.');return}
@@ -860,7 +741,7 @@ async function applyIntent(pi,m){
    await endOfTurn();
   }
   else if(act==='laylow'&&S.phase==='action'&&!S.mode){
-   if(m.choice==='cash')gain(pi,1,'kept it quiet');else addCortisol(pi,-1,'kept it quiet');
+   if(m.choice==='cash')gain(pi,1,'kept it quiet');else addHeat(pi,-1,'kept it quiet');
    await endOfTurn()}
  } finally {clearTimeout(Net.lockTimer);Net.lockTimer=null;Net.lock=false}
 }
@@ -882,9 +763,9 @@ async function doMove(pi,id){
 }
 async function doFly(pi,id){
  const p=S.players[pi];
- if(p.money<3){sysTo(pi,'The Flying Kangaroo wants $3 for the seat.');S.mode=null;sync();return}
+ if(p.money<3){sysTo(pi,'The sponsor wants $3 for the jet.');S.mode=null;sync();return}
  p.money-=3;fxAt(pi,'−$3','#ff6b5e');S.mode=null;p.pos=id;S.steps=0;
- log('✈️ '+pname(pi)+' takes the Qantas jet straight to '+NMAP[id].name.join(' ')+'.');
+ log('🏎️ '+pname(pi)+' flies the sponsor’s jet straight to '+NMAP[id].name.join(' ')+'.');
  await endMovement();
 }
 async function endMovement(){
@@ -911,9 +792,8 @@ async function doSeize(pi){
  let base=n.cost;
  if(S.owner.golf===pi)base=Math.max(1,base-1);
  if(n.type==='CHART'){if(S.owner.nab===pi)base=Math.max(1,base-1);if(S.owner.econ===pi)base=Math.max(1,base-1)}
- if(S.slipped&&S.owner.f1===pi){base=Math.max(1,base-2);S.slipped='spent';log('🏎️ The slipstream carries '+pname(pi)+' into the deal — $2 off.')}
  const isTake=prev!=null;
- const priorSeizures=S.seizeCount[nid]||0;const cost=isTake?(S.dossier?base:base*Math.pow(2,priorSeizures)):base;
+ const cost=isTake?(S.dossier?base:base*2):base;
  if(isTake&&S.dossier)log('📂 The Dossier does its work — list price, not double.');
  const maxPay=p.money+(S.owner.back===pi?Math.min(3,p.intel):0);
  if(maxPay<cost){sysTo(pi,"You can't afford that.");return}
@@ -932,14 +812,13 @@ async function doSeize(pi){
   if(S.owner.accc===prev&&p.money>=2){p.money-=2;S.players[prev].money+=2;log('🧐 ACCC review fee: '+pname(pi)+' pays '+pname(prev)+' $2.')}
  }
  S.owner[nid]=pi;
- S.seizeCount[nid]=(S.seizeCount[nid]||0)+1;
  const via=useInt>0?' (paid $'+cash+' + '+useInt+' 🛈)':'';
  log('📝 '+pname(pi)+(isTake?' muscles in on ':' seizes ')+n.name.join(' ')+via+'.');
  fx(n.x,n.y-64,'📝 SEIZED',S.players[pi].color);
  if(nid==='bond')giveIntel(pi,2,'desk gossip flows');
  if(nid==='leak')giveIntel(pi,1,'the leak pays');
  S.players.forEach((pl,j)=>{if(j!==pi&&S.owner.photo===j)giveIntel(j,1,'the Photo Wall catches it')});
- addCortisol(pi,isTake?2:1,isTake?'hostile takeover':'hands are getting dirty');
+ addHeat(pi,isTake?2:1,isTake?'hostile takeover':'hands are getting dirty');
  sync();
  if(await winCheck())return;
  await endOfTurn();
@@ -960,9 +839,9 @@ async function doSpin(pi,kind){
  if(S.owner[kind==='fox'?'fox':'press']!==pi)return;
  const p=S.players[pi];
  if(p.money<cost||S.spun){sysTo(pi,'Spin unavailable.');return}
- const v=await askPlayer(pi,{title:kind==='fox'?'FOX SPIN':'SPIN THE PRESS',body:(kind==='fox'?'Fair. And. Furious. ':'“Quite frankly…” — ')+'for $'+cost+':',options:[{label:'Cool my own Cortisol (−'+cool+' 🔥)',v:'cool'},{label:'Roast a rival (+1 🔥)',v:'cortisol'},{label:'Never mind',v:'no'}],def:'no'});
+ const v=await askPlayer(pi,{title:kind==='fox'?'FOX SPIN':'SPIN THE PRESS',body:(kind==='fox'?'Fair. And. Furious. ':'“Quite frankly…” — ')+'for $'+cost+':',options:[{label:'Cool my own Heat (−'+cool+' 🔥)',v:'cool'},{label:'Roast a rival (+1 🔥)',v:'heat'},{label:'Never mind',v:'no'}],def:'no'});
  if(v==='no')return;
- if(v==='cool'){p.money-=cost;fxAt(pi,'−$'+cost,'#ff6b5e');S.spun=true;log('🗞️ '+pname(pi)+' spins the story smooth.');addCortisol(pi,-cool,'friendly coverage');await endOfTurn();return}
+ if(v==='cool'){p.money-=cost;fxAt(pi,'−$'+cost,'#ff6b5e');S.spun=true;log('🗞️ '+pname(pi)+' spins the story smooth.');addHeat(pi,-cool,'friendly coverage');await endOfTurn();return}
  S.spinKind=kind;S.mode='roast';sync();
 }
 function drawCard(){
@@ -974,10 +853,10 @@ function drawCard(){
 }
 async function endOfTurn(){
  if(!S||S.over||S.phase==='event')return;
- S.mode=null;S.phase='event';sync(true);
+ S.mode=null;S.phase='event';sync();
  const jtO=S.owner.jt;
- if(jtO!=null&&!S.jtUsed&&!(S.players[jtO]&&S.players[jtO].dc)){
-  const v=await askPlayer(jtO,{title:'JTPORTAL INTERVENES?',body:'You hold JTPORTAL — once per game, an event can be made to have never happened. Use it on this one?',options:[{label:'Let it play out',v:0},{label:'“Quite frankly…” — cancel it',v:1}],def:0,timeout:15000});
+ if(jtO!=null&&!S.jtUsed){
+  const v=await askPlayer(jtO,{title:'JTPORTAL INTERVENES?',body:'You hold JTPORTAL — once per game, an event can be made to have never happened. Use it on this one?',options:[{label:'Let it play out',v:0},{label:'“Quite frankly…” — cancel it',v:1}],def:0});
   if(v){S.jtUsed=true;log('🌐 JTPortal: “Quite frankly, that never happened.” The event vanishes.');fx(1200,720,'“NEVER HAPPENED.”','#55c1ff',true);nextTurn();return}
  }
  const card=drawCard();
@@ -985,47 +864,62 @@ async function endOfTurn(){
  const tk=S.owner.toktimer;if(tk!=null)giveIntel(tk,1,'Toktimer clocked the event');
  await card.run();
  sync();
- if(await winCheck())return;
  nextTurn();
 }
-function nextTurn(){if(!S||S.over)return;S.cur=(S.cur+1)%S.players.length;if(S.cur===0)S.turn++;Promise.resolve(startTurn()).catch(e=>console.error(e))}
-function goalAmount(){return clampGoal(S&&S.goal?S.goal:Net.goal)}
-/* Money alone no longer takes it: the con needs a finished portfolio. */
-const WIN_TYPES=['BANK','REGULATOR','CHART','WILD','CORPORATE','COMMODITY','MEDIA'];
-function hasType(i,t){return NODES.some(n=>n.type===t&&S.owner[n.id]===i)}
-function missingTypes(i){return WIN_TYPES.filter(t=>!hasType(i,t))}
+function nextTurn(){if(!S||S.over)return;S.cur=(S.cur+1)%S.players.length;if(S.cur===0)S.turn++;startTurn()}
 async function winCheck(){
- if(!S||S.over||Net.role!=='host')return false;
- const goal=goalAmount();
- let win=-1;
- S.players.forEach((pl,i)=>{if(pl.money>=goal&&!missingTypes(i).length&&(win<0||pl.money>S.players[win].money))win=i});
- if(win<0)return false;
- S.over=true;S.phase='over';sync(true);
- const w=S.players[win];
- log('🏆 '+pname(win)+' banks $'+w.money+' with the full set of node types — the target was $'+goal+'. The con is complete.');
- const wc=charMeta(w.char);
- const charHtml=wc?'<div style="margin:10px 0 14px;text-align:center"><img src="'+charSrc(w.char)+'" alt="'+esc(wc.name)+'" style="width:96px;height:96px;object-fit:contain;border-radius:12px;border:2px solid '+w.color+';background:#111;padding:4px"><div style="font-weight:800;margin-top:5px">'+esc(wc.name)+'</div></div>':'';
- const board=S.players.map((pl,i)=>{const c=charMeta(pl.char);return esc(pl.name)+' ('+(c?esc(c.name):'No character')+') — $'+pl.money}).join(' · ');
- await revealAll('🏆 THE BIG CON PAYS OUT','<div class="winname" style="color:'+w.color+'">'+esc(w.name)+'</div>'+charHtml+'<p>walks away with <b>$'+w.money+'</b>, past the table’s target of <b>$'+goal+'</b>, holding one of every node type — '+WIN_TYPES.join(' · ')+'. The market was rigged. It was rigged by <b>them</b>.</p><div class="winlist">'+board+'</div>');
- sendAll({t:'reload'});setTimeout(()=>location.reload(),400);return true;
+ const adj={};EDGES.forEach(e=>{(adj[e[0]]=adj[e[0]]||[]).push(e[1]);(adj[e[1]]=adj[e[1]]||[]).push(e[0])});
+ for(let p=0;p<S.players.length;p++){
+  const charts=NODES.filter(n=>n.type==='CHART'&&S.owner[n.id]===p);
+  const banks=NODES.filter(n=>n.type==='BANK'&&S.owner[n.id]===p);
+  if(banks.length>=5){
+   S.over=true;S.phase='over';sync();
+   log('🏦 '+pname(p)+' pulls THE BANK RUN — five desks, one syndicate.');
+   await revealAll('🏦 THE BANK RUN','<div class="winname" style="color:'+S.players[p].color+'">'+esc(S.players[p].name)+'</div><p>owns <b>'+banks.length+' banks</b>. The desks now answer to one table.</p><div class="winlist">'+banks.map(n=>n.name.join(' ')).join(' · ')+'</div>');
+   sendAll({t:'reload'});setTimeout(()=>location.reload(),400);return true;
+  }
+  if(S.owner.mpc===p&&S.owner.school===p&&S.owner.ib===p&&charts.length>=4){
+   S.over=true;S.phase='over';sync();
+   log('🏆 '+pname(p)+' WINS THE AUSTRALIAN MONETARY POLICY COMPETITION.');
+   await revealAll('🏆 THE COMPETITION IS WON','<div class="winname" style="color:'+S.players[p].color+'">'+esc(S.players[p].name)+'</div><p>holds <b>THE AUSTRALIAN MONETARY POLICY COMPETITION</b>, <b>ST ANDREW’S CATHEDRAL SCHOOL</b>, <b>THE IB DIPLOMA PROGRAMME</b> and <b>'+charts.length+' charts</b>. The judges are speechless. The RBA applauds. The trophy goes home.</p><div class="winlist">'+charts.slice(0,8).map(n=>n.name.join(' ')).join(' · ')+'</div>');
+   sendAll({t:'reload'});setTimeout(()=>location.reload(),400);return true;
+  }
+  const seen=new Set();
+  for(const n of NODES){
+   if(S.owner[n.id]!==p||seen.has(n.id))continue;
+   const comp=[];const st=[n.id];seen.add(n.id);
+   while(st.length){const c=st.pop();comp.push(c);for(const m of adj[c]){if(S.owner[m]===p&&!seen.has(m)){seen.add(m);st.push(m)}}}
+   if(comp.length>=8){
+    const types=new Set(comp.map(id=>NMAP[id].type));
+    const ncharts=comp.filter(id=>NMAP[id].type==='CHART').length;
+    if(types.has('BANK')&&types.has('COMMODITY')&&types.has('MEDIA')&&ncharts>=2){
+     S.over=true;S.phase='over';sync();
+     const list=comp.map(id=>NMAP[id].name.join(' ')).join(' · ');
+     log('🏆 '+pname(p)+' completes THE BIG CON.');
+     await revealAll('🏆 THE BIG CON IS COMPLETE','<div class="winname" style="color:'+S.players[p].color+'">'+esc(S.players[p].name)+'</div><p>controls eight connected exhibits — the money, the assets, the story and the data:</p><div class="winlist">'+list+'</div><p>The market was rigged. It was rigged by <b>them</b>.</p>');
+     sendAll({t:'reload'});setTimeout(()=>location.reload(),400);return true;
+    }
+   }
+  }
+ }
+ return false;
 }
 function addChat(pi,text){
  if(!S)return;
- S.chat.push({n:pname(pi),c:S.players[pi].color,t:text});S.chatN=(S.chatN|0)+1;
+ S.chat.push({n:pname(pi),c:S.players[pi].color,t:text});
  if(S.chat.length>60)S.chat.shift();
  sync();
 }
 function showRules(){
  modal({title:'HOW TO PULL THE BIG CON',html:
- '<h4>Online play (2–8 players)</h4><p>One player <b>hosts</b> and shares the room code — a jt portal <b>buzzword</b> (NESA, HORNSBY HEIGHTS, JAKE TOMKINS…), every one of them straight off the jt portal news ticker; the others <b>join</b> by typing it — the table seats up to <b>eight</b>. Each player sees only their own secret prompts. If someone drops, their seat auto-plays “lay low” — rejoin with the <b>same name</b> to reclaim your empire. Chat in the <b>lobby</b> before the con starts, and in the sidebar once it does.</p>'
- +'<h4>The market mood — events you can feel</h4><p>Every market event shifts the mood of the whole board — watch the <b>ticker</b> across the top, the <b>tint</b> of the board and the <b>glowing nodes</b>: <b style="color:#f5c542">BOOM</b> (commodities +$1/turn), <b style="color:#ff6b5e">PANIC</b> (banks −$1/turn, intel dearer), <b style="color:#e19bff">MEDIA FRENZY</b> (media +$1/turn), <b style="color:#8fbf7f">CALM</b>. Yields go vertical in a panic; the oil graph spikes in a boom. Money, Cortisol and Intel changes pop up on the board as they happen.</p>'
- +'<h4>Intel ops (🛈)</h4><ul><li><b>Burn a favor</b> (1 🛈, while moving) — +1 step this turn.</li><li><b>Spy on the deck</b> (2 🛈, free action) — privately see the next event card, anywhere.</li><li><b>The Dossier</b> (3 🛈, free action) — your hostile takeovers this turn cost <b>list price, not double</b>.</li><li><b>Sweep for bugs</b> (2 🛈, your action) — remove every bug on your nodes.</li><li><b>Mass panic</b> (5 🛈, your action) — every player gains +2 Cortisol.</li><li><b>Sell intel</b> (your action) — at the Rumor Exchange: 1 🛈 = <b>$2</b> calm/boom, <b>$3</b> frenzy, <b>$4</b> panic. Bad news is good news.</li></ul>'
- +'<h4>The board is the whole collage</h4><p><b>83 exhibits.</b> Charts are no longer stacked in one corner — US yields sit by Trump, Japan by the tankers, Germany by Davos, UK by the papers, Australia by the coat of arms, Canada by the vault, the 10-year master in the middle. Each game <b>Quikstop opens in a different neighbourhood</b>, so the first moves change. New pins from the collage: <b>Westpac</b>, <b>BHP</b>, <b>Herald Sun / The Jim Reaper</b>, <b>the bullet train</b>, the circled <b>ASICS shoe</b>, and <b>Toktimer</b>. Red threads are the paths — long ones dash. <i>Drag to pan, scroll to zoom.</i></p>'
- +'<h4>Winning</h4><p><b>Money <i>and</i> a finished portfolio.</b> The host sets a cash target in the lobby (anything from $'+GOAL_MIN+' to $'+GOAL_MAX+'); to take the con you must reach it <b>while holding at least one '+WIN_TYPES.join(', one ')+' node</b> — the seven-type set is tracked in your sidebar, including MEDIA. There are only four REGULATORS on the whole board, so the set is a race of its own. Nodes, synergies, bugs and the mood are all just ways of getting there faster — the board banner and the sidebar show the target and who is closest.</p>'
+ '<h4>Online play (2–8 players)</h4><p>One player <b>hosts</b> and shares the room code; the others <b>join</b> — the table seats up to <b>eight</b>. Matchmaking uses ntfy.sh so home routers should not need special ports. Each player sees only their own secret prompts. If someone drops, their seat auto-plays “lay low” — rejoin with the <b>same name</b> to reclaim your empire. Chat in the sidebar.</p>'
+ +'<h4>The market mood — events you can feel</h4><p>Every market event shifts the mood of the whole board — watch the <b>ticker</b> across the top, the <b>tint</b> of the board and the <b>glowing nodes</b>: <b style="color:#f5c542">BOOM</b> (commodities +$1/turn), <b style="color:#ff6b5e">PANIC</b> (banks −$1/turn, intel dearer), <b style="color:#e19bff">MEDIA FRENZY</b> (media +$1/turn), <b style="color:#8fbf7f">CALM</b>. Yields go vertical in a panic; the oil graph spikes in a boom. Money, Heat and Intel changes pop up on the board as they happen.</p>'
+ +'<h4>Intel ops (🛈)</h4><ul><li><b>Burn a favor</b> (1 🛈, while moving) — +1 step this turn.</li><li><b>Spy on the deck</b> (2 🛈, free action) — privately see the next event card, anywhere.</li><li><b>The Dossier</b> (3 🛈, free action) — your hostile takeovers this turn cost <b>list price, not double</b>.</li><li><b>Sweep for bugs</b> (2 🛈, your action) — remove every bug on your nodes.</li><li><b>Sell intel</b> (your action) — at the Rumor Exchange: 1 🛈 = <b>$2</b> calm/boom, <b>$3</b> frenzy, <b>$4</b> panic. Bad news is good news.</li></ul>'
+ +'<h4>The board is the whole collage</h4><p><b>82 exhibits.</b> Charts are no longer stacked in one corner — US yields sit by Trump, Japan by the tankers, Germany by Davos, UK by the papers, Australia by the coat of arms, Canada by the vault, the 10-year master in the middle. Each game <b>Quikstop opens in a different neighbourhood</b>, so the first moves change. New pins from the collage: <b>Westpac</b>, <b>BHP</b>, <b>Herald Sun / The Jim Reaper</b>, <b>the bullet train</b>, the circled <b>ASICS shoe</b>, and <b>Toktimer</b>. Red threads are the paths — long ones dash. <i>Drag to pan, scroll to zoom.</i></p>'
+ +'<h4>Winning</h4><p><b>MAIN WIN:</b> 8 connected nodes incl. one <b>BANK</b>, one <b>COMMODITY</b>, one <b>MEDIA</b> and <b>two CHARTS</b>. <b>SCHOOL WIN:</b> the Monetary Policy Competition + St Andrew’s + the IB + any four charts. <b>BANK RUN:</b> own any five BANK nodes (they do not need to be connected).</p>'
  +'<h4>Your turn</h4><p><b>1 · Income</b> — $3 salary (+$1 CPI-indexed with Inflation Compensation) + holdings &amp; powers &amp; mood. <b>2 · Move</b> — 3 steps (+1 with COAL CORP HQ, +1 with the Coal Train <i>or</i> the Bullet Train, +1 with the ASICS shoe, +1 by burning a favor). Tolls: $1 entering a rival’s node — $2 if they hold Albanese, free if you hold James Bond. <b>3 · One action</b> (plus free intel ops). <b>4 · Market event</b> for the whole table — and the mood moves.</p>'
- +'<h4>Actions</h4><ul><li><b>Seize</b> the node you stand on (+1 🔥). Hostile takeover: double cost (list price with the Dossier), old owner pockets list price, +2 🔥, +$2 ACCC fee if they own the ACCC.</li><li><b>Plant a bug</b> (1 🛈; free with INSIDER TRADING) — skim $1/turn ($2 with the WEF).</li><li><b>Leak dirt</b> (2 🛈) · <b>Audit</b> ($4, ASIC) · <b>The Tweet</b> ($2, Trump) — rivals gain Cortisol.</li><li><b>Spin</b> ($3 Press Room) / <b>Fox Spin</b> ($2 Fox Business) · <b>Cook the books</b> ($3, The Rock) · <b>Budget night</b> ($3, the Government).</li><li><b>Push the boulder</b> (+$3, +1 🔥, forever) · <b>Scrub</b> (Real Yield) · <b>Fly the Qantas jet</b> ($3, teleport) · <b>Slipstream</b> ($2, Formula 1: +2 steps and $2 off the next seizure) · <b>Lay low</b>.</li></ul>'
- +'<h4>Cortisol &amp; raids</h4><p>At 🔥8 the regulators raid you, and a raid hurts: your <b>two</b> highest-income nodes are seized, every bug you planted is pulled, you pay a fine of $5 or 30% of your cash (whichever is larger), your Intel is burned down to 1, Cortisol resets to 3 and your <b>next turn brings no income and a single step</b>. <b>The whole table sees the raid</b> — it pops up on every screen. The Hedge Fund pays $3 on every raid; the Group Photograph pays 1 🛈 Intel.</p>'
- +'<h4>MADE (???)</h4><p>Nobody knows what the purple graphic is, but it moves money: each turn there is a 50% chance MADE pays out — <b>+$10 and +1 Intel</b> to its owner, <b>+$5</b> to each UNIDENTIFIED LOGO, while <b>everyone else pays $3 and gains 🔥+1</b>.</p>'
+ +'<h4>Actions</h4><ul><li><b>Seize</b> the node you stand on (+1 🔥). Hostile takeover: double cost (list price with the Dossier), old owner pockets list price, +2 🔥, +$2 ACCC fee if they own the ACCC.</li><li><b>Plant a bug</b> (1 🛈; free with INSIDER TRADING) — skim $1/turn ($2 with the WEF).</li><li><b>Leak dirt</b> (2 🛈) · <b>Audit</b> ($4, ASIC) · <b>The Tweet</b> ($2, Trump) — rivals gain Heat.</li><li><b>Spin</b> ($3 Press Room) / <b>Fox Spin</b> ($2 Fox Business) · <b>Cook the books</b> ($3, The Rock) · <b>Budget night</b> ($3, the Government).</li><li><b>Push the boulder</b> (+$3, +1 🔥, forever) · <b>Scrub</b> (Real Yield) · <b>Fly the F1 jet</b> ($3, teleport) · <b>Lay low</b>.</li></ul>'
+ +'<h4>Heat &amp; raids</h4><p>At 🔥8 the regulators raid you: lose your highest-income node, Heat resets to 3. The Hedge Fund pays $3 on every raid.</p>'
  +'<p class="fine">No dice. The dice were rigged from the start.</p>',
  options:[{label:'Back to the con',v:1}]});
 }
@@ -1040,29 +934,120 @@ function moodBoost(n){
  return 0;
 }
 function nodeSVG(n,cls){
- const o=S?S.owner[n.id]:null;
- const ownr=o!=null;
+ const o=S?S.owner[n.id]:null;const ownr=o!=null;
  const oc=ownr?S.players[o].color:'#8a7a5f';
  const bug=S&&S.bugs[n.id]!=null;
+ const initial=ownr?String(o+1):'';
  const md=MOODS[S?S.mood:'CALM'];
  const mb=moodBoost(n);
- const box=nodeBox(n),w=box[0],h=box[1];
- let halo='';
- if(cls.indexOf('reach')>=0||cls.indexOf('target')>=0){
-  halo='<rect x="'+(-w/2-6)+'" y="'+(-h/2-6)+'" width="'+(w+12)+'" height="'+(h+12)+'" fill="none" stroke="'+(cls.indexOf('target')>=0?'#55c1ff':'#fff')+'" stroke-width="2.5" stroke-dasharray="5 7"/>';
+ let halo='';if(cls.indexOf('reach')>=0||cls.indexOf('target')>=0)halo='<circle class="halo" r="66" fill="none" stroke="'+(cls.indexOf('target')>=0?'#55c1ff':'#fff')+'" stroke-width="2.5" stroke-dasharray="5 7"/>';
+ let moodGlow='';if(mb!==0)moodGlow='<circle class="moodhalo" r="68" fill="none" stroke="'+md.color+'" stroke-width="3.5" stroke-dasharray="3 6"/>';
+ let inner='',tag='',bugpos=[46,33],pincy=-40,cardB=40;
+ if(n.shape==='photo'||n.shape==='wide'){
+  const w=n.shape==='wide'?170:140,h=n.shape==='wide'?100:92;cardB=h/2;
+  const cap2=n.name[1]?'<text x="0" y="'+(h/2-9)+'" text-anchor="middle" font-size="8" font-style="italic" fill="#6b5b45">'+n.name[1]+'</text>':'';
+  inner='<rect class="card" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" rx="4" fill="#f8f3e2" stroke="'+oc+'" stroke-width="'+(ownr?4:2)+'"/>'
+   +'<rect x="'+(-w/2+12)+'" y="'+(-h/2+10)+'" width="'+(w-24)+'" height="'+(h-46)+'" rx="2" fill="#241c12" stroke="#4a3a28"/>'
+   +'<text x="'+(-w/2+18)+'" y="'+(-h/2+20)+'" font-size="6.5" font-weight="800" letter-spacing="1" fill="'+TYPE_COLORS[n.type]+'">'+n.type+'</text>'
+   +'<text x="0" y="'+(-h/2+34)+'" text-anchor="middle" font-size="24">'+n.icon+'</text>'
+   +'<text x="0" y="'+(-h/2+(h-40))+'" text-anchor="middle" font-size="7.5" fill="#cbb992">$'+n.income+'/t · cost $'+n.cost+'</text>'
+   +'<text x="0" y="'+(h/2-20)+'" text-anchor="middle" font-size="9" font-weight="800" fill="#241c12">'+n.name[0]+'</text>'+cap2;
+  tag=ownr?'<circle cx="'+(w/2-14)+'" cy="'+(h/2-14)+'" r="9" fill="'+oc+'" stroke="#3a2a1a"/><text x="'+(w/2-14)+'" y="'+(h/2-10.5)+'" text-anchor="middle" font-size="9.5" font-weight="800" fill="#141009">'+initial+'</text>':'';
+  bugpos=[w/2-22,-h/2+18];pincy=-h/2;
+ } else if(n.shape==='bubble'){
+  cardB=42;
+  const d2=n.name[1]?'<text x="0" y="-8" text-anchor="middle" font-size="9" font-weight="700" letter-spacing="1" fill="#8e2620">'+n.name[1]+'</text>':'';
+  inner='<path d="M-38,28 L-8,28 L-42,58 Z" fill="#f8f3e2" stroke="'+oc+'" stroke-width="2" stroke-linejoin="round"/>'
+   +'<rect class="card" x="-75" y="-42" width="150" height="76" rx="16" fill="#f8f3e2" stroke="'+oc+'" stroke-width="'+(ownr?4:2)+'"/>'
+   +'<text x="0" y="-22" text-anchor="middle" font-size="11" font-weight="800" font-style="italic" fill="#241c12">'+n.name[0]+'</text>'+d2
+   +'<text x="0" y="12" text-anchor="middle" font-size="18">'+n.icon+'</text>'
+   +'<text x="0" y="27" text-anchor="middle" font-size="7.5" fill="#6b5b45">'+n.type+' · $'+n.income+'/t · cost $'+n.cost+'</text>';
+  tag=ownr?'<circle cx="64" cy="-32" r="9" fill="'+oc+'" stroke="#3a2a1a"/><text x="64" y="-28.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="#141009">'+initial+'</text>':'';
+  bugpos=[52,26];pincy=-42;
+ } else if(n.shape==='logo'){
+  cardB=40;
+  const band='<path d="M-75,-14 L-75,-33 Q-75,-40 -68,-40 L68,-40 Q75,-40 75,-33 L75,-14 Z" fill="'+(n.band||TYPE_COLORS[n.type])+'"/>';
+  const l1='<text x="0" y="-27" text-anchor="middle" font-size="'+(n.name[0].length>13?7.5:9.5)+'" font-weight="900" letter-spacing="1" fill="#fff6e6">'+n.name[0]+'</text>';
+  const l2=n.name[1]?'<text x="0" y="-17.5" text-anchor="middle" font-size="7" font-weight="700" letter-spacing="1" fill="#ffe9c9">'+n.name[1]+'</text>':'';
+  inner='<rect class="card" x="-75" y="-40" width="150" height="80" rx="7" fill="#f2ead8" stroke="'+oc+'" stroke-width="'+(ownr?4:2)+'"/>'+band+l1+l2
+   +'<text x="-52" y="12" font-size="22">'+n.icon+'</text>'
+   +'<text x="22" y="0" text-anchor="middle" font-size="8" font-weight="800" letter-spacing="1.2" fill="'+TYPE_COLORS[n.type]+'">'+n.type+'</text>'
+   +'<text x="22" y="13" text-anchor="middle" font-size="9" fill="#6b5b45">$'+n.income+'/t · cost $'+n.cost+'</text>'
+   +'<text x="22" y="26" text-anchor="middle" font-size="6.5" font-style="italic" fill="#9b8a6d">'+n.sub.slice(0,26)+'</text>';
+  tag=ownr?'<circle cx="64" cy="-32" r="9" fill="'+oc+'" stroke="#3a2a1a"/><text x="64" y="-28.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="#141009">'+initial+'</text>':'';
+ } else if(n.shape==='chart'){
+  cardB=32;
+  /* the mood redraws the lines: yields go vertical in a PANIC, oil spikes in a BOOM */
+  let sk=n.spark;
+  if(S&&S.mood==='PANIC'&&(COUNTRY.indexOf(n.id)>=0||n.id==='tenyear'))sk='spike';
+  if(S&&S.mood==='BOOM'&&n.id==='oilgraph')sk='spike';
+  const sp=SPK[sk]||SPK.flat;
+  const nm=n.name.map((t,i)=>'<text x="0" y="'+(i===0?-19:-10)+'" text-anchor="middle" font-size="7.5" font-weight="800" fill="#241c12">'+t+'</text>').join('');
+  inner='<rect class="card" x="-65" y="-32" width="130" height="64" rx="5" fill="#f4eeda" stroke="'+oc+'" stroke-width="'+(ownr?3.5:2)+'"/>'
+   +'<rect x="-65" y="-32" width="7" height="64" rx="3" fill="'+TYPE_COLORS.CHART+'"/>'
+   +nm
+   +'<polyline points="'+sp+'" fill="none" stroke="#b0453a" stroke-width="1.8"/>'
+   +'<line x1="-50" y1="15.5" x2="50" y2="15.5" stroke="#c9bfa4" stroke-width="1"/>'
+   +'<text x="0" y="26.5" text-anchor="middle" font-size="6.5" fill="#6b5b45">CHART · $'+n.income+'/t · cost $'+n.cost+'</text>';
+  tag=ownr?'<circle cx="55" cy="-25" r="8.5" fill="'+oc+'" stroke="#3a2a1a"/><text x="55" y="-22" text-anchor="middle" font-size="9" font-weight="800" fill="#141009">'+initial+'</text>':'';
+  bugpos=[47,29];pincy=-32;
+ } else if(n.shape==='news'){
+  cardB=42;
+  inner='<rect class="card" x="-75" y="-42" width="150" height="84" rx="3" fill="#efeadb" stroke="'+oc+'" stroke-width="'+(ownr?4:2)+'"/>'
+   +'<rect x="-75" y="-42" width="150" height="13" fill="#241c12"/>'
+   +'<text x="0" y="-32.5" text-anchor="middle" font-size="8" font-weight="900" letter-spacing="3" fill="#f2ead8">THE DAILY CON</text>'
+   +'<text x="0" y="-17" text-anchor="middle" font-size="10.5" font-weight="900" fill="#241c12">'+n.name[0]+'</text>'
+   +'<text x="0" y="-7" text-anchor="middle" font-size="8" font-weight="700" fill="#8e2620">'+n.name[1]+'</text>'
+   +'<text x="0" y="8" text-anchor="middle" font-size="17">'+n.icon+'</text>'
+   +'<text x="0" y="22" text-anchor="middle" font-size="6.5" font-style="italic" fill="#6b5b45">'+n.sub.slice(0,30)+'</text>'
+   +'<text x="0" y="35" text-anchor="middle" font-size="7.5" fill="#6b5b45">'+n.type+' · $'+n.income+'/t · cost $'+n.cost+'</text>';
+  tag=ownr?'<circle cx="64" cy="-34" r="9" fill="'+oc+'" stroke="#3a2a1a"/><text x="64" y="-30.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="#141009">'+initial+'</text>':'';
+  bugpos=[52,30];pincy=-42;
+ } else if(n.shape==='made'){
+  cardB=37;
+  inner='<rect class="card" x="-70" y="-37" width="140" height="74" rx="10" fill="#4b2378" stroke="'+(ownr?oc:'#2c1448')+'" stroke-width="'+(ownr?4:2)+'"/>'
+   +'<text x="0" y="2" text-anchor="middle" font-size="26" font-weight="900" letter-spacing="6" fill="#e6d5ff">MADE</text>'
+   +'<text x="0" y="18" text-anchor="middle" font-size="9" fill="#c4a5e8">? ? ? ? ? ?</text>'
+   +'<text x="0" y="-24" text-anchor="middle" font-size="7" font-weight="800" letter-spacing="1.5" fill="#c4a5e8">'+n.type+' · $'+n.income+'/t · cost $'+n.cost+'</text>';
+  tag=ownr?'<circle cx="58" cy="-30" r="9" fill="'+oc+'" stroke="#2c1448"/><text x="58" y="-26.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="#141009">'+initial+'</text>':'';
+  bugpos=[50,24];pincy=-37;
+ } else if(n.shape==='mpc'){
+  cardB=48;
+  const nm=n.name.map((t,i)=>'<text x="0" y="'+(i===0?-22:(i===1?-12:-2))+'" text-anchor="middle" font-size="'+(i===2?7.5:9)+'" font-weight="900" fill="#5c3a00">'+t+'</text>').join('');
+  inner='<rect x="-82" y="-48" width="164" height="96" rx="6" fill="none" stroke="#b08d2e" stroke-width="3"/>'
+   +'<rect class="card" x="-78" y="-44" width="156" height="88" rx="5" fill="#f7edd2" stroke="'+oc+'" stroke-width="'+(ownr?4:2)+'"/>'
+   +nm+'<text x="0" y="18" text-anchor="middle" font-size="20">🏆</text>'
+   +'<text x="0" y="34" text-anchor="middle" font-size="7.5" fill="#8a6b1e">WILD · $'+n.income+'/t · cost $'+n.cost+' · ALT WIN</text>';
+  tag=ownr?'<circle cx="66" cy="-38" r="9" fill="'+oc+'" stroke="#3a2a1a"/><text x="66" y="-34.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="#141009">'+initial+'</text>':'';
+  bugpos=[56,34];pincy=-48;
+ } else if(n.shape==='sat'){
+  cardB=45;
+  inner='<rect class="card" x="-85" y="-45" width="170" height="90" rx="4" fill="#f8f3e2" stroke="'+oc+'" stroke-width="'+(ownr?4:2)+'"/>'
+   +'<rect x="-72" y="-33" width="144" height="48" fill="#c8a86b" stroke="#8a6b3a"/>'
+   +'<path d="M-72,5 L-30,-8 L10,6 L50,-6 L72,2" fill="none" stroke="#8a6b3a" stroke-width="2"/>'
+   +'<circle cx="40" cy="-24" r="7" fill="#f2d98c" stroke="#8a6b3a"/>'
+   +'<text x="-60" y="-20" font-size="16">'+n.icon+'</text>'
+   +'<text x="0" y="26" text-anchor="middle" font-size="8.5" font-weight="800" fill="#241c12">'+n.name.join(' · ')+'</text>'
+   +'<text x="0" y="38" text-anchor="middle" font-size="7.5" fill="#6b5b45">'+n.type+' · $'+n.income+'/t · cost $'+n.cost+'</text>';
+  tag=ownr?'<circle cx="72" cy="-37" r="9" fill="'+oc+'" stroke="#3a2a1a"/><text x="72" y="-33.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="#141009">'+initial+'</text>':'';
+  bugpos=[62,-30];pincy=-45;
+ } else {
+  cardB=40;
+  const two=n.name.length===2;
+  const nm=n.name.map((t,i)=>'<tspan x="24" dy="'+(i===0?(two?-19:-8):12)+'">'+t+'</tspan>').join('');
+  inner='<rect class="card" x="-75" y="-40" width="150" height="80" rx="7" fill="#f2ead8" stroke="'+oc+'" stroke-width="'+(ownr?4:2)+'"/>'
+   +'<text x="-56" y="13" font-size="26">'+n.icon+'</text>'
+   +'<text text-anchor="middle" x="24" font-size="10" font-weight="700" fill="#241c12">'+nm+'</text>'
+   +'<text text-anchor="middle" x="24" y="8" font-size="8" font-weight="700" letter-spacing="1.2" fill="'+TYPE_COLORS[n.type]+'">'+n.type+'</text>'
+   +'<text text-anchor="middle" x="24" y="21" font-size="9" fill="#6b5b45">$'+n.income+'/t · cost $'+n.cost+'</text>';
+  tag=ownr?'<circle cx="64" cy="-32" r="9" fill="'+oc+'" stroke="#3a2a1a"/><text x="64" y="-28.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="#141009">'+initial+'</text>':'';
  }
- let moodGlow='';
- if(mb!==0){
-  moodGlow='<rect class="moodhalo" x="'+(-w/2-5)+'" y="'+(-h/2-5)+'" width="'+(w+10)+'" height="'+(h+10)+'" fill="none" stroke="'+md.color+'" stroke-width="3.5" stroke-dasharray="3 6"/>';
- }
- const ownerTag=ownr?'<circle cx="'+(w/2-10)+'" cy="'+(-h/2+10)+'" r="8" fill="'+oc+'" stroke="#000" stroke-width="1.5"/><text x="'+(w/2-10)+'" y="'+(-h/2+13.5)+'" text-anchor="middle" font-size="8" font-weight="900" fill="#fff">'+String(o+1)+'</text>':'';
- const bugTag=bug?'<text x="'+(w/2-24)+'" y="'+(-h/2+18)+'" font-size="12">🐛</text>':'';
- const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ const moodBadge=mb!==0?'<text x="0" y="'+(cardB+12)+'" text-anchor="middle" font-size="10" font-weight="900" fill="'+md.color+'">'+(mb>0?'▲ +$1/t':'▼ −$1/t')+'</text>':'';
+ const pin='<circle cx="0" cy="'+(pincy-1)+'" r="6.5" fill="'+(ownr?oc:'#cf3a2e')+'" stroke="#3a2a1a" stroke-width="1.5"/><circle cx="-2" cy="'+(pincy-3)+'" r="1.8" fill="rgba(255,255,255,.55)"/>';
+ const bugtx=bug?'<text x="'+bugpos[0]+'" y="'+bugpos[1]+'" font-size="13">🐛</text>':'';
  return '<g class="node '+cls+'" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+') rotate('+n.rot+')">'
-  +moodGlow+halo
-  +'<image class="node-image" href="'+n.image+'" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" preserveAspectRatio="none"/>'
-  +ownerTag+bugTag
-  +'<title>'+esc(n.name.join(' '))+' — '+n.type+' · $'+n.income+'/turn · seize $'+n.cost+'&#10;'+esc(n.sub)+'&#10;'+esc(n.sp)+'</title></g>';
+  +moodGlow+halo+inner+tag+moodBadge+pin+bugtx
+  +'<title>'+n.name.join(' ')+' — '+n.type+' · $'+n.income+'/turn · seize $'+n.cost+'&#10;'+n.sub+'&#10;'+n.sp+'</title></g>';
 }
 function tokenLayer(){
  const byPos={};S.players.forEach((p,i)=>{(byPos[p.pos]=byPos[p.pos]||[]).push(i)});
@@ -1141,10 +1126,8 @@ function renderBoard(){
   lx+=14+k.length*6.2+16;
  });
  s+='</g>';
- const goalNow=goalAmount();
- const leader=S.players.reduce((a,b)=>b.money>a.money?b:a,S.players[0]);
- s+='<g transform="translate(1200,1490)"><rect x="-580" y="-14" width="1160" height="25" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="10.5" font-weight="700" letter-spacing="1" fill="#fff">WIN CONDITION: FIRST TO $'+goalNow+' TAKES THE CON</text></g>';
- s+='<g transform="translate(1200,1526)"><rect x="-580" y="-12" width="1160" height="23" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="10" font-weight="700" letter-spacing="1" fill="aqua">FRONT RUNNER: '+esc(String(leader.name).toUpperCase())+' — $'+leader.money+' · $'+Math.max(0,goalNow-leader.money)+' TO GO</text></g>';
+ s+='<g transform="translate(1200,1490)"><rect x="-580" y="-14" width="1160" height="25" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="10.5" font-weight="700" letter-spacing="1" fill="#fff">MAIN WIN: 8 CONNECTED — BANK · COMMODITY · MEDIA · TWO CHARTS &nbsp;·&nbsp; BANK RUN: ANY 5 BANKS</text></g>';
+ s+='<g transform="translate(1200,1526)"><rect x="-580" y="-12" width="1160" height="23" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="10" font-weight="700" letter-spacing="1" fill="aqua">SCHOOL WIN: MONETARY POLICY COMPETITION + ST ANDREW’S + THE IB + ANY 4 CHARTS — TAKE THE TROPHY</text></g>';
  NODES.forEach(n=>{
   let cls='';
   if(S&&!S.over){
@@ -1191,7 +1174,7 @@ function renderSide(){
   if(S.phase==='event')phaseHtml='<div class="phlabel">MARKET EVENT</div><p>The market moves whether anyone likes it or not…</p>';
   else phaseHtml='<div class="phlabel">STANDBY</div><p>⏳ Waiting for <b style="color:'+p.color+'">'+esc(p.name)+'</b>'+(p.dc?' <i>(away — auto-playing)</i>':'')+'…</p><p>Scheme in the chat. Hover exhibits to study their powers.</p>';
  } else if(S.phase==='move'){
-  const maxSteps=S.caution?1:3+(S.owner.coal===me?1:0)+((S.owner.train===me||S.owner.bullet===me)?1:0)+(S.owner.asics===me?1:0)+(S.extraStep?1:0)+(S.slipped?2:0);
+  const maxSteps=3+(S.owner.coal===me?1:0)+((S.owner.train===me||S.owner.bullet===me)?1:0)+(S.owner.asics===me?1:0)+(S.extraStep?1:0);
   const dots='●'.repeat(Math.max(0,S.steps))+'○'.repeat(Math.max(0,maxSteps-S.steps));
   if(S.mode==='fly'){phaseHtml='<div class="phlabel">PHASE 1 · MOVE — FLYING</div><p><b>FLYING:</b> click <b>any node</b> on the board to land there ($3).</p><button class="act" data-act="cancel">Cancel flight</button>'}
   else{
@@ -1200,8 +1183,7 @@ function renderSide(){
     +'<div class="dots">'+dots+' <span>'+S.steps+' step'+(S.steps!==1?'s':'')+' left</span></div>'
     +'<button class="act" data-act="endmove">Stay put — end movement</button>'
     +((!S.extraStep&&p.intel>=1)?'<button class="act" data-act="favor">🛈 Burn a favor — 1 🛈 (+1 step this turn)</button>':'')
-    +((S.owner.qantas===me)?'<button class="act" data-act="flymode"'+(p.money>=3?'':' disabled')+'>✈️ Fly the Qantas jet — $3 (anywhere)</button>':'')
-    +((S.owner.f1===me&&!S.slipped)?'<button class="act" data-act="slip"'+(p.money>=2?'':' disabled')+'>🏎️ Slipstream — $2 (+2 steps, $2 off next seizure)</button>':'');
+    +((S.owner.f1===me)?'<button class="act" data-act="flymode"'+(p.money>=3?'':' disabled')+'>🏎️ Fly the F1 jet — $3 (anywhere)</button>':'');
   }
  } else if(S.phase==='action'){
   const nid=p.pos,n=curN,prev=S.owner[nid];
@@ -1226,7 +1208,7 @@ function renderSide(){
     if(nid==='asics')btns.push('<button class="act primary" data-act="jog">Jog a lap — free −1 🔥</button>');
    }else{
     const afford=maxPay>=cost;
-    const lbl=isTake?('Hostile takeover — $'+cost+(S.dossier?' (DOSSIER: list price)':' (takeover '+(S.seizeCount[nid]||0)+'×)')):('Seize '+n.name.join(' ')+' — $'+cost);
+    const lbl=isTake?('Hostile takeover — $'+cost+(S.dossier?' (DOSSIER: list price)':' (owner pockets $'+n.cost+')')):('Seize '+n.name.join(' ')+' — $'+cost);
     btns.push('<button class="act primary" data-act="seize"'+(afford?'':' disabled')+'>'+lbl+(afford?'':' — can’t afford')+'</button>');
    }
    const bugCost=(S.owner.insider===me)?0:1;
@@ -1244,7 +1226,6 @@ function renderSide(){
    btns.push('<button class="act" data-act="spy"'+(p.intel>=2?'':' disabled')+' title="Free action — see the next event card, anywhere">🛈 Spy on the deck — 2 🛈 (see next event)</button>');
    btns.push('<button class="act" data-act="dossier"'+((p.intel>=3&&!S.dossier)?'':' disabled')+' title="Free action — hostile takeovers cost list price this turn">📂 The Dossier — 3 🛈 (takeovers at list price)</button>');
    btns.push('<button class="act" data-act="sweep"'+(p.intel>=2?'':' disabled')+' title="Your action — remove all bugs on your nodes">🧹 Sweep for bugs — 2 🛈 (cleanse your nodes)</button>');
-    btns.push('<button class="act" data-act="masspanic"'+(p.intel>=5?'':' disabled')+' title="Your action — every player gains 2 Cortisol">🔥 Mass panic — 5 🛈 (+2 Cortisol to everyone)</button>');
    for(let k=1;k<=3;k++){
     btns.push('<button class="act" data-act="sell" data-n="'+k+'"'+(p.intel>=k?'':' disabled')+' title="Your action — cash rumors at the exchange">💰 Sell '+k+' 🛈 → $'+(k*md.rate)+'</button>');
    }
@@ -1261,23 +1242,20 @@ function renderSide(){
   const nodes=NODES.filter(nn=>S.owner[nn.id]===i).length;
   const targetable=isTurn&&S.phase==='action'&&(S.mode==='leak'||S.mode==='audit'||S.mode==='tweet'||S.mode==='roast')&&i!==me;
   const face=charSrc(pl.char);
-  return '<div class="prow'+(i===me?' me':'')+(targetable?' targetable':'')+(pl.cortisol>=6?' hot':'')+'" data-rival="'+i+'" style="--pc:'+pl.color+'">'
+  return '<div class="prow'+(i===me?' me':'')+(targetable?' targetable':'')+(pl.heat>=6?' hot':'')+'" data-rival="'+i+'" style="--pc:'+pl.color+'">'
    +(face?'<img class="pface" src="'+face+'" alt="">':'<span class="pnum">'+(i+1)+'</span><span class="pdot"></span>')
    +'<span class="pname">'+esc(pl.name)+(i===me?' <i style="color:#9ad">(you)</i>':'')+(pl.dc?' 💤':'')+'</span>'
-   +'<span class="pstats">$'+pl.money+' · 🛈'+pl.intel+' · 🔥'+pl.cortisol+'</span>'
-   +'<span class="pnodes">'+nodes+' node'+(nodes!==1?'s':'')+' · set '+(WIN_TYPES.length-missingTypes(i).length)+'/'+WIN_TYPES.length+'</span></div>';
+   +'<span class="pstats">$'+pl.money+' · 🛈'+pl.intel+' · 🔥'+pl.heat+'</span>'
+   +'<span class="pnodes">'+nodes+' node'+(nodes!==1?'s':'')+'</span></div>';
  }).join('');
- const myMissing=missingTypes(me);
- const setHtml=WIN_TYPES.map(t=>{const has=hasType(me,t);return '<span style="color:'+(has?'#7fe08d':'#ff6b5e')+'">'+(has?'✔':'✘')+' '+t+'</span>'}).join('');
  const chatHtml=(S.chat||[]).map(c=>'<div><b style="color:'+c.c+'">'+esc(c.n)+':</b> '+esc(c.t)+'</div>').join('')||'<div style="opacity:.4;font-style:italic">— the wire is quiet —</div>';
  const chatVal=(window.__chatDraft)||'';
- side.innerHTML='<div class="netstrip">ROOM <b>'+(Net.roomLabel||Net.roomCode||'·····')+'</b> · '+(Net.role==='host'?'HOST':'SEAT '+(Net.myIdx+1))+' · 🎯 TARGET $'+goalAmount()+' · '+(S.players.filter(pl=>!pl.dc).length+'/'+S.players.length+' connected')+(S.deckCount!=null?' · 🎴 '+S.deckCount+' events left':'')+' · ⛽ '+(QUIK_SLOTS[S.quikSlot|0]||QUIK_SLOTS[0]).label+'</div>'
+ side.innerHTML='<div class="netstrip">ROOM <b>'+(Net.roomCode||'·····')+'</b> · '+(Net.role==='host'?'HOST':'SEAT '+(Net.myIdx+1))+' · '+(S.players.filter(pl=>!pl.dc).length+'/'+S.players.length+' connected')+(S.deckCount!=null?' · 🎴 '+S.deckCount+' events left':'')+' · ⛽ '+(QUIK_SLOTS[S.quikSlot|0]||QUIK_SLOTS[0]).label+'</div>'
   +'<div class="moodstrip" style="border-color:'+md.color+'"><span class="mdot" style="background:'+md.color+'"></span><b style="color:'+md.color+'">'+md.label+'</b><span>'+md.desc+'</span><span class="mwire">“'+esc(S.wire||'all quiet on the wire')+'”</span></div>'
   +'<div class="brand"><div class="t1">THE BIG CON</div><div class="t2">82 exhibits · charts unstacked · Quikstop wanders · online, 2–8 · no dice (they’re rigged)</div></div>'
   +'<div class="turncard" style="border-color:'+p.color+'"><div class="turnlab">TURN '+S.turn+'</div><div class="turnname" style="color:'+p.color+'">'+esc(p.name)+(isTurn?' — that’s you':'')+'</div>'
-  +'<div class="resline">$ '+p.money+' &nbsp;·&nbsp; 🛈 '+p.intel+' &nbsp;·&nbsp; 🔥 '+p.cortisol+(p.cortisol>=6?' <span class="danger">RAID AT 8</span>':'')+'</div>'
+  +'<div class="resline">$ '+p.money+' &nbsp;·&nbsp; 🛈 '+p.intel+' &nbsp;·&nbsp; 🔥 '+p.heat+(p.heat>=6?' <span class="danger">RAID AT 8</span>':'')+'</div>'
   +'<div class="holds" title="holdings of '+esc(p.name)+'">'+(isTurn?ownedIcons:'<span style="opacity:.5;font-size:12px">'+NODES.filter(n=>S.owner[n.id]===S.cur).length+' holdings</span>')+'</div></div>'
-  +'<div class="setcard"><span class="st">🎯 WIN SET</span>'+setHtml+'<span style="flex-basis:100%;color:#9ad">'+(myMissing.length?'still need: '+myMissing.join(', ')+' · and $'+goalAmount():'full set held — now bank $'+goalAmount())+'</span></div>'
   +'<div class="phasecard">'+phaseHtml+'</div>'
   +'<div class="paneltitle">THE SYNDICATE — '+S.players.length+' AT THE TABLE</div><div>'+prows+'</div>'
   +'<div class="paneltitle">THE RECORD</div><div class="log" id="logbox">'+S.log.map(l=>'<div>'+l+'</div>').join('')+'</div>'
@@ -1294,13 +1272,13 @@ function renderSide(){
 }
 function sendChat(t){
  if(Net.role==='host'){addChat(Net.myIdx,t)}
- else if(Net.conn&&Net.conn.open){Net.conn.send({t:'chat',text:t})}
+ else busSend({t:'chat',text:t,to:'host'});
 }
 function getPlayerId(){const key='bigcon-player-id';let id=sessionStorage.getItem(key);if(!id){id=crypto.randomUUID();sessionStorage.setItem(key,id)}return id;}
 function dispatch(m){
  if(!S||S.over)return;
  if(Net.role==='host')applyIntent(Net.myIdx,m);
- else if(Net.conn&&Net.conn.open)Net.conn.send({t:'intent',act:m.act,id:m.id,target:m.target,kind:m.kind,choice:m.choice,n:m.n});
+ else busSend({t:'intent',act:m.act,id:m.id,target:m.target,kind:m.kind,choice:m.choice,n:m.n,to:'host'});
 }
 
 /* ================= INPUT — pan, zoom & taps ================= */
@@ -1376,7 +1354,6 @@ function handleNodeTap(t){
  switch(act){
   case 'endmove':dispatch({act:'endmove'});break;
   case 'flymode':dispatch({act:'flymode'});break;
-  case 'slip':dispatch({act:'slip'});break;
   case 'favor':dispatch({act:'favor'});break;
   case 'seize':dispatch({act:'seize'});break;
   case 'bugmode':dispatch({act:'bugmode'});break;
@@ -1399,24 +1376,13 @@ function handleNodeTap(t){
  }
 });
 
-/* ================= NETWORKING ================= */
-const PFX='bigcon-oz-';
-/* Room codes are jt portal buzzwords — every one of these has its own line in
-   the jt portal news ticker, so the code is always something you can say out loud. */
-const BUZZWORDS=['WORLD ECONOMIC FORUM','NESA','JAKE TOMKINS','ELIJAH SON','SETH WEGRZYN','AIDAN NEWLING','DANIEL SWAIN','TOKTIMER','RBA','BIG BESSENT','NEW LAKEMBA','JTPORTAL','MCMETRO','CEO OF COAL','INKDIN','HORMUZ','PYONGYANG UNIVERSITY','LOW CORTISOL'];
-function codeSlug(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
-function codeLabel(slug){const hit=BUZZWORDS.find(b=>codeSlug(b)===slug);return hit||slug}
-/* Typed codes are forgiving: case, spaces and punctuation are all ignored, and a
-   unique prefix of a buzzword is enough. */
-function matchBuzzword(input){
- const s=codeSlug(input);
- if(!s)return '';
- if(BUZZWORDS.some(b=>codeSlug(b)===s))return s;
- const hits=BUZZWORDS.filter(b=>codeSlug(b).startsWith(s));
- return hits.length===1?codeSlug(hits[0]):s;
-}
-function genCode(){return codeSlug(BUZZWORDS[Math.floor(Math.random()*BUZZWORDS.length)])}
-function setNetStatus(msg,err){const el=$('netStatus');el.textContent=msg||'';el.className=err?'err':''}
+/* ================= NETWORKING (ntfy.sh room relay — no PeerJS, no MQTT) ================= */
+const NTFY_HTTP='https://ntfy.sh';
+const NTFY_WS='wss://ntfy.sh';
+const CODECH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const HOST_TYPES={welcome:1,lobby:1,begin:1,state:1,prompt:1,event:1,sys:1,reload:1,kick:1};
+function genCode(){let s='';for(let i=0;i<5;i++)s+=CODECH[Math.floor(Math.random()*CODECH.length)];return s}
+function setNetStatus(msg,err){const el=$('netStatus');if(!el)return;el.textContent=msg||'';el.className=err?'err':''}
 function cleanName(s){return String(s||'').replace(/[<>&"'`]/g,'').trim().slice(0,16)}
 function showFatal(msg){
  const ov=document.createElement('div');ov.className='overlay';
@@ -1424,127 +1390,202 @@ function showFatal(msg){
  card.innerHTML='<div class="mtitle">CONNECTION LOST</div><div class="mbody"><p>'+esc(msg)+'</p></div><div class="mopts"><button onclick="location.reload()">Reload</button></div>';
  ov.appendChild(card);document.body.appendChild(ov);
 }
-/* ---- WEBRTC / ICE CONFIG ---- */
-/* Keep game traffic peer-to-peer. STUN discovers routes; TURN relays only when
-   a direct route is impossible. Several relays over UDP, TCP and TLS/443:
-   office firewalls and mobile carriers block different ones. */
-const BIGCON_ICE_CONFIG={
- iceServers:[
-  {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302','stun:global.stun.twilio.com:3478']},
-  {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478','turn:eu-0.turn.peerjs.com:3478?transport=tcp','turn:us-0.turn.peerjs.com:3478?transport=tcp'],username:'peerjs',credential:'peerjsp'},
-  {urls:['turns:eu-0.turn.peerjs.com:5349','turns:us-0.turn.peerjs.com:5349'],username:'peerjs',credential:'peerjsp'}
- ],
- sdpSemantics:'unified-plan',
- iceCandidatePoolSize:4
-};
-const BIGCON_PEER_OPTIONS={config:BIGCON_ICE_CONFIG,debug:1,pingInterval:5000};
-const HEARTBEAT_MS=4000,CONN_TIMEOUT_MS=16000;
+function roomTopic(code){return 'bigconV4'+String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
+function refreshPipes(){
+ Net.conns=(Net.roster||[]).map(function(e){
+  if(!e||!e.playerId)return null;
+  return {open:true,playerId:e.playerId,send:function(msg){busSend(Object.assign({},msg,{to:e.playerId}))}};
+ });
+}
+function rememberMid(mid){
+ if(!mid)return false;
+ if(Net.seen[mid])return true;
+ Net.seen[mid]=1;
+ Net.seenList.push(mid);
+ if(Net.seenList.length>500){
+  const drop=Net.seenList.splice(0,250);
+  drop.forEach(function(id){delete Net.seen[id]});
+ }
+ return false;
+}
+function onBusMessage(d){
+ if(!d||!d.t)return;
+ if(d.from&&d.from===Net.playerId)return;
+ if(rememberMid(d.mid))return;
+ if(d.to&&d.to!=='*'&&d.to!==Net.playerId){
+  if(!(d.to==='host'&&Net.role==='host'))return;
+ }
+ if(Net.role==='host')onHostBus(d);
+ else onGuestData(d);
+}
+
+function busSend(msg){
+ if(!Net.roomCode||!Net.playerId)return;
+ const envelope=Object.assign({
+  v:4,
+  mid:Net.playerId+'-'+(++Net.msgSeq)+'-'+Date.now().toString(36),
+  from:Net.playerId,
+  role:Net.role,
+  ts:Date.now()
+ },msg);
+ if(Net.bc){try{Net.bc.postMessage(envelope)}catch(e){}}
+ enqueuePub(JSON.stringify(envelope));
+}
+
+function enqueuePub(text){
+ Net.pubQ=Net.pubQ||[];
+ Net.pubQ.push(text);
+ if(Net.pubQ.length>40)Net.pubQ.splice(0,Net.pubQ.length-40);
+ pumpPub();
+}
+function pumpPub(){
+ if(Net.pubBusy)return;
+ const text=(Net.pubQ||[]).shift();
+ if(!text)return;
+ Net.pubBusy=true;
+ ntfyPublish(text).then(function(){
+  Net.pubBusy=false;
+  pumpPub();
+ }).catch(function(err){
+  Net.lastPubErr=String(err&&err.message||err);
+  Net.pubQ.unshift(text);
+  Net.pubBusy=false;
+  setTimeout(pumpPub,2500);
+ });
+}
+function ntfyPublish(text){
+ const topic=roomTopic(Net.roomCode);
+ const headers={};
+ if(text.length>=3500){
+  headers.Filename='bigcon.json';
+  headers['Content-Type']='application/octet-stream';
+ }
+ return fetch(NTFY_HTTP+'/'+topic,{method:'POST',body:text,headers:headers}).then(function(r){
+  if(r.status===429)throw new Error('relay busy — retrying');
+  if(!r.ok)throw new Error('relay HTTP '+r.status);
+ });
+}
+
+function connectRelays(onReady){
+ Net.msgSeq=Net.msgSeq||0;
+ Net.seen=Net.seen||Object.create(null);
+ Net.seenList=Net.seenList||[];
+ Net.pubQ=Net.pubQ||[];
+ let ready=false;
+ function markReady(why){
+  if(ready)return;
+  ready=true;
+  Net.relayName=why;
+  onReady&&onReady();
+ }
+ try{
+  if(Net.bc){try{Net.bc.close()}catch(e){}}
+  Net.bc=new BroadcastChannel('bigcon-'+Net.roomCode);
+  Net.bc.onmessage=function(ev){try{onBusMessage(ev.data)}catch(e){console.error(e)}};
+ }catch(e){Net.bc=null}
+
+ function openNtfy(){
+  if(Net.ntfyStop)return;
+  const topic=roomTopic(Net.roomCode);
+  let ws;
+  try{
+   ws=new WebSocket(NTFY_WS+'/'+topic+'/ws?since=15m');
+  }catch(e){
+   setNetStatus('Browser blocked the relay websocket.',true);
+   setTimeout(openNtfy,3000);
+   return;
+  }
+  Net.ntfyWs=ws;
+  const boot=setTimeout(function(){
+   if(!ready)setNetStatus('Still opening the matchmaking relay…');
+  },4000);
+  ws.onopen=function(){
+   clearTimeout(boot);
+   Net.ntfyOpen=true;
+   markReady('ntfy.sh');
+  };
+  ws.onmessage=function(ev){
+   let obj;try{obj=JSON.parse(ev.data)}catch(e){return}
+   if(!obj||obj.event!=='message')return;
+   function take(text){
+    let d;try{d=JSON.parse(text)}catch(e){return}
+    try{onBusMessage(d)}catch(err){console.error(err)}
+   }
+   if(obj.attachment&&obj.attachment.url){
+    fetch(obj.attachment.url).then(function(r){return r.text()}).then(take).catch(function(){});
+    return;
+   }
+   if(typeof obj.message==='string'&&obj.message.charAt(0)==='{')take(obj.message);
+  };
+  ws.onerror=function(){};
+  ws.onclose=function(){
+   Net.ntfyOpen=false;
+   if(Net.ntfyStop)return;
+   setNetStatus('Relay dropped — reconnecting…',true);
+   setTimeout(openNtfy,2000);
+  };
+ }
+ openNtfy();
+ setTimeout(function(){
+  if(!ready){
+   setNetStatus('Could not reach ntfy.sh. You need internet, and some school networks block it.',true);
+   if(Net.role==='guest')$('btnJoinGo').disabled=false;
+   if(Net.role==='host')$('btnCreate').disabled=false;
+  }
+ },12000);
+}
+
+function seatByPlayerId(playerId){
+ if(!playerId)return -1;
+ if(S&&S.players){
+  const si=S.players.findIndex(function(pl){return pl.playerId===playerId});
+  if(si>=0)return si;
+ }
+ return (Net.roster||[]).findIndex(function(e){return e&&e.playerId===playerId});
+}
 
 /* ---- HOST ---- */
 function hostCreate(name){
- setNetStatus('Contacting the matchmaker…');
- Net.role='host';Net.myName=name;Net.playerId=getPlayerId();Net.myIdx=0;Net.roster=[{name,playerId:Net.playerId,conn:null,char:null}];Net.conns=[null];
- Net.roomCode=genCode();Net.roomLabel=codeLabel(Net.roomCode);
- hostOpenPeer();
- startHostHeartbeat();
-}
-function hostOpenPeer(){
- const code=Net.roomCode;
- const old=Net.peer;
- if(old&&!old.destroyed){try{old.destroy()}catch(_){}}
- const p=new Peer(PFX+code,BIGCON_PEER_OPTIONS);
- Net.peer=p;
- let opened=false;
- p.on('open',()=>{
-  opened=true;
-  if(Net.peer!==p)return;
+ setNetStatus('Opening the matchmaking relay…');
+ Net.ntfyStop=false;
+ Net.role='host';
+ Net.myName=name;
+ Net.playerId=getPlayerId();
+ Net.hostId=Net.playerId;
+ Net.myIdx=0;
+ Net.roomCode=genCode();
+ Net.roster=[{name:name,playerId:Net.playerId,conn:null,char:null}];
+ refreshPipes();
+ connectRelays(function(){
   showLobby(true);
-  if(!Net.started)setNetStatus('Room created — seats up to 8. Waiting for co-conspirators…');
- });
- p.on('disconnected',()=>{
-  if(Net.peer!==p||p.destroyed)return;
-  try{p.reconnect()}catch(_){setTimeout(()=>{if(Net.peer===p)hostOpenPeer()},1500)}
- });
- p.on('error',e=>{
-  const ty=e&&e.type;
-  if(Net.peer!==p)return;
-  if(ty==='unavailable-id'&&!opened&&!Net.started){try{p.destroy()}catch(x){}Net.roomCode=genCode();Net.roomLabel=codeLabel(Net.roomCode);hostOpenPeer();return}
-  if(ty==='unavailable-id'){/* our own stale registration on the matchmaker */ setTimeout(()=>{if(Net.peer===p)hostOpenPeer()},2000);return}
-  if(ty==='network'||ty==='socket-error'||ty==='socket-closed'||ty==='server-error'){
-   /* live games keep running peer-to-peer; we only need the matchmaker for new joins */
-   setNetStatus('Matchmaker hiccup — reopening the room…',true);
-   setTimeout(()=>{if(Net.peer===p)hostOpenPeer()},2000);
-   return;
-  }
-  if(ty==='peer-unavailable')return;
-  setNetStatus('Network error: '+(ty||'unknown')+' — check your internet and try again.',true);
- });
- p.on('connection',c=>{
-  c.on('open',()=>{
-   c.__lastSeen=Date.now();
-   c.on('data',d=>{try{onHostData(c,d)}catch(err){console.error(err)}});
-  });
-  c.on('close',()=>onHostClose(c));
-  c.on('error',()=>onHostClose(c));
+  setNetStatus('Room live. Share this exact file + the code. Relay: ntfy.sh');
+  broadcastLobby();
+  clearInterval(Net.hbT);
+  Net.hbT=setInterval(function(){
+   if(Net.role!=='host')return;
+   if(!Net.started)broadcastLobby();
+   else busSend({t:'hb',to:'*'});
+   checkGuestTimeouts();
+  },5000);
  });
 }
-/* A quiet data channel is indistinguishable from a dead one, so the host keeps
-   pinging and drops seats that stop answering instead of stalling the table. */
-function startHostHeartbeat(){
- clearInterval(Net.hbTimer);
- Net.hbTimer=setInterval(()=>{
-  const now=Date.now();
-  for(let i=0;i<Net.conns.length;i++){
-   const c=Net.conns[i];
-   if(!c)continue;
-   if(!c.open){onHostClose(c);continue}
-   if(now-(c.__lastSeen||now)>CONN_TIMEOUT_MS){try{c.close()}catch(_){}onHostClose(c);continue}
-   try{c.send({t:'ping'})}catch(_){}
-  }
- },HEARTBEAT_MS);
-}
-function onHostData(c,d){
+function onHostBus(d){
  if(!d||!d.t)return;
- c.__lastSeen=Date.now();
- if(d.t==='ping'){try{c.send({t:'pong'})}catch(_){}return}
- if(d.t==='pong')return;
- if(d.t==='hello'){handleHello(c,cleanName(d.name)||'Player',String(d.playerId||''));return}
- if(d.t==='pick'){const pi=Net.conns.indexOf(c);if(pi>=0)applyChar(pi,d.char);return}
- const pi=Net.conns.indexOf(c);
+ if(d.from)Net.lastSeen[d.from]=Date.now();
+ if(d.t==='hello'){handleHello(cleanName(d.name)||'Player',String(d.playerId||d.from||''));return}
+ if(d.t==='ping'){const pi=seatByPlayerId(d.from);if(pi>=0&&S&&S.players[pi])S.players[pi].dc=false;return}
+ const pi=seatByPlayerId(d.from);
+ if(d.t==='pick'){if(pi>=0)applyChar(pi,d.char);return}
  if(pi<0)return;
  if(d.t==='intent'){applyIntent(pi,d)}
  else if(d.t==='answer'){const pr=Net.pendingPrompts.get(d.pid);if(pr&&pr.pi===pi){Net.pendingPrompts.delete(d.pid);pr.res(d.v)}}
  else if(d.t==='ack'){if(Net.acks&&Net.acks.eid===d.eid){Net.acks.set.delete(pi);if(!Net.acks.set.size){clearTimeout(Net.acks.timer);const r=Net.acks.res;Net.acks=null;r()}}}
  else if(d.t==='chat'){if(S)addChat(pi,String(d.text||'').slice(0,140))}
- else if(d.t==='lchat'){if(!Net.started)addLobbyChat(pi,String(d.text||'').slice(0,140))}
 }
-/* The wire opens before the con does: chat runs in the lobby too, and whatever
-   was said there carries over into the game record. */
-function addLobbyChat(pi,text){
- if(!text)return;
- const e=Net.roster[pi];if(!e)return;
- Net.lobbyChat.push({n:e.name,c:PCOLORS[pi%PCOLORS.length],t:text});
- if(Net.lobbyChat.length>40)Net.lobbyChat.shift();
- broadcastLobby();
-}
-function sendLobbyChat(){
- const inp=$('lobbyChatInput');if(!inp)return;
- const text=inp.value.trim().slice(0,140);
- if(!text)return;
- inp.value='';
- if(Net.role==='host')addLobbyChat(0,text);
- else if(Net.conn&&Net.conn.open)Net.conn.send({t:'lchat',text});
-}
-function renderLobbyChat(){
- const box=$('lobbyChatList');if(!box)return;
- const rows=Net.lobbyChat||[];
- box.innerHTML=rows.map(c=>'<div><b style="color:'+c.c+'">'+esc(c.n)+':</b> '+esc(c.t)+'</div>').join('')||'<div style="opacity:.4;font-style:italic">— the wire is quiet —</div>';
- box.scrollTop=box.scrollHeight;
-}
-function lobbyPlayers(){return (Net.role==='host'?Net.roster:(Net.lobbyPlayers||[])).map(e=>({name:e.name,char:e.char||null}))}
+function lobbyPlayers(){return (Net.role==='host'?Net.roster:(Net.lobbyPlayers||[])).map(function(e){return {name:e.name,char:e.char||null}})}
 function applyChar(idx,id){
  if(!charMeta(id))return false;
- if((Net.roster||[]).some((e,i)=>i!==idx&&e.char===id))return false;
+ if((Net.roster||[]).some(function(e,i){return i!==idx&&e.char===id}))return false;
  if(!Net.roster[idx])return false;
  Net.roster[idx].char=id;
  broadcastLobby();
@@ -1553,238 +1594,193 @@ function applyChar(idx,id){
 function renderCharGrid(){
  const grid=$('charGrid');if(!grid)return;
  const rows=Net.role==='host'?Net.roster:(Net.lobbyPlayers||[]);
- const myIdx=Net.role==='host'?0:Net.myIdx;
+ const myIdx=Net.myIdx;
  const mine=rows[myIdx]&&rows[myIdx].char;
- const taken=new Set(rows.filter((e,i)=>e.char&&i!==myIdx).map(e=>e.char));
- grid.innerHTML=CHARS.map(c=>{
+ const taken=new Set(rows.filter(function(e,i){return e.char&&i!==myIdx}).map(function(e){return e.char}));
+ grid.innerHTML=CHARS.map(function(c){
   const on=mine===c.id,busy=taken.has(c.id);
   return '<button type="button" class="charpick'+(on?' on':'')+(busy?' taken':'')+'" data-char="'+c.id+'" '+(busy?'disabled':'')+'>'
    +'<img src="'+CHARURL+c.file+'" alt="">'
    +'<div class="cn">'+esc(c.name)+(on?' · you':'')+(busy?' · taken':'')+'</div></button>';
  }).join('');
 }
-function handleHello(c,name,playerId){
- const existing=playerId?Net.roster.findIndex(e=>e.playerId===playerId):-1;
+function handleHello(name,playerId){
+ if(!playerId)playerId=crypto.randomUUID();
+ const existing=seatByPlayerId(playerId);
  if(existing>=0){
-  const old=Net.conns[existing];
-  if(old===c)return;
-  if(old&&old.open){c.send({t:'kick',reason:'This player is already connected in this room. Close the other tab before joining again.'});setTimeout(()=>{try{c.close()}catch(e){}},800);return;}
-  Net.roster[existing].conn=c;Net.conns[existing]=c;c.__bigconClosed=false;c.__lastSeen=Date.now();
-  if(Net.started&&S){S.players[existing].dc=false;clearTimeout(Net.autoT);log('🔔 '+name+' reconnected to their existing seat.');c.send({t:'welcome',idx:existing,s:pubState(true)});sync(true);return;}
-  c.send({t:'welcome',idx:existing,lobby:lobbyPlayers(),goal:clampGoal(Net.goal),chat:Net.lobbyChat.slice(-40)});broadcastLobby();return;
- }
- if(Net.started&&S){
-  const idx=S.players.findIndex(pl=>pl.dc&&pl.name.toLowerCase()===name.toLowerCase());
-  if(idx>=0&&idx!==Net.myIdx){
-   Net.conns[idx]=c;S.players[idx].dc=false;c.__bigconClosed=false;c.__lastSeen=Date.now();
-   if(Net.roster[idx]){Net.roster[idx].conn=c;Net.roster[idx].playerId=playerId||Net.roster[idx].playerId}
-   log('🔔 '+name+' is back at the table.');
-   clearTimeout(Net.autoT);
-   c.send({t:'welcome',idx:idx,s:pubState(true)});
-   sync(true);return;
+  if(Net.roster[existing])Net.roster[existing].playerId=playerId;
+  refreshPipes();
+  if(Net.started&&S){
+   S.players[existing].dc=false;
+   if(S.players[existing].name)name=S.players[existing].name;
+   log('🔔 '+name+' reconnected to their existing seat.');
+   busSend({t:'welcome',to:playerId,idx:existing,hostId:Net.playerId,s:pubState()});
+   sync();
+   return;
   }
-  c.send({t:'kick',reason:'Game already in progress — no empty seat named “'+name+'”.'});
-  setTimeout(()=>{try{c.close()}catch(e){}},800);return;
- }
- if(Net.roster.length>=MAXPLAYERS){c.send({t:'kick',reason:'Room is full (8 players).'});setTimeout(()=>{try{c.close()}catch(e){}},800);return}
- if(Net.roster.some(e=>e.name.toLowerCase()===name.toLowerCase()))name=name+' ★';
- Net.roster.push({name,playerId:playerId||crypto.randomUUID(),conn:c,char:null});
- Net.conns=Net.roster.map(e=>e.conn);
- c.__lastSeen=Date.now();
- c.send({t:'welcome',idx:Net.roster.length-1,lobby:lobbyPlayers(),goal:clampGoal(Net.goal),chat:Net.lobbyChat.slice(-40)});
- broadcastLobby();
-}
-function onHostClose(c){
- if(c.__bigconClosed)return;
- c.__bigconClosed=true;
- const pi=Net.conns.indexOf(c);
- if(pi<0)return;
- if(!Net.started){
-  const nm=Net.roster[pi]?Net.roster[pi].name:'A player';
-  Net.roster.splice(pi,1);Net.conns=Net.roster.map(e=>e.conn);
-  broadcastLobby();setNetStatus(nm+' left the lobby.');
+  busSend({t:'welcome',to:playerId,idx:existing,hostId:Net.playerId,lobby:lobbyPlayers()});
+  broadcastLobby();
   return;
  }
- if(Net.conns[pi]===c)Net.conns[pi]=null;
- if(Net.roster[pi]&&Net.roster[pi].conn===c)Net.roster[pi].conn=null;
- if(S&&!S.over&&S.players[pi]){
+ if(Net.started&&S){
+  const idx=S.players.findIndex(function(pl){return pl.dc&&pl.name.toLowerCase()===name.toLowerCase()});
+  if(idx>0){
+   if(Net.roster[idx])Net.roster[idx].playerId=playerId;
+   S.players[idx].playerId=playerId;
+   S.players[idx].dc=false;
+   refreshPipes();
+   log('🔔 '+name+' is back at the table.');
+   clearTimeout(Net.autoT);
+   busSend({t:'welcome',to:playerId,idx:idx,hostId:Net.playerId,s:pubState()});
+   sync();
+   return;
+  }
+  busSend({t:'kick',to:playerId,reason:'Game already in progress — no empty seat named “'+name+'”.'});
+  return;
+ }
+ if(Net.roster.length>=MAXPLAYERS){busSend({t:'kick',to:playerId,reason:'Room is full (8 players).'});return}
+ if(Net.roster.some(function(e){return e.name.toLowerCase()===name.toLowerCase()}))name=name+' ★';
+ Net.roster.push({name:name,playerId:playerId,conn:null,char:null});
+ Net.lastSeen[playerId]=Date.now();
+ refreshPipes();
+ busSend({t:'welcome',to:playerId,idx:Net.roster.length-1,hostId:Net.playerId,lobby:lobbyPlayers()});
+ broadcastLobby();
+}
+function markSeatAway(pi){
+ if(pi<=0)return;
+ if(!Net.started){
+  const nm=Net.roster[pi]?Net.roster[pi].name:'A player';
+  const gone=Net.roster[pi]&&Net.roster[pi].playerId;
+  Net.roster.splice(pi,1);
+  if(gone)delete Net.lastSeen[gone];
+  refreshPipes();
+  broadcastLobby();
+  setNetStatus(nm+' left the lobby.');
+  return;
+ }
+ if(S&&!S.over&&S.players[pi]&&!S.players[pi].dc){
   S.players[pi].dc=true;
   log('🔕 '+pname(pi)+' lost connection — seat is being held.');
-  Net.pendingPrompts.forEach((p,pid)=>{if(p.pi===pi){Net.pendingPrompts.delete(pid);p.res(p.def)}});
-  if(Net.acks&&Net.acks.set.has(pi)){
-   Net.acks.set.delete(pi);
-   if(!Net.acks.set.size){clearTimeout(Net.acks.timer);const r=Net.acks.res;Net.acks=null;r()}
-  }
+  Net.pendingPrompts.forEach(function(p,pid){if(p.pi===pi){Net.pendingPrompts.delete(pid);p.res(p.def)}});
   if(S.cur===pi&&(S.phase==='move'||S.phase==='action')){
    clearTimeout(Net.autoT);
-   Net.autoT=setTimeout(()=>{
+   Net.autoT=setTimeout(function(){
     if(S&&!S.over&&S.cur===pi&&S.players[pi].dc){log('💤 '+pname(pi)+' is away — plays it quiet.');gain(pi,1,'away');endOfTurn()}
    },20000);
   }
-  sync(true);
+  sync();
+ }
+}
+function checkGuestTimeouts(){
+ const now=Date.now();
+ if(!Net.started){
+  for(let i=Net.roster.length-1;i>=1;i--){
+   const id=Net.roster[i].playerId;
+   const last=Net.lastSeen[id]||0;
+   if(last&&now-last>35000)markSeatAway(i);
+  }
+  return;
+ }
+ if(!S)return;
+ for(let i=0;i<S.players.length;i++){
+  if(i===Net.myIdx)continue;
+  const id=(S.players[i].playerId)||(Net.roster[i]&&Net.roster[i].playerId);
+  if(!id)continue;
+  const last=Net.lastSeen[id]||0;
+  if(last&&now-last>35000)markSeatAway(i);
  }
 }
 function broadcastLobby(){
- sendAll({t:'lobby',players:lobbyPlayers(),goal:clampGoal(Net.goal),chat:Net.lobbyChat.slice(-40)});
- renderLobbyList();renderLobbyChat();
+ sendAll({t:'lobby',players:lobbyPlayers(),hostId:Net.playerId});
+ renderLobbyList();
  const n=Net.roster.length;
- const ready=n>=2&&Net.roster.every(e=>e.char);
- $('btnStart').disabled=!ready;
- $('btnStart').textContent=!ready?(n<2?'START THE CON (need 2+ players)':'START THE CON (everyone pick a face)'):
-  (n>=MAXPLAYERS?'START THE CON — FULL TABLE (8/8)':
-  'START THE CON — '+n+' PLAYERS · '+(MAXPLAYERS-n)+' SEATS OPEN');
+ const ready=n>=2&&Net.roster.every(function(e){return e.char});
+ if($('btnStart')){
+  $('btnStart').disabled=!ready;
+  $('btnStart').textContent=!ready?(n<2?'START THE CON (need 2+ players)':'START THE CON (everyone pick a face)'):
+   (n>=MAXPLAYERS?'START THE CON — FULL TABLE (8/8)':
+   'START THE CON — '+n+' PLAYERS · '+(MAXPLAYERS-n)+' SEATS OPEN');
+ }
 }
 function renderLobbyList(){
  const c=$('lobbyList');if(!c)return;
  const rows=Net.role==='host'?Net.roster:(Net.lobbyPlayers||[]);
- c.innerHTML=rows.map((e,i)=>{
+ c.innerHTML=rows.map(function(e,i){
   const face=charSrc(e.char);
-  const who=Net.role==='host'?(i===0?'HOST · YOU':'CONNECTED'):(i===Net.myIdx?'YOU':'CONNECTED');
+  const who=Net.role==='host'?(i===Net.myIdx?'HOST · YOU':'CONNECTED'):(i===Net.myIdx?'YOU':'CONNECTED');
   return '<div class="lrow">'+(face?'<img class="pface" src="'+face+'" alt="">':'<span class="ld" style="background:'+PCOLORS[i%PCOLORS.length]+'"></span>')
    +'<span class="ln">'+(i+1)+'. '+esc(e.name)+(e.char?' · '+esc((charMeta(e.char)||{}).name||''):' · pick a face')+'</span><span class="lh">'+who+'</span></div>';
  }).join('')
   +'<div class="lrow" style="background:transparent;border:1px dashed #168388;color:#9ad;font-size:12px"><span class="ln">'+rows.length+' of 8 seats filled</span></div>';
  renderCharGrid();
 }
+
 /* ---- GUEST ---- */
-let guestReconnectTimer=null;
-let guestReconnectAttempt=0;
-let guestTransportToken=0;
-let guestReconnectStopped=false;
-
-function clearGuestReconnect(){
- if(guestReconnectTimer){clearTimeout(guestReconnectTimer);guestReconnectTimer=null}
-}
-
-function guestReconnectDelay(){
- return Math.min(8000,1000*Math.pow(2,Math.max(0,guestReconnectAttempt-1)));
-}
-
-function guestConnectionLost(token){
- if(token!==guestTransportToken||guestReconnectStopped)return;
- clearGuestReconnect();
- guestReconnectAttempt++;
- const attempt=guestReconnectAttempt;
- const delay=guestReconnectDelay();
- stopGuestHeartbeat();
- setNetStatus((Net.begun?'Connection lost':'Lost the lobby connection')+' — reconnecting ('+attempt+')…',true);
- guestReconnectTimer=setTimeout(()=>{
-  guestReconnectTimer=null;
-  if(token!==guestTransportToken||guestReconnectStopped)return;
-  connectGuestTransport(true);
- },delay);
-}
-
-function connectGuestTransport(isRetry){
- const token=++guestTransportToken;
- const name=Net.myName;
- const code=Net.roomCode;
- const oldPeer=Net.peer;
- if(oldPeer&&!oldPeer.destroyed){
-  try{oldPeer.destroy()}catch(_){}
- }
- const p=new Peer(BIGCON_PEER_OPTIONS);
- Net.peer=p;
- p.on('open',()=>{
-  if(token!==guestTransportToken||guestReconnectStopped)return;
-  const c=p.connect(PFX+code,{reliable:true,serialization:'json'});
-  Net.conn=c;
-  let connectionOpened=false;
-  const connectionTimeout=setTimeout(()=>{
-   if(!connectionOpened&&token===guestTransportToken&&!guestReconnectStopped){
-    console.warn('[BigCon] Data connection timed out; retrying', {code, token});
-    try{c.close()}catch(_){}
-    guestConnectionLost(token);
-   }
-  },15000);
-  c.on('open',()=>{
-   connectionOpened=true;
-   clearTimeout(connectionTimeout);
-   if(token!==guestTransportToken||guestReconnectStopped)return;
-   guestReconnectAttempt=0;
-   c.__bigconClosed=false;
-   c.send({t:'hello',name,playerId:Net.playerId});
-   setNetStatus('Connected — '+(isRetry?'rejoining':'joining')+' “'+codeLabel(code)+'”…');
-   startGuestHeartbeat(token);
-  });
-  c.on('data',d=>{
-   if(token!==guestTransportToken||guestReconnectStopped)return;
-   Net.lastSeen=Date.now();
-   try{onGuestData(d)}catch(err){console.error(err)}
-  });
-  c.on('close',()=>guestConnectionLost(token));
-  c.on('error',()=>guestConnectionLost(token));
- });
- p.on('disconnected',()=>{
-  if(token!==guestTransportToken||guestReconnectStopped)return;
-  try{p.reconnect()}catch(_){guestConnectionLost(token)}
- });
- p.on('error',e=>{
-  if(token!==guestTransportToken||guestReconnectStopped)return;
-  const ty=e&&e.type;
-  if(ty==='peer-unavailable'){
-   /* the host may just be re-registering with the matchmaker — keep trying a while */
-   if(Net.begun||guestReconnectAttempt<5)guestConnectionLost(token);
-   else setNetStatus('Room “'+codeLabel(code)+'” not found — check the buzzword (and that the host still has the page open).',true);
-  }else if(ty==='network'||ty==='socket-error'||ty==='socket-closed'||ty==='server-error'||ty==='unavailable-id'){
-   guestConnectionLost(token);
-  }else{
-   setNetStatus('Network error: '+(ty||'unknown')+'.',true);
-  }
- });
-}
-
-/* The guest watches the wire too: silence for CONN_TIMEOUT_MS means the link is
-   gone even when the browser never fires 'close'. */
-function stopGuestHeartbeat(){clearInterval(Net.hbTimer);Net.hbTimer=null}
-function startGuestHeartbeat(token){
- stopGuestHeartbeat();
- Net.lastSeen=Date.now();
- Net.hbTimer=setInterval(()=>{
-  if(token!==guestTransportToken||guestReconnectStopped){stopGuestHeartbeat();return}
-  const c=Net.conn;
-  if(!c||!c.open){guestConnectionLost(token);return}
-  if(Date.now()-Net.lastSeen>CONN_TIMEOUT_MS){try{c.close()}catch(_){}guestConnectionLost(token);return}
-  try{c.send({t:'ping'})}catch(_){guestConnectionLost(token)}
- },HEARTBEAT_MS);
-}
-
 function guestJoin(name,code){
- clearGuestReconnect();
- guestReconnectStopped=false;
- guestReconnectAttempt=0;
- setNetStatus('Contacting the matchmaker…');
- Net.role='guest';Net.myName=name;Net.playerId=getPlayerId();Net.roomCode=code;Net.roomLabel=codeLabel(code);
- connectGuestTransport(false);
+ setNetStatus('Opening the matchmaking relay…');
+ Net.ntfyStop=false;
+ Net.role='guest';
+ Net.myName=name;
+ Net.playerId=getPlayerId();
+ Net.roomCode=code;
+ Net.myIdx=-1;
+ Net.lobbyPlayers=null;
+ connectRelays(function(){
+  busSend({t:'hello',name:name,playerId:Net.playerId,to:'host'});
+  setNetStatus('Relay up. Looking for host of “'+code+'”…');
+  clearTimeout(Net.joinTimer);
+  Net.joinTimer=setTimeout(function(){
+   if(!Net.begun&&$('lobbyView').style.display!=='block'){
+    setNetStatus('No host answered for “'+code+'”. Host must keep their tab open, and you both need this same new file.',true);
+    $('btnJoinGo').disabled=false;
+   }
+  },16000);
+  clearInterval(Net.hbT);
+  Net.hbT=setInterval(function(){
+   if(Net.role!=='guest')return;
+   if(!Net.begun)busSend({t:'hello',name:Net.myName,playerId:Net.playerId,to:'host'});
+   else busSend({t:'ping',to:'host'});
+  },5000);
+ });
 }
 
 function onGuestData(d){
  if(!d||!d.t)return;
+ if(HOST_TYPES[d.t]){
+  if(d.hostId)Net.hostId=d.hostId;
+  if(d.from&&!Net.hostId&&d.role==='host')Net.hostId=d.from;
+  if(Net.hostId&&d.from&&d.from!==Net.hostId)return;
+ }
  switch(d.t){
-  case 'ping':if(Net.conn&&Net.conn.open){try{Net.conn.send({t:'pong'})}catch(_){}}break;
-  case 'pong':break;
   case 'welcome':
+   clearTimeout(Net.joinTimer);
    Net.myIdx=d.idx;
+   if(d.hostId)Net.hostId=d.hostId;
    if(d.lobby)Net.lobbyPlayers=d.lobby;
-   if(d.chat)Net.lobbyChat=d.chat;
-   if(d.goal)setGoalUI(d.goal);
-   if(d.s){S=null;adoptState(d.s);Net.begun=true;enterGame()}
-   else showLobby(false);
+   if(d.s){S=d.s;Net.begun=true;enterGame()}
+   else{showLobby(false);setNetStatus('In the lobby. Pick a face — the host starts when everyone is in.')}
    break;
   case 'lobby':
+   if(d.hostId)Net.hostId=d.hostId;
    Net.lobbyPlayers=d.players||[];
-   Net.lobbyChat=d.chat||[];
-   renderLobbyChat();
-   if(d.goal)setGoalUI(d.goal);
-   renderLobbyList();
+   if(!Net.begun){
+    if($('lobbyView').style.display!=='block')showLobby(false);
+    renderLobbyList();
+   }
    break;
-  case 'begin':S=null;adoptState(d.s);if(d.idx!=null)Net.myIdx=d.idx;Net.begun=true;enterGame();break;
-  case 'state':adoptState(d.s);scheduleRender();break;
-  case 'prompt':modal({title:d.title,html:d.html,body:d.body,options:d.options}).then(v=>{if(Net.conn&&Net.conn.open)Net.conn.send({t:'answer',pid:d.pid,v})});break;
-  case 'event':modal({title:d.title,html:d.html,options:[{label:'Continue',v:1}]}).then(()=>{if(Net.conn&&Net.conn.open)Net.conn.send({t:'ack',eid:d.eid})});break;
+  case 'begin':
+   S=d.s;if(d.idx!=null)Net.myIdx=d.idx;Net.begun=true;enterGame();break;
+  case 'state':S=d.s;render();break;
+  case 'prompt':
+   modal({title:d.title,html:d.html,body:d.body,options:d.options}).then(function(v){busSend({t:'answer',pid:d.pid,v:v,to:'host'})});
+   break;
+  case 'event':
+   modal({title:d.title,html:d.html,options:[{label:'Continue',v:1}]}).then(function(){busSend({t:'ack',eid:d.eid,to:'host'})});
+   break;
   case 'sys':toast(d.msg);break;
   case 'reload':location.reload();break;
-  case 'kick':guestReconnectStopped=true;clearGuestReconnect();stopGuestHeartbeat();showFatal(d.reason||'Kicked from room.');break;
+  case 'kick':showFatal(d.reason||'Kicked from room.');break;
+  case 'hb':break;
  }
 }
 function enterGame(){
@@ -1794,72 +1790,44 @@ function enterGame(){
 }
 
 /* ================= SETUP SCREEN ================= */
-/* Only the host may move the target; guests mirror whatever comes off the wire. */
-function setGoalUI(v){
- Net.goal=clampGoal(v);
- const inp=$('goalInput');
- if(inp&&document.activeElement!==inp)inp.value=Net.goal;
- const note=$('goalNote');
- if(note)note.textContent=Net.role==='host'?'first player to $'+Net.goal+' wins the con':'the host set the target at $'+Net.goal;
-}
 function showLobby(asHost){
  $('hostForm').classList.remove('show');$('joinForm').classList.remove('show');
  $('lobbyView').style.display='block';
- $('roomCodeBig').textContent=Net.roomLabel||Net.roomCode||'·····';
+ $('roomCodeBig').textContent=Net.roomCode||'·····';
  $('btnStart').style.display=asHost?'block':'none';
  $('btnCopy').style.display=asHost?'inline-block':'none';
- const gi=$('goalInput');
- if(gi)gi.disabled=!asHost;
- setGoalUI(Net.goal);
  if(!asHost)setNetStatus('In the lobby. Pick a face — the host starts when everyone is in.');
- renderLobbyList();renderLobbyChat();
- const inp=$('lobbyChatInput'),btn=$('lobbyChatSend');
- if(btn)btn.onclick=sendLobbyChat;
- if(inp)inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sendLobbyChat()}};
+ renderLobbyList();
 }
- $('btnHost').onclick=()=>{$('hostForm').classList.add('show');$('joinForm').classList.remove('show');$('lobbyView').style.display='none';setNetStatus('')};
- $('btnJoin').onclick=()=>{$('joinForm').classList.add('show');$('hostForm').classList.remove('show');$('lobbyView').style.display='none';setNetStatus('')};
- $('btnCreate').onclick=()=>{
- if(typeof Peer==='undefined'){setNetStatus('Could not load the networking library — check your internet connection and reload.',true);return}
+$('btnHost').onclick=function(){$('hostForm').classList.add('show');$('joinForm').classList.remove('show');$('lobbyView').style.display='none';setNetStatus('')};
+$('btnJoin').onclick=function(){$('joinForm').classList.add('show');$('hostForm').classList.remove('show');$('lobbyView').style.display='none';setNetStatus('')};
+$('btnCreate').onclick=function(){
  const nm=cleanName($('hostName').value);if(!nm){setNetStatus('Enter your name first.',true);return}
  $('btnCreate').disabled=true;hostCreate(nm);
 };
- $('btnJoinGo').onclick=()=>{
- if(typeof Peer==='undefined'){setNetStatus('Could not load the networking library — check your internet connection and reload.',true);return}
- const nm=cleanName($('joinName').value);const code=matchBuzzword($('joinCode').value);
+$('btnJoinGo').onclick=function(){
+ const nm=cleanName($('joinName').value);const code=($('joinCode').value||'').toUpperCase().replace(/[^A-Z2-9]/g,'');
  if(!nm){setNetStatus('Enter your name first.',true);return}
- if(!code){setNetStatus('Enter the buzzword the host read out — e.g. NESA or HORNSBY HEIGHTS.',true);return}
+ if(code.length!==5){setNetStatus('Enter the 5-letter room code from the host.',true);return}
  $('btnJoinGo').disabled=true;guestJoin(nm,code);
 };
- $('btnStart').onclick=()=>{
- if(Net.roster.length<2||Net.roster.some(e=>!e.char)){toast('Everyone needs their own face first.');return}
+$('btnStart').onclick=function(){
+ if(Net.roster.length<2||Net.roster.some(function(e){return !e.char})){toast('Everyone needs their own face first.');return}
  $('btnStart').disabled=true;
- initGame(Net.roster.map(e=>({name:e.name,char:e.char})));
+ initGame(Net.roster.map(function(e){return {name:e.name,char:e.char,playerId:e.playerId}}));
 };
- document.addEventListener('click',e=>{
-  const b=e.target.closest('#charGrid .charpick');
-  if(!b||b.disabled)return;
-  const id=b.dataset.char;
-  if(Net.role==='host')applyChar(0,id);
-  else if(Net.conn&&Net.conn.open)Net.conn.send({t:'pick',char:id});
- });
- (function(){
- const gi=$('goalInput');
- if(!gi)return;
- const push=()=>{if(Net.role!=='host')return;setGoalUI(gi.value);broadcastLobby()};
- gi.oninput=()=>{if(Net.role!=='host')return;const n=Number(gi.value);if(n>=GOAL_MIN&&n<=GOAL_MAX)push()};
- gi.onchange=()=>{if(Net.role!=='host')return;gi.value=clampGoal(gi.value);push()};
-})();
- $('btnCopy').onclick=()=>{
- const code=Net.roomLabel||Net.roomCode||'';
- try{navigator.clipboard.writeText(code).then(()=>toast('Room code copied: '+code))}catch(e){toast('Code: '+code)}
+document.addEventListener('click',function(e){
+ const b=e.target.closest('#charGrid .charpick');
+ if(!b||b.disabled)return;
+ const id=b.dataset.char;
+ if(Net.role==='host')applyChar(Net.myIdx,id);
+ else busSend({t:'pick',char:id,to:'host'});
+});
+$('btnCopy').onclick=function(){
+ const code=Net.roomCode||'';
+ try{navigator.clipboard.writeText(code).then(function(){toast('Room code copied: '+code)})}catch(e){toast('Code: '+code)}
 };
-(function(){
- const dl=$('buzzwords');
- if(dl)dl.innerHTML=BUZZWORDS.map(b=>'<option value="'+b+'"></option>').join('');
-})();
-document.querySelector('.setuplinks button[data-srules]').onclick=()=>showRules();
-if(typeof Peer==='undefined'){setNetStatus('⚠ Networking library failed to load — you need an internet connection the first time you connect.',true)}
+document.querySelector('.setuplinks button[data-srules]').onclick=function(){showRules()};
 </script>
 </body>
 </html>
