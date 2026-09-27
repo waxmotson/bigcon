@@ -250,20 +250,23 @@ const Presence=(function(){
  return{
   menu(){
    startedAt=null;
-   send({details:'In the menu',state:'Setting up a con',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON'});
+   send({details:'In the menu',state:'Setting up the con',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON'});
   },
   lobby(asHost,code,have,max,charId){
    const p={details:asHost?'Hosting a lobby':'Waiting in a lobby',state:'Room '+(code||'·····')+' · '+have+'/'+max+' seated',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON',partyId:'bigcon-'+(code||'solo'),partySize:have,partyMax:max};
    send(withChar(p,charId));
   },
-  inGame(turn,curName,isMe,myMoney,goal,connected,charId,code){
+  inGame(turn,curName,isMe,myMoney,goal,connected,charId,code,curCharId){
    if(!startedAt)startedAt=Date.now();
-   const p={details:'Turn '+turn+(isMe?' — your move':' — '+curName+'’s move'),state:'$'+myMoney+' of $'+goal+' target',startTimestamp:startedAt,largeImageKey:'big_con_logo',largeImageText:'THE BIG CON',partyId:'bigcon-'+(code||'solo'),partySize:connected,partyMax:MAXPLAYERS};
+   const large=curCharId?curCharId+'_big':'big_con_logo';
+   const lm=(typeof charMeta==='function'&&curCharId)?charMeta(curCharId):null;
+   const p={details:'Turn '+turn+(' — '+curName+'’s move'),state:'$'+myMoney+' of $'+goal+' target',startTimestamp:startedAt,largeImageKey:large,largeImageText:lm?lm.name:'THE BIG CON',partyId:'bigcon-'+(code||'solo'),partySize:connected,partyMax:MAXPLAYERS};
    send(withChar(p,charId));
   },
   gameOver(winnerName,winnerChar){
-   const p={details:'Game over',state:winnerName+' pulled off the con',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON'};
-   send(withChar(p,winnerChar));
+   const large=winnerChar?winnerChar+'_big':'big_con_logo';
+   const lm=(typeof charMeta==='function'&&winnerChar)?charMeta(winnerChar):null;
+   send({details:'Game over',state:winnerName+' pulled off the con',largeImageKey:large,largeImageText:lm?lm.name:'THE BIG CON'});
   },
   clear(){
    const b=bridge();if(!b||!b.clearActivity)return;
@@ -1146,7 +1149,8 @@ function render(){
  applyLayoutFromState();renderBoard();renderSide();
  if(!S.over){
   const me=S.players[Net.myIdx];
-  Presence.inGame(S.turn,pname(S.cur),S.cur===Net.myIdx,me?me.money:0,goalAmount(),S.players.filter(pl=>!pl.dc).length,me?me.char:null,Net.roomLabel||Net.roomCode);
+  const cur=S.players[S.cur];
+  Presence.inGame(S.turn,pname(S.cur),S.cur===Net.myIdx,me?me.money:0,goalAmount(),S.players.filter(pl=>!pl.dc).length,me?me.char:null,Net.roomLabel||Net.roomCode,cur?cur.char:null);
  }
 }
 function moodBoost(n){
