@@ -313,30 +313,30 @@ const BASE_EDGES=[
  /* regulators row */
  ['rba','bullock'],['rba','asic'],['asic','accc'],['accc','gov'],['gov','chalmers'],['chalmers','albo'],['albo','trump'],['rba','bond'],['gov','herald'],
  /* desks & screens */
- ['bond','hedge'],['bond','bessent'],['bond','back'],['hedge','term'],['hedge','stock'],['term','vault'],['term','bessent'],['term','stock'],
+ ['bond','hedge'],['bond','bessent'],['bond','back'],['hedge','term'],['hedge','stock'],['term','bessent'],['term','stock'],
  /* charts — each lives in a different neighbourhood, linked to neighbours AND the master */
  ['rba','cash'],['cash','bullock'],['cash','tenyear'],['aus','gov'],['aus','accc'],['aus','tenyear'],['debt','gov'],['debt','chalmers'],['debt','tenyear'],
- ['us','trump'],['us','albo'],['us','tenyear'],['japan','petronas'],['japan','tanker'],['japan','tenyear'],['can','vault'],['can','gold'],['can','tenyear'],
- ['ger','wef'],['ger','brad'],['ger','tenyear'],['uk','press'],['uk','news'],['uk','tenyear'],['tenyear','bessent'],['tenyear','bond'],
- ['real','school'],['real','ib'],['real','mpc'],['infl','notes'],['infl','jt'],['infl','back'],
- ['spend','jim'],['spend','herald'],['spend','port'],['stock','oilgraph'],['timeline','photo'],['timeline','news'],['timeline','econ'],
- ['econ','made'],['econ','sat'],['econ','unid2'],
+ ['us','trump'],['us','albo'],['us','tenyear'],['japan','petronas'],['japan','tanker'],['japan','tenyear'],
+ ['uk','press'],['uk','news'],['uk','tenyear'],['tenyear','bessent'],['tenyear','bond'],
+ ['infl','jt'],['infl','back'],
+ ['stock','oilgraph'],
+ 
  /* commodities */
  ['oil','oilgraph'],['oil','tanker'],['oil','petronas'],['oil','barrels'],['oil','jt'],['barrels','forklift'],['forklift','port'],['forklift','gold'],
- ['tanker','port'],['tanker','petronas'],['petronas','trump'],['gold','notes'],['gold','vault'],['notes','back'],['notes','jt'],
+ ['tanker','port'],['tanker','petronas'],['petronas','trump'],
  ['train','coal'],['train','watson'],['train','port'],['train','rock'],['train','bhp'],['bhp','coal'],['bhp','watson'],['bhp','market'],
  /* corporates & the wandering servo */
  ['coal','watson'],['coal','quik'],['quik','market'],['quik','bond007'],['quik','watson'],['market','f1'],['market','office'],
- ['f1','office'],['f1','unid1'],['f1','qantas'],['qantas','unid1'],['qantas','press'],['qantas','golf'],['office','unid1'],['office','golf'],['office','ib'],['bullet','school'],['bullet','albo'],['bullet','golf'],['bullet','asics'],
+ ['f1','office'],['f1','qantas'],['qantas','press'],['qantas','golf'],['office','golf'],['office','ib'],['bullet','school'],['bullet','albo'],['bullet','golf'],['bullet','asics'],
  /* media ring */
- ['back','press'],['back','leak'],['back','jt'],['vault','whistle'],['vault','iface'],['iface','tv'],['iface','unid2'],['iface','toktimer'],
+ ['back','press'],['back','leak'],['back','jt'],['iface','toktimer'],
  ['press','leak'],['press','fox'],['press','golf'],['press','news'],['leak','photo'],['photo','news'],['photo','bigshort'],['photo','made'],
  ['news','fox'],['news','made'],['fox','jim'],['jim','bess'],['jim','herald'],['bess','insider'],['bess','wef'],['bess','herald'],
- ['insider','tv'],['insider','whistle'],['tv','whistle'],['tv','toktimer'],['wef','brad'],['wef','iface'],['bigshort','brad'],['hedge','bigshort'],
+ ['insider','whistle'],['wef','brad'],['wef','iface'],['bigshort','brad'],['hedge','bigshort'],
  /* school, fate, shoes, the clock */
- ['school','ib'],['school','mpc'],['school','golf'],['ib','mpc'],['ib','unid1'],['mpc','sisy'],['sisy','group'],['sisy','sat'],
+ ['school','ib'],['school','mpc'],['school','golf'],['ib','mpc'],['mpc','sisy'],['sisy','group'],['sisy','sat'],
  ['group','sat'],['group','press'],['group','news'],['sat','made'],['sat','asics'],['asics','mpc'],['asics','sisy'],
- ['toktimer','whistle'],['toktimer','brad'],['toktimer','unid2'],
+ ['toktimer','whistle'],['toktimer','brad'],
  /* people bridges */
  ['bullock','rock'],['rock','jt'],['jt','press'],['watson','golf'],['chalmers','herald']
 ];
