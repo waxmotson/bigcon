@@ -263,7 +263,6 @@ const NODES=[
 {id:'market',image:'./static/marketplace.webp',name:['MARKETPLACE','LEICHARDT'],icon:'🛍️',type:'CORPORATE',shape:'logo',band:'#b0342e',income:2,cost:5,x:170,y:660,rot:1,sub:'shopping centre · interior & exterior',sp:'+$2 income while you also own QUIKSTOP (the anchor tenant).'},
 {id:'f1',image:'./static/f1.png',name:['FORMULA 1','RACING CAR'],icon:'🏎️',type:'CORPORATE',shape:'photo',income:2,cost:6,x:380,y:760,rot:-3,sub:'sponsorship pays',sp:'Unlocks THE SLIPSTREAM ($2, during movement, once per turn): +2 steps and your next seizure this turn costs $2 less.'},
 {id:'qantas',image:'./static/qantas.png',name:['QANTAS','THE FLYING KANGAROO'],icon:'✈️',type:'CORPORATE',shape:'logo',band:'#e0001b',income:2,cost:10,x:575,y:975,rot:2,sub:'the spirit of australia',sp:'Unlocks FLY THE JET ($3, during movement): teleport to any node.'},
-{id:'office',image:'./static/citi tower.webp',name:['THE HEAD OFFICE'],icon:'🏢',type:'CORPORATE',shape:'logo',band:'#34506b',income:2,cost:5,x:170,y:850,rot:2,sub:'the modern tower',sp:'+$1 income per CORPORATE node you own.'},
 {id:'bullet',image:'./static/bullet train.png',name:['THE BULLET TRAIN'],icon:'🚄',type:'CORPORATE',income:2,cost:6,x:95,y:1240,rot:-1,sub:'fast enough to outrun a hearing',sp:'+1 movement step each turn. Does not stack with THE COAL TRAIN — pick the faster service.'},
 /* — the media — */
 {id:'press',image:'./static/jtportal quite frankly.png',name:['“QUITE FRANKLY,','JTPORTAL…” PRESS ROOM'],icon:'🗣️',type:'MEDIA',shape:'bubble',income:2,cost:6,x:760,y:900,rot:-1,sub:'narrative for sale',sp:'Unlocks SPIN ($3): −2 own Cortisol or +1 rival Cortisol.'},
@@ -326,8 +325,8 @@ const BASE_EDGES=[
  ['tanker','port'],['tanker','petronas'],['petronas','trump'],
  ['train','coal'],['train','watson'],['train','port'],['train','rock'],['train','bhp'],['bhp','coal'],['bhp','watson'],['bhp','market'],
  /* corporates & the wandering servo */
- ['coal','watson'],['coal','quik'],['quik','market'],['quik','bond007'],['quik','watson'],['market','f1'],['market','office'],
- ['f1','office'],['f1','qantas'],['qantas','press'],['qantas','golf'],['office','golf'],['office','ib'],['bullet','school'],['bullet','albo'],['bullet','golf'],['bullet','asics'],
+ ['coal','watson'],['coal','quik'],['quik','market'],['quik','bond007'],['quik','watson'],['market','f1'],['market',],
+ ['f1',],['f1','qantas'],['qantas','press'],['qantas','golf'],['golf'],['ib'],['bullet','school'],['bullet','albo'],['bullet','golf'],['bullet','asics'],
  /* media ring */
  ['back','press'],['back','leak'],['back','jt'],['iface','toktimer'],
  ['press','leak'],['press','fox'],['press','golf'],['press','news'],['leak','photo'],['photo','news'],['photo','bigshort'],['photo','made'],
@@ -753,7 +752,7 @@ function income(i){
  if(own('barrels')&&own('forklift'))syn+=1;
  if(own('forklift')&&comm)syn+=comm;
  if(own('market')&&own('quik'))syn+=2;
- if(own('office')&&corp)syn+=corp;
+ if(own()&&corp)syn+=corp;
  if(own('rock'))syn+=new Set(owned.map(n=>n.type)).size;
  if(own('bessent')&&bank)syn+=bank;
  if(own('chalmers')&&reg)syn+=reg;
@@ -2092,7 +2091,7 @@ function income(i){
  if(own('barrels')&&own('forklift'))syn+=1;
  if(own('forklift')&&comm)syn+=comm;
  if(own('market')&&own('quik'))syn+=2;
- if(own('office')&&corp)syn+=corp;
+ if(own()&&corp)syn+=corp;
  if(own('rock'))syn+=new Set(owned.map(n=>n.type)).size;
  if(own('bessent')&&bank)syn+=bank;
  if(own('chalmers')&&reg)syn+=reg;
