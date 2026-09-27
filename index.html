@@ -405,6 +405,14 @@ const CHARS=[
 ];
 function charMeta(id){return CHARS.find(c=>c.id===id)||null}
 function charSrc(id){const c=charMeta(id);return c?CHARURL+c.file:''}
+
+function charMeta(id){return CHARS.find(c=>c.id===id)||null}
+function charSrc(id){const c=charMeta(id);return c?CHARURL+c.file:''}
+// ADD THIS:
+function discordCharKey(charId) {
+  if (!charId) return undefined;
+  return charId + '_big'; 
+}
 /* ================= THE MARKET MOOD — set by every event, felt by everyone ================= */
 const MOODS={
  CALM:{label:'MARKET: CALM',color:'#8fbf7f',tint:'rgba(70,130,70,0.045)',rate:2,desc:'no modifiers · 1 🛈 = $2'},
