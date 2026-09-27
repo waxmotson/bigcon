@@ -471,7 +471,7 @@ const CARDS=[
  run(){setMood('CALM','a brown envelope, no return address');S.players.forEach((pl,i)=>giveIntel(i,1,'the envelope'));log('✉️ Every player gains 1 Intel.');}},
 {id:'frenzy',icon:'🗣️',title:'MEDIA FRENZY',text:'“Quite frankly…” The press needs a villain before deadline. Whoever owns the narrative picks one.',
  async run(){setMood('FRENZY','the press needs a villain before deadline');const pi=S.owner.press;if(pi==null){log('🗣️ The Press Room is unowned — the story dies in committee.');return}const rivals=S.players.map((pl,i)=>i).filter(i=>i!==pi);const opts=rivals.map(i=>({label:S.players[i].name+' +2 🔥',v:i}));opts.push({label:'Sit on the story',v:-1});const v=await askPlayer(pi,{title:'MEDIA FRENZY',body:'You control the PRESS ROOM — torch which rival?',options:opts,def:-1});if(v>=0)addCortisol(v,2,'front-page frenzy','event');}},
-{id:'crackdown',icon:'🚨',title:'MONOPOLY ALERT',text:'The regulator finally does something. The hottest player pays for it.',
+{id:'crackdown',icon:'🚨',title:'CRACKDOWN!',text:'The regulator finally does something. The hottest player pays for it.',
  run(){setMood('PANIC','crackdown — the regulator finally does something');const mx=Math.max(0,...S.players.map(pl=>pl.cortisol));if(mx<=0){log('🚨 Nobody is hot — the crackdown hits an empty office.');return}S.players.forEach((pl,i)=>{if(pl.cortisol===mx)payFee(i,4,'crackdown fine')});const bs=S.owner.bigshort;if(bs!=null)gain(bs,3,'the cinema called it');}},
 {id:'tapes',icon:'🗑️',title:'THE TAPES GO MISSING',text:'A shredder runs all night. What you knew, you no longer know — unless you kept copies.',
  run(){setMood('CALM','the tapes go missing — a shredder runs all night');S.players.forEach((pl,i)=>{if(S.owner.whistle===i){giveIntel(i,2,'the Whistleblower kept copies')}else if(S.owner.jt===i){giveIntel(i,2,'JTPortal keeps backups')}else if(pl.intel>0){pl.intel-=1;fxAt(i,'🛈−1','#55c1ff');log('🗑️ '+pname(i)+' loses 1 Intel — the tapes are gone.')}});}},
@@ -506,8 +506,7 @@ function modal(o){return new Promise(res=>{
  (o.options||[{label:'Continue',v:1}]).forEach(op=>{const bt=document.createElement('button');bt.textContent=op.label;bt.onclick=()=>{document.body.removeChild(ov);res(op.v)};opts.appendChild(bt)});
  card.appendChild(t);card.appendChild(b);card.appendChild(opts);ov.appendChild(card);document.body.appendChild(ov);
 })}
-function monopolyAlertFace(sub){ return '<div class="eventcard"><div style="display:flex;gap:16px;justify-content:center;align-items:center;margin:10px 0 8px"><img src="./static/the rock.gif" alt="The Rock" style="width:120px;height:120px;object-fit:cover;border:2px solid #168388;background:#000"><img src="./static/accc.png" alt="ACCC" style="width:120px;height:120px;object-fit:contain;border:2px solid #168388;background:#111;padding:8px"></div><div class="etitle">MONOPOLY ALERT</div><div class="etext">'+(sub||'')+'</div></div>';}
-function cardFace(c){if(c.id==='crackdown')return monopolyAlertFace(c.text);return '<div class="eventcard"><div class="eicon">'+c.icon+'</div><div class="etitle">'+c.title+'</div><div class="etext">'+c.text+'</div></div>'}
+function cardFace(c){return '<div class="eventcard"><div class="eicon">'+c.icon+'</div><div class="etitle">'+c.title+'</div><div class="etext">'+c.text+'</div></div>'}
 /* ---- floating FX: visible on every screen, driven purely by synced state ---- */
 function fx(x,y,t,c,big){if(Net.role!=='host'||!S)return;S.fx.push({id:++fxSeq,x,y,t,c,b:big?1:0});if(S.fx.length>40)S.fx.shift()}
 function fxAt(pi,t,c){if(!S||!S.players[pi])return;const n=NMAP[S.players[pi].pos];if(n)fx(n.x,n.y-64,t,c)}
@@ -586,10 +585,11 @@ function acccInvestigate(pi){
  hits.sort((a,b)=>b.n-a.n||a.g.name.localeCompare(b.g.name));
  const hit=hits[0];
  hit.owned.forEach(n=>{delete S.owner[n.id];delete S.bugs[n.id];fx(n.x,n.y-70,'🧐 DIVESTED','#55c1ff')});
- log('🧐 MONOPOLY ALERT! '+pname(pi)+' is forced to dump the whole '+hit.g.name+' book ('+hit.owned.map(n=>n.name.join(' ')).join(', ')+').');
- fxAt(pi,'MONOPOLY ALERT','#55c1ff',true);
- announceAll('MONOPOLY ALERT',
-  monopolyAlertFace(esc(S.players[pi].name)+' held more than two '+esc(hit.g.name)+' properties.')
+ log('🧐 ACCC INVESTIGATION! '+pname(pi)+' is forced to dump the whole '+hit.g.name+' book ('+hit.owned.map(n=>n.name.join(' ')).join(', ')+').');
+ fxAt(pi,'🧐 ACCC','#55c1ff',true);
+ announceAll('🧐 ACCC INVESTIGATION',
+  '<div class="eventcard"><div class="eicon">🧐</div><div class="etitle">CONCENTRATION RAID</div>'
+  +'<div class="etext">'+esc(S.players[pi].name)+' held more than two '+esc(hit.g.name)+' properties.</div></div>'
   +'<p>The ACCC breaks up the book. Divested: <b>'+hit.owned.map(n=>esc(n.name.join(' '))).join('</b>, <b>')+'</b>.</p>');
 }
 /* MADE moves money off the rest of the table, not out of thin air. */
