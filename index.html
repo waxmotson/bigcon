@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>THE BIG CON v1.4</title>
+<title>THE BIG CON v1.5</title>
 <link rel="icon" href="favicon.ico">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
@@ -13,7 +13,7 @@ body{font-family:system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif;col
 .serif,.bigtitle,.brand .t1,.winname,.turnname,.codeline .cc,.mtitle,.etitle{font-family:'Times New Roman',Times,serif}
 #toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-70px);background:#168388;color:#fff;font-weight:800;padding:10px 24px;border-radius:0;border:2px solid #000;box-shadow:0 10px 30px rgba(0,0,0,.6);opacity:0;transition:all .35s;z-index:90;pointer-events:none;font-size:14px;letter-spacing:1px;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
 #toast.show{opacity:1;transform:translate(-50%,0)}
-#setup{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px}
+#setup{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px}.splash-logo{width:min(100%,620px);height:220px;display:flex;align-items:center;justify-content:center;margin:0 auto 22px;background:#000;overflow:hidden}.splash-logo img{display:block;width:100%;height:100%;object-fit:contain}
 .setupcard{background:#111413;color:#f2f2f2;max-width:720px;width:100%;border-radius:0;border:2px solid #168388;padding:28px 32px;box-shadow:0 24px 80px rgba(0,0,0,.75);margin-top:28px}
 .bigtitle{font-size:44px;font-weight:900;letter-spacing:4px;background:#168388;color:#fff;display:inline-block;padding:10px 18px;margin:0 0 8px}
 .tag{font-size:17px;font-style:italic;color:burlywood;margin:12px 0 4px}
@@ -164,13 +164,7 @@ button.mini:hover{background:#168388}
 
 <div id="setup">
  <div class="setupcard">
-  <div class="bigtitle">THE BIG CON</div>
-  <div class="tag" style="margin-top:0">v1.4</div>
-  <p class="tag">v1.4 — The complete evidence board — charts unstacked, Quikstop on the move. Seats 2–8.</p>
-  <p class="intro">The evidence board contains the exhibits shown below: Qantas, JTPortal, St Andrew's Cathedral School, the ACCC, the RBA, Citi, CommBank, NAB, ANZ, Westpac, ASIC, the coat of arms, PETRONAS, BHP, MarketPlace Leichhardt, Quikstop, MADE, the World Economic Forum, Fox Business, Herald Sun / The Jim Reaper, the charts now pinned all over the collage (10-year master in the middle; US by Trump; Japan by the tankers; UK by the papers; Australia by the coat of arms; Canada by the vault), the commodities (WTI pit, blue barrels, tanker fleet, gold coins, coal train, coal terminal, forklift, BHP), the headlines (“Quite frankly, JTPortal…”, “BONDMAGEDDON”, “Big Bessent”, “The Jim…”, INSIDER TRADING, CEO COAL, BRAD PITT, The Big Short) and the polaroids — Watson, Bessent, Chalmers, Albanese, Trump, Bullock, James Bond of Citibank, The Rock, the Whistleblower, Toktimer — plus the IB Diploma, the Sisyphus Boulder, the circled ASICS shoe, the bullet train and the Australian Monetary Policy Competition.<br><br>
-  <b>Each game Quikstop opens in a different neighbourhood</b> — the inner west, the docks, across from the RBA, down by MarketPlace, or next to MADE — so the opening map is never the same.<br><br>
-  Every market event now <b>shifts the mood of the whole board</b> — watch the ticker, the tint and the glowing nodes — and money, Cortisol and Intel <b>pop up on the board as they happen</b>. Intel is a currency with teeth: <b>burn favors, spy on the event deck, open the Dossier, sweep for bugs, or sell rumors at the exchange</b> (rates rise when the market panics).<br><br>
-  <b>Online play (2–8 players):</b> one player hosts and gets a room code — a jt portal <b>buzzword</b> like NESA, HORNSBY HEIGHTS or WORLD ECONOMIC FORUM, each one straight off the jt portal ticker; everyone else joins by typing it, and the lobby has its own chat while you wait. Each screen sees only its own secret prompts. Everyone must run <b>this same file</b>.</p>
+  <div class="splash-logo"><img id="splashLogo" src="https://raw.githubusercontent.com/waxmotson/The-big-con-desktop/master/whatsappbigcon_1.gif" alt="THE BIG CON"></div>
   <div class="chooserow">
    <button class="modebtn" id="btnHost">HOST</button>
    <button class="modebtn" id="btnJoin">JOIN</button>
@@ -218,7 +212,7 @@ button.mini:hover{background:#168388}
 
 <script>
 'use strict';
-const $=id=>document.getElementById(id);
+const $=id=>document.getElementById(id);(function(){const img=$('splashLogo');if(!img)return;let done=false;const swap=()=>{if(done)return;done=true;img.src='https://raw.githubusercontent.com/waxmotson/The-big-con-desktop/master/big%20con%20logo.png';img.alt='THE BIG CON'};setTimeout(swap,5000)})();
 
 /* ================= DISCORD RICH PRESENCE BRIDGE =================
    window.discordRPC is injected ONLY by the desktop (Electron) build's
@@ -272,7 +266,7 @@ const Presence=(function(){
    const p={details:asHost?'Hosting a lobby':'Waiting in a lobby',state:have+'/'+max+' seated — send a Discord invite',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON',partyId:'bigcon-'+(codeSlug(code)||'solo'),partySize:have,partyMax:max,supportedPlatforms:['desktop']};
    const secret=joinSecretFor(code);
    if(secret&&have<max){p.joinSecret=secret;p.instance=true}
-   send(withChar(p,charId));
+   send(p);
   },
   inGame(turn,curName,isMe,myMoney,goal,connected,charId,code,curCharId){
    if(!startedAt)startedAt=Date.now();
@@ -1274,7 +1268,7 @@ function renderBoard(){
  s+=scribble(1830,860,100,64,4)+scribble(1150,540,95,72,-3)+scribble(1000,1380,92,62,5)+scribble(1630,930,96,62,-4)+scribble(1500,470,98,62,3)+scribble(2020,185,92,66,-5)+scribble(390,1200,102,68,3);
  s+=redArrow(2090,330,1140,310)+redArrow(1965,235,1580,440)+redArrow(1080,585,480,1140)+redArrow(1130,1170,420,640);
  s+=scribText(1930,392,-4,'CASH RATE ↑')+scribText(1150,390,3,'“BOND…”')+scribText(1715,448,-6,'WTI +12%')+scribText(455,295,2,'TOO BIG TO FAIL')+scribText(1930,745,-3,'GOLD ↑')+scribText(1050,1150,4,'RATES ON HOLD')+scribText(640,810,-5,'INSIDER TRADING?');
- s+='<g transform="translate(58,40)"><rect x="-4" y="-22" width="268" height="36" fill="#168388" stroke="#000" stroke-width="2"/><text x="14" y="3" font-size="16" font-weight="900" letter-spacing="2" fill="#fff" font-family="Times New Roman, Times, serif">THE BIG CON v1.4</text></g>';
+ s+='<g transform="translate(58,40)"><rect x="-4" y="-22" width="268" height="36" fill="#168388" stroke="#000" stroke-width="2"/><text x="14" y="3" font-size="16" font-weight="900" letter-spacing="2" fill="#fff" font-family="Times New Roman, Times, serif">THE BIG CON v1.5</text></g>';
  /* the market wire — the mood, live */
  s+='<g transform="translate(1230,30)"><rect x="-700" y="-13" width="1400" height="26" fill="#000" stroke="'+md.color+'" stroke-width="2" opacity=".96"/><circle class="tkdot" cx="-682" cy="0" r="5" fill="'+md.color+'"/><text x="-668" y="4" font-size="11" font-weight="900" letter-spacing="1.5" fill="aqua">'+md.label+'</text><text x="-20" y="4" text-anchor="middle" font-size="10.5" font-style="italic" fill="#ddd">'+esc((S.wire||'all quiet on the wire').slice(0,88))+'</text><text x="688" y="4" text-anchor="end" font-size="10" font-weight="800" fill="#9ad">1🛈=$'+md.rate+'</text></g>';
  let lx=560;
