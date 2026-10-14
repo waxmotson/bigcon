@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>THE BIG CON v1.5</title>
+<title>THE BIG CON v1.7</title>
 <link rel="icon" href="favicon.ico">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
@@ -1271,7 +1271,7 @@ function renderBoard(){
  s+=scribble(1830,860,100,64,4)+scribble(1150,540,95,72,-3)+scribble(1000,1380,92,62,5)+scribble(1630,930,96,62,-4)+scribble(1500,470,98,62,3)+scribble(2020,185,92,66,-5)+scribble(390,1200,102,68,3);
  s+=redArrow(2090,330,1140,310)+redArrow(1965,235,1580,440)+redArrow(1080,585,480,1140)+redArrow(1130,1170,420,640);
  s+=scribText(1930,392,-4,'CASH RATE ↑')+scribText(1150,390,3,'“BOND…”')+scribText(1715,448,-6,'WTI +12%')+scribText(455,295,2,'TOO BIG TO FAIL')+scribText(1930,745,-3,'GOLD ↑')+scribText(1050,1150,4,'RATES ON HOLD')+scribText(640,810,-5,'INSIDER TRADING?');
- s+='<g transform="translate(58,40)"><rect x="-4" y="-22" width="268" height="36" fill="#168388" stroke="#000" stroke-width="2"/><text x="14" y="3" font-size="16" font-weight="900" letter-spacing="2" fill="#fff" font-family="Times New Roman, Times, serif">THE BIG CON v1.5</text></g>';
+ s+='<g transform="translate(58,40)"><rect x="-4" y="-22" width="268" height="36" fill="#168388" stroke="#000" stroke-width="2"/><text x="14" y="3" font-size="16" font-weight="900" letter-spacing="2" fill="#fff" font-family="Times New Roman, Times, serif">THE BIG CON v1.7</text></g>';
  /* the market wire — the mood, live */
  s+='<g transform="translate(1230,30)"><rect x="-700" y="-13" width="1400" height="26" fill="#000" stroke="'+md.color+'" stroke-width="2" opacity=".96"/><circle class="tkdot" cx="-682" cy="0" r="5" fill="'+md.color+'"/><text x="-668" y="4" font-size="11" font-weight="900" letter-spacing="1.5" fill="aqua">'+md.label+'</text><text x="-20" y="4" text-anchor="middle" font-size="10.5" font-style="italic" fill="#ddd">'+esc((S.wire||'all quiet on the wire').slice(0,88))+'</text><text x="688" y="4" text-anchor="end" font-size="10" font-weight="800" fill="#9ad">1🛈=$'+md.rate+'</text></g>';
  let lx=560;
@@ -1412,7 +1412,7 @@ function renderSide(){
  const chatVal=(window.__chatDraft)||'';
  side.innerHTML='<div class="netstrip">ROOM <b>'+(Net.roomLabel||Net.roomCode||'·····')+'</b> · '+(Net.role==='host'?'HOST':'SEAT '+(Net.myIdx+1))+' · 🎯 TARGET $'+goalAmount()+' · '+(S.players.filter(pl=>!pl.dc).length+'/'+S.players.length+' connected')+(S.deckCount!=null?' · 🎴 '+S.deckCount+' events left':'')+' · ⛽ '+(QUIK_SLOTS[S.quikSlot|0]||QUIK_SLOTS[0]).label+'</div>'
   +'<div class="moodstrip" style="border-color:'+md.color+'"><span class="mdot" style="background:'+md.color+'"></span><b style="color:'+md.color+'">'+md.label+'</b><span>'+md.desc+'</span><span class="mwire">“'+esc(S.wire||'all quiet on the wire')+'”</span></div>'
-  +'<div class="brand"><div class="t1">THE BIG CON</div><div class="t2">v1.4 · 82 exhibits · charts unstacked · Quikstop wanders · online, 2–8 · no dice (they’re rigged)</div></div>'
+  +'<div class="brand"><div class="t1">THE BIG CON</div><div class="t2">v1.7 · 82 exhibits · charts unstacked · Quikstop wanders · online, 2–8 · no dice (they’re rigged)</div></div>'
   +'<div class="turncard" style="border-color:'+p.color+'"><div class="turnlab">TURN '+S.turn+'</div><div class="turnname" style="color:'+p.color+'">'+esc(p.name)+(isTurn?' — that’s you':'')+'</div>'
   +'<div class="resline">$ '+p.money+' &nbsp;·&nbsp; 🛈 '+p.intel+' &nbsp;·&nbsp; 🔥 '+p.cortisol+(p.cortisol>=6?' <span class="danger">RAID AT 8</span>':'')+'</div>'
   +'<div class="holds" title="holdings of '+esc(p.name)+'">'+(isTurn?ownedIcons:'<span style="opacity:.5;font-size:12px">'+NODES.filter(n=>S.owner[n.id]===S.cur).length+' holdings</span>')+'</div></div>'
