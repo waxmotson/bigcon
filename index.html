@@ -470,10 +470,14 @@ const CHARS=[
  {id:'calvinathanasius',name:'Calvin Athanasius',file:'calvinathanasius.png'},
  {id:'denialswan',name:'Denial Swan',file:'denialswan.png'},
  {id:'japsnchen',name:'Japsn Chen',file:'japsnchen.png'},
- {id:'thousandyardwax',name:'Thousand Yard Wax',file:'thousandyardwax.png'}
+ {id:'thousandyardwax',name:'Thousand Yard Wax',file:'thousandyardwax.png'},
+ {id:'Alexander_Lane',name:'The guy from Toktimer',file:'Alexander_Lane.png',url:'https://raw.githubusercontent.com/waxmotson/bigcon3D/master/characters/Alexander_Lane.png'},
+ {id:'DJT',name:'QUITE FRANKLY',file:'DJT.png',url:'https://raw.githubusercontent.com/waxmotson/bigcon3D/master/characters/DJT.png'},
+ {id:'thebigag',name:'The Big Ag',file:'thebigag.png',url:'https://raw.githubusercontent.com/waxmotson/bigcon3D/master/characters/thebigag.png'},
+ {id:'thebigwegrzyn',name:'Seth Wegrzyn',file:'thebigwegrzyn.png',url:'https://raw.githubusercontent.com/waxmotson/bigcon3D/master/characters/thebigwegrzyn.png'}
 ];
 function charMeta(id){return CHARS.find(c=>c.id===id)||null}
-function charSrc(id){const c=charMeta(id);return c?CHARURL+c.file:''}
+function charSrc(id){const c=charMeta(id);return c?(c.url||CHARURL+c.file):''}
 /* ================= THE MARKET MOOD — set by every event, felt by everyone ================= */
 const MOODS={
  CALM:{label:'MARKET: CALM',color:'#8fbf7f',tint:'rgba(70,130,70,0.045)',rate:2,desc:'no modifiers · 1 🛈 = $2'},
