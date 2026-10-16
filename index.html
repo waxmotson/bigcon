@@ -1263,7 +1263,8 @@ function showRules(){
 /* ================= RENDERING (shared by host & guests) ================= */
 function render(){
  if(!S)return;
- \n notifyCurrentTurn(false);applyLayoutFromState();renderBoard();renderSide();
+ 
+ notifyCurrentTurn(false);applyLayoutFromState();renderBoard();renderSide();
  if(!S.over){
   const me=S.players[Net.myIdx];
   const cur=S.players[S.cur];
