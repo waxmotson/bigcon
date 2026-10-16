@@ -1610,7 +1610,8 @@ function handleNodeTap(t){
  const b=e.target.closest('button[data-act]');
  if(!b||b.disabled)return;
  const act=b.dataset.act;
- if(act==='rules'){showRules();return}\n if(act==='notifications'){toggleTurnAlerts();return}
+ if(act==='rules'){showRules();return}
+ if(act==='notifications'){toggleTurnAlerts();return}
  if(act==='leave'){
   if(Net.role==='host'){const v=await modal({title:'END THE GAME?',body:'This will disconnect everyone and return all players to the lobby screen. Proceed?',options:[{label:'Yes — end it',v:1},{label:'Keep scheming',v:0}]});if(v){sendAll({t:'reload'});setTimeout(()=>location.reload(),300)}}
   else{const v=await modal({title:'LEAVE THE TABLE?',body:'Your seat will be held — rejoin later with the same name and room code.',options:[{label:'Yes — leave',v:1},{label:'Stay',v:0}]});if(v)location.reload()}
