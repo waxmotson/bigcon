@@ -225,11 +225,10 @@ body.game-open{overflow:hidden}
   <div class="netform show" id="transportSettings" style="display:flex;margin-top:8px">
    <label class="namelab" style="font-size:12px;color:#9ad;flex-wrap:wrap">Connection system
     <select id="transportMode" style="flex:1;min-width:150px;background:#000;color:#fff;border:1px solid #168388;padding:8px;font:inherit">
-     <option value="peerjs">PeerJS (direct / TURN)</option><option value="cloudflare">Cloudflare Durable Objects relay</option>
+     <option value="cloudflare">Cloudflare relay (default)</option><option value="peerjs">PeerJS / WebRTC fallback</option>
     </select>
    </label>
-   <label class="namelab" id="relayUrlRow" style="display:none"><input id="relayUrl" type="url" placeholder="https://your-worker.workers.dev" autocomplete="url"></label>
-   <div id="relayHelp" style="font-size:11px;color:#9ad;line-height:1.4">Cloudflare mode uses a deployed Worker URL. PeerJS remains the default.</div>
+   <div id="relayHelp" style="font-size:11px;color:#9ad;line-height:1.4">Cloudflare relay is the default. If it is unavailable, switch to PeerJS / WebRTC; everyone in the room must use the same connection system.</div>
   </div>
   <div class="setuplinks"><button data-srules>📖 How to play</button></div>
  </div>
@@ -247,7 +246,7 @@ body.game-open{overflow:hidden}
 <script>
 'use strict';
 /* Keep this equal to the parent commit's 7-character SHA; CI enforces updates. */
-const BUILD_COMMIT = '852672e';
+const BUILD_COMMIT = '7344cb9';
 const $=id=>document.getElementById(id);
 $('buildStamp').textContent='COMMIT '+BUILD_COMMIT;(function(){const img=$('splashLogo');if(!img)return;let done=false;const swap=()=>{if(done)return;done=true;img.src='https://raw.githubusercontent.com/waxmotson/The-big-con-desktop/master/big%20con%20logo.png';img.alt='THE BIG CON'};setTimeout(swap,5000)})();
 
@@ -1751,33 +1750,28 @@ function showFatal(msg){
  ov.appendChild(card);document.body.appendChild(ov);
 }
 
-/* ---- OPTIONAL CLOUDFLARE DURABLE OBJECT RELAY ----
-   Configure the Worker URL in the setup panel. This transport preserves the
-   PeerJS subset used by the game, while the Durable Object relays room traffic.
-   It is opt-in; the existing PeerJS path remains unchanged. */
+/* ---- DEFAULT CLOUDFLARE DURABLE OBJECT RELAY ----
+   The deployed Worker URL is built in, so players do not need to configure it.
+   PeerJS remains available as a fallback transport if the relay is unavailable;
+   all players in a room must select the same transport. */
+const BIGCON_RELAY_URL='https://bigconhosting.wax-no-bones.workers.dev';
 function transportSettings(){
- const mode=$('transportMode')?.value||'peerjs';
- const raw=$('relayUrl')?.value||'';
- try{localStorage.setItem('bigcon-transport-mode',mode);localStorage.setItem('bigcon-relay-url',raw)}catch(_){}
- return {mode,url:raw.trim().replace(/^http:/i,'ws:').replace(/^https:/i,'wss:').replace(/\/+$/,'')};
+ const mode=$('transportMode')?.value||'cloudflare';
+ try{localStorage.setItem('bigcon-transport-mode',mode)}catch(_){}
+ return {mode,url:BIGCON_RELAY_URL.replace(/^https:/i,'wss:').replace(/^http:/i,'ws:').replace(/\/+$/,'')};
 }
 function loadTransportSettings(){
  try{
-  const mode=localStorage.getItem('bigcon-transport-mode')||'peerjs';
-  const url=localStorage.getItem('bigcon-relay-url')||'';
+  const mode=localStorage.getItem('bigcon-transport-mode')||'cloudflare';
   if($('transportMode'))$('transportMode').value=mode;
-  if($('relayUrl'))$('relayUrl').value=url;
  }catch(_){}
  const refresh=()=>{
-  const mode=$('transportMode')?.value||'peerjs';
-  if($('relayUrlRow'))$('relayUrlRow').style.display=mode==='cloudflare'?'flex':'none';
+  const mode=$('transportMode')?.value||'cloudflare';
   if($('relayHelp'))$('relayHelp').textContent=mode==='cloudflare'
-   ?'Uses a Cloudflare Worker + Durable Object you deploy. Paste its HTTPS workers.dev URL above. Reconnects use the same room code.'
-   :'PeerJS direct / TURN transport is active. Cloudflare is optional.';
+   ?'Using the built-in Cloudflare relay. No URL setup is needed.'
+   :'PeerJS / WebRTC direct or TURN fallback is active. Everyone joining the room must select the same connection system.';
  };
  $('transportMode')?.addEventListener('change',()=>{transportSettings();refresh()});
- $('relayUrl')?.addEventListener('change',transportSettings);
- $('relayUrl')?.addEventListener('blur',transportSettings);
  loadTransportSettings._refresh=refresh;refresh();
 }
 class RelayEvents{
@@ -1796,9 +1790,7 @@ class CloudflarePeer extends RelayEvents{
   queueMicrotask(()=>{if(this.destroyed)return;if(this.hostSide)this._connectSocket(this.id.slice(PFX.length),'host');else this.emit('open','guest-'+crypto.randomUUID())});
  }
  _baseUrl(){
-  const url=(transportSettings().url||'').trim();
-  if(!url)throw new Error('Enter your deployed Cloudflare Worker URL in Connection system settings.');
-  return url;
+  return transportSettings().url;
  }
  _connectSocket(room,role){
   let base;try{base=this._baseUrl()}catch(e){this.emit('error',{type:'configuration',message:e.message});return}
