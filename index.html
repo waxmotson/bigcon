@@ -1757,12 +1757,12 @@ function showFatal(msg){
 const BIGCON_RELAY_URL='https://bigconhosting.wax-no-bones.workers.dev';
 function transportSettings(){
  const mode=$('transportMode')?.value||'cloudflare';
- try{localStorage.setItem('bigcon-transport-mode',mode)}catch(_){}
+ try{localStorage.setItem('bigcon-transport-mode-v2',mode)}catch(_){}
  return {mode,url:BIGCON_RELAY_URL.replace(/^https:/i,'wss:').replace(/^http:/i,'ws:').replace(/\/+$/,'')};
 }
 function loadTransportSettings(){
  try{
-  const mode=localStorage.getItem('bigcon-transport-mode')||'cloudflare';
+  const mode=localStorage.getItem('bigcon-transport-mode-v2')||'cloudflare';
   if($('transportMode'))$('transportMode').value=mode;
  }catch(_){}
  const refresh=()=>{
