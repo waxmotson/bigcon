@@ -12,9 +12,9 @@ This optional Worker provides a WebSocket relay backed by one Durable Object per
    npx wrangler deploy
    \`\`\`
 3. Copy the deployed HTTPS \`workers.dev\` URL (for example, \`https://bigcon-relay.<your-subdomain>.workers.dev\`).
-4. In the Big Con website's setup panel, choose **Cloudflare Durable Objects relay**, paste that URL, then host/join as usual. Use the same room code as usual.
+4. The Big Con game has this Worker URL built in: `https://bigconhosting.wax-no-bones.workers.dev`. Open the game and host/join as usual; no URL needs to be pasted. Cloudflare relay is the default. If the relay is unavailable, select **PeerJS / WebRTC fallback** in Connection system settings. Everyone in the same room must use the same transport.
 
-The URL is saved in that browser's local storage. Leave PeerJS selected to use the existing path. No API token should be placed in the game page.
+No API token should be placed in the game page.
 
 ## What it does
 
