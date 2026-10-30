@@ -252,7 +252,7 @@ body.game-open{overflow:hidden}
 <script>
 'use strict';
 /* Keep this equal to the parent commit's 7-character SHA; CI enforces updates. */
-const BUILD_COMMIT = 'fcb01aa';
+const BUILD_COMMIT = 'a81afd1';
 const $=id=>document.getElementById(id);
 $('buildStamp').textContent='COMMIT '+BUILD_COMMIT;(function(){const img=$('splashLogo');if(!img)return;let done=false;const swap=()=>{if(done)return;done=true;img.src='https://raw.githubusercontent.com/waxmotson/The-big-con-desktop/master/big%20con%20logo.png';img.alt='THE BIG CON'};setTimeout(swap,5000)})();
 
@@ -330,7 +330,7 @@ const Presence=(function(){
  };
 })();
 
-/* ================= THE COMPLETE EVIDENCE BOARD — 70 exhibits · +11 with the GEOGRAPHY DLC ================= */
+/* ================= THE COMPLETE EVIDENCE BOARD — 70 exhibits · +12 with the GEOGRAPHY DLC ================= */
 const BASE_NODES=[
 {id:'citi',image:'./static/citi tower.webp',name:['CITI TOWER'],icon:'🏦',type:'BANK',shape:'logo',band:'#1a5fa8',income:3,cost:8,x:210,y:150,rot:-2,sub:'too big to fail · 007 on payroll',sp:'+$1 income per CORPORATE node you own (James Bond is on the payroll).'},
 {id:'commbank',image:'./static/cba.png',name:['COMMONWEALTH BANK'],icon:'🏦',type:'BANK',shape:'logo',band:'#d4a017',income:2,cost:6,x:400,y:95,rot:2,sub:'can’t be beat? we’ll see',sp:'+$2 income while you own any other BANK (the big four stick together).'},
@@ -410,34 +410,35 @@ const BASE_NODES=[
 {id:'asics',image:'./static/running shoe.jpg',name:['THE RUNNING SHOE','ASICS'],icon:'👟',type:'WILD',shape:'photo',income:1,cost:3,x:430,y:1360,rot:3,sub:'circled in red · why is this here',sp:'+1 movement step (you are always jogging). Stand here (once owned) to JOG: free −1 Cortisol.'},
 {id:'toktimer',image:'./static/toktimer.png',name:['TOKTIMER'],icon:'⏱️',type:'WILD',shape:'photo',income:1,cost:5,x:1920,y:1020,rot:-2,sub:'the clock is running',sp:'+1 Intel whenever a Market Event is revealed. Time is information.'}
 ];
-/* ─────────── 🌍 GEOGRAPHY DLC — eleven more pins, host-toggled in the lobby ───────────
+/* ─────────── 🌍 GEOGRAPHY DLC — twelve more pins, host-toggled in the lobby ───────────
    The whole GEOGRAPHY set is appended to BASE_NODES only when the lobby flag is on
    (rebuildWorld). Abilities are id-hooked exactly like the base game: startTurn
    passives, income() synergies, and applyIntent actions keyed on the node id. */
 let NODES=[];
-const GEO_NODE_IDS=['geo_missile','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_boeing','geo_scs','geo_stage5','geo_pillars','geo_venice','geo_tuvalu','geo_kim'];
+const GEO_NODE_IDS=['geo_missile','geo_shahed','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_boeing','geo_scs','geo_stage5','geo_pillars','geo_venice','geo_tuvalu','geo_kim'];
 const OIL_IDS=['oil','oilgraph','barrels','tanker','petronas'];
-const GEO_HIGH_VALUE_IDS=['geo_missile','geo_scs','geo_pyothotel','geo_boeing','geo_pillars'];
-/* The hermit kingdom: these pins spawn clustered in a ring around Pyongyang City. */
+const GEO_HIGH_VALUE_IDS=['geo_missile','geo_shahed','geo_scs','geo_pyothotel','geo_boeing','geo_pillars','geo_kim','geo_wonsan','geo_venice','geo_pyoncity','geo_stage5'];
+/* Related North Korea DLC pins; their physical positions are deliberately not clustered. */
 const GEO_NK_IDS=['geo_missile','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_kim'];
 const GEO_NODES=[
-{id:'geo_missile',image:'./static/GeographyDLC/nk_missile.jpg',name:['MISSILE COMMAND'],icon:'🚀',type:'REGULATOR',shape:'photo',income:0,cost:8,x:2140,y:1180,rot:2,sub:'strategic assets · keys under the desk',sp:'Unlocks LAUNCH A MISSILE ($4 + 1 Intel, once per turn): strike any node — but you must BE HERE to fire, during your move (the launch ends the move; your action still follows) or as your action (owning KIM JONG UN also arms the silo from anywhere). An owned node is expropriated with NO payout; either way it becomes rubble — no income, no seizing. Stand on rubble in your action phase and pay the list price to rebuild it; it returns unowned, buyable from next turn. Pillars-protected nodes cannot be struck.'},
+{id:'geo_missile',image:'./static/GeographyDLC/nk_missile.jpg',name:['MISSILE COMMAND'],icon:'🚀',type:'REGULATOR',shape:'photo',income:0,cost:8,x:2140,y:1180,rot:2,sub:'strategic assets · keys under the desk',sp:'Unlocks LAUNCH A MISSILE ($4 + 1 Intel, once per turn): strike any node — but you must BE HERE to fire, during your move (the launch ends the move; your action still follows) or as your action (owning KIM JONG UN also arms the silo from anywhere). An owned node is expropriated with NO payout; either way it becomes rubble — no income, no seizing. Stand on rubble in your action phase and pay the list price to rebuild it; it returns unowned, buyable from next turn. ESG is vulnerable to missile strikes.'},
+{id:'geo_shahed',image:'./static/GeographyDLC/shahed drone.webp',name:['IRANIAN','SHAHED DRONE'],icon:'🛩️',type:'REGULATOR',shape:'photo',income:0,cost:8,x:420,y:1120,rot:-2,sub:'one-way delivery · disposable diplomacy',sp:'Functions like MISSILE COMMAND: launch a missile for $4 + 1 Intel, once per turn. Fire while standing on the drone you own, or from anywhere if you own KIM JONG UN. You cannot own this and MISSILE COMMAND at the same time.'},
 {id:'geo_wonsan',image:'./static/GeographyDLC/nk_wonsanresort.jpg',name:['WONSAN','RESORT'],icon:'🏖️',type:'WILD',shape:'photo',income:2,cost:5,x:2080,y:700,rot:-2,sub:'the beach town · sanctioned paradise',sp:'Stand here (once owned) for BEACH DAY: free, once per turn, −2 Cortisol. The sand is quiet. The waves are loud. Nobody is watching.'},
 {id:'geo_pyoncity',image:'./static/GeographyDLC/nk_pyongyangcity.webp',name:['PYONGYANG','CITY'],icon:'🌆',type:'BANK',shape:'photo',income:2,cost:6,x:2240,y:1000,rot:1,sub:'the capital · show windows, all lit',sp:'+$1 income per GEOGRAPHY DLC node you own (the capital collects tribute).'},
 {id:'geo_pyothotel',image:'./static/GeographyDLC/nk_pyongyanghotel.jpg',name:['PYONGYANG','HOTEL'],icon:'🏨',type:'CORPORATE',shape:'photo',income:2,cost:8,x:2200,y:830,rot:-1,sub:'106 floors · 47 in use',sp:'Gain $2 whenever ANY rubble node is REBUILT (construction kickbacks, allegedly).'},
 {id:'geo_boeing',image:'./static/GeographyDLC/geo_boeing.jpg',name:['THE CORPORATE','BOEING'],icon:'🛩️',type:'CORPORATE',shape:'photo',income:2,cost:7,x:1920,y:590,rot:2,sub:'white tail · no livery · no paperwork',sp:'Unlocks SHUT DOWN QANTAS ($4, once per turn): the kangaroo is grounded for two full turns — nobody flies the jet, and its owner collects nothing from it.'},
 {id:'geo_scs',image:'./static/GeographyDLC/geo_southchinasea.jpg',name:['THE SOUTH','CHINA SEA'],icon:'🌊',type:'COMMODITY',shape:'photo',income:4,cost:9,x:1880,y:1300,rot:-2,sub:'disputed waters · freedom of navigation',sp:'Unlocks TRIGGER AN OIL CRASH ($3, once per turn): the mood turns PANIC and every player pays $2 per oil node they own. Pillars-protected players are exempt.'},
 {id:'geo_stage5',image:'./static/GeographyDLC/geo_stage5decline.png',name:['STAGE 5','DECLINE'],type:'CHART',shape:'chart',spark:'down',income:1,cost:4,x:2040,y:470,rot:1,sub:'imported uranium · charcoal · decay',sp:'Unlocks CALL STAGE 5 (2 Intel, once per turn): the current richest player (not you) makes NO income on their next turn.'},
-{id:'geo_pillars',image:'./static/GeographyDLC/geo_pillars.jpg',name:['PILLARS OF','SUSTAINABILITY'],icon:'🧱',type:'REGULATOR',shape:'photo',income:1,cost:6,x:1760,y:250,rot:-1,sub:'ESG-laminated · one pillar is cardboard',sp:'ESG SHIELD: −1 Cortisol at the start of each of your turns. Your nodes cannot be missile-struck; you pay nothing on an OIL CRASH; Stage 5 Decline cannot call you.'},
+{id:'geo_pillars',image:'./static/GeographyDLC/geo_pillars.jpg',name:['PILLARS OF','SUSTAINABILITY'],icon:'🧱',type:'REGULATOR',shape:'photo',income:1,cost:6,x:1760,y:250,rot:-1,sub:'ESG-laminated · one pillar is cardboard',sp:'ESG SHIELD: −1 Cortisol at the start of each of your turns. You still pay nothing on an OIL CRASH and Stage 5 Decline cannot call you, but the Pillars themselves can be missile-struck and your holdings remain vulnerable to Overtourism.'},
 {id:'geo_venice',image:'./static/GeographyDLC/geo_venice.jpg',name:['VENICE','DI CCTV'],type:'MEDIA',shape:'photo',income:3,cost:8,x:150,y:950,rot:2,sub:'la serenissima · sella aperta',sp:'Stand here (once owned) for GONDOLA THERAPY: free, once per turn, −1 Cortisol. Or in your action phase send OVERTOURISM ($2, once per turn, either/or): pick a rival node — its owner takes +1 Cortisol at the start of each of their turns while the cruise ships keep coming.'},
 {id:'geo_tuvalu',image:'./static/GeographyDLC/geo_tuvalu.png',name:['TUVALU','.TV'],icon:'🏝️',type:'WILD',shape:'photo',income:2,cost:5,x:1900,y:1420,rot:-2,sub:'the first country you get free',sp:'THE JOIN IS FREE: the first player to arrive simply owns it. No action, no cost, no Cortisol. After that, normal rules apply.'},
-{id:'geo_kim',image:'./static/GeographyDLC/nk_kimjongun.png',name:['KIM JONG','UN'],icon:'🧨',type:'WILD',shape:'photo',income:0,cost:6,x:2320,y:1210,rot:-2,sub:'the man himself · nothing is happening',sp:'+1 Intel at the start of each of your turns. Owning him exempts you from the MISSILE COMMAND on-site rule — the keys work from anywhere.'},
+{id:'geo_kim',image:'./static/GeographyDLC/nk_kimjongun.png',name:['KIM JONG','UN'],icon:'🧨',type:'WILD',shape:'photo',income:0,cost:6,x:2320,y:1210,rot:-2,sub:'the man himself · nothing is happening',sp:'+1 Intel at the start of each of your turns. Owning him exempts you from either launcher’s on-site rule — both the silo and the Shahed can fire from anywhere.'},
 ];
 const GEO_EDGES=[
  ['geo_missile','geo_pyoncity'],['geo_pyoncity','geo_pyothotel'],['geo_pyothotel','geo_wonsan'],['geo_wonsan','geo_missile'],
  ['geo_boeing','geo_pyothotel'],['geo_missile','geo_stage5'],['geo_stage5','geo_pillars'],
  ['geo_scs','geo_tuvalu'],['geo_venice','geo_scs'],
- ['geo_kim','geo_missile'],['geo_kim','geo_pyoncity']
+ ['geo_kim','geo_missile'],['geo_kim','geo_pyoncity'],['geo_shahed','geo_venice']
 ];
 const NMAP={};
 /* The Geography DLC rebuilds these every time the lobby flag flips. */
@@ -722,9 +723,9 @@ function gain(i,amt,why){S.players[i].money+=amt;log('💰 '+pname(i)+' gains $'
 function payVoid(i,amt,why){const p=S.players[i];const real=Math.min(p.money,amt);p.money-=real;log('💸 '+pname(i)+' loses $'+real+' — '+why+'.');fxAt(i,'−$'+real,'#ff6b5e')}
 function payTo(i,amt,to,why){const p=S.players[i];const real=Math.min(p.money,amt);p.money-=real;S.players[to].money+=real;log('💸 '+pname(i)+' pays $'+real+' to '+pname(to)+' — '+why+'.');fxAt(i,'−$'+real,'#ff6b5e');fxAt(to,'+$'+real,'#7fe08d')}
 function payFee(i,amt,why){const p=S.players[i];const real=Math.min(p.money,amt);p.money-=real;log('💸 '+pname(i)+' pays $'+real+' — '+why+'.');fxAt(i,'−$'+real,'#ff6b5e')}
-function addCortisol(i,n,why,ev){
+function addCortisol(i,n,why,ev,force){
  if(!n)return;
- if(n>0&&NODES.filter(node=>S.owner[node.id]===i).length<=1)return;
+ if(n>0&&!force&&NODES.filter(node=>S.owner[node.id]===i).length<=1)return;
  if(ev&&n>0&&(S.owner.bess===i||S.owner.jim===i)){n-=1;if(n<=0){log('📺 Big Bessent / The Jim buries the story — '+pname(i)+' takes no Cortisol at all.');return}log('📺 Breaking news softens the story — '+pname(i)+' takes only +'+n+' Cortisol.')}
  if(ev&&n>0){const h=S.owner.herald;if(h!=null&&h!==i)giveIntel(h,1,'THE JIM REAPER files the cortisol')}
  const p=S.players[i];p.cortisol=Math.max(0,Math.min(9,p.cortisol+n));
@@ -938,26 +939,24 @@ function generateRandomBoard(slot){
  const ids=NODES.map(n=>n.id).filter(id=>id!=='quik');
  const positions=shuffle(ORIGINAL_NODE_LAYOUT.filter(p=>p.id!=='quik').map(p=>({x:p.x,y:p.y,rot:p.rot})));
  const farthest=positions.slice().sort((a,b)=>Math.hypot(b.x-slot.x,b.y-slot.y)-Math.hypot(a.x-slot.x,a.y-slot.y));
- const prized=shuffle(ids.filter(id=>HIGH_VALUE_NODE_IDS.has(id)&&id!=='made'));
+ const basePrized=shuffle(ids.filter(id=>HIGH_VALUE_BASE_IDS.includes(id)&&id!=='made'));
+ const geoPrized=shuffle(ids.filter(id=>GEO_HIGH_VALUE_IDS.includes(id)));
  const ordinary=shuffle(ids.filter(id=>!HIGH_VALUE_NODE_IDS.has(id)&&id!=='made'));
  const assignment={quik:{x:slot.x,y:slot.y,rot:slot.rot}};
+ const quikPoint={x:slot.x,y:slot.y};
  assignment.made=farthest[0];
- prized.forEach((id,i)=>{assignment[id]=farthest[i+1]});
- const remaining=shuffle(farthest.slice(1+prized.length));
- ordinary.forEach((id,i)=>{assignment[id]=remaining[i]});
+ const remaining=positions.filter(p=>p!==assignment.made);
+ const basePool=remaining.slice().sort((a,b)=>Math.hypot(b.x-slot.x,b.y-slot.y)-Math.hypot(a.x-slot.x,a.y-slot.y)).slice(0,Math.ceil(positions.length*.55)); /* a wider outer-board pool preserves the prized-ring bias */
+ const takeMostSpaced=(pool,anchors)=>{pool.sort((a,b)=>Math.min(...anchors.map(p=>Math.hypot(b.x-p.x,b.y-p.y)))-Math.min(...anchors.map(p=>Math.hypot(a.x-p.x,a.y-p.y))));const p=pool.shift();const at=remaining.indexOf(p);if(at>=0)remaining.splice(at,1);return p};
+ const baseAnchors=[quikPoint,assignment.made];
+ basePrized.forEach(id=>{const p=takeMostSpaced(basePool,baseAnchors);assignment[id]=p;baseAnchors.push(p)});
+ const sortedRemaining=remaining.slice().sort((a,b)=>Math.hypot(a.x-slot.x,a.y-slot.y)-Math.hypot(b.x-slot.x,b.y-slot.y));
+ const geoPool=geoPrized.length?sortedRemaining.slice(Math.floor(sortedRemaining.length*.10),Math.ceil(sortedRemaining.length*.98)):[]; /* wide outer-biased pool, max-min spaced */
+ geoPrized.forEach(id=>{const p=takeMostSpaced(geoPool,baseAnchors);assignment[id]=p;baseAnchors.push(p)});
+ const ordinaryPositions=shuffle(remaining);
+ ordinary.forEach((id,i)=>{assignment[id]=ordinaryPositions[i]});
  NODES.forEach(n=>{const p=assignment[n.id]||ORIGINAL_LAYOUT_BY_ID[n.id];n.x=p.x;n.y=p.y;n.rot=p.rot});
- /* 🌍 GEOGRAPHY DLC — the North Korea pins spawn as a tight ring around Pyongyang
-    City's dealt plot, wherever the collage put it. Fixed per-node offsets (squashed
-    vertically for the wide collage) keep every mirror deterministic. */
- if(WORLD_GEO&&NMAP.geo_pyoncity){
-  const city=NMAP.geo_pyoncity;
-  const ring={geo_missile:[185,-215],geo_wonsan:[-215,-140],geo_pyothotel:[150,205],geo_kim:[-155,225]};
-  Object.keys(ring).forEach(id=>{
-   const n=NMAP[id];if(!n)return;
-   n.x=Math.max(95,Math.min(2305,city.x+ring[id][0]));
-   n.y=Math.max(95,Math.min(1455,city.y+ring[id][1]*0.72));
-  });
- }
+ /* High-value nodes keep the max-min spacing assigned above. */
  /* Randomized nearest-neighbour spanning tree, then extra local links. */
  const order=shuffle(ids),edges=[],seen=new Set();
  const add=(a,b)=>{if(!a||!b||a===b)return;const key=[a,b].sort().join('|');if(seen.has(key))return;seen.add(key);edges.push([a,b])};
@@ -999,14 +998,14 @@ function initGame(defs){
   Net.myIdx=order.indexOf(hostWas);
  }
  const goal=clampGoal(Net.goal);
- S={backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,dlcGeo:!!Net.dlcGeo,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null};
+ S={backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,dlcGeo:!!Net.dlcGeo,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,bondmageddonUsed:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null};
  const slot=QUIK_SLOTS[quikSlot];
  const generated=generateRandomBoard(slot);S.boardLayout=generated.positions;S.boardEdges=generated.edges;
  applyLayoutFromState();
  Net.started=true;
  log('🌅 A new board is dealt — '+NODES.length+' exhibits, '+EDGES.length+' freshly rebuilt connections, '+S.players.length+' at the table.');
  log('🧭 High-value targets are seeded further from Quikstop; the board and routes are reshuffled every game.');
- if(S.dlcGeo)log('🌍 GEOGRAPHY DLC — 11 extra island exhibits are on the board: missiles, resorts, disputed waters, ESG pillars, the hermit kingdom and one free country.');
+ if(S.dlcGeo)log('🌍 GEOGRAPHY DLC — 12 extra exhibits are on the board: missiles, resorts, disputed waters, ESG pillars, the hermit kingdom and one free country.');
  log('🎲 Seating was shuffled. First to move: '+S.players[0].name+'.');
  log('⛽ Quikstop opened '+slot.label+' this game. Everyone starts there with $15 and 2 Intel.');
  log('🏆 WIN CONDITION: $'+goal+' in the bank AND one of every node type ('+WIN_TYPES.join(', ')+'). The host set the target.');
@@ -1056,6 +1055,7 @@ async function startTurn(){
  log('—— TURN '+S.turn+' · '+pname(S.cur)+' ——');
  S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;
  if(S.dlcGeo){S.geoMissiled=false;S.geoBeach=false;S.geoBoeing=false;S.geoCrash=false;S.geoStage5=false;S.geoVenice=false}
+ S.bondmageddonUsed=false;
  if(S.fx.length>30)S.fx=S.fx.slice(-30);
  /* Expired blockades come down the moment the rotation that blocked them is done. */
  if(S.blockades)Object.keys(S.blockades).forEach(id=>{if(S.blockades[id]<=S.turn)delete S.blockades[id]});
@@ -1089,9 +1089,9 @@ async function startTurn(){
   if(own('gold')&&p.cortisol>0){const relief=Math.min(2,p.cortisol);p.cortisol-=relief;fxAt(S.cur,'🔥−'+relief,'#8fbf7f');log('🪙 Gold-coloured coins somehow soothe the nerves: −'+relief+' Cortisol (now '+p.cortisol+').')}
  if(S.dlcGeo&&own('geo_pillars')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🧱 ESG SHIELD — the Pillars absorb 1 Cortisol (now '+p.cortisol+').')}
  if(S.dlcGeo&&S.ov){
-  const ov=S.ov;
-  if(S.owner[ov.nid]===S.cur&&S.owner.geo_venice===ov.by&&!S.rubble[ov.nid])addCortisol(S.cur,1,'overtourism — the Venice cruise ships keep coming');
-  else S.ov=null;
+  const ov=S.ov,turnIndex=S.turn*S.players.length+S.cur;
+  if(S.owner.geo_venice!==ov.by||S.owner[ov.nid]!==ov.targetOwner||S.rubble[ov.nid]||turnIndex>=ov.expiresAt)S.ov=null;
+  else if(ov.targetOwner===S.cur)addCortisol(S.cur,1,'overtourism — the Venice cruise ships keep coming');
  }
  if(own('whistle'))giveIntel(S.cur,1,'the dossier grows');
  if(own('bullock'))giveIntel(S.cur,1,'the Governor briefs you');
@@ -1227,27 +1227,30 @@ async function applyIntent(pi,m){
   else if(act==='jog'&&abilityPhase(pi)&&!S.mode&&p.pos==='asics'&&S.owner.asics===pi){
    log('👟 '+pname(pi)+' jogs a lap in the circled shoe. Why is it on the board? Irrelevant.');addCortisol(pi,-1,'a cooling lap');await finishNodeAbility(pi)}
   /* ---- 🌍 GEOGRAPHY DLC ---- */
-  else if(act==='missilemode'&&S.dlcGeo&&(S.phase==='action'||S.phase==='move')&&!S.mode&&S.owner.geo_missile===pi&&p.money>=4&&p.intel>=1&&!S.geoMissiled&&(p.pos==='geo_missile'||S.owner.geo_kim===pi)){S.mode='missile';sync()}
+  else if(act==='missilemode'&&S.dlcGeo&&(S.phase==='action'||S.phase==='move')&&!S.mode&&ownsMissileLauncher(pi)&&canFireMissileFrom(pi)&&p.money>=4&&p.intel>=1&&!S.geoMissiled){S.mode='missile';sync()}
   else if(act==='missile'&&S.dlcGeo&&(S.phase==='action'||S.phase==='move')&&S.mode==='missile'){
    const n=NMAP[m.id];
    if(!n||!S.rubble||S.rubble[m.id]){sysTo(pi,'Pick a target that still stands.');S.mode=null;sync();return}
    if(S.owner[m.id]===pi){sysTo(pi,'You cannot missile your own node.');S.mode=null;sync();return}
-   if(S.owner[m.id]!=null&&S.owner[m.id]===S.owner.geo_pillars){sysTo(pi,'ESG SHIELD — the Pillars of Sustainability protect that node.');S.mode=null;sync();return}
+   const launcherId=S.owner.geo_missile===pi?'geo_missile':(S.owner.geo_shahed===pi?'geo_shahed':null);
+   if(!launcherId||!canFireMissileFrom(pi)){sysTo(pi,'You no longer control an armed missile launcher.');S.mode=null;sync();return}
+   /* ESG holdings are valid missile targets. */
    if(p.money<4||p.intel<1||S.geoMissiled){sysTo(pi,'Missile unavailable.');S.mode=null;sync();return}
    p.money-=4;p.intel-=1;fxAt(pi,'−$4 · 🛈−1','#ff6b5e');
    S.geoMissiled=true;S.mode=null;
    if(m.id==='geo_tuvalu'){
-    /* 🌍 TUVALU REFLECTS — the island is done sinking quietly: the warhead comes
-       back down on the launcher's own board and the silo detonates with it. */
-    projFx('missile','geo_missile','geo_tuvalu');
+    /* 🌍 TUVALU REFLECTS — the island sends the warhead back at the launcher
+       that actually fired it, whether that is MISSILE COMMAND or the SHAHED DRONE. */
+    const launcherName=NMAP[launcherId].name.join(' ');
+    projFx('missile',launcherId,'geo_tuvalu');
     log('🚀 '+pname(pi)+' launches a missile at TUVALU — the island REFUSES it. The warhead comes back down on '+pname(pi)+'’s own holdings.');
-    delete S.owner.geo_missile;delete S.bugs.geo_missile;S.rubble.geo_missile=1;
-    fx(NMAP.geo_missile.x,NMAP.geo_missile.y-70,'💥 BACKFIRE','#ff6b5e');
-    log('💥 '+pname(pi)+'’s MISSILE COMMAND silo blows up in the backblast — rubble, no payout, no refund.');
+    delete S.owner[launcherId];delete S.bugs[launcherId];S.rubble[launcherId]=1;
+    fx(NMAP[launcherId].x,NMAP[launcherId].y-70,'💥 BACKFIRE','#ff6b5e');
+    log('💥 '+pname(pi)+'’s '+launcherName+' is destroyed in the backblast — rubble, no payout, no refund.');
     sync();
     await projPause(); /* the warhead flies to the island before anything lands */
-    const pool=NODES.filter(nn=>S.owner[nn.id]===pi&&nn.id!=='geo_missile'&&nn.id!=='geo_tuvalu'&&!S.rubble[nn.id]);
-    if(S.owner.geo_pillars===pi)pool.length=0; /* the ESG shield keeps the reflection off their whole board */
+    const pool=NODES.filter(nn=>S.owner[nn.id]===pi&&nn.id!==launcherId&&nn.id!=='geo_tuvalu'&&!S.rubble[nn.id]);
+    /* ESG does not shield the owner's holdings from missile impacts. */
     if(pool.length){
      const hit=pool[Math.floor(Math.random()*pool.length)];
      if(projFx('missile','geo_tuvalu',hit.id)){sync();await projPause()} /* the reflected warhead flies home on screen */
@@ -1257,7 +1260,7 @@ async function applyIntent(pi,m){
     if(S.phase==='move'){S.steps=0;await endMovement()} /* a mid-move launch ends the walk; the action phase still follows */
     else await endOfTurn();
    }else{
-    if(projFx('missile','geo_missile',m.id)){sync();await projPause()} /* the flight plays on every screen before the market event covers the board */
+    if(projFx('missile',launcherId,m.id)){sync();await projPause()} /* the flight starts at the launcher the player actually owns */
     strikeNode(pi,m.id);
     if(S.phase==='move'){S.steps=0;await endMovement()} /* a mid-move launch ends the walk; the action phase still follows */
     else await endOfTurn();
@@ -1313,10 +1316,10 @@ async function applyIntent(pi,m){
   else if(act==='overtour'&&S.phase==='action'&&S.dlcGeo&&S.mode==='overtour'){
    const n=NMAP[m.id],o=S.owner[m.id];
    if(!n||o==null||o===pi||S.rubble[m.id]){sysTo(pi,'Overtourism targets a rival-owned node that still stands.');S.mode=null;sync();return}
-   if(S.owner.geo_pillars===o){sysTo(pi,'ESG SHIELD — that holding is protected.');S.mode=null;sync();return}
+   /* ESG does not protect against Overtourism. */
    if(p.money<2||S.geoVenice){S.mode=null;sync();return}
    p.money-=2;fxAt(pi,'−$2','#ff6b5e');
-   S.geoVenice=true;S.ov={nid:m.id,by:pi};S.mode=null;
+   S.geoVenice=true;S.ov={nid:m.id,by:pi,targetOwner:o,expiresAt:S.turn*S.players.length+S.cur+S.players.length};S.mode=null;
    fx(n.x,n.y-60,'🛳️ OVERTOURISM','#e19bff');
    log('🛳️ '+pname(pi)+' sends the cruise ships to '+n.name.join(' ')+' — OVERTOURISM: '+pname(o)+' takes +1 Cortisol at each of their turns while the ships keep coming.');
    await finishNodeAbility(pi);
@@ -1358,6 +1361,16 @@ async function applyIntent(pi,m){
     S.players.forEach((pl,j)=>addCortisol(j,2,'mass panic'));
     await endOfTurn();
    }
+  else if(act==='targetpanic'&&S.phase==='action'&&!S.mode&&p.intel>=30){
+   const rivals=S.players.map((pl,j)=>j).filter(j=>j!==pi);
+   if(!rivals.length){sysTo(pi,'There is nobody else at the table.');return}
+   const target=await askPlayer(pi,{title:'CORTISOL OVERLOAD — 30 INTEL',body:'Choose one rival to receive +6 Cortisol.',options:rivals.map(j=>({label:pname(j)+' · '+S.players[j].cortisol+'/9 Cortisol',v:j})).concat([{label:'Cancel',v:-1}]),def:-1});
+   if(target<0){sync();return}
+   if(!Number.isInteger(target)||target===pi||!S.players[target]){sysTo(pi,'Choose a valid rival.');sync();return}
+   if(S.cur!==pi||S.phase!=='action'||S.over||p.intel<30){sysTo(pi,'The overload is no longer available.');sync();return}
+   p.intel-=30;fxAt(pi,'🛈−30','#55c1ff');log('🔥 '+pname(pi)+' spends 30 Intel to overload '+pname(target)+' with +6 Cortisol.');
+   addCortisol(target,6,'a 30-Intel intelligence overload',null,true);await endOfTurn();
+  }
   else if(act==='divestmade'&&S.phase==='action'&&!S.mode&&p.intel>=5&&p.money>=7&&S.owner.made!=null&&S.owner.made!==pi){
    const oldOwner=S.owner.made;
    const confirm=await askPlayer(pi,{title:'DIVEST MADE — 5 INTEL + $7',body:'Force MADE away from '+pname(oldOwner)+'? They receive $7 compensation.',options:[{label:'Pay 5 Intel + $7 compensation',v:1},{label:'Cancel',v:0}],def:0});
@@ -1367,8 +1380,37 @@ async function applyIntent(pi,m){
    log('🟣 '+pname(pi)+' forces MADE to divest from '+pname(oldOwner)+', paying $7 compensation.');
    addCortisol(pi,1,'the forced divestment');await endOfTurn();
   }
-  else if(act==='sell'&&S.phase==='action'&&!S.mode&&m.n>0){
-   const rate=MOODS[S.mood].rate;const n=Math.min(+m.n,p.intel);
+  else if(act==='bondmageddon'&&S.phase==='action'&&!S.mode&&S.owner.bond===pi&&!S.bondmageddonUsed&&p.money>=16&&p.intel>=4){
+   const rivals=S.players.map((pl,j)=>j).filter(j=>j!==pi);
+   if(!rivals.length){sysTo(pi,'There is nobody else at the table.');return}
+   const chartCount=j=>NODES.filter(nn=>nn.type==='CHART'&&S.owner[nn.id]===j).length;
+   const most=Math.max(...rivals.map(chartCount));
+   const leaders=rivals.filter(j=>chartCount(j)===most);
+   const target=leaders[Math.floor(Math.random()*leaders.length)];
+   const owned=NODES.filter(nn=>S.owner[nn.id]===target&&!S.rubble[nn.id]);
+   if(!owned.length){sysTo(pi,'The chart leader has no intact holdings to strike.');return}
+   const esg=owned.find(nn=>nn.id==='geo_pillars');
+   let targets;
+   if(esg){
+    const others=owned.filter(nn=>nn.id!=='geo_pillars');
+    const final=others.length?others[Math.floor(Math.random()*others.length)]:esg;
+    targets=[esg.id,esg.id,esg.id,final.id];
+   }else{
+    targets=shuffle(owned).slice(0,4).map(nn=>nn.id);
+    while(targets.length<4)targets.push(owned[Math.floor(Math.random()*owned.length)].id);
+   }
+   p.money-=16;p.intel-=4;S.bondmageddonUsed=true;fxAt(pi,'−$16 · 🛈−4','#ff6b5e');
+   log('💥 '+pname(pi)+' unleashes BONDMAGEDDON on '+pname(target)+', the table’s biggest chart-holder ('+most+' CHART nodes). Four missiles inbound.');
+   for(let i=0;i<targets.length;i++){
+    const id=targets[i],node=NMAP[id];
+    if(projFx('missile','bond',id)){sync();await projPause()}
+    if(!S.rubble[id]&&S.owner[id]===target)strikeNode(pi,id,{silent:true});
+    else log('💥 Missile '+(i+1)+' hits '+node.name.join(' ')+' again — it is already rubble; the barrage continues.');
+   }
+   await endOfTurn();
+  }
+  else if((act==='sell'||act==='sellall')&&S.phase==='action'&&!S.mode){
+   const rate=MOODS[S.mood].rate;const n=act==='sellall'?p.intel:Math.min(+m.n,p.intel);
    if(n<=0){sysTo(pi,'No Intel to sell.');return}
    p.intel-=n;fxAt(pi,'🛈−'+n,'#55c1ff');
    gain(pi,n*rate,'sold '+n+' Intel at the market ($'+rate+'/🛈)');
@@ -1405,8 +1447,10 @@ function strikeNode(pi,nid,opts){
  sync();
 }
 function canMissileNode(me,nid){
- return !!(S&&S.dlcGeo&&!S.rubble[nid]&&S.owner[nid]!==me&&!(S.owner[nid]!=null&&S.owner[nid]===S.owner.geo_pillars));
+ return !!(S&&S.dlcGeo&&!S.rubble[nid]&&S.owner[nid]!==me);
 }
+function ownsMissileLauncher(pi){return !!(S&&S.dlcGeo&&(S.owner.geo_missile===pi||S.owner.geo_shahed===pi))}
+function canFireMissileFrom(pi){if(!S||!S.players[pi]||!ownsMissileLauncher(pi))return false;const pos=S.players[pi].pos;return (pos==='geo_missile'&&S.owner.geo_missile===pi)||(pos==='geo_shahed'&&S.owner.geo_shahed===pi)||S.owner.geo_kim===pi}
 function canReach(id){return !(id==='qantas'&&qantasGrounded())}
 function blockaded(id){return !!(S&&S.blockades&&S.blockades[id]>S.turn)}
 function seizeListPrice(pi,n){
@@ -1415,7 +1459,7 @@ function seizeListPrice(pi,n){
  if(n.type==='CHART'){if(S.owner.nab===pi)base=Math.max(1,base-1);if(S.owner.econ===pi)base=Math.max(1,base-1)}
  return base;
 }
-function flatSeize(nid){return nid==='made'||nid==='qantas'||nid==='rba'}
+function flatSeize(nid){return nid==='made'||nid==='qantas'||nid==='rba'||nid==='geo_pillars'}
 function takeoverCost(pi,nid,base){
  if(flatSeize(nid))return base;
  if(S.dossier)return base;
@@ -1489,6 +1533,7 @@ async function doSeize(pi){
  const p=S.players[pi];const nid=p.pos;const n=NMAP[nid];const prev=S.owner[nid];
  if(S.dlcGeo&&S.rubble[nid]){sysTo(pi,'That node is rubble — it must be rebuilt before it can be owned.');return}
  if(prev===pi)return;
+ if(S.dlcGeo&&((nid==='geo_shahed'&&S.owner.geo_missile===pi)||(nid==='geo_missile'&&S.owner.geo_shahed===pi))){sysTo(pi,'You can own either MISSILE COMMAND or the SHAHED DRONE, not both.');return}
  let base=seizeListPrice(pi,n);
  if(S.slipped&&S.owner.f1===pi){base=Math.max(1,base-2);S.slipped='spent';log('🏎️ The slipstream carries '+pname(pi)+' into the deal — $2 off.')}
  const isTake=prev!=null;
@@ -1600,25 +1645,27 @@ function showRules(){
  modal({title:'HOW TO PULL THE BIG CON',html:
  '<h4>Online play (2–8 players)</h4><p>One player <b>hosts</b> and shares the room code — a jt portal <b>buzzword</b> (NESA, LOW CORTISOL, JAKE TOMKINS…), every one of them straight off the jt portal news ticker; the others <b>join</b> by typing it — the table seats up to <b>eight</b>. Each player sees only their own secret prompts. If someone drops, their seat auto-plays “lay low” — rejoin with the <b>same name</b> to reclaim your empire. Chat in the <b>lobby</b> before the con starts, and in the sidebar once it does.</p>'
  +'<h4>The market mood — events you can feel</h4><p>Every market event shifts the mood of the whole board — watch the <b>ticker</b> across the top, the <b>tint</b> of the board and the <b>glowing nodes</b>: <b style="color:#f5c542">BOOM</b> (commodities +$1/turn), <b style="color:#ff6b5e">PANIC</b> (banks −$1/turn, intel dearer), <b style="color:#e19bff">MEDIA FRENZY</b> (media +$1/turn), <b style="color:#8fbf7f">CALM</b>. Yields go vertical in a panic; the oil graph spikes in a boom. Money, Cortisol and Intel changes pop up on the board as they happen.</p>'
- +'<h4>Intel ops (🛈)</h4><ul><li><b>Burn a favor</b> (1 🛈, while moving) — +1 step this turn.</li><li><b>Spy on the deck</b> (2 🛈, free action) — privately see the next event card, anywhere.</li><li><b>The Dossier</b> (3 🛈, free action) — your hostile takeovers this turn cost <b>list price, not double</b>.</li><li><b>Sweep for bugs</b> (2 🛈, your action) — remove every bug on your nodes.</li><li><b>Mass panic</b> (5 🛈, your action) — every player gains +2 Cortisol.</li><li><b>Divest MADE</b> (5 🛈, your action) — take MADE from any rival and pay its former owner $7 compensation.</li><li><b>Sell intel</b> (your action, anywhere): 1 🛈 = <b>$2</b> calm/boom, <b>$3</b> frenzy, <b>$4</b> panic. Bad news is good news.</li></ul>'
+ +'<h4>Intel ops (🛈)</h4><ul><li><b>Burn a favor</b> (1 🛈, while moving) — +1 step this turn.</li><li><b>Spy on the deck</b> (2 🛈, free action) — privately see the next event card, anywhere.</li><li><b>The Dossier</b> (3 🛈, free action) — your hostile takeovers this turn cost <b>list price, not double</b>.</li><li><b>Sweep for bugs</b> (2 🛈, your action) — remove every bug on your nodes.</li><li><b>Mass panic</b> (5 🛈, your action) — every player gains +2 Cortisol.</li><li><b>Divest MADE</b> (5 🛈, your action) — take MADE from any rival and pay its former owner $7 compensation.</li><li><b>Sell intel</b> (your action, anywhere): sell 1–3 or <b>ALL</b> your Intel at once for the current market rate. Bad news is good news.</li><li><b>Overload a rival</b> (30 🛈, your action): choose one rival to receive <b>+6 Cortisol</b>, bypassing the normal one-node immunity.</li></ul>'
  +'<h4>The board is the whole collage</h4><p><b>70 exhibits.</b> Charts are spread across the collage — US yields sit by Trump, Japan by the tankers, UK by the papers, Australia by the coat of arms, and the 10-year master in the middle. Each game <b>Quikstop opens in a different neighbourhood</b>, so the first moves change. New pins from the collage: <b>Westpac</b>, <b>BHP</b>, <b>Herald Sun / The Jim Reaper</b>, <b>the bullet train</b>, the circled <b>ASICS shoe</b>, and <b>Toktimer</b>. Red threads are the paths — long ones dash. <i>Drag to pan, scroll to zoom.</i></p>'
  +'<h4>Winning</h4><p><b>Money <i>and</i> a finished portfolio.</b> The host sets a cash target in the lobby (anything from $'+GOAL_MIN+' to $'+GOAL_MAX+'); to take the con you must reach it <b>while holding at least one '+WIN_TYPES.join(', one ')+' node</b> — the seven-type set (BANK, REGULATOR, CHART, WILD, CORPORATE, COMMODITY and MEDIA) is tracked in your sidebar. There are only four REGULATORS on the whole board, so the set is a race of its own. Nodes, synergies, bugs and the mood are all just ways of getting there faster — the board banner and the sidebar show the target and who is closest.</p>'
  +'<h4>Your turn</h4><p><b>1 · Income</b> — $3 salary (+$1 CPI-indexed with Inflation Compensation) + holdings &amp; powers &amp; mood. <b>2 · Move</b> — 3 steps (+1 with COAL CORP HQ, +1 with the Coal Train <i>or</i> the Bullet Train, +1 with the ASICS shoe, +1 by burning a favor). Tolls: $1 entering a rival’s node — $2 if they hold Albanese, free if you hold James Bond. <b>3 · One action</b> (plus free intel ops). <b>4 · Market event</b> for the whole table — and the mood moves.</p>'
- +'<h4>Actions</h4><ul><li><b>Seize</b> the node you stand on (+1 🔥). Hostile takeover: double cost (list price with the Dossier; MADE, Qantas and the RBA never inflate), old owner pockets list price, +2 🔥, +$2 ACCC fee if they own the ACCC.</li><li><b>Plant a bug</b> (1 🛈; free with INSIDER TRADING) — skim $1/turn ($2 with the WEF).</li><li><b>Leak dirt</b> (2 🛈) — rival +2 Cortisol · <b>Audit</b> ($4, ASIC) — rival +1 Cortisol · <b>The Tweet</b> ($2, Trump) — rival loses the greater of 3 Intel or 50% of their Intel.</li><li><b>Spin</b> ($3 Press Room) / <b>Fox Spin</b> ($2 Fox Business) · <b>Cook the books</b> ($3, The Rock) · <b>Budget night</b> ($3, the Government) · <b>Lean on the table</b> (Backroom Deals: every rival +1 🔥; using a Backroom ability costs 2 movement steps).</li><li><b>Push the boulder</b> — earns $10 the first time, then doubles every push ($10, $20, $40, $80…). No Cortisol cost. · <b>Fly the Qantas jet</b> ($3, teleport — Qantas itself cannot be reached on turn 1) · <b>Slipstream</b> ($2, Formula 1: +2 steps and $2 off the next seizure) · <b>Lay low</b> (choose $1 cash or −2 Cortisol). · <b>Blockade</b> (free, the PM, once per turn) — wall off literally any node for one full rotation: nobody walks in, nobody lands, not even you.</li></ul>'
+ +'<h4>Actions</h4><ul><li><b>Seize</b> the node you stand on (+1 🔥). Hostile takeover: double cost (list price with the Dossier; MADE, Qantas, the RBA and ESG Pillars never inflate), old owner pockets list price, +2 🔥, +$2 ACCC fee if they own the ACCC.</li><li><b>Plant a bug</b> (1 🛈; free with INSIDER TRADING) — skim $1/turn ($2 with the WEF).</li><li><b>Leak dirt</b> (2 🛈) — rival +2 Cortisol · <b>Audit</b> ($4, ASIC) — rival +1 Cortisol · <b>The Tweet</b> ($2, Trump) — rival loses the greater of 3 Intel or 50% of their Intel.</li><li><b>Spin</b> ($3 Press Room) / <b>Fox Spin</b> ($2 Fox Business) · <b>Cook the books</b> ($3, The Rock) · <b>Budget night</b> ($3, the Government) · <b>Lean on the table</b> (Backroom Deals: every rival +1 🔥; using a Backroom ability costs 2 movement steps).</li><li><b>Push the boulder</b> — earns $10 the first time, then doubles every push ($10, $20, $40, $80…). No Cortisol cost. · <b>Fly the Qantas jet</b> ($3, teleport — Qantas itself cannot be reached on turn 1) · <b>Slipstream</b> ($2, Formula 1: +2 steps and $2 off the next seizure) · <b>Lay low</b> (choose $1 cash or −2 Cortisol). · <b>Blockade</b> (free, the PM, once per turn) — wall off literally any node for one full rotation: nobody walks in, nobody lands, not even you.</li></ul>'
+ +'<p><b>BONDMAGEDDON</b> (Bond Desk, $16 + 4 🛈, once per turn): launch four missiles at the rival with the most CHART holdings. If they own the ESG Pillars, three missiles hit ESG and the fourth hits another random holding.</p>'
  +'<h4>Cortisol &amp; raids</h4><p>Cortisol is capped at 9. At 🔥9 the regulators raid you, and a raid hurts: your <b>two</b> highest-income nodes are seized, every bug you planted is pulled, you pay a fine of $5 or 30% of your cash (whichever is larger), your Intel is burned down to 1, Cortisol resets to 0 and your <b>next turn brings no income and a single step</b>. <b>The whole table sees the raid</b> — it pops up on every screen. The Hedge Fund pays $3 on every raid; the Group Photograph pays 1 🛈 Intel.</p>'
  +'<h4>ACCC concentration</h4><p>Charts are exempt from the six type-based industries; the custom MONETARY POLICY industry also counts the CASH-RATE and INFLATION charts. If you hold <b>more than two</b> properties in the same tracked industry — banking, regulators, corporates, coal, commodities, media, oil, education, JTPortal, Jim Chalmers, Big Bessent, or monetary policy — then at the start of <b>your turn</b> there is a <b>33% chance</b> the regulators investigate: <b>ASIC</b> runs monetary-policy books as <b>market manipulation</b>, the <b>ACCC</b> takes every other industry. You pay a <b>20% fine on both cash and Intel</b>; divested nodes are randomly redistributed to other players (maximum one node per player), with any remainder returned to the market. Owning <b>Mark Watson</b> exempts your holdings in the COAL industry from ACCC monopoly investigations.</p>'
  +'<h4>MADE (???)</h4><p>Nobody knows what the purple graphic is, but it moves money: at the <b>start of every player\'s turn</b> there is a <b>33% chance</b> MADE pays out — <b>+$10 and +1 Intel</b> to its owner. Every other player with <b>more than two nodes and at least $50</b> pays 15% of their cash to the void. Seizing MADE always costs list price — it never inflates after a takeover. You may also force MADE to divest from any rival for <b>5 Intel</b>, paying the former owner <b>$7 compensation</b>.</p>'
- +'<h4>🌍 The Geography DLC — the board expands over the water</h4><p>Host-toggled in the lobby (look for <b>ENABLE THE GEOGRAPHY DLC</b>). <b>On: the board deals 81 exhibits.</b> Off: the same 70 exhibits as always.</p>'
- +'<ul><li><b>MISSILE COMMAND ($8)</b> — LAUNCH A MISSILE ($4 + 1 🛈, once per turn): strike any node that still stands — <b>but you must stand on the silo to fire</b>, during your move (the launch ends the move; your action still follows) or as your action (owning KIM JONG UN arms it from anywhere). An <b>owned node is expropriated with NO payout</b> to its former owner; either way the pin becomes <b>RUBBLE</b> — no income, nothing to seize. Stand on rubble in your action phase and pay its <b>list price to rebuild</b>: it returns unowned, buyable from any player’s next turn. The <b>PILLARS</b> shield their owner’s nodes. Strike a <b>REGULATOR</b> and an investigation opens — <b>ASIC or the ACCC</b> comes for you on your next turn: a 50/50 indictment, and <b>+1 Cortisol</b> whether it lands or not.</li>'
+ +'<h4>🌍 The Geography DLC — the board expands over the water</h4><p>Host-toggled in the lobby (look for <b>ENABLE THE GEOGRAPHY DLC</b>). <b>On: the board deals 82 exhibits.</b> Off: the same 70 exhibits as always.</p>'
+ +'<ul><li><b>MISSILE COMMAND ($8) / IRANIAN SHAHED DRONE ($8)</b> — you can own <b>MISSILE COMMAND or the SHAHED DRONE</b>, but not both. Either owned launch site can LAUNCH A MISSILE ($4 + 1 🛈, once per turn): stand on the launcher you own to fire, or own KIM JONG UN to fire from anywhere. An <b>owned node is expropriated with NO payout</b> to its former owner; either way it becomes <b>RUBBLE</b> until rebuilt at list price. The <b>ESG Pillars themselves can be missile-struck</b>. Strike a <b>REGULATOR</b> and an investigation opens — <b>ASIC or the ACCC</b> comes for you on your next turn: a 50/50 indictment, and <b>+1 Cortisol</b> whether it lands or not.</li>'
  +'<li><b>PYONGYANG CITY ($6)</b> — +$1 income per Geography node you own. The capital collects tribute.</li>'
  +'<li><b>PYONGYANG HOTEL ($8)</b> — collects <b>$2</b> whenever anyone rebuilds rubble. Construction kickbacks, allegedly.</li>'
  +'<li><b>WONSAN RESORT ($5)</b> — stand there (owned) for <b>BEACH DAY</b>: free, once per turn, <b>−2 Cortisol</b>.</li>'
- +'<li><b>KIM JONG UN ($6)</b> — <b>+1 Intel at the start of each of your turns</b>. Owning him exempts you from the missile silo’s on-site rule — the keys work from anywhere.</li>'
+ +'<li><b>IRANIAN SHAHED DRONE ($8)</b> — a second missile launch site using the same rules and cost as MISSILE COMMAND; one player cannot own both.</li>'
+ +'<li><b>KIM JONG UN ($6)</b> — <b>+1 Intel at the start of each of your turns</b>. Owning him exempts you from either launcher’s on-site rule — the keys work from anywhere.</li>'
  +'<li><b>THE CORPORATE BOEING ($7)</b> — SHUT DOWN QANTAS ($4, once per turn): the kangaroo is <b>grounded for two full turns</b> — nobody flies the jet, and its owner collects nothing from it.</li>'
  +'<li><b>THE SOUTH CHINA SEA ($9)</b> — TRIGGER AN OIL CRASH ($3, once per turn): PANIC mood, and every player pays <b>$2 per oil node</b> they own (Pillars players exempt).</li>'
  +'<li><b>STAGE 5 DECLINE ($4)</b> — CALL STAGE 5 (2 🛈, once per turn): the <b>richest player</b> (never you) makes <b>no income of any kind on their next turn</b>.</li>'
- +'<li><b>PILLARS OF SUSTAINABILITY ($6)</b> — <b>ESG SHIELD</b>: −1 Cortisol each of your turns; your nodes cannot be missile-struck, you pay nothing on an oil crash, and Stage 5 cannot call you.</li>'
- +'<li><b>VENICE DI CCTV ($8)</b> — stand there (owned) for <b>GONDOLA THERAPY</b>: free, once per turn, −1 Cortisol. Or, as your action, send <b>OVERTOURISM</b> ($2, once per turn, one or the other): pick a rival destination — its owner takes <b>+1 Cortisol</b> at the start of every turn of theirs while you keep Venice and the ships keep coming.</li>'
+ +'<li><b>PILLARS OF SUSTAINABILITY ($6)</b> — <b>ESG SHIELD</b>: −1 Cortisol each of your turns; the Pillars themselves can be missile-struck and your holdings remain vulnerable to Overtourism; you still pay nothing on an oil crash and Stage 5 cannot call you.</li>'
+ +'<li><b>VENICE DI CCTV ($8)</b> — stand there (owned) for <b>GONDOLA THERAPY</b>: free, once per turn, −1 Cortisol. Or, as your action, send <b>OVERTOURISM</b> ($2, once per turn, one or the other): pick a rival-owned node (including ESG holdings) — the target takes <b>+1 Cortisol</b> on their turn during the next full table rotation. It ends when the rotation finishes or Venice changes hands.</li>'
  +'<li><b>TUVALU .TV ($5)</b> — THE JOIN IS FREE: the first player to arrive simply owns it. No action, no cost, no Cortisol. <b>Missiles aimed at Tuvalu are REFLECTED</b> back onto the launcher’s own holdings — and their silo blows up in the backblast.</li></ul>'
  +'<h4>Turn notifications &amp; player identity</h4><p>Desktop turn alerts are enabled by default. Use <b>TURN ALERTS</b> in the game sidebar to switch them on or off; your choice is saved on this device. Your browser or desktop app must allow notifications for alerts to appear. Choose a character in the lobby to lock in that character’s dedicated player colour, shown beside the portrait and used throughout the game. Player names support up to 80 characters.</p><p class="fine">No dice. The dice were rigged from the start.</p>',
  options:[{label:'Back to the con',v:1}]});
@@ -1871,7 +1918,7 @@ function renderSide(){
     +((!S.extraStep&&p.intel>=1)?'<button class="act" data-act="favor">🛈 Burn a favor — 1 🛈 (+1 step this turn)</button>':'')
     +((S.owner.qantas===me)?'<button class="act" data-act="flymode"'+(p.money>=3?'':' disabled')+'>✈️ Fly the Qantas jet — $3 (anywhere)</button>':'')
     +((S.owner.f1===me&&!S.slipped)?'<button class="act" data-act="slip"'+(p.money>=2?'':' disabled')+'>🏎️ Slipstream — $2 (+2 steps, $2 off next seizure)</button>':'')
-    +((S.dlcGeo&&S.owner.geo_missile===me&&(p.pos==='geo_missile'||S.owner.geo_kim===me))?'<button class="act" data-act="missilemode"'+((p.money>=4&&p.intel>=1&&!S.geoMissiled)?'':' disabled')+' title="From the silo (anywhere with Kim Jong Un): strike any node that still stands — the launch ends your move; your action still follows ($4 + 1 Intel, once per turn)">🚀 Launch a missile — $4 + 1🛈 (ends the move)</button>':'');
+    +((S.dlcGeo&&ownsMissileLauncher(me)&&canFireMissileFrom(me))?'<button class="act" data-act="missilemode"'+((p.money>=4&&p.intel>=1&&!S.geoMissiled)?'':' disabled')+' title="From either launcher (anywhere with Kim Jong Un): strike any node that still stands — the launch ends your move; your action still follows ($4 + 1 Intel, once per turn)">🚀 Launch a missile — $4 + 1🛈 (ends the move)</button>':'');
     if(S.owner.back===me&&!S.backroomAbilityUsed){
      phaseHtml+='<div class="sublabel">BACKROOM DEALS · ONE NODE ABILITY · COSTS 2 MOVEMENT STEPS</div><div class="btns">';
      const backroomStepLock=S.steps<2?' disabled':'';
@@ -1935,14 +1982,14 @@ function renderSide(){
    if(S.owner.gov===me)btns.push('<button class="act" data-act="budget"'+((p.money>=3&&!S.budgeted)?'':' disabled')+'>🦘 Budget night — $3 (rivals each pay you $1, +1 🛈)</button>');
    if(S.owner.back===me)btns.push('<button class="act" data-act="pressure"'+(!S.pressured?'':' disabled')+'>🤝 Lean on the table — rivals each +1 🔥</button>');
    /* ---- 🌍 GEOGRAPHY DLC ---- */
-   if(S.dlcGeo&&S.owner.geo_missile===me&&(p.pos==='geo_missile'||S.owner.geo_kim===me))btns.push('<button class="act" data-act="missilemode"'+((p.money>=4&&p.intel>=1&&!S.geoMissiled)?'':' disabled')+' title="Stand on the silo to fire (owning Kim Jong Un arms it from anywhere): strike any node — the owner is expropriated with no payout; the node becomes rubble ($4 + 1 Intel, once per turn)">🚀 Launch a missile — $4 + 1 🛈 (expropriate &amp; rubble)</button>');
+   if(S.dlcGeo&&ownsMissileLauncher(me)&&canFireMissileFrom(me))btns.push('<button class="act" data-act="missilemode"'+((p.money>=4&&p.intel>=1&&!S.geoMissiled)?'':' disabled')+' title="Stand on either launcher to fire (owning Kim Jong Un arms either from anywhere): strike any node — the owner is expropriated with no payout; the node becomes rubble ($4 + 1 Intel, once per turn)">🚀 Launch a missile — $4 + 1 🛈 (expropriate &amp; rubble)</button>');
    if(S.dlcGeo&&S.owner.geo_boeing===me)btns.push('<button class="act" data-act="qantasdown"'+((p.money>=4&&!S.geoBoeing&&S.owner.qantas!==me)?'':' disabled')+' title="QANTAS grounded for two full turns — no jet, no income ($4, once per turn)">🛩️ Shut down Qantas — $4 (grounded two turns)</button>');
    if(S.dlcGeo&&S.owner.geo_scs===me)btns.push('<button class="act" data-act="oilcrash"'+((p.money>=3&&!S.geoCrash)?'':' disabled')+' title="PANIC mood; everyone pays $2 per oil node owned — Pillars exempt ($3, once per turn)">🌊 Trigger an oil crash — $3 (oil pays underwater)</button>');
    if(S.dlcGeo&&S.owner.geo_stage5===me)btns.push('<button class="act" data-act="stage5"'+((p.intel>=2&&!S.geoStage5)?'':' disabled')+' title="The richest player (not you) makes no income on their next turn (2 Intel, once per turn)">📉 Call Stage 5 decline — 2 🛈</button>');
    if(S.dlcGeo&&S.owner.geo_venice===me&&nid==='geo_venice')btns.push('<button class="act" data-act="venicecool"'+(!S.geoVenice?'':' disabled')+' title="Free — once per turn, either this or Overtourism">🚤 Gondola therapy — free −1 🔥</button>');
    if(S.dlcGeo&&S.owner.geo_venice===me){
-    const ot=NODES.filter(nn=>S.owner[nn.id]!=null&&S.owner[nn.id]!==me&&!(S.rubble&&S.rubble[nn.id])&&S.owner[nn.id]!==S.owner.geo_pillars).length;
-    btns.push('<button class="act" data-act="overmode"'+((p.money>=2&&!S.geoVenice&&ot>0)?'':' disabled')+' title="Pick a rival destination: its owner steams +1 Cortisol per turn while the ships keep coming ($2, once per turn, either/or)">🛳️ Overtourism — $2 (mark a rival node)</button>');
+    const ot=NODES.filter(nn=>S.owner[nn.id]!=null&&S.owner[nn.id]!==me&&!(S.rubble&&S.rubble[nn.id])).length;
+    btns.push('<button class="act" data-act="overmode"'+((p.money>=2&&!S.geoVenice&&ot>0)?'':' disabled')+' title="Pick any rival-owned node, including ESG holdings. It remains active for one full table rotation and applies +1 Cortisol when the target takes their turn ($2, once per turn, either/or)">🛳️ Overtourism — $2 (one full turn cycle)</button>');
    }
    if(S.dlcGeo&&S.owner.geo_wonsan===me&&nid==='geo_wonsan')btns.push('<button class="act primary" data-act="beach"'+(!S.geoBeach?'':' disabled')+' title="Free — once per turn">🏖️ Beach day — free −2 🔥</button>');
    if(S.owner.albo===me){const blockadeTargets=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));btns.push('<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&blockadeTargets?'':' disabled')+' title="Free, once per turn: wall off any unblocked, non-rubble node for one full rotation. Blocks walking and Qantas landings; shown by a 🚧 marker on the board.">🚧 Blockade — free (once per turn)</button>');}
@@ -1953,9 +2000,12 @@ function renderSide(){
    btns.push('<button class="act" data-act="divestmade"'+((p.intel>=5&&p.money>=7&&S.owner.made!=null&&S.owner.made!==me)?'':' disabled')+' title="Pay 5 Intel and $7 compensation to remove MADE from any rival">🟣 Divest MADE — 5 🛈 + $7 compensation</button>');
    btns.push('<button class="act" data-act="sweep"'+(p.intel>=2?'':' disabled')+' title="Your action — remove all bugs on your nodes">🧹 Sweep for bugs — 2 🛈 (cleanse your nodes)</button>');
     btns.push('<button class="act" data-act="masspanic"'+(p.intel>=5?'':' disabled')+' title="Your action — every player gains 2 Cortisol">🔥 Mass panic — 5 🛈 (+2 Cortisol to everyone)</button>');
+   btns.push('<button class="act" data-act="targetpanic"'+(p.intel>=30&&S.players.length>1?'':' disabled')+' title="Choose one rival to receive +6 Cortisol; costs 30 Intel">🔥 Overload a rival — 30 🛈 (+6 Cortisol)</button>');
+   if(S.owner.bond===me)btns.push('<button class="act" data-act="bondmageddon"'+(p.money>=16&&p.intel>=4&&!S.bondmageddonUsed&&S.players.length>1?'':' disabled')+' title="Four missiles against the rival with the most CHART holdings. If they own ESG, three hit ESG and the fourth hits another holding. Costs $16 + 4 Intel; once per turn.">💥 BONDMAGEDDON — 4 missiles ($16 + 4 🛈)</button>');
    for(let k=1;k<=3;k++){
     btns.push('<button class="act" data-act="sell" data-n="'+k+'"'+(p.intel>=k?'':' disabled')+' title="Your action — sell Intel at the current market rate">💰 Sell '+k+' 🛈 → $'+(k*md.rate)+'</button>');
    }
+   btns.push('<button class="act" data-act="sellall"'+(p.intel>0?'':' disabled')+' title="Exchange every Intel point you hold at the current market rate">💰 Sell ALL '+p.intel+' 🛈 → $'+(p.intel*md.rate)+'</button>');
    btns.push('<button class="act" data-act="laylowcash">Lay low — pocket $1</button>');
    btns.push('<button class="act" data-act="laylowcool">Lay low — cool 2 🔥</button>');
    phaseHtml='<div class="phlabel">PHASE 2 · ONE ACTION</div>'+powline+'<div class="btns">'+btns.join('')+'</div>';

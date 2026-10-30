@@ -64,7 +64,7 @@ test('RC-01 every node is structurally complete and every baked asset exists on 
   }
   assert.equal(NODES.length, 70, 'help copy and live board both describe 70 exhibits');
   assert.ok(SOURCE.includes('70 exhibits'), 'the help modal uses the live exhibit count');
-  assert.ok(!SOURCE.includes('82 exhibits'), 'obsolete exhibit count is gone');
+  assert.ok(SOURCE.includes('82 exhibits'), 'the help modal documents the Geography DLC exhibit count');
   console.log(`    informational: live node count ${NODES.length}`);
 });
 
