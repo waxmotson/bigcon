@@ -1990,7 +1990,7 @@ function renderSide(){
    if(S.dlcGeo&&S.owner.geo_venice===me&&nid==='geo_venice')btns.push('<button class="act" data-act="venicecool"'+(!S.geoVenice?'':' disabled')+' title="Free — once per turn, either this or Overtourism">🚤 Gondola therapy — free −1 🔥</button>');
    if(S.dlcGeo&&S.owner.geo_venice===me){
     const ot=NODES.filter(nn=>S.owner[nn.id]!=null&&S.owner[nn.id]!==me&&!(S.rubble&&S.rubble[nn.id])).length;
-    btns.push('<button class="act" data-act="overmode"'+((p.money>=2&&!S.geoVenice&&ot>0)?'':' disabled')+' title="Pick any rival-owned node, including ESG holdings. It remains active for one full table rotation and applies +1 Cortisol on the target owner's turn ($2, once per turn, either/or)">🛳️ Overtourism — $2 (one full turn cycle)</button>');
+    btns.push('<button class="act" data-act="overmode"'+((p.money>=2&&!S.geoVenice&&ot>0)?'':' disabled')+' title="Pick any rival-owned node, including ESG holdings. It remains active for one full table rotation and applies +1 Cortisol when the target takes their turn ($2, once per turn, either/or)">🛳️ Overtourism — $2 (one full turn cycle)</button>');
    }
    if(S.dlcGeo&&S.owner.geo_wonsan===me&&nid==='geo_wonsan')btns.push('<button class="act primary" data-act="beach"'+(!S.geoBeach?'':' disabled')+' title="Free — once per turn">🏖️ Beach day — free −2 🔥</button>');
    if(S.owner.albo===me){const blockadeTargets=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));btns.push('<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&blockadeTargets?'':' disabled')+' title="Free, once per turn: wall off any unblocked, non-rubble node for one full rotation. Blocks walking and Qantas landings; shown by a 🚧 marker on the board.">🚧 Blockade — free (once per turn)</button>');}
