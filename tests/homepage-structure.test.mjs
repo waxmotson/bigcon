@@ -22,8 +22,8 @@ test('homepage script tags are balanced and every inline script parses', () => {
   for (const [index, block] of scriptBlocks.entries()) {
     if (/\bsrc\s*=/.test(block[1])) continue;
     assert.doesNotThrow(
-      () => new vm.Script(block[2], { filename: \`index.html:inline-script-\${index + 1}\` }),
-      \`inline script \${index + 1} must parse\`
+      () => new vm.Script(block[2], { filename: 'index.html:inline-script-' + (index + 1) }),
+      'inline script ' + (index + 1) + ' must parse'
     );
   }
 });
