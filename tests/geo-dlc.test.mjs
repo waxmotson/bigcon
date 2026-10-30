@@ -993,3 +993,11 @@ test('GD-27 Shahed Drone uses the shared launcher rules and cannot be owned with
   await e.f.applyIntent(0, { act: 'missilemode' });
   assert.equal(S.mode, 'missile', 'the Shahed arms from its own location');
 });
+
+
+test('GD-28 ESG Pillars never inflate on hostile takeover', t => {
+  const e = engineFor(t);
+  e.f.rebuildWorld(true);
+  assert.equal(e.f.flatSeize('geo_pillars'), true, 'the Pillars are a flat-price takeover node');
+  assert.equal(e.f.takeoverCost(0, 'geo_pillars', 6), 6, 'repeat takeovers remain at list price');
+});
