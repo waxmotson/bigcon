@@ -60,7 +60,7 @@ body.game-open{overflow:hidden}
 .lrow .ln{font-weight:800}
 .lrow .lh{margin-left:auto;font-size:10.5px;letter-spacing:1px;color:#8a7a5f}
 .setuplinks{margin-top:12px;text-align:center}
-.setuplinks button{background:none;border:none;color:aqua;font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;padding:4px}
+.setuplinks button,.setuplinks a{background:none;border:none;color:aqua;font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;padding:4px}.setuplinks a{display:inline-block}
 #app{display:none;flex-wrap:wrap;gap:14px;padding:14px;align-items:flex-start}
 #boardWrap{flex:1 1 640px;min-width:300px;position:relative}
 #board{display:block;width:100%;height:auto;border-radius:12px;box-shadow:0 14px 50px rgba(0,0,0,.65);cursor:grab;touch-action:none}
@@ -119,7 +119,7 @@ button.act.primary:hover:not(:disabled){background:#0e5c60}
 .chatrow{display:flex;gap:6px}
 .chatrow input{flex:1;font-family:inherit;font-size:12px;padding:6px 9px;border-radius:0;border:1px solid #168388;background:#111413;color:#fff;min-width:0}
 .chatrow button{font-family:inherit;font-size:11px;font-weight:800;border-radius:0;border:1px solid #168388;background:#000;color:#fff;padding:6px 10px;cursor:pointer}
-.footbtns{display:flex;gap:8px}
+.footbtns{display:flex;gap:8px;flex-wrap:wrap}.footbtns a.mini{display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;min-width:0}
 button.mini{flex:1;font-family:inherit;background:#000;border:1px solid #168388;color:#fff;border-radius:0;padding:7px;cursor:pointer;font-size:12px;letter-spacing:1px}
 button.mini:hover{background:#168388}
 .node{cursor:default}.node-image{display:block;pointer-events:all}
@@ -207,7 +207,7 @@ body.game-open{overflow:hidden}
    <button class="gobtn" id="btnJoinGo">JOIN GAME</button>
   </div>
   <div id="lobbyView">
-   <div class="codeline"><div class="cl">ROOM CODE — OR SEND A DISCORD INVITE FROM YOUR PROFILE / + IN CHAT</div><div class="cc" id="roomCodeBig">·····</div><button class="copybtn" id="btnCopy">📋 copy code</button><div class="gn" style="margin-top:8px;font-size:11px;color:#9ad;letter-spacing:0;text-transform:none">Desktop build: friends can Join from the Discord invite card. The buzzword still works on the website.</div></div>
+   <div class="codeline"><div class="cl">ROOM CODE — OR SEND A DISCORD INVITE FROM YOUR PROFILE / + IN CHAT</div><div class="cc" id="roomCodeBig">·····</div><button class="copybtn" id="btnCopy">📋 copy code</button><div class="gn" style="margin-top:8px;font-size:11px;color:#9ad;letter-spacing:0;text-transform:none">Desktop build: friends can Join from the Discord invite card. The buzzword still works on the website.</div></div>\n   <div class="setcard" style="justify-content:center"><a href="exhibits.html" target="_blank" rel="noopener" style="color:aqua;font-weight:800;letter-spacing:1px">▦ BROWSE THE EXHIBITS — review every node and its abilities</a></div>
    <div class="goalrow">
     <div class="cl">WIN TARGET — REACH THIS MUCH MONEY <i>AND</i> HOLD ONE OF EVERY NODE TYPE</div>
     <div class="goalctl"><span class="gd">$</span><input id="goalInput" type="number" min="20" max="999" step="5" value="100"><span class="gn" id="goalNote">the host sets the target</span></div>
@@ -236,7 +236,7 @@ body.game-open{overflow:hidden}
    </label>
    <div id="relayHelp" style="font-size:11px;color:#9ad;line-height:1.4">Cloudflare relay is the default. If it is unavailable, switch to PeerJS / WebRTC; everyone in the room must use the same connection system.</div>
   </div>
-  <div class="setuplinks"><button data-srules>📖 How to play</button></div>
+  <div class="setuplinks"><button data-srules>📖 How to play</button><a href="exhibits.html" target="_blank" rel="noopener">▦ Browse the exhibits</a></div>
  </div>
 </div>
 
@@ -2040,7 +2040,7 @@ function renderSide(){
   +'<div class="paneltitle">THE SYNDICATE — '+S.players.length+' AT THE TABLE</div><div>'+prows+'</div>'
   +'<div class="paneltitle">THE RECORD</div><div class="log" id="logbox">'+S.log.map(l=>'<div>'+l+'</div>').join('')+'</div>'
   +'<div class="paneltitle">THE WIRE (chat)</div><div class="chatbox"><div class="chatlist" id="chatbox">'+chatHtml+'</div><div class="chatrow"><input id="chatInput" maxlength="140" placeholder="talk your book…" value="'+esc(chatVal)+'"><button id="chatSend">SEND</button></div></div>'
-  +'<div class="footbtns"><button class="mini" data-act="notifications">🔔 TURN ALERTS: '+(turnAlertsEnabled()?'ON':'OFF')+'</button><button class="mini" data-act="rules">📖 RULES</button><button class="mini" data-act="leave">↺ LEAVE</button></div>';
+  +'<div class="footbtns"><button class="mini" data-act="notifications">🔔 TURN ALERTS: '+(turnAlertsEnabled()?'ON':'OFF')+'</button><button class="mini" data-act="rules">📖 RULES</button><a class="mini" href="exhibits.html" target="_blank" rel="noopener">▦ EXHIBITS</a><button class="mini" data-act="leave">↺ LEAVE</button></div>';
  const lb=$('logbox');if(lb)lb.scrollTop=lb.scrollHeight;
  const cb=$('chatbox');if(cb)cb.scrollTop=cb.scrollHeight;
  const ci=$('chatInput');
