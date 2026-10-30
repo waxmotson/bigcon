@@ -40,7 +40,7 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
 .sechead h2{margin:0;font-size:21px;font-weight:900;letter-spacing:3px;color:var(--c)}
 .sechead .sflav{font-size:12px;font-style:italic;color:burlywood}
 .sechead .scount{margin-left:auto;font-size:11px;letter-spacing:2px;color:#9ad}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:16px;align-items:stretch}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:stretch;width:100%}
 .card{min-width:0;background:#0d1110;border:1px solid #354747;border-top:4px solid var(--c);padding:11px 12px 12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:transform .12s,border-color .12s,background .12s}
 .card:hover{transform:translateY(-2px);border-color:#168388;background:#101817}
 .card.hit{border-color:#f5c542;box-shadow:0 0 0 1px #f5c542 inset}
@@ -91,7 +91,8 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
 #mcard .mmech ul{margin:4px 0;padding-left:18px}
 #mcard .mmech li{margin:5px 0}
 #mpos{position:absolute;bottom:8px;right:12px;z-index:2;font-size:10px;letter-spacing:2px;color:#9ad;background:rgba(0,0,0,.55);border:1px solid #1d4a4a;padding:3px 8px}
-@media(max-width:760px){.sec{padding:12px 11px}.cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:11px}}
+@media(max-width:1050px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.sec{padding:12px 11px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}}
 @media(max-width:480px){.cards{grid-template-columns:1fr}.sechead h2{font-size:18px}#brand h1{font-size:19px}}
 @media print{#brand .row1,#bar,#digest,#mnav,#mclose{display:none!important}.card{break-inside:avoid}}
 </style>
