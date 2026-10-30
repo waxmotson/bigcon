@@ -1093,10 +1093,10 @@ async function startTurn(){
  if(own('sat')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🛰️ Hiding out in the dry country: −1 Cortisol (now '+p.cortisol+').')}
   if(own('gold')&&p.cortisol>0){const relief=Math.min(2,p.cortisol);p.cortisol-=relief;fxAt(S.cur,'🔥−'+relief,'#8fbf7f');log('🪙 Gold-coloured coins somehow soothe the nerves: −'+relief+' Cortisol (now '+p.cortisol+').')}
  if(S.dlcGeo&&own('geo_pillars')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🧱 ESG SHIELD — the Pillars absorb 1 Cortisol (now '+p.cortisol+').')}
- if(S.dlcGeo&&S.ov&&S.ov.target===S.cur){
-  const ov=S.ov;
-  if(S.owner[ov.nid]===S.cur&&!S.rubble[ov.nid]&&S.owner.geo_venice===ov.by)addCortisol(S.cur,1,'overtourism — the Venice cruise ships keep coming');
-  S.ov=null; /* expires only after the targeted player's next turn begins */
+ if(S.dlcGeo&&S.ov){
+  const ov=S.ov,turnIndex=S.turn*S.players.length+S.cur;
+  if(S.owner.geo_venice!==ov.by||S.owner[ov.nid]!==ov.targetOwner||S.rubble[ov.nid]||turnIndex>=ov.expiresAt)S.ov=null;
+  else if(ov.targetOwner===S.cur)addCortisol(S.cur,1,'overtourism — the Venice cruise ships keep coming');
  }
  if(own('whistle'))giveIntel(S.cur,1,'the dossier grows');
  if(own('bullock'))giveIntel(S.cur,1,'the Governor briefs you');
@@ -1321,7 +1321,7 @@ async function applyIntent(pi,m){
    /* ESG does not protect against Overtourism. */
    if(p.money<2||S.geoVenice){S.mode=null;sync();return}
    p.money-=2;fxAt(pi,'−$2','#ff6b5e');
-   S.geoVenice=true;S.ov={nid:m.id,by:pi,target:o};S.mode=null;
+   S.geoVenice=true;S.ov={nid:m.id,by:pi,targetOwner:o,expiresAt:S.turn*S.players.length+S.cur+S.players.length};S.mode=null;
    fx(n.x,n.y-60,'🛳️ OVERTOURISM','#e19bff');
    log('🛳️ '+pname(pi)+' sends the cruise ships to '+n.name.join(' ')+' — OVERTOURISM: '+pname(o)+' takes +1 Cortisol at each of their turns while the ships keep coming.');
    await finishNodeAbility(pi);
@@ -1988,7 +1988,7 @@ function renderSide(){
    if(S.dlcGeo&&S.owner.geo_venice===me&&nid==='geo_venice')btns.push('<button class="act" data-act="venicecool"'+(!S.geoVenice?'':' disabled')+' title="Free — once per turn, either this or Overtourism">🚤 Gondola therapy — free −1 🔥</button>');
    if(S.dlcGeo&&S.owner.geo_venice===me){
     const ot=NODES.filter(nn=>S.owner[nn.id]!=null&&S.owner[nn.id]!==me&&!(S.rubble&&S.rubble[nn.id])).length;
-    btns.push('<button class="act" data-act="overmode"'+((p.money>=2&&!S.geoVenice&&ot>0)?'':' disabled')+' title="Pick any rival-owned node, including ESG holdings. The effect lasts until that rival has taken their next turn ($2, once per turn, either/or)">🛳️ Overtourism — $2 (one full turn cycle)</button>');
+    btns.push('<button class="act" data-act="overmode"'+((p.money>=2&&!S.geoVenice&&ot>0)?'':' disabled')+' title="Pick any rival-owned node, including ESG holdings. It remains active for one full table rotation and applies +1 Cortisol on the target owner's turn ($2, once per turn, either/or)">🛳️ Overtourism — $2 (one full turn cycle)</button>');
    }
    if(S.dlcGeo&&S.owner.geo_wonsan===me&&nid==='geo_wonsan')btns.push('<button class="act primary" data-act="beach"'+(!S.geoBeach?'':' disabled')+' title="Free — once per turn">🏖️ Beach day — free −2 🔥</button>');
    if(S.owner.albo===me){const blockadeTargets=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));btns.push('<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&blockadeTargets?'':' disabled')+' title="Free, once per turn: wall off any unblocked, non-rubble node for one full rotation. Blocks walking and Qantas landings; shown by a 🚧 marker on the board.">🚧 Blockade — free (once per turn)</button>');}
