@@ -1,7 +1,7 @@
 /*
  * 🌍 GEOGRAPHY DLC — section GD of docs/CODE_LEVEL_TEST_PLAN.md.
  *
- * Eleven extra island exhibits, host-toggled in the lobby. The suite runs against
+ * Thirteen extra exhibits, host-toggled in the lobby. The suite runs against
  * the same engine contract as the base game: rebuildWorld flips the node set,
  * applyIntent gains ten actions, startTurn/income gain passives.
  *
@@ -43,7 +43,7 @@ test('GD-01 rebuildWorld(false) mirrors the classic 70-exhibit world; (true) dea
   assert.equal(acc.HIGH_VALUE_NODE_IDS.has('geo_pillars'), false);
 
   e.f.rebuildWorld(true);
-  assert.equal(acc.NODES.length, 82, '82 exhibits with the DLC on');
+  assert.equal(acc.NODES.length, 83, '83 exhibits with the DLC on');
   assert.equal(acc.WORLD_GEO, true);
   for (const id of acc.GEO_NODE_IDS) assert.ok(acc.NMAP[id], `DLC pin dealt: ${id}`);
   for (const id of acc.GEO_HIGH_VALUE_IDS) assert.ok(acc.HIGH_VALUE_NODE_IDS.has(id), `${id} seeded far out`);
@@ -74,8 +74,8 @@ test('GD-01b every GEOGRAPHY node is structurally complete with a shipped asset'
     assert.ok(fs.existsSync(path.join(repoRoot, n.image.replace(/^\.\//, ''))), `${n.id}: ${n.image} exists on disk`);
     assert.ok(typeof n.sp === 'string' && n.sp.length > 40, `${n.id}: has power copy`);
   }
-  assert.equal(e.acc.GEO_NODES.length, 12, 'twelve islands, no more, no fewer');
-  assert.equal(new Set(e.acc.GEO_NODES.map(n => n.id)).size, 12, 'and no duplicate ids');
+  assert.equal(e.acc.GEO_NODES.length, 13, 'thirteen exhibits, no more, no fewer');
+  assert.equal(new Set(e.acc.GEO_NODES.map(n => n.id)).size, 13, 'and no duplicate ids');
 });
 
 /* ================= GD-02 — the DLC world deals a connected 80-pin board ================= */
@@ -87,14 +87,14 @@ test('GD-02 with the toggle on, initGame deals 80 pins and every seed keeps the 
     withSeed(seed, () => e.f.initGame([{ name: 'A', char: 'markwatson' }, { name: 'B', char: 'tomkins' }]));
     const S = e.acc.S;
     assert.equal(S.dlcGeo, true, 'the flag rides with the state');
-    assert.equal(e.acc.NODES.length, 82, '82 pins dealt');
+    assert.equal(e.acc.NODES.length, 83, '83 pins dealt');
     assert.equal(Object.keys(S.rubble).length, 0, 'a fresh world has no rubble');
     assert.ok(S.log.some(l => l.includes('GEOGRAPHY DLC')), 'the table is told the DLC is live');
     const reached = bfs(e.acc.ADJ, 'quik');
     for (const id of e.acc.GEO_NODE_IDS) {
       assert.ok(reached.has(id), `seed ${seed}: ${id} reachable from Quikstop`);
     }
-    assert.equal(reached.size, 82, `seed ${seed}: the whole board is walkable`);
+    assert.equal(reached.size, 83, `seed ${seed}: the whole board is walkable`);
     e.dispose();
   }
 });
@@ -525,7 +525,7 @@ test('GD-14 the generated 80-pin board stays a valid collage across 30 seeds', {
       assert.ok(posById.has(id), `seed ${seed}: ${id} plotted`);
     }
     const reached = bfs(e.acc.ADJ, 'quik');
-    assert.equal(reached.size, 82, `seed ${seed}: fully connected`);
+    assert.equal(reached.size, 83, `seed ${seed}: fully connected`);
     /* Geo pins never share a plot with each other. */
     for (let i = 0; i < e.acc.GEO_NODE_IDS.length; i++) {
       for (let j = i + 1; j < e.acc.GEO_NODE_IDS.length; j++) {
@@ -556,7 +556,7 @@ test('GD-15 the geo flag is host-gated in the lobby and travels with every paylo
   const guest = engineFor(t);
   assert.equal(guest.acc.NODES.length, 70, 'guests start in the base world');
   guest.f.adoptState(JSON.parse(JSON.stringify(e.f.pubState(true))));
-  assert.equal(guest.acc.NODES.length, 82, 'adopting a geo state rebuilds the guest world');
+  assert.equal(guest.acc.NODES.length, 83, 'adopting a geo state rebuilds the guest world');
   assert.equal(guest.acc.WORLD_GEO, true);
   assert.ok(guest.acc.NMAP.geo_tuvalu, 'guests see every pin');
   assert.equal(JSON.parse(JSON.stringify(guest.acc.S)).dlcGeo, true);
@@ -572,7 +572,7 @@ test('GD-15 the geo flag is host-gated in the lobby and travels with every paylo
 /* ================= GD-16 — help copy & the exhibit-count contract ================= */
 test('GD-16 the help panel explains the DLC without breaking the base-game copy pins', t => {
   assert.ok(SOURCE.includes('The Geography DLC'), 'the help section is titled');
-  assert.ok(SOURCE.includes('82 exhibits'), 'help copy says what the board becomes');
+  assert.ok(SOURCE.includes('83 exhibits'), 'help copy says what the board becomes');
   assert.ok(SOURCE.includes('v1.9'), 'the version stamp moved');
   assert.ok(SOURCE.includes('70 exhibits'), 'the base-game exhibit copy is intact (RC-01 pin)');
   assert.ok(!SOURCE.includes('81 exhibits'), 'no stale exhibit counts');
