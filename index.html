@@ -946,11 +946,12 @@ function generateRandomBoard(slot){
  const quikPoint={x:slot.x,y:slot.y};
  assignment.made=farthest[0];
  const remaining=positions.filter(p=>p!==assignment.made);
- const basePool=remaining.slice(); /* let max-min placement choose from the whole board, not a narrow outer ring */
+ const basePool=remaining.slice().sort((a,b)=>Math.hypot(b.x-slot.x,b.y-slot.y)-Math.hypot(a.x-slot.x,a.y-slot.y)).slice(0,Math.ceil(positions.length*.55)); /* a wider outer-board pool preserves the prized-ring bias */
  const takeMostSpaced=(pool,anchors)=>{pool.sort((a,b)=>Math.min(...anchors.map(p=>Math.hypot(b.x-p.x,b.y-p.y)))-Math.min(...anchors.map(p=>Math.hypot(a.x-p.x,a.y-p.y))));const p=pool.shift();const at=remaining.indexOf(p);if(at>=0)remaining.splice(at,1);return p};
  const baseAnchors=[quikPoint,assignment.made];
  basePrized.forEach(id=>{const p=takeMostSpaced(basePool,baseAnchors);assignment[id]=p;baseAnchors.push(p)});
- const geoPool=geoPrized.length?remaining.slice():[]; /* the geo synergies use every remaining slot as a candidate */
+ const sortedRemaining=remaining.slice().sort((a,b)=>Math.hypot(a.x-slot.x,a.y-slot.y)-Math.hypot(b.x-slot.x,b.y-slot.y));
+ const geoPool=geoPrized.length?sortedRemaining.slice(Math.floor(sortedRemaining.length*.10),Math.ceil(sortedRemaining.length*.98)):[]; /* wide outer-biased pool, max-min spaced */
  geoPrized.forEach(id=>{const p=takeMostSpaced(geoPool,baseAnchors);assignment[id]=p;baseAnchors.push(p)});
  const ordinaryPositions=shuffle(remaining);
  ordinary.forEach((id,i)=>{assignment[id]=ordinaryPositions[i]});
