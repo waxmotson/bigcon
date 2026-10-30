@@ -415,20 +415,21 @@ const BASE_NODES=[
    (rebuildWorld). Abilities are id-hooked exactly like the base game: startTurn
    passives, income() synergies, and applyIntent actions keyed on the node id. */
 let NODES=[];
-const GEO_NODE_IDS=['geo_missile','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_boeing','geo_scs','geo_stage5','geo_pillars','geo_venice','geo_tuvalu','geo_kim'];
+const GEO_NODE_IDS=['geo_missile','geo_shahed','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_boeing','geo_scs','geo_stage5','geo_pillars','geo_venice','geo_tuvalu','geo_kim'];
 const OIL_IDS=['oil','oilgraph','barrels','tanker','petronas'];
-const GEO_HIGH_VALUE_IDS=['geo_missile','geo_scs','geo_pyothotel','geo_boeing','geo_pillars'];
+const GEO_HIGH_VALUE_IDS=['geo_missile','geo_shahed','geo_scs','geo_pyothotel','geo_boeing','geo_pillars','geo_kim','geo_wonsan','geo_venice'];
 /* The hermit kingdom: these pins spawn clustered in a ring around Pyongyang City. */
 const GEO_NK_IDS=['geo_missile','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_kim'];
 const GEO_NODES=[
 {id:'geo_missile',image:'./static/GeographyDLC/nk_missile.jpg',name:['MISSILE COMMAND'],icon:'🚀',type:'REGULATOR',shape:'photo',income:0,cost:8,x:2140,y:1180,rot:2,sub:'strategic assets · keys under the desk',sp:'Unlocks LAUNCH A MISSILE ($4 + 1 Intel, once per turn): strike any node — but you must BE HERE to fire, during your move (the launch ends the move; your action still follows) or as your action (owning KIM JONG UN also arms the silo from anywhere). An owned node is expropriated with NO payout; either way it becomes rubble — no income, no seizing. Stand on rubble in your action phase and pay the list price to rebuild it; it returns unowned, buyable from next turn. Pillars-protected nodes cannot be struck.'},
+{id:'geo_shahed',image:'./static/GeographyDLC/shahed%20drone.webp',name:['IRANIAN','SHAHED DRONE'],icon:'🛩️',type:'REGULATOR',shape:'photo',income:0,cost:8,x:420,y:1120,rot:-2,sub:'one-way delivery · disposable diplomacy',sp:'Functions like MISSILE COMMAND: launch a missile for $4 + 1 Intel, once per turn. Fire while standing on the drone, at MISSILE COMMAND, or from anywhere if you own KIM JONG UN. You cannot own this and MISSILE COMMAND at the same time.'},
 {id:'geo_wonsan',image:'./static/GeographyDLC/nk_wonsanresort.jpg',name:['WONSAN','RESORT'],icon:'🏖️',type:'WILD',shape:'photo',income:2,cost:5,x:2080,y:700,rot:-2,sub:'the beach town · sanctioned paradise',sp:'Stand here (once owned) for BEACH DAY: free, once per turn, −2 Cortisol. The sand is quiet. The waves are loud. Nobody is watching.'},
 {id:'geo_pyoncity',image:'./static/GeographyDLC/nk_pyongyangcity.webp',name:['PYONGYANG','CITY'],icon:'🌆',type:'BANK',shape:'photo',income:2,cost:6,x:2240,y:1000,rot:1,sub:'the capital · show windows, all lit',sp:'+$1 income per GEOGRAPHY DLC node you own (the capital collects tribute).'},
 {id:'geo_pyothotel',image:'./static/GeographyDLC/nk_pyongyanghotel.jpg',name:['PYONGYANG','HOTEL'],icon:'🏨',type:'CORPORATE',shape:'photo',income:2,cost:8,x:2200,y:830,rot:-1,sub:'106 floors · 47 in use',sp:'Gain $2 whenever ANY rubble node is REBUILT (construction kickbacks, allegedly).'},
 {id:'geo_boeing',image:'./static/GeographyDLC/geo_boeing.jpg',name:['THE CORPORATE','BOEING'],icon:'🛩️',type:'CORPORATE',shape:'photo',income:2,cost:7,x:1920,y:590,rot:2,sub:'white tail · no livery · no paperwork',sp:'Unlocks SHUT DOWN QANTAS ($4, once per turn): the kangaroo is grounded for two full turns — nobody flies the jet, and its owner collects nothing from it.'},
 {id:'geo_scs',image:'./static/GeographyDLC/geo_southchinasea.jpg',name:['THE SOUTH','CHINA SEA'],icon:'🌊',type:'COMMODITY',shape:'photo',income:4,cost:9,x:1880,y:1300,rot:-2,sub:'disputed waters · freedom of navigation',sp:'Unlocks TRIGGER AN OIL CRASH ($3, once per turn): the mood turns PANIC and every player pays $2 per oil node they own. Pillars-protected players are exempt.'},
 {id:'geo_stage5',image:'./static/GeographyDLC/geo_stage5decline.png',name:['STAGE 5','DECLINE'],type:'CHART',shape:'chart',spark:'down',income:1,cost:4,x:2040,y:470,rot:1,sub:'imported uranium · charcoal · decay',sp:'Unlocks CALL STAGE 5 (2 Intel, once per turn): the current richest player (not you) makes NO income on their next turn.'},
-{id:'geo_pillars',image:'./static/GeographyDLC/geo_pillars.jpg',name:['PILLARS OF','SUSTAINABILITY'],icon:'🧱',type:'REGULATOR',shape:'photo',income:1,cost:6,x:1760,y:250,rot:-1,sub:'ESG-laminated · one pillar is cardboard',sp:'ESG SHIELD: −1 Cortisol at the start of each of your turns. Your nodes cannot be missile-struck; you pay nothing on an OIL CRASH; Stage 5 Decline cannot call you.'},
+{id:'geo_pillars',image:'./static/GeographyDLC/geo_pillars.jpg',name:['PILLARS OF','SUSTAINABILITY'],icon:'🧱',type:'REGULATOR',shape:'photo',income:1,cost:6,x:1760,y:250,rot:-1,sub:'ESG-laminated · one pillar is cardboard',sp:'ESG SHIELD: −1 Cortisol at the start of each of your turns. You still pay nothing on an OIL CRASH and Stage 5 Decline cannot call you, but the Pillars themselves can be missile-struck and your holdings remain vulnerable to Overtourism.'},
 {id:'geo_venice',image:'./static/GeographyDLC/geo_venice.jpg',name:['VENICE','DI CCTV'],type:'MEDIA',shape:'photo',income:3,cost:8,x:150,y:950,rot:2,sub:'la serenissima · sella aperta',sp:'Stand here (once owned) for GONDOLA THERAPY: free, once per turn, −1 Cortisol. Or in your action phase send OVERTOURISM ($2, once per turn, either/or): pick a rival node — its owner takes +1 Cortisol at the start of each of their turns while the cruise ships keep coming.'},
 {id:'geo_tuvalu',image:'./static/GeographyDLC/geo_tuvalu.png',name:['TUVALU','.TV'],icon:'🏝️',type:'WILD',shape:'photo',income:2,cost:5,x:1900,y:1420,rot:-2,sub:'the first country you get free',sp:'THE JOIN IS FREE: the first player to arrive simply owns it. No action, no cost, no Cortisol. After that, normal rules apply.'},
 {id:'geo_kim',image:'./static/GeographyDLC/nk_kimjongun.png',name:['KIM JONG','UN'],icon:'🧨',type:'WILD',shape:'photo',income:0,cost:6,x:2320,y:1210,rot:-2,sub:'the man himself · nothing is happening',sp:'+1 Intel at the start of each of your turns. Owning him exempts you from the MISSILE COMMAND on-site rule — the keys work from anywhere.'},
@@ -437,7 +438,7 @@ const GEO_EDGES=[
  ['geo_missile','geo_pyoncity'],['geo_pyoncity','geo_pyothotel'],['geo_pyothotel','geo_wonsan'],['geo_wonsan','geo_missile'],
  ['geo_boeing','geo_pyothotel'],['geo_missile','geo_stage5'],['geo_stage5','geo_pillars'],
  ['geo_scs','geo_tuvalu'],['geo_venice','geo_scs'],
- ['geo_kim','geo_missile'],['geo_kim','geo_pyoncity']
+ ['geo_kim','geo_missile'],['geo_kim','geo_pyoncity'],['geo_shahed','geo_venice']
 ];
 const NMAP={};
 /* The Geography DLC rebuilds these every time the lobby flag flips. */
@@ -941,15 +942,18 @@ function generateRandomBoard(slot){
  const prized=shuffle(ids.filter(id=>HIGH_VALUE_NODE_IDS.has(id)&&id!=='made'));
  const ordinary=shuffle(ids.filter(id=>!HIGH_VALUE_NODE_IDS.has(id)&&id!=='made'));
  const assignment={quik:{x:slot.x,y:slot.y,rot:slot.rot}};
- assignment.made=farthest[0];
- prized.forEach((id,i)=>{assignment[id]=farthest[i+1]});
- const remaining=shuffle(farthest.slice(1+prized.length));
+ const available=positions.slice();
+ const takeMostSpaced=anchors=>{available.sort((a,b)=>Math.min(...anchors.map(p=>Math.hypot(b.x-p.x,b.y-p.y)))-Math.min(...anchors.map(p=>Math.hypot(a.x-p.x,a.y-p.y))));return available.shift()};
+ assignment.made=takeMostSpaced([{x:slot.x,y:slot.y}]);
+ const prizedAnchors=[{x:slot.x,y:slot.y},assignment.made];
+ prized.forEach(id=>{const p=takeMostSpaced(prizedAnchors);assignment[id]=p;prizedAnchors.push(p)});
+ const remaining=shuffle(available);
  ordinary.forEach((id,i)=>{assignment[id]=remaining[i]});
  NODES.forEach(n=>{const p=assignment[n.id]||ORIGINAL_LAYOUT_BY_ID[n.id];n.x=p.x;n.y=p.y;n.rot=p.rot});
  /* 🌍 GEOGRAPHY DLC — the North Korea pins spawn as a tight ring around Pyongyang
     City's dealt plot, wherever the collage put it. Fixed per-node offsets (squashed
     vertically for the wide collage) keep every mirror deterministic. */
- if(WORLD_GEO&&NMAP.geo_pyoncity){
+ if(false&&WORLD_GEO&&NMAP.geo_pyoncity){
   const city=NMAP.geo_pyoncity;
   const ring={geo_missile:[185,-215],geo_wonsan:[-215,-140],geo_pyothotel:[150,205],geo_kim:[-155,225]};
   Object.keys(ring).forEach(id=>{
@@ -1088,10 +1092,10 @@ async function startTurn(){
  if(own('sat')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🛰️ Hiding out in the dry country: −1 Cortisol (now '+p.cortisol+').')}
   if(own('gold')&&p.cortisol>0){const relief=Math.min(2,p.cortisol);p.cortisol-=relief;fxAt(S.cur,'🔥−'+relief,'#8fbf7f');log('🪙 Gold-coloured coins somehow soothe the nerves: −'+relief+' Cortisol (now '+p.cortisol+').')}
  if(S.dlcGeo&&own('geo_pillars')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🧱 ESG SHIELD — the Pillars absorb 1 Cortisol (now '+p.cortisol+').')}
- if(S.dlcGeo&&S.ov){
+ if(S.dlcGeo&&S.ov&&S.ov.target===S.cur){
   const ov=S.ov;
-  if(S.owner[ov.nid]===S.cur&&S.owner.geo_venice===ov.by&&!S.rubble[ov.nid])addCortisol(S.cur,1,'overtourism — the Venice cruise ships keep coming');
-  else S.ov=null;
+  if(S.owner[ov.nid]===S.cur&&!S.rubble[ov.nid]&&S.owner.geo_venice===ov.by)addCortisol(S.cur,1,'overtourism — the Venice cruise ships keep coming');
+  S.ov=null; /* expires only after the targeted player's next turn begins */
  }
  if(own('whistle'))giveIntel(S.cur,1,'the dossier grows');
  if(own('bullock'))giveIntel(S.cur,1,'the Governor briefs you');
@@ -1232,7 +1236,7 @@ async function applyIntent(pi,m){
    const n=NMAP[m.id];
    if(!n||!S.rubble||S.rubble[m.id]){sysTo(pi,'Pick a target that still stands.');S.mode=null;sync();return}
    if(S.owner[m.id]===pi){sysTo(pi,'You cannot missile your own node.');S.mode=null;sync();return}
-   if(S.owner[m.id]!=null&&S.owner[m.id]===S.owner.geo_pillars){sysTo(pi,'ESG SHIELD — the Pillars of Sustainability protect that node.');S.mode=null;sync();return}
+   /* ESG holdings are valid missile targets. */
    if(p.money<4||p.intel<1||S.geoMissiled){sysTo(pi,'Missile unavailable.');S.mode=null;sync();return}
    p.money-=4;p.intel-=1;fxAt(pi,'−$4 · 🛈−1','#ff6b5e');
    S.geoMissiled=true;S.mode=null;
@@ -1247,7 +1251,7 @@ async function applyIntent(pi,m){
     sync();
     await projPause(); /* the warhead flies to the island before anything lands */
     const pool=NODES.filter(nn=>S.owner[nn.id]===pi&&nn.id!=='geo_missile'&&nn.id!=='geo_tuvalu'&&!S.rubble[nn.id]);
-    if(S.owner.geo_pillars===pi)pool.length=0; /* the ESG shield keeps the reflection off their whole board */
+    /* ESG does not shield the owner's holdings from missile impacts. */
     if(pool.length){
      const hit=pool[Math.floor(Math.random()*pool.length)];
      if(projFx('missile','geo_tuvalu',hit.id)){sync();await projPause()} /* the reflected warhead flies home on screen */
@@ -1313,10 +1317,10 @@ async function applyIntent(pi,m){
   else if(act==='overtour'&&S.phase==='action'&&S.dlcGeo&&S.mode==='overtour'){
    const n=NMAP[m.id],o=S.owner[m.id];
    if(!n||o==null||o===pi||S.rubble[m.id]){sysTo(pi,'Overtourism targets a rival-owned node that still stands.');S.mode=null;sync();return}
-   if(S.owner.geo_pillars===o){sysTo(pi,'ESG SHIELD — that holding is protected.');S.mode=null;sync();return}
+   /* ESG does not protect against Overtourism. */
    if(p.money<2||S.geoVenice){S.mode=null;sync();return}
    p.money-=2;fxAt(pi,'−$2','#ff6b5e');
-   S.geoVenice=true;S.ov={nid:m.id,by:pi};S.mode=null;
+   S.geoVenice=true;S.ov={nid:m.id,by:pi,target:o};S.mode=null;
    fx(n.x,n.y-60,'🛳️ OVERTOURISM','#e19bff');
    log('🛳️ '+pname(pi)+' sends the cruise ships to '+n.name.join(' ')+' — OVERTOURISM: '+pname(o)+' takes +1 Cortisol at each of their turns while the ships keep coming.');
    await finishNodeAbility(pi);
@@ -1405,7 +1409,7 @@ function strikeNode(pi,nid,opts){
  sync();
 }
 function canMissileNode(me,nid){
- return !!(S&&S.dlcGeo&&!S.rubble[nid]&&S.owner[nid]!==me&&!(S.owner[nid]!=null&&S.owner[nid]===S.owner.geo_pillars));
+ return !!(S&&S.dlcGeo&&!S.rubble[nid]&&S.owner[nid]!==me);
 }
 function canReach(id){return !(id==='qantas'&&qantasGrounded())}
 function blockaded(id){return !!(S&&S.blockades&&S.blockades[id]>S.turn)}
@@ -1415,7 +1419,7 @@ function seizeListPrice(pi,n){
  if(n.type==='CHART'){if(S.owner.nab===pi)base=Math.max(1,base-1);if(S.owner.econ===pi)base=Math.max(1,base-1)}
  return base;
 }
-function flatSeize(nid){return nid==='made'||nid==='qantas'||nid==='rba'}
+function flatSeize(nid){return nid==='made'||nid==='qantas'||nid==='rba'||nid==='geo_pillars'}
 function takeoverCost(pi,nid,base){
  if(flatSeize(nid))return base;
  if(S.dossier)return base;
@@ -1941,7 +1945,7 @@ function renderSide(){
    if(S.dlcGeo&&S.owner.geo_stage5===me)btns.push('<button class="act" data-act="stage5"'+((p.intel>=2&&!S.geoStage5)?'':' disabled')+' title="The richest player (not you) makes no income on their next turn (2 Intel, once per turn)">📉 Call Stage 5 decline — 2 🛈</button>');
    if(S.dlcGeo&&S.owner.geo_venice===me&&nid==='geo_venice')btns.push('<button class="act" data-act="venicecool"'+(!S.geoVenice?'':' disabled')+' title="Free — once per turn, either this or Overtourism">🚤 Gondola therapy — free −1 🔥</button>');
    if(S.dlcGeo&&S.owner.geo_venice===me){
-    const ot=NODES.filter(nn=>S.owner[nn.id]!=null&&S.owner[nn.id]!==me&&!(S.rubble&&S.rubble[nn.id])&&S.owner[nn.id]!==S.owner.geo_pillars).length;
+    const ot=NODES.filter(nn=>S.owner[nn.id]!=null&&S.owner[nn.id]!==me&&!(S.rubble&&S.rubble[nn.id])).length;
     btns.push('<button class="act" data-act="overmode"'+((p.money>=2&&!S.geoVenice&&ot>0)?'':' disabled')+' title="Pick a rival destination: its owner steams +1 Cortisol per turn while the ships keep coming ($2, once per turn, either/or)">🛳️ Overtourism — $2 (mark a rival node)</button>');
    }
    if(S.dlcGeo&&S.owner.geo_wonsan===me&&nid==='geo_wonsan')btns.push('<button class="act primary" data-act="beach"'+(!S.geoBeach?'':' disabled')+' title="Free — once per turn">🏖️ Beach day — free −2 🔥</button>');
