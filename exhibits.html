@@ -38,8 +38,8 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
 .sechead h2{margin:0;font-size:21px;font-weight:900;letter-spacing:3px;color:var(--c)}
 .sechead .sflav{font-size:12px;font-style:italic;color:burlywood}
 .sechead .scount{margin-left:auto;font-size:11px;letter-spacing:2px;color:#9ad}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
-.card{background:#111413;border:1px solid #2a3d3d;border-top:3px solid var(--c);padding:10px 12px 11px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:transform .12s,border-color .12s}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:12px;align-items:start}
+.card{background:#111413;border:1px solid #2a3d3d;border-top:3px solid var(--c);padding:8px 9px 10px;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:transform .12s,border-color .12s}
 .card:hover{transform:translateY(-2px);border-top-width:3px;border-color:#168388}
 .card.hit{border-color:#f5c542;box-shadow:0 0 0 1px #f5c542 inset}
 .card.dim{opacity:.32}
@@ -51,19 +51,11 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
 .pill.t{color:#fff;border-color:var(--c);background:color-mix(in srgb,var(--c) 28%,#000)}
 .pill.k{color:#f5c542;border-color:#6b5a2a}
 .pill.g{color:#8fd;border-color:#4f7a3a}
-.fig{background:#000;border:1px solid #2a3d3d;align-self:stretch}
-.fig img{display:block;width:100%;height:118px;object-fit:cover}
-.fig .ph{height:118px;display:flex;align-items:center;justify-content:center;font-size:40px;background:#0a0d0d}
-.sub{font-size:11.5px;font-style:italic;color:burlywood;margin:0}
-.shot{font-size:12.5px;line-height:1.45;margin:0;color:#f2f2f2}
-.mech{font-size:11.8px;line-height:1.5;color:#c9d6d6;margin:0}
-.mech ul{margin:4px 0 0;padding-left:16px}
-.mech li{margin:3px 0}
-.mech b{color:#fff}
-.mech .neg{color:#ff9a8a}
-.mech .pos{color:#8fe08d}
-.mech .int{color:#55c1ff}
-.mech .hot{color:#ffa94d}
+.fig{background:#000;border:1px solid #2a3d3d;overflow:hidden}
+.fig img{display:block;width:100%;height:auto;object-fit:cover}
+.fig .ph{display:flex;align-items:center;justify-content:center;font-size:40px;background:#0a0d0d;aspect-ratio:140/58;width:100%}
+.sub{font-size:11px;font-style:italic;color:burlywood;margin:0}
+.shot{font-size:11.8px;line-height:1.42;margin:0;color:#f2f2f2}
 .chiprow{display:flex;gap:5px;flex-wrap:wrap;align-items:center;border-top:1px dashed #2a3d3d;padding-top:7px}
 .chiprow .lab{font-size:9px;font-weight:800;letter-spacing:2px;color:#6b7f7f;flex-basis:100%}
 .chip,.xref,.erev{font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:.4px;padding:3px 8px;background:#000;border:1px solid #365b5b;color:aqua;cursor:pointer;border-radius:2px}
@@ -264,6 +256,13 @@ const HI_SET=new Set('qantas rba oil gold sat asics rock press fox sisy made bul
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let showGeo=true,onlyTypes=new Set(),query='';
+/* pin-art proportions mirrored from the engine: each shape draws its image into a
+   (w−10) × (h−22) box (the pin's label bar takes the rest), sliced to cover — so
+   every tile crops exactly like the exhibit's artwork does in the real game.
+   Nodes without a `shape` field use the engine default [150,80]. */
+const SHAPE_SIZE={photo:[140,92],wide:[170,100],bubble:[150,80],logo:[150,80],chart:[130,64],news:[150,84],made:[140,74],mpc:[164,96],sat:[170,90]};
+const sizeOf=n=>SHAPE_SIZE[n.shape]||[150,80];
+const figRatio=n=>{const[a,b]=sizeOf(n);return(a-10)+'/'+(b-22)};
 DATA.forEach(n=>{DIS[n.id]=n.name.join(' ')});
 function chipsRow(n){
  const rel=(n.rel||[]).map(id=>'<button class="chip" data-x="'+id+'">'+esc(DIS[id]||id)+'</button>').join('');
@@ -282,12 +281,10 @@ function cardHtml(n){
  if(HI_SET.has(n.id))tags.push('<span class="pill" title="High-value seed: dealt far from Quikstop">⤢ FAR OUT</span>');
  if(n.geo)tags.push('<span class="pill g">🌍 GEO DLC</span>');
  return '<article class="card'+(n.geo?' geo':'')+'" id="x-'+n.id+'" data-id="'+n.id+'" style="--c:'+TYPE_META[type].c+'">'
-  +'<div class="fig">'+(n.img?'<img loading="lazy" decoding="async" src="'+encodeURI(img)+'" alt="'+esc(n.name.join(' '))+'" onerror="this.parentNode.innerHTML=\'<div class="ph">'+esc(icon)+'</div>\'">':'<div class="ph">'+esc(icon)+'</div>')+'</div>'
+  +'<div class="fig">'+(n.img?'<img loading="lazy" decoding="async" style="aspect-ratio:'+figRatio(n)+'" src="'+encodeURI(img)+'" alt="'+esc(n.name.join(' '))+'" onerror="this.parentNode.innerHTML=\'<div class="ph">'+esc(icon)+'</div>\'">':'<div class="ph" style="aspect-ratio:'+figRatio(n)+'">'+esc(icon)+'</div>')+'</div>'
   +'<div><div class="nmrow"><h3 class="nm">'+esc(n.name.join(' '))+'</h3></div><div class="pillrow">'+tags.join('')+'</div></div>'
   +'<p class="sub">'+esc(n.sub)+'</p>'
   +'<p class="shot">'+n.short+'</p>'
-  +'<div class="mech">'+n.mech+'</div>'
-  +chipsRow(n)
   +'</article>';
 }
 function renderSections(){
