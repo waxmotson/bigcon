@@ -293,7 +293,7 @@ function cardHtml(n){
  if(HI_SET.has(n.id))tags.push('<span class="pill" title="High-value seed: dealt far from Quikstop">⤢ FAR OUT</span>');
  if(n.geo)tags.push('<span class="pill g">🌍 GEO DLC</span>');
  return '<article class="card'+(n.geo?' geo':'')+'" id="x-'+n.id+'" data-id="'+n.id+'" style="--c:'+TYPE_META[type].c+'">'
-  +'<div class="fig">'+(n.img?'<img loading="lazy" decoding="async" style="aspect-ratio:'+figRatio(n)+'" src="'+encodeURI(img)+'" alt="'+esc(n.name.join(' '))+'" onerror="this.parentNode.innerHTML=\'<div class="ph">'+esc(icon)+'</div>\'">':'<div class="ph" style="aspect-ratio:'+figRatio(n)+'">'+esc(icon)+'</div>')+'</div>'
+  +'<div class="fig">'+(n.img?'<img loading="lazy" decoding="async" data-fallback="'+esc(icon)+'" style="aspect-ratio:'+figRatio(n)+'" src="'+encodeURI(img)+'" alt="'+esc(n.name.join(' '))+'">':'<div class="ph" style="aspect-ratio:'+figRatio(n)+'">'+esc(icon)+'</div>')+'</div>'
   +'<div><div class="nmrow"><h3 class="nm">'+esc(n.name.join(' '))+'</h3></div><div class="pillrow">'+tags.join('')+'</div></div>'
   +'<p class="sub">'+esc(n.sub)+'</p>'
   +'<p class="shot">'+n.short+'</p>'
@@ -324,6 +324,18 @@ function applySearchDim(){
   c.classList.toggle('hit',hit&&!!q);
  });
 }
+
+/* Replace failed images without inline HTML attributes: quotes in inline handlers
+   can break the card markup and let later images escape their grid cells. */
+document.addEventListener('error',e=>{
+ const img=e.target;
+ if(!(img instanceof HTMLImageElement)||!img.dataset.fallback)return;
+ const ph=document.createElement('div');
+ ph.className='ph';
+ ph.textContent=img.dataset.fallback;
+ if(img.closest('.fig'))ph.style.aspectRatio=img.style.aspectRatio;
+ img.replaceWith(ph);
+},true);
 
 /* ================= interactions ================= */
 document.addEventListener('click',e=>{
@@ -379,7 +391,7 @@ function modalBodyNode(n){
   ,'<span class="pill k">+$'+n.inc+' / TURN</span>','<span class="pill k">SEIZE $'+n.cost+'</span>'];
  if(HI_SET.has(n.id))pills.push('<span class="pill" title="High-value seed: dealt far from Quikstop">⤢ FAR OUT</span>');
  if(n.geo)pills.push('<span class="pill g">🌍 GEO DLC</span>');
- return '<div class="mhero">'+(n.img?'<img src="'+encodeURI(n.img)+'" alt="'+esc(n.name.join(' '))+'" onerror="this.parentNode.innerHTML=\'<div class=ph>'+esc(n.icon||'📌')+'</div>\'">':'<div class="ph">'+esc(n.icon||'📌')+'</div>')+'</div>'
+ return '<div class="mhero">'+(n.img?'<img data-fallback="'+esc(n.icon||'📌')+'" src="'+encodeURI(n.img)+'" alt="'+esc(n.name.join(' '))+'">':'<div class="ph">'+esc(n.icon||'📌')+'</div>')+'</div>'
   +'<div class="mbody"><h3 class="mname">'+esc(n.name.join(' '))+'</h3>'
   +'<p class="sub" style="margin:2px 0 0">'+esc(n.sub)+'</p>'
   +'<div class="pillrow" style="margin-top:6px">'+pills.join('')+'</div>'
