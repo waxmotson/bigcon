@@ -267,13 +267,13 @@ Prefer structured metadata tests over brittle string scraping. If the UI still e
 
 ## 8. Geography DLC (GD)
 
-Ten extra exhibits (`GEO_NODES`) behind a host-toggled lobby flag (`S.dlcGeo` / `Net.dlcGeo`). `rebuildWorld(geo)` swaps the node set, `WORLD_EDGES` unions `GEO_EDGES` when on, and the flag travels with every state payload (`pubState` serialises it; `adoptState` rebuilds the world before render). All behaviour lives in `tests/geo-dlc.test.mjs` and uses the `quiet` deck exactly like RC-03.
+Twelve extra exhibits (`GEO_NODES`) behind a host-toggled lobby flag (`S.dlcGeo` / `Net.dlcGeo`). `rebuildWorld(geo)` swaps the node set, `WORLD_EDGES` unions `GEO_EDGES` when on, and the flag travels with every state payload (`pubState` serialises it; `adoptState` rebuilds the world before render). All behaviour lives in `tests/geo-dlc.test.mjs` and uses the `quiet` deck exactly like RC-03.
 
 ### GD-01 / GD-01b — World rebuild & node integrity
-`rebuildWorld(false)` restores the classic 70-exhibit world (NMAP rebuilt, not accumulated; high-value set rebuilt); `rebuildWorld(true)` deals 80 with every `GEO_EDGES` pair present and every `GEO_HIGH_VALUE_IDS` pin seeded far out. Each GEO node is structurally complete with a shipped asset under `./static/GeographyDLC/`.
+`rebuildWorld(false)` restores the classic 70-exhibit world (NMAP rebuilt, not accumulated; high-value set rebuilt); `rebuildWorld(true)` deals 82 with every `GEO_EDGES` pair present and every `GEO_HIGH_VALUE_IDS` pin seeded far out. Each GEO node is structurally complete with a shipped asset under `./static/GeographyDLC/`.
 
 ### GD-02 / GD-14 — The 82-pin board
-`initGame` with the flag deals 80 connected pins on every probed seed (log tells the table the DLC is live, no rubble on a fresh world); a 30-seed generator sweep keeps the DLC board a valid collage (every geo pin plotted, no mutual overlaps, fully walkable).
+`initGame` with the flag deals 82 connected pins on every probed seed (log tells the table the DLC is live, no rubble on a fresh world); a 30-seed generator sweep keeps the DLC board a valid collage (every geo pin plotted, no mutual overlaps, fully walkable).
 
 ### GD-03..GD-05 — MISSILE COMMAND
 Strike ($4 + 1 Intel, once/turn): owned target ⇒ expropriated with NO payout; either way the pin becomes rubble (no income, nothing to seize). Guards: no self-strike, Pillars holdings immune, rubble unstrikeable, no charge on refused launches. Rebuild on-site pays exact list price, returns the node UNOWNED, and the Pyongyang Hotel skims $2 kickbacks off every rebuild.
@@ -282,7 +282,7 @@ Strike ($4 + 1 Intel, once/turn): owned target ⇒ expropriated with NO payout; 
 Wonsan beach day: free −2 Cortisol, once/turn, on-site only. Pyongyang City: +$1 income per owned GEO node (and note the base-game westpac/REGULATOR pairing — the missile site is a regulator, GD-07 pins the interaction). The Corporate Boeing: SHUT DOWN QANTAS ($4, once/turn) grounds the jet through the current and next two turns — nobody flies it, its owner's Qantas income is $0 — and a Boeing owner cannot ground their own airline.
 
 ### GD-10..GD-11b — Crash & decline
-Oil crash ($3, once/turn): PANIC mood (logged before the quiet card calms it), every player pays $2 per owned oil node, Pillars holders exempt (and the Pillars pin itself still pays its $1 income). Stage 5 (2 Intel, once/turn): the richest *other* player makes no income of any kind on their next turn; the call is consumed at their next `startTurn`; ESG-rich seats cannot be declined; a one-seat table has no call.
+Oil crash ($3, once/turn): PANIC mood (logged before the quiet card calms it), every player pays $2 per owned oil node, Pillars holders exempt (and the Pillars pin itself still pays its $1 income). The Pillars themselves remain valid missile targets and do not block Overtourism. Stage 5 (2 Intel, once/turn): the richest *other* player makes no income of any kind on their next turn; the call is consumed at their next `startTurn`; ESG-rich seats cannot be declined; a one-seat table has no call.
 
 ### GD-12..GD-12c — Venice
 Gondola therapy: free −1 Cortisol on-site. Overtourism ($2, once/turn, *either/or* with the gondola): targets any rival-owned standing pin, including ESG holdings; applies +1 Cortisol on the target owner's turn during one full table rotation, then expires. It also clears if Venice changes hands or the target pin is removed. Rubble remains an invalid target.
@@ -293,13 +293,13 @@ THE JOIN IS FREE: the first arrival auto-claims (no action, no cost, no Cortisol
 ### GD-15 / GD-16 — Lobby & copy
 The checkbox is host-gated (guest flips are refused and mirrored); the welcome and lobby payloads carry `dlcGeo`; adopting a geo state rebuilds the guest world. Help copy: v1.12, "82 exhibits" on / "70 exhibits" off; the Shahed launcher is documented alongside MISSILE COMMAND.
 
-### GD-17..GD-24 — Geography wave 2 (silo on-site rule, probe, reflection, blockade, Kim, clustering, ASIC, projectiles)
-- **GD-17** — the silo only arms on-site (`p.pos==='geo_missile'`); exemptions: Backroom Deals mid-move (spends 2 movement steps via `finishNodeAbility`, does not end the turn) or owning KIM JONG UN.
+### GD-17..GD-24 — Geography wave 2 (dual launchers, probe, reflection, blockade, Kim, map spacing, ASIC, projectiles)
+- **GD-17** — either owned launcher (MISSILE COMMAND or SHAHED DRONE) arms on-site; owning KIM JONG UN permits either to fire from anywhere. A player cannot own both launchers.
 - **GD-18** — striking a REGULATOR schedules `S.missileProbe={by}` at the strike; it resolves on the striker's NEXT `startTurn` BEFORE the caution flag is read, so a 50% indictment runs the full `raid(striker)` and its caution bites that same turn (the `p.raided=0` reset at the end of startTurn wipes the flag, by design). Either verdict adds +1 Cortisol via a direct set (bypasses `addCortisol`'s ≤1-node guard). Seeded via `makeRng`/`withSeedAsync`.
 - **GD-19** — a warhead at TUVALU reflects: Tuvalu never burns, the launcher's silo is expropriated to rubble (custom backblast log), and the warhead lands on a random launcher-owned pin (pool excludes rubble, the silo, Tuvalu; empty if the launcher holds Pillars). Reflected strikes use `strikeNode(...,{silent:true})` — no probe cascade.
 - **GD-20** — BLOCKADE (Albanese, base-game, not DLC-gated): free, once per player-turn, action phase only, consumes the turn; expiry `S.blockades[id]=S.turn+S.players.length` while `blockades[id]>S.turn` = exactly one rotation; blocks walkers, the jet and the owner; income and missiles unaffected; rubble and already-walled pins refused. A walled Tuvalu cannot be free-claimed.
 - **GD-21** — KIM JONG UN: WILD, income 0, $6, `nk_kimjongun.png` on disk; +1 Intel at each startTurn ("the Supreme Leader briefs you"), Toktimer-style.
-- **GD-22** — the five NK pins (`GEO_NK_IDS`) spawn as a ring around Pyongyang City's dealt plot (fixed per-node offsets squashed ×0.72, clamped to the collage bounds) — verified across 12 seeds; the NK max pairwise spread stays below the rest of the DLC's.
+- **GD-22** — strategic and Cortisol-relief nodes are distributed across the map with max-min placement; the old fixed Pyongyang ring is removed. Verify across 12 seeds that the high-value set is not clustered.
 - **GD-23** — MONETARY POLICY concentration (charts counted) is policed by ASIC as MARKET MANIPULATION: the card carries `./static/asic.png` and the ASIC titles; mechanics unchanged (33% gate, 20% cash+Intel fines, divestment). Other industries keep the ACCC face.
 - **GD-24** — projectile fx: `projFx(kind,fromId,toId)` emits `{id,proj:1,img,base,w,h,x0,y0,x1,y1,x,y}` riding `S.fx`/`pubState`; `projRig` returns `rotate(θ+base)` rightward and `scale(-1,1) rotate(atan2(dy,−dx)+base)` leftward (missile base +45°, jet base +10°); same-pin launches emit nothing; the 40-entry fx cap holds.
 
