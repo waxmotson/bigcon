@@ -417,7 +417,7 @@ const BASE_NODES=[
 let NODES=[];
 const GEO_NODE_IDS=['geo_missile','geo_shahed','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_boeing','geo_scs','geo_stage5','geo_pillars','geo_venice','geo_tuvalu','geo_kim'];
 const OIL_IDS=['oil','oilgraph','barrels','tanker','petronas'];
-const GEO_HIGH_VALUE_IDS=['geo_missile','geo_shahed','geo_scs','geo_pyothotel','geo_boeing','geo_pillars','geo_kim','geo_wonsan','geo_venice'];
+const GEO_HIGH_VALUE_IDS=['geo_missile','geo_shahed','geo_scs','geo_pyothotel','geo_boeing','geo_pillars','geo_kim','geo_wonsan','geo_venice','geo_pyoncity','geo_stage5'];
 /* Related North Korea DLC pins; their physical positions are deliberately not clustered. */
 const GEO_NK_IDS=['geo_missile','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_kim'];
 const GEO_NODES=[
@@ -946,12 +946,11 @@ function generateRandomBoard(slot){
  const quikPoint={x:slot.x,y:slot.y};
  assignment.made=farthest[0];
  const remaining=positions.filter(p=>p!==assignment.made);
- const basePool=remaining.slice().sort((a,b)=>Math.hypot(b.x-slot.x,b.y-slot.y)-Math.hypot(a.x-slot.x,a.y-slot.y)).slice(0,Math.max(basePrized.length+6,Math.ceil(positions.length*.30)));
+ const basePool=remaining.slice(); /* let max-min placement choose from the whole board, not a narrow outer ring */
  const takeMostSpaced=(pool,anchors)=>{pool.sort((a,b)=>Math.min(...anchors.map(p=>Math.hypot(b.x-p.x,b.y-p.y)))-Math.min(...anchors.map(p=>Math.hypot(a.x-p.x,a.y-p.y))));const p=pool.shift();const at=remaining.indexOf(p);if(at>=0)remaining.splice(at,1);return p};
  const baseAnchors=[quikPoint,assignment.made];
  basePrized.forEach(id=>{const p=takeMostSpaced(basePool,baseAnchors);assignment[id]=p;baseAnchors.push(p)});
- const sortedRemaining=remaining.slice().sort((a,b)=>Math.hypot(a.x-slot.x,a.y-slot.y)-Math.hypot(b.x-slot.x,b.y-slot.y));
- const geoPool=geoPrized.length?sortedRemaining.slice(Math.floor(sortedRemaining.length*.25),Math.ceil(sortedRemaining.length*.85)):[];
+ const geoPool=geoPrized.length?remaining.slice():[]; /* the geo synergies use every remaining slot as a candidate */
  geoPrized.forEach(id=>{const p=takeMostSpaced(geoPool,baseAnchors);assignment[id]=p;baseAnchors.push(p)});
  const ordinaryPositions=shuffle(remaining);
  ordinary.forEach((id,i)=>{assignment[id]=ordinaryPositions[i]});
