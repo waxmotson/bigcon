@@ -959,3 +959,22 @@ test('GD-25 targeted Cortisol overload costs 30 Intel and adds 6 to one selected
   assert.equal(S.players[1].cortisol, 7, 'the selected rival receives +6 Cortisol');
   assert.ok(S.log.some(l => l.includes('overload')), 'the action is logged');
 });
+
+
+test('GD-26 Bondmageddon targets the rival with the most charts and prioritises the ESG node', async t => {
+  const { e, S } = await geoGame(t);
+  S.owner.bond = 0;
+  S.owner.us = 1; S.owner.japan = 1;
+  S.owner.geo_pillars = 1; S.owner.oil = 1; S.owner.westpac = 1;
+  S.players[0].money = 40; S.players[0].intel = 10;
+  armAction(e);
+  const barrage = e.f.applyIntent(0, { act: 'bondmageddon' });
+  for (let i = 0; i < 8; i++) { e.clock.advance(e.acc.PROJ_PAUSE_MS + 100); await settle(); }
+  await barrage; await settle();
+  assert.equal(S.bondmageddonUsed, true, 'the ability is once per turn');
+  assert.equal(S.players[0].money, 40 - 16 + 2, 'the four-launch cost is charged');
+  assert.equal(S.players[0].intel, 6, 'the four Intel cost is charged');
+  assert.equal(S.rubble.geo_pillars, 1, 'the ESG holding is hit first');
+  const otherHits = ['us', 'japan', 'oil', 'westpac'].filter(id => S.rubble[id]);
+  assert.equal(otherHits.length, 1, 'the final launch hits one other random holding');
+});
