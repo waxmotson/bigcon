@@ -835,7 +835,7 @@ test('GD-22 cortisol relief and strategic drone synergies spawn far apart across
   const e = engineFor(t);
   e.f.rebuildWorld(true);
   const slots = e.acc.QUIK_SLOTS;
-  const strategic = ['geo_missile', 'geo_shahed', 'geo_kim', 'geo_wonsan', 'geo_venice', 'geo_pillars', 'geo_scs', 'geo_pyothotel', 'geo_boeing', 'gold', 'sat', 'asics', 'rba', 'rock'];
+  const strategic = ['geo_missile', 'geo_shahed', 'geo_kim', 'geo_wonsan', 'geo_venice', 'geo_pillars', 'geo_scs', 'geo_pyothotel', 'geo_boeing', 'geo_pyoncity', 'geo_stage5', 'gold', 'sat', 'asics', 'rba', 'rock'];
   for (let s = 0; s < 12; s++) {
     const seed = 5000 + s;
     const slot = slots[s % slots.length];
@@ -1000,7 +1000,7 @@ test('GD-26 Bondmageddon targets the chart leader and prioritises ESG before one
   const barrage = e.f.applyIntent(0, { act: 'bondmageddon' });
   for (let i = 0; i < 8; i++) { e.clock.advance(e.acc.PROJ_PAUSE_MS + 100); await settle(); }
   await barrage; await settle();
-  assert.ok(S.log.some(l => l.includes('BONDMAGEDDON') && l.includes('Player 2')), 'the chart leader is selected, not the lower-chart rival');
+  assert.ok(S.log.some(l => l.includes('BONDMAGEDDON') && l.includes('(2 CHART nodes)')), 'the chart leader is selected, not the lower-chart rival');
   assert.equal(S.players[0].money, 40 - 16 + 2, 'the four-launch cost is charged');
   assert.equal(S.players[0].intel, 6, 'the four Intel cost is charged');
   assert.equal(S.rubble.geo_pillars, 1, 'the first launch hits ESG');
