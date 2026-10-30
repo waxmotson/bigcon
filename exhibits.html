@@ -31,22 +31,6 @@ a{color:aqua}
 #geoT{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:1px;color:#8fd;border:1px solid #168388;background:#000;padding:5px 10px;cursor:pointer;user-select:none}
 #geoT input{accent-color:#168388;cursor:pointer}
 #geoT.on{background:#04100f}
-/* ── collage viewer ── */
-#viewsec{max-width:1240px;margin:16px auto 0;padding:0 14px}
-#viewbox{width:100%;aspect-ratio:2400/1560;border:2px solid #168388;background:#1d201f;position:relative;cursor:grab;touch-action:none;user-select:none;overflow:hidden}
-#viewbox.panning{cursor:grabbing}
-#viewbox svg{display:block;width:100%;height:100%}
-.vcap{font-size:11px;color:#8a7a5f;letter-spacing:.6px;margin:6px 2px 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.vcap b{color:#9ad}
-.vbtns{position:absolute;top:8px;right:10px;display:flex;gap:5px;z-index:5}
-.vbtns button{width:30px;height:30px;border-radius:0;border:1px solid #168388;background:#000;color:#fff;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer}
-.vbtns button:hover{background:#168388}
-.vlegend{position:absolute;left:8px;top:8px;background:rgba(0,0,0,.82);border:1px solid #168388;padding:4px 9px;font-size:10px;letter-spacing:1px;color:#9ad;z-index:5;pointer-events:none}
-.pnode{cursor:pointer}
-.pnode:hover{filter:brightness(1.25)}
-.pnode.dim{opacity:.18}
-.pnode.dim:hover{opacity:.5}
-.pnode.flash{outline:2px solid #f5c542}
 /* ── sections & cards ── */
 main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
 .sec{margin-top:26px}
@@ -114,7 +98,7 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
 #mcard .mmech li{margin:5px 0}
 #mpos{position:absolute;bottom:8px;right:12px;z-index:2;font-size:10px;letter-spacing:2px;color:#9ad;background:rgba(0,0,0,.55);border:1px solid #1d4a4a;padding:3px 8px}
 @media(max-width:640px){.cards{grid-template-columns:1fr}#brand h1{font-size:19px}}
-@media print{#brand .row1,#bar,#viewsec,.vbtns,#digest,#mnav,#mclose{display:none!important}.card{break-inside:avoid}}
+@media print{#brand .row1,#bar,#digest,#mnav,#mclose{display:none!important}.card{break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -123,7 +107,7 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
   <h1>THE BIG CON — THE EXHIBITS</h1>
   <div class="cnt" id="counts"></div>
  </div>
- <div class="brandsub">Every pin on the evidence board, grouped by type — what each exhibit earns, unlocks, triggers and who it deals with. Click a card (or a pin on the collage) for the full file.</div>
+ <div class="brandsub">Every pin on the evidence board, grouped by type — what each exhibit earns, unlocks, triggers and who it deals with. Click a card for the full file.</div>
  <div id="bar">
   <button class="tchip all on" id="chipAll">ALL EXHIBITS</button>
   <span id="chips" style="display:contents"></span>
@@ -131,11 +115,6 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
   <input id="search" type="search" placeholder="Search exhibits — names, powers, payouts…" spellcheck="false">
  </div>
 </header>
-
-<section id="viewsec">
- <div id="viewbox"><span class="vlegend">CANONICAL COLLAGE — CLICK A PIN</span><div class="vbtns"><button id="vzin" title="Zoom in">+</button><button id="vzout" title="Zoom out">−</button><button id="vzfit" title="Fit the whole collage">⤢</button></div></div>
- <div class="vcap"><span><b>THE COLLAGE</b> — the canonical layout. Live boards re-deal every pin and thread each game; pricey exhibits are seeded <b>far from Quikstop</b>.</span><span id="vnote"></span></div>
-</section>
 
 <main id="grid"></main>
 
@@ -145,7 +124,7 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
  <details id="dFine"><summary>THE FINE PRINT</summary><div class="dinner" id="fineBody"></div></details>
 </div>
 
-<div id="ovl"><div id="mcard"></div></div>
+<div id="ovl"><button id="mclose" title="Close" aria-label="Close">×</button><div id="mcard"></div></div>
 
 <script>
 /* ============================================================
@@ -279,40 +258,7 @@ const EVENTS=[
 {id:'madeout',icon:'🟣',title:'MADE PAYS OUT… PROBABLY',mood:'—',tag:'money appears. Explanations do not.',pay:['<b>One roll in three:</b> <span class="xref" data-id="made">MADE</span> has paid out — the owner banks the usual <span class="pos">+$10 and +1 Intel</span> while every rival holding <b>3+ pins and $50+</b> hands over <span class="neg">15% of their cash</span> to nobody. Otherwise: MADE remains unexplained. Again.']},
 ];
 const EVBY={};EVENTS.forEach(e=>EVBY[e.id]=e);
-const GEO_SET=new Set(DATA.filter(n=>n.geo).map(n=>n.id));
 const HI_SET=new Set('qantas rba oil gold sat asics rock press fox sisy made bullock jt mpc whistle term bond hedge petronas geo_missile geo_shahed geo_scs geo_pyothotel geo_boeing geo_pillars geo_kim geo_wonsan geo_venice geo_pyoncity geo_stage5'.split(' '));
-/* canonical collage geometry (.edges: the original threads, minus retired pins) */
-const REMOVED_IDS=new Set('notes vault unid1 unid2 real spend can tv ger timeline econ debt'.split(' '));
-const CANON_EDGES=[
- ['citi','commbank'],['commbank','nab'],['nab','anz'],['nab','westpac'],['westpac','commbank'],['westpac','citi'],['anz','rba'],['citi','bond007'],['citi','coal'],
- ['rba','bullock'],['rba','asic'],['asic','accc'],['accc','gov'],['gov','chalmers'],['chalmers','albo'],['albo','trump'],['rba','bond'],['gov','herald'],
- ['bond','hedge'],['bond','bessent'],['bond','back'],['hedge','term'],['hedge','stock'],['term','bessent'],['term','stock'],
- ['rba','cash'],['cash','bullock'],['cash','tenyear'],['aus','gov'],['aus','accc'],['aus','tenyear'],['gov','chalmers'],['chalmers','tenyear'],
- ['us','trump'],['us','albo'],['us','tenyear'],['japan','petronas'],['japan','tanker'],['japan','tenyear'],
- ['uk','press'],['uk','news'],['uk','tenyear'],['tenyear','bessent'],['tenyear','bond'],
- ['infl','jt'],['infl','back'],['stock','oilgraph'],
- ['oil','oilgraph'],['oil','tanker'],['oil','petronas'],['oil','barrels'],['oil','jt'],['barrels','forklift'],['forklift','port'],['forklift','gold'],
- ['tanker','port'],['tanker','petronas'],['petronas','trump'],
- ['train','coal'],['train','watson'],['train','port'],['train','rock'],['train','bhp'],['bhp','coal'],['bhp','watson'],['bhp','market'],
- ['coal','watson'],['coal','quik'],['quik','market'],['quik','bond007'],['quik','watson'],['market','f1'],
- ['f1','qantas'],['qantas','press'],['qantas','golf'],['bullet','school'],['bullet','albo'],['bullet','golf'],['bullet','asics'],
- ['back','press'],['back','leak'],['back','jt'],['iface','toktimer'],
- ['press','leak'],['press','fox'],['press','golf'],['press','news'],['leak','photo'],['photo','news'],['photo','bigshort'],['photo','made'],
- ['news','fox'],['news','made'],['fox','jim'],['jim','bess'],['jim','herald'],['bess','insider'],['bess','wef'],['bess','herald'],
- ['insider','whistle'],['wef','brad'],['wef','iface'],['bigshort','brad'],['hedge','bigshort'],
- ['school','ib'],['school','mpc'],['school','golf'],['ib','mpc'],['mpc','sisy'],['sisy','group'],['sisy','sat'],
- ['group','sat'],['group','press'],['group','news'],['sat','made'],['sat','asics'],['asics','mpc'],['asics','sisy'],
- ['toktimer','whistle'],['toktimer','brad'],
- ['bullock','rock'],['rock','jt'],['jt','press'],['watson','golf'],['chalmers','herald']
-];
-const GEO_EDGES=[
- ['geo_missile','geo_pyoncity'],['geo_pyoncity','geo_pyothotel'],['geo_pyothotel','geo_wonsan'],['geo_wonsan','geo_missile'],
- ['geo_boeing','geo_pyothotel'],['geo_missile','geo_stage5'],['geo_stage5','geo_pillars'],
- ['geo_scs','geo_tuvalu'],['geo_venice','geo_scs'],
- ['geo_kim','geo_missile'],['geo_kim','geo_pyoncity'],['geo_shahed','geo_venice']
-];
-const SHAPE_SIZE={photo:[140,92],wide:[170,100],bubble:[150,80],logo:[150,80],chart:[130,64],news:[150,84],made:[140,74],mpc:[164,96],sat:[170,90]};
-const sizeOf=n=>SHAPE_SIZE[n.shape]||[150,80];
 
 /* ================= build the sections ================= */
 const $=id=>document.getElementById(id);
@@ -357,8 +303,6 @@ function renderSections(){
  $('grid').innerHTML=html||'<p style="color:#8a7a5f;font-style:italic;margin-top:30px">Nothing on the wall matches that.</p>';
  applySearchDim();
  $('counts').innerHTML='<b>'+visible.length+'</b> exhibits · '+TYPE_ORDER.filter(t=>visible.some(n=>n.type===t)).map(t=>'<span style="color:'+TYPE_META[t].c+'">'+t+'</span>').join(' · ')+' · <b style="color:#8fd">'+DATA.filter(n=>n.geo&&showGeo).length+' / '+DATA.filter(n=>n.geo).length+' 🌍 GEO</b>';
- $('vnote').textContent='showing '+visible.length+' of '+DATA.length+' pins';
- buildCollage();
 }
 function applySearchDim(){
  const q=query.trim().toLowerCase();
@@ -369,10 +313,6 @@ function applySearchDim(){
   if(q){hit=hayFor(n).includes(q);c.classList.toggle('dim',!hit);}
   else c.classList.remove('dim');
   c.classList.toggle('hit',hit&&!!q);
- });
- document.querySelectorAll('#vsvg .pnode').forEach(p=>{
-  const n=DATA.find(d=>d.id===p.dataset.id);
-  if(n)p.classList.toggle('dim',!!q&&!hayFor(n).includes(q));
  });
 }
 
@@ -505,102 +445,6 @@ function buildFineDigest(){
 $('dDeck').addEventListener('toggle',()=>{if($('deckBody').firstChild)return;buildEventDigest()});
 $('dFine').addEventListener('toggle',()=>{if($('fineBody').firstChild)return;buildFineDigest()});
 $('dHouse').addEventListener('toggle',()=>{if($('houseBody').firstChild)return;buildHouseDigest()});
-/* ══════════════ collage: canonical layout (coordinates mirrored from the engine) ══════════════ */
-const XY={
- citi:[210,150,-2],commbank:[400,95,2],nab:[590,165,-1],anz:[770,100,2],westpac:[500,270,1],bond:[1040,310,1],hedge:[1260,300,-2],
- rba:[960,145,1],asic:[1160,95,-1],accc:[1360,155,1],gov:[1540,100,-1],
- us:[1980,95,1],japan:[2260,455,-1],uk:[980,1165,1],aus:[1325,85,1],tenyear:[1285,205,1],infl:[1085,675,-1],cash:[880,210,1],stock:[1365,365,1],
- oil:[1500,470,-2],oilgraph:[1680,540,2],barrels:[1320,480,1],tanker:[1850,430,2],petronas:[2000,530,-1],gold:[1330,620,-2],train:[770,700,-2],port:[950,800,2],bhp:[560,820,-2],forklift:[1520,650,-1],
- coal:[150,480,-2],quik:[350,430,2],market:[170,660,1],f1:[380,760,-3],qantas:[575,975,2],bullet:[95,1240,-1],
- press:[760,900,-1],fox:[980,1000,2],leak:[1200,930,2],jim:[1420,880,-2],herald:[1725,265,2],bess:[1630,930,-1],insider:[1830,860,2],photo:[1220,1210,-2],bigshort:[1420,1080,1],news:[860,1250,-1],wef:[1750,1300,-2],
- back:[960,430,-3],term:[1440,255,1],golf:[170,960,3],whistle:[1980,640,-2],iface:[2060,1100,2],
- school:[170,1080,-1],ib:[380,1050,2],mpc:[390,1200,-2],sisy:[600,1150,2],group:[820,1120,-1],sat:[610,1300,1],
- watson:[330,590,3],bessent:[1600,310,-2],chalmers:[1720,180,2],albo:[1875,105,-2],trump:[2020,185,2],bullock:[880,265,-3],bond007:[300,330,-2],rock:[660,450,2],brad:[1630,1120,-2],jt:[1150,540,-1],made:[1000,1380,-2],asics:[430,1360,3],toktimer:[1920,1020,-2],
- geo_missile:[2140,1180,2],geo_shahed:[420,1120,-2],geo_wonsan:[2080,700,-2],geo_pyoncity:[2240,1000,1],geo_pyothotel:[2200,830,-1],geo_boeing:[1920,590,2],
- geo_scs:[1880,1300,-2],geo_stage5:[2040,470,1],geo_pillars:[1760,250,-1],geo_venice:[150,950,2],geo_tuvalu:[1900,1420,-2],geo_kim:[2320,1210,-2]
-};
-function edgesFor(){
- const vis=new Set(DATA.filter(n=>showGeo||!n.geo).map(n=>n.id));
- const add=edgeCan=>{const out=[];edgeCan.forEach(e=>{if(vis.has(e[0])&&vis.has(e[1]))out.push(e)});return out};
- return add(CANON_EDGES).concat(showGeo?add(GEO_EDGES):[]);
-}
-function pinNode(g,n){
- const a=XY[n.id],w=sizeOf(n)[0],h=sizeOf(n)[1],x=a[0]-w/2,y=a[1]-h/2,rr=Math.min(10,w/2,h/2);
- const c=TYPE_META[n.type].c;
- g.setAttribute('transform','translate('+a[0]+','+a[1]+') rotate('+a[2]+') translate('+(-a[0])+','+(-a[1])+')');
- g.setAttribute('id','vp-'+n.id);
- let img=n.img?'<image href="'+encodeURI(n.img)+'" x="'+(x+5)+'" y="'+(y+5)+'" width="'+(w-10)+'" height="'+(h-22)+'" preserveAspectRatio="xMidYMid slice" style="opacity:.82"/>'
-  :'<text x="'+(a[0])+'" y="'+(y+42)+'" font-size="34" text-anchor="middle" style="pointer-events:none">'+(n.icon||'📌')+'</text>';
- g.innerHTML='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+rr+'" fill="#0d100f" stroke="'+c+'" stroke-width="2.5"/>'
-  +img
-  +'<rect x="'+(x+5)+'" y="'+(y+h-17)+'" width="'+(w-10)+'" height="12" rx="2" fill="rgba(0,0,0,.82)" style="pointer-events:none"/>'
-  +'<text x="'+(a[0])+'" y="'+(y+h-8)+'" text-anchor="middle" font-size="10.5" font-weight="800" letter-spacing="0.5" fill="'+c+'" style="font-family:system-ui;pointer-events:none">'+esc(n.name[0])+'</text>'
-  +'<text x="'+(x+9)+'" y="'+(y+16)+'" font-size="11" style="pointer-events:none">'+esc(n.icon||'')+'</text>'
-  +(n.geo?'<text x="'+(x+w-11)+'" y="'+(y+16)+'" text-anchor="end" font-size="10" style="pointer-events:none">🌍</text>':'');
-}
-function buildCollage(){
- const box=$('viewbox');if(!box)return;
- let svg=document.getElementById('vsvg');
- const edges=edgesFor(),pins=DATA.filter(n=>showGeo||!n.geo).filter(n=>XY[n.id]);
- if(!svg){
-  svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.id='vsvg';svg.setAttribute('viewBox','0 0 2400 1560');
-  svg.innerHTML='<rect width="2400" height="1560" fill="#191c1a"/>'
-   +'<g id="eggies" stroke="#8a3a2e" stroke-width="2.5" stroke-opacity=".5"></g>'
-   +'<g id="eggpins"></g>';
-  box.insertBefore(svg,box.firstChild);
-  cameraInit();
- }
- const ge=document.getElementById('eggies'),gp=document.getElementById('eggpins');
- ge.innerHTML=edges.map(e=>{const a=XY[e[0]],b=XY[e[1]];return '<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'"/>'}).join('');
- gp.innerHTML='';
- pins.forEach(n=>{const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','pnode');g.dataset.id=n.id;pinNode(g,n);gp.appendChild(g)});
- applySearchDim();
-}
-/*__ZOOM__*/
-const vD={k:2400,x:0,y:0,drag:false,moved:0,px:0,py:0};
-function cameraApply(){
- const svg=document.getElementById('vsvg');if(!svg)return;
- const W=vD.k,H=W*1560/2400;
- svg.setAttribute('viewBox',Math.round(vD.x)+' '+Math.round(vD.y)+' '+Math.round(W)+' '+Math.round(H));
-}
-function cameraZoom(f,cx,cy){ /* f: 1 v f >1 zoom in? we pass multiplier on the viewBox width */
- const svg=document.getElementById('vsvg');if(!svg)return;
- const r=svg.getBoundingClientRect(),W0=vD.k;
- let W=Math.min(4800,Math.max(360,W0*f));
- if(cx==null){cx=r.width/2;cy=r.height/2}
- const bx=vD.x+cx/r.width*vD.k,by=vD.y+cy/r.height*vD.k;
- vD.x=bx-cx/r.width*W;vD.y=by-cy/r.height*W;vD.k=W;
- cameraApply();
-}
-function cameraInit(){
- const svg=document.getElementById('vsvg');
- svg.addEventListener('wheel',e=>{e.preventDefault();cameraZoom(e.deltaY>0?1.28:0.78,e.offsetX,e.offsetY)},{passive:false});
- svg.addEventListener('pointerdown',e=>{vD.drag=false;vD.moved=0;vD.px=e.clientX;vD.py=e.clientY;svg.setPointerCapture&&svg.setPointerCapture(e.pointerId)});
- svg.addEventListener('pointermove',e=>{
-  if(e.buttons&&vD.moved!=null){
-   const svg2=document.getElementById('vsvg'),r=svg2.getBoundingClientRect();
-   const dx=e.clientX-vD.px,dy=e.clientY-vD.py;vD.moved=Math.abs(dx)+Math.abs(dy);
-   if(vD.moved>4&&!vD.drag){vD.drag=true;svg2.classList.add('panning');vD.kPrev=vD.k}
-   if(vD.drag){vD.x-=(dx/r.width)*vD.k;vD.y-=(dy/r.height)*vD.k;vD.px=e.clientX;vD.py=e.clientY;cameraApply()}
-  }
- });
- window.addEventListener('pointerup',e=>{
-  const svg2=document.getElementById('vsvg');if(!svg2)return;
-  const p=e.target&&e.target.closest&&e.target.closest('.pnode');
-  if(!vD.drag&&p&&vD.moved<5)openNode(p.dataset.id);
-  svg2.classList.remove('panning');vD.drag=false;vD.moved=999;
- });
-}
-(function cameraButtons(){
- const zin=$('vzin'),zout=$('vzout'),zfit=$('vzfit');
- if(zin)zin.addEventListener('click',()=>cameraZoom(0.75));
- if(zout)zout.addEventListener('click',()=>cameraZoom(1.33));
- if(zfit)zfit.addEventListener('click',()=>{vD.k=2400;vD.x=0;vD.y=0;cameraApply()});
-})();
-
-
-
 /* ================= boot ================= */
 (function buildTypeChips(){
  $('chips').innerHTML=TYPE_ORDER.map(t=>'<button class="tchip" data-t="'+t+'" style="--c:'+TYPE_META[t].c+'"><span class="sw"></span>'+t+' <span class="n">'+DATA.filter(n=>n.type===t).length+'</span></button>').join('');
