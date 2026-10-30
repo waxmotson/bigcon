@@ -153,7 +153,7 @@ test('GD-04 missile guards: no self-strike, ESG is vulnerable, no charge on refu
   await esgStrike; await settle();
   assert.equal(S.owner.geo_pillars, undefined, 'the Pillars themselves can be missile-struck');
   assert.equal(S.rubble.geo_pillars, 1, 'the ESG node becomes rubble');
-  assert.equal(S.players[0].money, 26, 'the successful launch costs $4');
+  assert.equal(S.players[0].money, 28, 'the successful launch costs $4 before the quiet-quarter payout');
   assert.equal(S.players[0].intel, 2, 'the successful launch costs 1 Intel');
   assert.equal(e.f.canMissileNode(0, 'sat'), false, 'rubble is not targetable');
   assert.equal(e.f.canMissileNode(0, 'infl'), true, 'unprotected unowned pins stay targetable');
@@ -470,7 +470,7 @@ test('GD-12c Overtourism guards: ESG does not block it; rubble still does', asyn
   await e.f.applyIntent(0, { act: 'overtour', id: 'westpac' });
   await settle();
   assert.notEqual(S.ov, null, 'ESG does not protect holdings from Overtourism');
-  assert.equal(S.players[0].money, 28, 'the overtourism fare is charged');
+  assert.equal(S.players[0].money, 30, 'the $2 fare is charged before the quiet-quarter payout');
   assert.equal(S.mode, null, 'the board closed');
   /* Rubble pins are out of scope too. */
   S.ov = null; S.geoVenice = false; S.owner.geo_venice = 0;
@@ -574,7 +574,7 @@ test('GD-15 the geo flag is host-gated in the lobby and travels with every paylo
 test('GD-16 the help panel explains the DLC without breaking the base-game copy pins', t => {
   assert.ok(SOURCE.includes('The Geography DLC'), 'the help section is titled');
   assert.ok(SOURCE.includes('82 exhibits'), 'help copy says what the board becomes');
-  assert.ok(SOURCE.includes('v1.9'), 'the version stamp moved');
+  assert.ok(SOURCE.includes('v1.12'), 'the current version stamp is documented');
   assert.ok(SOURCE.includes('70 exhibits'), 'the base-game exhibit copy is intact (RC-01 pin)');
   assert.ok(!SOURCE.includes('81 exhibits'), 'no stale exhibit counts');
   assert.ok(SOURCE.includes('KIM JONG UN ($6)'), 'the Supreme Leader has a help bullet');
@@ -952,7 +952,7 @@ test('GD-24 Sell ALL exchanges every Intel point at the current market rate', as
 
 test('GD-25 targeted Cortisol overload costs 30 Intel and adds 6 to one selected rival', async t => {
   const { e, S } = await geoGame(t);
-  S.players[0].intel = 30; S.players[1].cortisol = 1;
+  S.players[0].intel = 30; S.players[1].cortisol = 1; S.owner.oil = 1;
   e.queueModal(1);
   armAction(e);
   await e.f.applyIntent(0, { act: 'targetpanic' }); await settle();
