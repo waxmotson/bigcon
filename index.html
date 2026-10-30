@@ -330,7 +330,7 @@ const Presence=(function(){
  };
 })();
 
-/* ================= THE COMPLETE EVIDENCE BOARD — 70 exhibits · +11 with the GEOGRAPHY DLC ================= */
+/* ================= THE COMPLETE EVIDENCE BOARD — 70 exhibits · +12 with the GEOGRAPHY DLC ================= */
 const BASE_NODES=[
 {id:'citi',image:'./static/citi tower.webp',name:['CITI TOWER'],icon:'🏦',type:'BANK',shape:'logo',band:'#1a5fa8',income:3,cost:8,x:210,y:150,rot:-2,sub:'too big to fail · 007 on payroll',sp:'+$1 income per CORPORATE node you own (James Bond is on the payroll).'},
 {id:'commbank',image:'./static/cba.png',name:['COMMONWEALTH BANK'],icon:'🏦',type:'BANK',shape:'logo',band:'#d4a017',income:2,cost:6,x:400,y:95,rot:2,sub:'can’t be beat? we’ll see',sp:'+$2 income while you own any other BANK (the big four stick together).'},
@@ -410,7 +410,7 @@ const BASE_NODES=[
 {id:'asics',image:'./static/running shoe.jpg',name:['THE RUNNING SHOE','ASICS'],icon:'👟',type:'WILD',shape:'photo',income:1,cost:3,x:430,y:1360,rot:3,sub:'circled in red · why is this here',sp:'+1 movement step (you are always jogging). Stand here (once owned) to JOG: free −1 Cortisol.'},
 {id:'toktimer',image:'./static/toktimer.png',name:['TOKTIMER'],icon:'⏱️',type:'WILD',shape:'photo',income:1,cost:5,x:1920,y:1020,rot:-2,sub:'the clock is running',sp:'+1 Intel whenever a Market Event is revealed. Time is information.'}
 ];
-/* ─────────── 🌍 GEOGRAPHY DLC — eleven more pins, host-toggled in the lobby ───────────
+/* ─────────── 🌍 GEOGRAPHY DLC — twelve more pins, host-toggled in the lobby ───────────
    The whole GEOGRAPHY set is appended to BASE_NODES only when the lobby flag is on
    (rebuildWorld). Abilities are id-hooked exactly like the base game: startTurn
    passives, income() synergies, and applyIntent actions keyed on the node id. */
@@ -950,7 +950,7 @@ function generateRandomBoard(slot){
  const remaining=shuffle(available);
  ordinary.forEach((id,i)=>{assignment[id]=remaining[i]});
  NODES.forEach(n=>{const p=assignment[n.id]||ORIGINAL_LAYOUT_BY_ID[n.id];n.x=p.x;n.y=p.y;n.rot=p.rot});
- /* 🌍 GEOGRAPHY DLC — the North Korea pins spawn as a tight ring around Pyongyang
+ /* 🌍 GEOGRAPHY DLC — the strategic and cortisol-relief pins are distributed across the whole board rather than clustered
     City's dealt plot, wherever the collage put it. Fixed per-node offsets (squashed
     vertically for the wide collage) keep every mirror deterministic. */
  if(false&&WORLD_GEO&&NMAP.geo_pyoncity){
@@ -1010,7 +1010,7 @@ function initGame(defs){
  Net.started=true;
  log('🌅 A new board is dealt — '+NODES.length+' exhibits, '+EDGES.length+' freshly rebuilt connections, '+S.players.length+' at the table.');
  log('🧭 High-value targets are seeded further from Quikstop; the board and routes are reshuffled every game.');
- if(S.dlcGeo)log('🌍 GEOGRAPHY DLC — 11 extra island exhibits are on the board: missiles, resorts, disputed waters, ESG pillars, the hermit kingdom and one free country.');
+ if(S.dlcGeo)log('🌍 GEOGRAPHY DLC — 12 extra exhibits are on the board: missiles, resorts, disputed waters, ESG pillars, the hermit kingdom and one free country.');
  log('🎲 Seating was shuffled. First to move: '+S.players[0].name+'.');
  log('⛽ Quikstop opened '+slot.label+' this game. Everyone starts there with $15 and 2 Intel.');
  log('🏆 WIN CONDITION: $'+goal+' in the bank AND one of every node type ('+WIN_TYPES.join(', ')+'). The host set the target.');
@@ -1655,7 +1655,7 @@ function showRules(){
  +'<h4>Cortisol &amp; raids</h4><p>Cortisol is capped at 9. At 🔥9 the regulators raid you, and a raid hurts: your <b>two</b> highest-income nodes are seized, every bug you planted is pulled, you pay a fine of $5 or 30% of your cash (whichever is larger), your Intel is burned down to 1, Cortisol resets to 0 and your <b>next turn brings no income and a single step</b>. <b>The whole table sees the raid</b> — it pops up on every screen. The Hedge Fund pays $3 on every raid; the Group Photograph pays 1 🛈 Intel.</p>'
  +'<h4>ACCC concentration</h4><p>Charts are exempt from the six type-based industries; the custom MONETARY POLICY industry also counts the CASH-RATE and INFLATION charts. If you hold <b>more than two</b> properties in the same tracked industry — banking, regulators, corporates, coal, commodities, media, oil, education, JTPortal, Jim Chalmers, Big Bessent, or monetary policy — then at the start of <b>your turn</b> there is a <b>33% chance</b> the regulators investigate: <b>ASIC</b> runs monetary-policy books as <b>market manipulation</b>, the <b>ACCC</b> takes every other industry. You pay a <b>20% fine on both cash and Intel</b>; divested nodes are randomly redistributed to other players (maximum one node per player), with any remainder returned to the market. Owning <b>Mark Watson</b> exempts your holdings in the COAL industry from ACCC monopoly investigations.</p>'
  +'<h4>MADE (???)</h4><p>Nobody knows what the purple graphic is, but it moves money: at the <b>start of every player\'s turn</b> there is a <b>33% chance</b> MADE pays out — <b>+$10 and +1 Intel</b> to its owner. Every other player with <b>more than two nodes and at least $50</b> pays 15% of their cash to the void. Seizing MADE always costs list price — it never inflates after a takeover. You may also force MADE to divest from any rival for <b>5 Intel</b>, paying the former owner <b>$7 compensation</b>.</p>'
- +'<h4>🌍 The Geography DLC — the board expands over the water</h4><p>Host-toggled in the lobby (look for <b>ENABLE THE GEOGRAPHY DLC</b>). <b>On: the board deals 83 exhibits.</b> Off: the same 70 exhibits as always.</p>'
+ +'<h4>🌍 The Geography DLC — the board expands over the water</h4><p>Host-toggled in the lobby (look for <b>ENABLE THE GEOGRAPHY DLC</b>). <b>On: the board deals 82 exhibits.</b> Off: the same 70 exhibits as always.</p>'
  +'<ul><li><b>MISSILE COMMAND ($8) / IRANIAN SHAHED DRONE ($8)</b> — you can own <b>MISSILE COMMAND or the SHAHED DRONE</b>, but not both. Either owned launch site can LAUNCH A MISSILE ($4 + 1 🛈, once per turn): stand on the launcher you own to fire, or own KIM JONG UN to fire from anywhere. You cannot own both launch sites at once. An <b>owned node is expropriated with NO payout</b> to its former owner; either way it becomes <b>RUBBLE</b> until rebuilt at list price. The <b>ESG Pillars themselves can be missile-struck</b>. Strike a <b>REGULATOR</b> and an investigation opens — <b>ASIC or the ACCC</b> comes for you on your next turn: a 50/50 indictment, and <b>+1 Cortisol</b> whether it lands or not.</li>'
  +'<li><b>PYONGYANG CITY ($6)</b> — +$1 income per Geography node you own. The capital collects tribute.</li>'
  +'<li><b>PYONGYANG HOTEL ($8)</b> — collects <b>$2</b> whenever anyone rebuilds rubble. Construction kickbacks, allegedly.</li>'
