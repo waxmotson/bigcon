@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadEngine, makeGame, SOURCE } from './helpers/harness.mjs';
+import { loadEngine, makeGame, SOURCE, HTML } from './helpers/harness.mjs';
 
 test('Fog of War is a host-controlled lobby option propagated to the game state', t => {
-  assert.match(SOURCE, /id="fogToggle"/);
+  assert.match(HTML, /id="fogToggle"/);
   assert.match(SOURCE, /fogOfWar:\!\!Net\.fogOfWar/);
   assert.match(SOURCE, /setFogUI\(!!d\.fogOfWar\)/);
   assert.match(SOURCE, /Fog of War is enabled/);
