@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420">
+<defs><linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4f4ed"/><stop offset="1" stop-color="#9ba7ad"/></linearGradient></defs>
+<rect width="640" height="420" rx="18" fill="#172128"/>
+<path d="M65 210 Q92 177 140 169 L456 55 L501 73 L475 191 L542 210 L475 229 L501 347 L456 365 L140 251 Q92 243 65 210Z" fill="url(#body)" stroke="#3c4b53" stroke-width="5"/>
+<path d="M140 169 L456 55 L426 191 L140 210Z" fill="#dce4e5" stroke="#65747a" stroke-width="3"/>
+<path d="M140 251 L456 365 L426 229 L140 210Z" fill="#c7d1d4" stroke="#65747a" stroke-width="3"/>
+<path d="M78 210 L140 198 L170 210 L140 222Z" fill="#f9faf6" stroke="#65747a" stroke-width="3"/>
+<circle cx="470" cy="210" r="15" fill="#39474e"/><path d="M492 177 L512 243 M512 177 L492 243" stroke="#e6b35d" stroke-width="7" stroke-linecap="round"/>
+<path d="M455 55 L479 25 L530 30 L548 77" fill="#34414a" stroke="#111a20" stroke-width="4"/>
+<path d="M455 365 L479 395 L530 390 L548 343" fill="#34414a" stroke="#111a20" stroke-width="4"/>
+<circle cx="250" cy="210" r="11" fill="#168388"/><path d="M250 210 L318 210" stroke="#52656d" stroke-width="5"/>
+<text x="320" y="405" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" fill="#dce4e5" letter-spacing="4">SHAHED DRONE</text>
+</svg>

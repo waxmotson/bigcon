@@ -43,7 +43,7 @@ test('GD-01 rebuildWorld(false) mirrors the classic 70-exhibit world; (true) dea
   assert.equal(acc.HIGH_VALUE_NODE_IDS.has('geo_pillars'), false);
 
   e.f.rebuildWorld(true);
-  assert.equal(acc.NODES.length, 81, '81 exhibits with the DLC on');
+  assert.equal(acc.NODES.length, 82, '82 exhibits with the DLC on');
   assert.equal(acc.WORLD_GEO, true);
   for (const id of acc.GEO_NODE_IDS) assert.ok(acc.NMAP[id], `DLC pin dealt: ${id}`);
   for (const id of acc.GEO_HIGH_VALUE_IDS) assert.ok(acc.HIGH_VALUE_NODE_IDS.has(id), `${id} seeded far out`);
@@ -74,8 +74,8 @@ test('GD-01b every GEOGRAPHY node is structurally complete with a shipped asset'
     assert.ok(fs.existsSync(path.join(repoRoot, n.image.replace(/^\.\//, ''))), `${n.id}: ${n.image} exists on disk`);
     assert.ok(typeof n.sp === 'string' && n.sp.length > 40, `${n.id}: has power copy`);
   }
-  assert.equal(e.acc.GEO_NODES.length, 11, 'eleven islands, no more, no fewer');
-  assert.equal(new Set(e.acc.GEO_NODES.map(n => n.id)).size, 11, 'and no duplicate ids');
+  assert.equal(e.acc.GEO_NODES.length, 12, 'twelve islands, no more, no fewer');
+  assert.equal(new Set(e.acc.GEO_NODES.map(n => n.id)).size, 12, 'and no duplicate ids');
 });
 
 /* ================= GD-02 — the DLC world deals a connected 80-pin board ================= */
@@ -87,14 +87,14 @@ test('GD-02 with the toggle on, initGame deals 80 pins and every seed keeps the 
     withSeed(seed, () => e.f.initGame([{ name: 'A', char: 'markwatson' }, { name: 'B', char: 'tomkins' }]));
     const S = e.acc.S;
     assert.equal(S.dlcGeo, true, 'the flag rides with the state');
-    assert.equal(e.acc.NODES.length, 81, '81 pins dealt');
+    assert.equal(e.acc.NODES.length, 82, '82 pins dealt');
     assert.equal(Object.keys(S.rubble).length, 0, 'a fresh world has no rubble');
     assert.ok(S.log.some(l => l.includes('GEOGRAPHY DLC')), 'the table is told the DLC is live');
     const reached = bfs(e.acc.ADJ, 'quik');
     for (const id of e.acc.GEO_NODE_IDS) {
       assert.ok(reached.has(id), `seed ${seed}: ${id} reachable from Quikstop`);
     }
-    assert.equal(reached.size, 81, `seed ${seed}: the whole board is walkable`);
+    assert.equal(reached.size, 82, `seed ${seed}: the whole board is walkable`);
     e.dispose();
   }
 });
@@ -132,7 +132,7 @@ test('GD-03 the missile expropriates an owned node: no payout, rubble, once per 
   assert.equal(e.f.canMissileNode(0, 'infl'), true, 'intact unowned pins remain targetable');
 });
 
-test('GD-04 missile guards: no self-strike, Pillars immune, no charge on refused launches', async t => {
+test('GD-04 missile guards: no self-strike, ESG is vulnerable, no charge on refused launches', async t => {
   const { e, S } = await geoGame(t);
   S.owner.geo_missile = 0;
   S.players[0].pos = 'geo_missile';      // the silo only fires from the pad
@@ -150,11 +150,11 @@ test('GD-04 missile guards: no self-strike, Pillars immune, no charge on refused
   await e.f.applyIntent(0, { act: 'missilemode' });
   await e.f.applyIntent(0, { act: 'missile', id: 'sat' });
   await settle();
-  assert.equal(S.owner.sat, 1, 'the ESG SHIELD protects the rival holding');
-  assert.equal(S.rubble.sat, undefined);
-  assert.equal(S.players[0].money, 30, 'no launch money was ever spent');
-  assert.equal(S.players[0].intel, 3, 'no launch Intel was ever spent');
-  assert.equal(e.f.canMissileNode(0, 'sat'), false, 'targetability helper agrees with the shield');
+  assert.equal(S.owner.sat, undefined, 'the Pillars holding can be missile-struck');
+  assert.equal(S.rubble.sat, 1, 'the ESG node becomes rubble');
+  assert.equal(S.players[0].money, 26, 'the successful launch costs $4');
+  assert.equal(S.players[0].intel, 2, 'the successful launch costs 1 Intel');
+  assert.equal(e.f.canMissileNode(0, 'sat'), false, 'rubble is not targetable');
   assert.equal(e.f.canMissileNode(0, 'infl'), true, 'unprotected unowned pins stay targetable');
 });
 
@@ -439,7 +439,10 @@ test('GD-12b Overtourism: +1 Cortisol per owner-turn while Venice stays owned', 
   assert.equal(S.mode, 'overtour', 'the cruise board arms');
   const tour = e.f.applyIntent(0, { act: 'overtour', id: 'westpac' });
   assert.equal(S.players[0].money, 30 - 2 + 2, '−$2 fare, + the quiet quarter already in');
-  assert.equal(JSON.stringify(S.ov), JSON.stringify({ nid: 'westpac', by: 0 }), 'the ships are booked');
+  assert.equal(S.ov.nid, 'westpac', 'the ships are booked against the selected node');
+  assert.equal(S.ov.by, 0, 'the Venetian player owns the effect');
+  assert.equal(S.ov.targetOwner, 1, 'the effect tracks the original node owner');
+  assert.equal(S.ov.expiresAt, S.turn * S.players.length + S.cur + S.players.length, 'the effect lasts one full turn cycle');
   assert.ok(S.log.some(l => l.includes('OVERTOURISM')), 'the table saw the ships');
   await tour;
   await settle();
@@ -456,7 +459,7 @@ test('GD-12b Overtourism: +1 Cortisol per owner-turn while Venice stays owned', 
   assert.equal(S.players[1].cortisol, 5, 'no further cortisol once the ships are gone');
 });
 
-test('GD-12c Overtourism guards: needs a standing rival pin, refuses ESG holdings', async t => {
+test('GD-12c Overtourism guards: ESG does not block it; rubble still does', async t => {
   const { e, S } = await geoGame(t);
   S.owner.geo_venice = 0;
   S.owner.geo_pillars = 1; S.owner.westpac = 1; // the rival holds the Pillars
@@ -465,10 +468,11 @@ test('GD-12c Overtourism guards: needs a standing rival pin, refuses ESG holding
   await e.f.applyIntent(0, { act: 'overmode' });
   await e.f.applyIntent(0, { act: 'overtour', id: 'westpac' });
   await settle();
-  assert.equal(S.ov, null, 'the ESG SHIELD keeps the ships away');
-  assert.equal(S.players[0].money, 30, 'no fare charged on a refused launch');
+  assert.notEqual(S.ov, null, 'ESG does not protect holdings from Overtourism');
+  assert.equal(S.players[0].money, 28, 'the overtourism fare is charged');
   assert.equal(S.mode, null, 'the board closed');
   /* Rubble pins are out of scope too. */
+  S.ov = null; S.geoVenice = false; S.owner.geo_venice = 0;
   S.owner.westpac = 1; S.owner.geo_pillars = 2;
   S.rubble.westpac = 1; S.players[0].money = 30;
   armAction(e);
@@ -521,7 +525,7 @@ test('GD-14 the generated 80-pin board stays a valid collage across 30 seeds', {
       assert.ok(posById.has(id), `seed ${seed}: ${id} plotted`);
     }
     const reached = bfs(e.acc.ADJ, 'quik');
-    assert.equal(reached.size, 81, `seed ${seed}: fully connected`);
+    assert.equal(reached.size, 82, `seed ${seed}: fully connected`);
     /* Geo pins never share a plot with each other. */
     for (let i = 0; i < e.acc.GEO_NODE_IDS.length; i++) {
       for (let j = i + 1; j < e.acc.GEO_NODE_IDS.length; j++) {
@@ -552,7 +556,7 @@ test('GD-15 the geo flag is host-gated in the lobby and travels with every paylo
   const guest = engineFor(t);
   assert.equal(guest.acc.NODES.length, 70, 'guests start in the base world');
   guest.f.adoptState(JSON.parse(JSON.stringify(e.f.pubState(true))));
-  assert.equal(guest.acc.NODES.length, 81, 'adopting a geo state rebuilds the guest world');
+  assert.equal(guest.acc.NODES.length, 82, 'adopting a geo state rebuilds the guest world');
   assert.equal(guest.acc.WORLD_GEO, true);
   assert.ok(guest.acc.NMAP.geo_tuvalu, 'guests see every pin');
   assert.equal(JSON.parse(JSON.stringify(guest.acc.S)).dlcGeo, true);
@@ -568,12 +572,12 @@ test('GD-15 the geo flag is host-gated in the lobby and travels with every paylo
 /* ================= GD-16 — help copy & the exhibit-count contract ================= */
 test('GD-16 the help panel explains the DLC without breaking the base-game copy pins', t => {
   assert.ok(SOURCE.includes('The Geography DLC'), 'the help section is titled');
-  assert.ok(SOURCE.includes('81 exhibits'), 'help copy says what the board becomes');
+  assert.ok(SOURCE.includes('82 exhibits'), 'help copy says what the board becomes');
   assert.ok(SOURCE.includes('v1.9'), 'the version stamp moved');
   assert.ok(SOURCE.includes('70 exhibits'), 'the base-game exhibit copy is intact (RC-01 pin)');
-  assert.ok(!SOURCE.includes('82 exhibits'), 'no stale exhibit counts');
+  assert.ok(!SOURCE.includes('81 exhibits'), 'no stale exhibit counts');
   assert.ok(SOURCE.includes('KIM JONG UN ($6)'), 'the Supreme Leader has a help bullet');
-  assert.ok(SOURCE.includes('must stand on the silo to fire'), 'the on-site launch rule is documented');
+  assert.ok(SOURCE.includes('MISSILE COMMAND or the SHAHED DRONE'), 'either strategic drone launch site is documented');
   assert.ok(SOURCE.includes('50/50 indictment'), 'the probe is documented');
   assert.ok(SOURCE.includes('REFLECTED'), 'the Tuvalu reflection is documented');
   assert.ok(SOURCE.includes('wall off literally any node'), 'the blockade is documented');
@@ -798,36 +802,32 @@ test('GD-21 Kim Jong Un: a WILD pin that pays +1 Intel at every startTurn', asyn
   assert.equal(S.players[0].money, 20 + 3, 'salary only — the pin pays no income');
 });
 
-/* ================= GD-22 — the hermit kingdom spawns clustered ================= */
-test('GD-22 the North Korea pins spawn in a tight ring around Pyongyang City across seeds', { timeout: 60000 }, t => {
+/* ================= GD-22 — strategic synergies spawn far apart ================= */
+test('GD-22 cortisol relief and strategic drone synergies spawn far apart across seeds', { timeout: 60000 }, t => {
   const e = engineFor(t);
   e.f.rebuildWorld(true);
   const slots = e.acc.QUIK_SLOTS;
+  const strategic = ['geo_missile', 'geo_shahed', 'geo_kim', 'geo_wonsan', 'geo_pillars', 'gold', 'sat', 'asics', 'rba'];
   for (let s = 0; s < 12; s++) {
     const seed = 5000 + s;
     const slot = slots[s % slots.length];
     let gen;
     withSeed(seed, () => { gen = e.f.generateRandomBoard(slot); });
     const posById = new Map(gen.positions.map(p => [p.id, p]));
-    const city = posById.get('geo_pyoncity');
-    assert.ok(city, `seed ${seed}: the capital is plotted`);
     const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-    for (const id of e.acc.GEO_NK_IDS) {
-      if (id === 'geo_pyoncity') continue;
+    for (const id of strategic) assert.ok(posById.has(id), `seed ${seed}: ${id} is plotted`);
+    let closest = Infinity, closestPair = '';
+    for (let i = 0; i < strategic.length; i++) {
+      for (let j = i + 1; j < strategic.length; j++) {
+        const distance = d(posById.get(strategic[i]), posById.get(strategic[j]));
+        if (distance < closest) { closest = distance; closestPair = strategic[i] + ' / ' + strategic[j]; }
+      }
+    }
+    assert.ok(closest > 150, `seed ${seed}: key synergies are spread apart (closest: ${closestPair}, ${Math.round(closest)}px)`);
+    for (const id of strategic) {
       const p = posById.get(id);
-      assert.ok(p, `seed ${seed}: ${id} plotted`);
-      const dist = d(p, city);
-      assert.ok(dist < 900, `seed ${seed}: ${id} stays in the neighbourhood (${Math.round(dist)}px)`);
       assert.ok(p.x >= 95 && p.x <= 2305 && p.y >= 95 && p.y <= 1455, `seed ${seed}: ${id} stays on the board`);
     }
-    /* The hermit kingdom hugs tighter than the rest of the DLC sprawls. */
-    const nk = e.acc.GEO_NK_IDS.map(id => posById.get(id));
-    let nkMax = 0;
-    for (let i = 0; i < nk.length; i++) for (let j = i + 1; j < nk.length; j++) nkMax = Math.max(nkMax, d(nk[i], nk[j]));
-    const others = e.acc.GEO_NODE_IDS.filter(id => !e.acc.GEO_NK_IDS.includes(id)).map(id => posById.get(id));
-    let otherMax = 0;
-    for (let i = 0; i < others.length; i++) for (let j = i + 1; j < others.length; j++) otherMax = Math.max(otherMax, d(others[i], others[j]));
-    assert.ok(nkMax < otherMax, `seed ${seed}: the hermit kingdom (${Math.round(nkMax)}px) hugs tighter than the rest of the DLC (${Math.round(otherMax)}px)`);
   }
 });
 
