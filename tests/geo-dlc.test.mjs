@@ -978,3 +978,19 @@ test('GD-26 Bondmageddon targets the rival with the most charts and prioritises 
   const otherHits = ['us', 'japan', 'oil', 'westpac'].filter(id => S.rubble[id]);
   assert.equal(otherHits.length, 1, 'the final launch hits one other random holding');
 });
+
+
+test('GD-27 Shahed Drone uses the shared launcher rules and cannot be owned with the silo', async t => {
+  const { e, S } = await geoGame(t);
+  assert.equal(e.acc.NMAP.geo_shahed.image, './static/GeographyDLC/shahed drone.webp', 'the shipped WebP is used');
+  S.owner.geo_missile = 0;
+  S.players[0].pos = 'geo_shahed'; S.players[0].money = 30; S.players[0].intel = 3;
+  armAction(e);
+  await e.f.applyIntent(0, { act: 'seize' });
+  assert.equal(S.owner.geo_shahed, undefined, 'the same player cannot acquire both launch sites');
+  assert.ok(S.log.some(l => l.includes('cannot own both')), 'the refusal is explained');
+  delete S.owner.geo_missile;
+  S.owner.geo_shahed = 0;
+  await e.f.applyIntent(0, { act: 'missilemode' });
+  assert.equal(S.mode, 'missile', 'the Shahed arms from its own location');
+});
