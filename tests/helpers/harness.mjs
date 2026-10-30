@@ -31,6 +31,7 @@ function inlineScript() {
   if (start === -1 || end === -1) throw new Error('could not locate the inline game script');
   return html.slice(start + '<script>'.length, end);
 }
+export const HTML = html;
 export const SOURCE = inlineScript();
 
 /* ---------- virtual clock ---------- */
