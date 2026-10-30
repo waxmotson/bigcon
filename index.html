@@ -432,7 +432,7 @@ const GEO_NODES=[
 {id:'geo_pillars',image:'./static/GeographyDLC/geo_pillars.jpg',name:['PILLARS OF','SUSTAINABILITY'],icon:'🧱',type:'REGULATOR',shape:'photo',income:1,cost:6,x:1760,y:250,rot:-1,sub:'ESG-laminated · one pillar is cardboard',sp:'ESG SHIELD: −1 Cortisol at the start of each of your turns. You still pay nothing on an OIL CRASH and Stage 5 Decline cannot call you, but the Pillars themselves can be missile-struck and your holdings remain vulnerable to Overtourism.'},
 {id:'geo_venice',image:'./static/GeographyDLC/geo_venice.jpg',name:['VENICE','DI CCTV'],type:'MEDIA',shape:'photo',income:3,cost:8,x:150,y:950,rot:2,sub:'la serenissima · sella aperta',sp:'Stand here (once owned) for GONDOLA THERAPY: free, once per turn, −1 Cortisol. Or in your action phase send OVERTOURISM ($2, once per turn, either/or): pick a rival node — its owner takes +1 Cortisol at the start of each of their turns while the cruise ships keep coming.'},
 {id:'geo_tuvalu',image:'./static/GeographyDLC/geo_tuvalu.png',name:['TUVALU','.TV'],icon:'🏝️',type:'WILD',shape:'photo',income:2,cost:5,x:1900,y:1420,rot:-2,sub:'the first country you get free',sp:'THE JOIN IS FREE: the first player to arrive simply owns it. No action, no cost, no Cortisol. After that, normal rules apply.'},
-{id:'geo_kim',image:'./static/GeographyDLC/nk_kimjongun.png',name:['KIM JONG','UN'],icon:'🧨',type:'WILD',shape:'photo',income:0,cost:6,x:2320,y:1210,rot:-2,sub:'the man himself · nothing is happening',sp:'+1 Intel at the start of each of your turns. Owning him exempts you from the MISSILE COMMAND on-site rule — the keys work from anywhere.'},
+{id:'geo_kim',image:'./static/GeographyDLC/nk_kimjongun.png',name:['KIM JONG','UN'],icon:'🧨',type:'WILD',shape:'photo',income:0,cost:6,x:2320,y:1210,rot:-2,sub:'the man himself · nothing is happening',sp:'+1 Intel at the start of each of your turns. Owning him exempts you from either launcher’s on-site rule — both the silo and the Shahed can fire from anywhere.'},
 ];
 const GEO_EDGES=[
  ['geo_missile','geo_pyoncity'],['geo_pyoncity','geo_pyothotel'],['geo_pyothotel','geo_wonsan'],['geo_wonsan','geo_missile'],
@@ -1232,21 +1232,24 @@ async function applyIntent(pi,m){
    const n=NMAP[m.id];
    if(!n||!S.rubble||S.rubble[m.id]){sysTo(pi,'Pick a target that still stands.');S.mode=null;sync();return}
    if(S.owner[m.id]===pi){sysTo(pi,'You cannot missile your own node.');S.mode=null;sync();return}
+   const launcherId=S.owner.geo_missile===pi?'geo_missile':(S.owner.geo_shahed===pi?'geo_shahed':null);
+   if(!launcherId||!canFireMissileFrom(pi)){sysTo(pi,'You no longer control an armed missile launcher.');S.mode=null;sync();return}
    /* ESG holdings are valid missile targets. */
    if(p.money<4||p.intel<1||S.geoMissiled){sysTo(pi,'Missile unavailable.');S.mode=null;sync();return}
    p.money-=4;p.intel-=1;fxAt(pi,'−$4 · 🛈−1','#ff6b5e');
    S.geoMissiled=true;S.mode=null;
    if(m.id==='geo_tuvalu'){
-    /* 🌍 TUVALU REFLECTS — the island is done sinking quietly: the warhead comes
-       back down on the launcher's own board and the silo detonates with it. */
-    projFx('missile','geo_missile','geo_tuvalu');
+    /* 🌍 TUVALU REFLECTS — the island sends the warhead back at the launcher
+       that actually fired it, whether that is MISSILE COMMAND or the SHAHED DRONE. */
+    const launcherName=NMAP[launcherId].name.join(' ');
+    projFx('missile',launcherId,'geo_tuvalu');
     log('🚀 '+pname(pi)+' launches a missile at TUVALU — the island REFUSES it. The warhead comes back down on '+pname(pi)+'’s own holdings.');
-    delete S.owner.geo_missile;delete S.bugs.geo_missile;S.rubble.geo_missile=1;
-    fx(NMAP.geo_missile.x,NMAP.geo_missile.y-70,'💥 BACKFIRE','#ff6b5e');
-    log('💥 '+pname(pi)+'’s MISSILE COMMAND silo blows up in the backblast — rubble, no payout, no refund.');
+    delete S.owner[launcherId];delete S.bugs[launcherId];S.rubble[launcherId]=1;
+    fx(NMAP[launcherId].x,NMAP[launcherId].y-70,'💥 BACKFIRE','#ff6b5e');
+    log('💥 '+pname(pi)+'’s '+launcherName+' is destroyed in the backblast — rubble, no payout, no refund.');
     sync();
     await projPause(); /* the warhead flies to the island before anything lands */
-    const pool=NODES.filter(nn=>S.owner[nn.id]===pi&&nn.id!=='geo_missile'&&nn.id!=='geo_tuvalu'&&!S.rubble[nn.id]);
+    const pool=NODES.filter(nn=>S.owner[nn.id]===pi&&nn.id!==launcherId&&nn.id!=='geo_tuvalu'&&!S.rubble[nn.id]);
     /* ESG does not shield the owner's holdings from missile impacts. */
     if(pool.length){
      const hit=pool[Math.floor(Math.random()*pool.length)];
@@ -1257,7 +1260,7 @@ async function applyIntent(pi,m){
     if(S.phase==='move'){S.steps=0;await endMovement()} /* a mid-move launch ends the walk; the action phase still follows */
     else await endOfTurn();
    }else{
-    if(projFx('missile','geo_missile',m.id)){sync();await projPause()} /* the flight plays on every screen before the market event covers the board */
+    if(projFx('missile',launcherId,m.id)){sync();await projPause()} /* the flight starts at the launcher the player actually owns */
     strikeNode(pi,m.id);
     if(S.phase==='move'){S.steps=0;await endMovement()} /* a mid-move launch ends the walk; the action phase still follows */
     else await endOfTurn();
@@ -1363,7 +1366,8 @@ async function applyIntent(pi,m){
    if(!rivals.length){sysTo(pi,'There is nobody else at the table.');return}
    const target=await askPlayer(pi,{title:'CORTISOL OVERLOAD — 30 INTEL',body:'Choose one rival to receive +6 Cortisol.',options:rivals.map(j=>({label:pname(j)+' · '+S.players[j].cortisol+'/9 Cortisol',v:j})).concat([{label:'Cancel',v:-1}]),def:-1});
    if(target<0){sync();return}
-   if(p.intel<30){sysTo(pi,'You no longer have 30 Intel.');return}
+   if(!Number.isInteger(target)||target===pi||!S.players[target]){sysTo(pi,'Choose a valid rival.');sync();return}
+   if(S.cur!==pi||S.phase!=='action'||S.over||p.intel<30){sysTo(pi,'The overload is no longer available.');sync();return}
    p.intel-=30;fxAt(pi,'🛈−30','#55c1ff');log('🔥 '+pname(pi)+' spends 30 Intel to overload '+pname(target)+' with +6 Cortisol.');
    addCortisol(target,6,'a 30-Intel intelligence overload',null,true);await endOfTurn();
   }
