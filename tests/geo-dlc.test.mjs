@@ -936,3 +936,26 @@ test('GD-25 the launch holds the turn: the warhead and the jet fly before the ne
   await flight;
   assert.equal(S.phase, 'action', 'the action phase opens only after the jet lands');
 });
+
+
+/* ================= GD-24..GD-25 — Intel operations ================= */
+test('GD-24 Sell ALL exchanges every Intel point at the current market rate', async t => {
+  const { e, S } = await geoGame(t);
+  S.players[0].intel = 17; S.players[0].money = 20; S.mood = 'CALM';
+  const rate = e.acc.MOODS.CALM.rate;
+  armAction(e);
+  await e.f.applyIntent(0, { act: 'sellall' }); await settle();
+  assert.equal(S.players[0].intel, 0, 'all Intel is exchanged in one action');
+  assert.equal(S.players[0].money, 20 + 17 * rate + 2, 'cash uses the live rate and then the quiet event resolves');
+});
+
+test('GD-25 targeted Cortisol overload costs 30 Intel and adds 6 to one selected rival', async t => {
+  const { e, S } = await geoGame(t);
+  S.players[0].intel = 30; S.players[1].cortisol = 1;
+  e.queueModal(1);
+  armAction(e);
+  await e.f.applyIntent(0, { act: 'targetpanic' }); await settle();
+  assert.equal(S.players[0].intel, 0, 'exactly 30 Intel is spent');
+  assert.equal(S.players[1].cortisol, 7, 'the selected rival receives +6 Cortisol');
+  assert.ok(S.log.some(l => l.includes('overload')), 'the action is logged');
+});
