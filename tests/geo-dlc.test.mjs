@@ -43,7 +43,7 @@ test('GD-01 rebuildWorld(false) mirrors the classic 70-exhibit world; (true) dea
   assert.equal(acc.HIGH_VALUE_NODE_IDS.has('geo_pillars'), false);
 
   e.f.rebuildWorld(true);
-  assert.equal(acc.NODES.length, 83, '82 exhibits with the DLC on');
+  assert.equal(acc.NODES.length, 82, '82 exhibits with the DLC on');
   assert.equal(acc.WORLD_GEO, true);
   for (const id of acc.GEO_NODE_IDS) assert.ok(acc.NMAP[id], `DLC pin dealt: ${id}`);
   for (const id of acc.GEO_HIGH_VALUE_IDS) assert.ok(acc.HIGH_VALUE_NODE_IDS.has(id), `${id} seeded far out`);
@@ -87,7 +87,7 @@ test('GD-02 with the toggle on, initGame deals 80 pins and every seed keeps the 
     withSeed(seed, () => e.f.initGame([{ name: 'A', char: 'markwatson' }, { name: 'B', char: 'tomkins' }]));
     const S = e.acc.S;
     assert.equal(S.dlcGeo, true, 'the flag rides with the state');
-    assert.equal(e.acc.NODES.length, 83, '82 pins dealt');
+    assert.equal(e.acc.NODES.length, 82, '82 pins dealt');
     assert.equal(Object.keys(S.rubble).length, 0, 'a fresh world has no rubble');
     assert.ok(S.log.some(l => l.includes('GEOGRAPHY DLC')), 'the table is told the DLC is live');
     const reached = bfs(e.acc.ADJ, 'quik');
