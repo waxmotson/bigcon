@@ -33,14 +33,16 @@ a{color:aqua}
 #geoT.on{background:#04100f}
 /* ── sections & cards ── */
 main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
-.sec{margin-top:26px}
-.sechead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--c);padding-bottom:6px;margin-bottom:12px}
+.sec{margin-top:24px;padding:15px 16px 17px;background:#141918;border:1px solid #344747;border-left:4px solid var(--c);box-shadow:0 8px 22px rgba(0,0,0,.22)}
+.sechead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--c);padding:0 0 9px;margin:0 0 15px}
+.sechead h2{font-size:22px}
+.sec .cards{padding:2px 1px 1px}
 .sechead h2{margin:0;font-size:21px;font-weight:900;letter-spacing:3px;color:var(--c)}
 .sechead .sflav{font-size:12px;font-style:italic;color:burlywood}
 .sechead .scount{margin-left:auto;font-size:11px;letter-spacing:2px;color:#9ad}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:12px;align-items:start}
-.card{background:#111413;border:1px solid #2a3d3d;border-top:3px solid var(--c);padding:8px 9px 10px;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:transform .12s,border-color .12s}
-.card:hover{transform:translateY(-2px);border-top-width:3px;border-color:#168388}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:16px;align-items:stretch}
+.card{min-width:0;background:#0d1110;border:1px solid #354747;border-top:4px solid var(--c);padding:11px 12px 12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:transform .12s,border-color .12s,background .12s}
+.card:hover{transform:translateY(-2px);border-color:#168388;background:#101817}
 .card.hit{border-color:#f5c542;box-shadow:0 0 0 1px #f5c542 inset}
 .card.dim{opacity:.32}
 .card.geo{border-left:6px solid #4f7a3a}
@@ -63,7 +65,7 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
 .chip:hover,.xref:hover,.erev:hover{background:#168388;color:#fff;border-color:#168388}
 .erev{border-style:dashed}
 /* ── footer digest ── */
-#digest{max-width:1240px;margin:34px auto 30px;padding:0 14px}
+#digest{max-width:1240px;margin:28px auto 30px;padding:0 14px}\n.house-top{display:block;max-width:1212px;margin:18px auto 8px;background:#000;border:2px solid #168388}\n.house-top summary{cursor:pointer;padding:12px 15px;font-weight:900;letter-spacing:2px;font-size:13px;color:#f5c542;list-style:none}\n.house-top summary::before{content:'▸ ';color:#9ad}\n.house-top[open] summary::before{content:'▾ '}\n.house-top .dinner{padding:0 17px 16px;font-size:12.5px;line-height:1.65;color:#c9d6d6}\n.house-top h4{margin:13px 0 3px;font-size:12px;letter-spacing:2px;color:#f5c542}
 #digest details{background:#000;border:1px solid #168388;margin-bottom:10px}
 #digest summary{cursor:pointer;padding:10px 14px;font-weight:800;letter-spacing:2px;font-size:12px;color:#9ad;list-style:none}
 #digest summary::before{content:'▸ ';color:#f5c542}
@@ -89,7 +91,8 @@ main{max-width:1240px;margin:0 auto;padding:10px 14px 40px}
 #mcard .mmech ul{margin:4px 0;padding-left:18px}
 #mcard .mmech li{margin:5px 0}
 #mpos{position:absolute;bottom:8px;right:12px;z-index:2;font-size:10px;letter-spacing:2px;color:#9ad;background:rgba(0,0,0,.55);border:1px solid #1d4a4a;padding:3px 8px}
-@media(max-width:640px){.cards{grid-template-columns:1fr}#brand h1{font-size:19px}}
+@media(max-width:760px){.sec{padding:12px 11px}.cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:11px}}
+@media(max-width:480px){.cards{grid-template-columns:1fr}.sechead h2{font-size:18px}#brand h1{font-size:19px}}
 @media print{#brand .row1,#bar,#digest,#mnav,#mclose{display:none!important}.card{break-inside:avoid}}
 </style>
 </head>
