@@ -136,7 +136,7 @@ test('GD-04 missile guards: no self-strike, ESG is vulnerable, no charge on refu
   const { e, S } = await geoGame(t);
   S.owner.geo_missile = 0;
   S.players[0].pos = 'geo_missile';      // the silo only fires from the pad
-  S.owner.geo_pillars = 1;               // the rival ESG-shields their holdings
+  S.owner.geo_pillars = 1;               // the ESG itself is a valid strike target
   S.owner.sat = 1;
   S.owner.oil = 0;                       // the actor's own node
   S.players[0].money = 30; S.players[0].intel = 3;
@@ -148,10 +148,11 @@ test('GD-04 missile guards: no self-strike, ESG is vulnerable, no charge on refu
   assert.equal(S.rubble.oil, undefined, 'no rubble from your own strike');
   assert.equal(S.mode, null, 'the console closed itself');
   await e.f.applyIntent(0, { act: 'missilemode' });
-  await e.f.applyIntent(0, { act: 'missile', id: 'sat' });
-  await settle();
-  assert.equal(S.owner.sat, undefined, 'the Pillars holding can be missile-struck');
-  assert.equal(S.rubble.sat, 1, 'the ESG node becomes rubble');
+  const esgStrike = e.f.applyIntent(0, { act: 'missile', id: 'geo_pillars' });
+  e.clock.advance(e.acc.PROJ_PAUSE_MS + 100);
+  await esgStrike; await settle();
+  assert.equal(S.owner.geo_pillars, undefined, 'the Pillars themselves can be missile-struck');
+  assert.equal(S.rubble.geo_pillars, 1, 'the ESG node becomes rubble');
   assert.equal(S.players[0].money, 26, 'the successful launch costs $4');
   assert.equal(S.players[0].intel, 2, 'the successful launch costs 1 Intel');
   assert.equal(e.f.canMissileNode(0, 'sat'), false, 'rubble is not targetable');
