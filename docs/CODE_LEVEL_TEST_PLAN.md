@@ -29,7 +29,7 @@ Relevant implementation areas include `applyIntent()`, `addCortisol()`, `raid()`
 - `tests/multiplayer.test.mjs` (MP/DC) — 12 tests + DC-05 skipped.
 - `tests/board-generation.test.mjs` (RM) — 200-seed generator sweep + initGame wire checks + `pubState`→`adoptState` round-trip.
 - `tests/rules-consistency.test.mjs` (RC) — 22 tests: assets/copies on disk, deck completeness, every card's `run()` on a clean table, behaviour-driven action costs, cortisol constants, win types/goal clamp, dead-reference audit.
-- `tests/geo-dlc.test.mjs` (GD) — 20 tests for the Geography DLC: world rebuild both ways, 80-pin generation sweeps, missiles/rubble/rebuild, beach day, tribute income, Qantas grounding, oil crash, Stage 5 decline, Venice either/or, Tuvalu claim, lobby mirroring, copy pins.
+- `tests/geo-dlc.test.mjs` (GD) — 31 tests for the Geography DLC: world rebuild both ways, 82-pin generation sweeps, missile and Shahed launchers, ESG vulnerability and takeover pricing, rubble/rebuild, board-wide synergy spacing, Intel operations, Bondmageddon, beach day, tribute income, Qantas grounding, oil crash, Stage 5 decline, Venice turn-cycle overtourism, Tuvalu claim, lobby mirroring, copy pins.
 
 **Engine findings recorded (no production code changed; each has a pinning test):**
 
@@ -272,7 +272,7 @@ Ten extra exhibits (`GEO_NODES`) behind a host-toggled lobby flag (`S.dlcGeo` / 
 ### GD-01 / GD-01b — World rebuild & node integrity
 `rebuildWorld(false)` restores the classic 70-exhibit world (NMAP rebuilt, not accumulated; high-value set rebuilt); `rebuildWorld(true)` deals 80 with every `GEO_EDGES` pair present and every `GEO_HIGH_VALUE_IDS` pin seeded far out. Each GEO node is structurally complete with a shipped asset under `./static/GeographyDLC/`.
 
-### GD-02 / GD-14 — The 80-pin board
+### GD-02 / GD-14 — The 82-pin board
 `initGame` with the flag deals 80 connected pins on every probed seed (log tells the table the DLC is live, no rubble on a fresh world); a 30-seed generator sweep keeps the DLC board a valid collage (every geo pin plotted, no mutual overlaps, fully walkable).
 
 ### GD-03..GD-05 — MISSILE COMMAND
@@ -285,13 +285,13 @@ Wonsan beach day: free −2 Cortisol, once/turn, on-site only. Pyongyang City: +
 Oil crash ($3, once/turn): PANIC mood (logged before the quiet card calms it), every player pays $2 per owned oil node, Pillars holders exempt (and the Pillars pin itself still pays its $1 income). Stage 5 (2 Intel, once/turn): the richest *other* player makes no income of any kind on their next turn; the call is consumed at their next `startTurn`; ESG-rich seats cannot be declined; a one-seat table has no call.
 
 ### GD-12..GD-12c — Venice
-Gondola therapy: free −1 Cortisol on-site. Overtourism ($2, once/turn, *either/or* with the gondola): a rival-owned standing pin's owner takes +1 Cortisol at each of their turns while the Venice owner keeps the city; it sweeps when Venice changes hands. Guards: ESG holdings refused, rubble refused, no fare on refused launches.
+Gondola therapy: free −1 Cortisol on-site. Overtourism ($2, once/turn, *either/or* with the gondola): targets any rival-owned standing pin, including ESG holdings; applies +1 Cortisol on the target owner's turn during one full table rotation, then expires. It also clears if Venice changes hands or the target pin is removed. Rubble remains an invalid target.
 
 ### GD-13 — Tuvalu
 THE JOIN IS FREE: the first arrival auto-claims (no action, no cost, no Cortisol) via `doMove` and `doFly`; later arrivals pay the ordinary toll; rubble is unclaimable.
 
 ### GD-15 / GD-16 — Lobby & copy
-The checkbox is host-gated (guest flips are refused and mirrored); the welcome and lobby payloads carry `dlcGeo`; adopting a geo state rebuilds the guest world. Help copy: v1.9, "81 exhibits" on / "70 exhibits" off, and the RC-01 pin that the string `82 exhibits` never appears.
+The checkbox is host-gated (guest flips are refused and mirrored); the welcome and lobby payloads carry `dlcGeo`; adopting a geo state rebuilds the guest world. Help copy: v1.12, "82 exhibits" on / "70 exhibits" off; the Shahed launcher is documented alongside MISSILE COMMAND.
 
 ### GD-17..GD-24 — Geography wave 2 (silo on-site rule, probe, reflection, blockade, Kim, clustering, ASIC, projectiles)
 - **GD-17** — the silo only arms on-site (`p.pos==='geo_missile'`); exemptions: Backroom Deals mid-move (spends 2 movement steps via `finishNodeAbility`, does not end the turn) or owning KIM JONG UN.
@@ -350,4 +350,4 @@ Branch `fix/rules-copy-and-watson-exemption` applies the maintainer's decisions 
 
 ### Geography DLC implementation
 
-Adds ten exhibits (MISSILE COMMAND, PYONGYANG CITY, PYONGYANG HOTEL, WONSAN RESORT, THE CORPORATE BOEING, THE SOUTH CHINA SEA, STAGE 5 DECLINE, PILLARS OF SUSTAINABILITY, VENICE DI CCTV, TUVALU .TV) behind a host-toggled lobby flag that mirrors to every guest and rides with `pubState`/`adoptState`. Missiles expropriate owned nodes with no payout and leave rebuildable rubble (rebuild = list price, returns unowned, Hotel skims $2); Wonsan/La Serenissima sell Cortisol relief with an either/or overtourism curse; the Boeing grounds Qantas for two turns; the South China Sea crashes oil; Stage 5 silences the richest seat's next income; the Pillars are the ESG shield (missile/crash/decline immunity, −1 Cortisol/turn); Tuvalu joins the first arrival for free. Version stamp v1.8 → v1.9 (80 exhibits on, 70 off; `BUILD_COMMIT` tracks HEAD). Full suite: **112 tests, 111 pass, 1 documented skip, 0 fail.**
+Adds twelve Geography exhibits (including MISSILE COMMAND and the Iranian Shahed Drone) behind a host-toggled lobby flag that mirrors to every guest and rides with `pubState`/`adoptState`. Both missile launchers share the same $4 + 1 Intel strike and cannot be owned by the same player at once; Kim Jong Un arms either from anywhere. Missiles expropriate owned nodes with no payout and leave rebuildable rubble (rebuild = list price, returns unowned, Hotel skims $2); ESG has flat takeover pricing and can itself be missile-struck, while its owner still has the oil-crash and Stage 5 protections. Wonsan/La Serenissima sell Cortisol relief; Overtourism targets ESG too and lasts one full table rotation; the Boeing grounds Qantas for two turns; the South China Sea crashes oil; Stage 5 silences the richest seat's next income; Tuvalu joins the first arrival for free. High-value cortisol relief and strategic nodes use max-min spacing across the board. Intel adds Sell ALL, a 30-Intel +6 Cortisol overload, and Bondmageddon (four missiles at the rival with most charts; three hit ESG first if held). Version stamp v1.12 (82 exhibits on, 70 off; `BUILD_COMMIT` tracks HEAD). Full suite: **112 tests, 111 pass, 1 documented skip, 0 fail.**
