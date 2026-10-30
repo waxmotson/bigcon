@@ -1010,7 +1010,7 @@ function initGame(defs){
  Net.started=true;
  log('🌅 A new board is dealt — '+NODES.length+' exhibits, '+EDGES.length+' freshly rebuilt connections, '+S.players.length+' at the table.');
  log('🧭 High-value targets are seeded further from Quikstop; the board and routes are reshuffled every game.');
- if(S.dlcGeo)log('🌍 GEOGRAPHY DLC — 13 extra exhibits are on the board, including the missile silo, Shahed drone, resorts, disputed waters, ESG pillars and one free country.');
+ if(S.dlcGeo)log('🌍 GEOGRAPHY DLC — 11 extra island exhibits are on the board: missiles, resorts, disputed waters, ESG pillars, the hermit kingdom and one free country.');
  log('🎲 Seating was shuffled. First to move: '+S.players[0].name+'.');
  log('⛽ Quikstop opened '+slot.label+' this game. Everyone starts there with $15 and 2 Intel.');
  log('🏆 WIN CONDITION: $'+goal+' in the bank AND one of every node type ('+WIN_TYPES.join(', ')+'). The host set the target.');
@@ -1059,7 +1059,8 @@ async function startTurn(){
  if(!S||S.over)return;
  log('—— TURN '+S.turn+' · '+pname(S.cur)+' ——');
  S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;
- if(S.dlcGeo){S.geoMissiled=false;S.geoBeach=false;S.geoBoeing=false;S.geoCrash=false;S.geoStage5=false;S.geoVenice=false;S.bondmageddonUsed=false}
+ if(S.dlcGeo){S.geoMissiled=false;S.geoBeach=false;S.geoBoeing=false;S.geoCrash=false;S.geoStage5=false;S.geoVenice=false}
+ S.bondmageddonUsed=false;
  if(S.fx.length>30)S.fx=S.fx.slice(-30);
  /* Expired blockades come down the moment the rotation that blocked them is done. */
  if(S.blockades)Object.keys(S.blockades).forEach(id=>{if(S.blockades[id]<=S.turn)delete S.blockades[id]});
@@ -1379,6 +1380,35 @@ async function applyIntent(pi,m){
    fxAt(pi,'🛈−5 · −$7','#55c1ff');fxAt(oldOwner,'+$7 compensation','#7fe08d');
    log('🟣 '+pname(pi)+' forces MADE to divest from '+pname(oldOwner)+', paying $7 compensation.');
    addCortisol(pi,1,'the forced divestment');await endOfTurn();
+  }
+  else if(act==='bondmageddon'&&S.phase==='action'&&!S.mode&&S.owner.bond===pi&&!S.bondmageddonUsed&&p.money>=16&&p.intel>=4){
+   const rivals=S.players.map((pl,j)=>j).filter(j=>j!==pi);
+   if(!rivals.length){sysTo(pi,'There is nobody else at the table.');return}
+   const chartCount=j=>NODES.filter(nn=>nn.type==='CHART'&&S.owner[nn.id]===j).length;
+   const most=Math.max(...rivals.map(chartCount));
+   const leaders=rivals.filter(j=>chartCount(j)===most);
+   const target=leaders[Math.floor(Math.random()*leaders.length)];
+   const owned=NODES.filter(nn=>S.owner[nn.id]===target&&!S.rubble[nn.id]);
+   if(!owned.length){sysTo(pi,'The chart leader has no intact holdings to strike.');return}
+   const esg=owned.find(nn=>nn.id==='geo_pillars');
+   let targets;
+   if(esg){
+    const others=owned.filter(nn=>nn.id!=='geo_pillars');
+    const final=others.length?others[Math.floor(Math.random()*others.length)]:esg;
+    targets=[esg.id,esg.id,esg.id,final.id];
+   }else{
+    targets=shuffle(owned).slice(0,4).map(nn=>nn.id);
+    while(targets.length<4)targets.push(owned[Math.floor(Math.random()*owned.length)].id);
+   }
+   p.money-=16;p.intel-=4;S.bondmageddonUsed=true;fxAt(pi,'−$16 · 🛈−4','#ff6b5e');
+   log('💥 '+pname(pi)+' unleashes BONDMAGEDDON on '+pname(target)+', the table’s biggest chart-holder ('+most+' CHART nodes). Four missiles inbound.');
+   for(let i=0;i<targets.length;i++){
+    const id=targets[i],node=NMAP[id];
+    if(projFx('missile','bond',id)){sync();await projPause()}
+    if(!S.rubble[id]&&S.owner[id]===target)strikeNode(pi,id,{silent:true});
+    else log('💥 Missile '+(i+1)+' hits '+node.name.join(' ')+' again — it is already rubble; the barrage continues.');
+   }
+   await endOfTurn();
   }
   else if((act==='sell'||act==='sellall')&&S.phase==='action'&&!S.mode){
    const rate=MOODS[S.mood].rate;const n=act==='sellall'?p.intel:Math.min(+m.n,p.intel);
@@ -1968,6 +1998,7 @@ function renderSide(){
    btns.push('<button class="act" data-act="sweep"'+(p.intel>=2?'':' disabled')+' title="Your action — remove all bugs on your nodes">🧹 Sweep for bugs — 2 🛈 (cleanse your nodes)</button>');
     btns.push('<button class="act" data-act="masspanic"'+(p.intel>=5?'':' disabled')+' title="Your action — every player gains 2 Cortisol">🔥 Mass panic — 5 🛈 (+2 Cortisol to everyone)</button>');
    btns.push('<button class="act" data-act="targetpanic"'+(p.intel>=30&&S.players.length>1?'':' disabled')+' title="Choose one rival to receive +6 Cortisol; costs 30 Intel">🔥 Overload a rival — 30 🛈 (+6 Cortisol)</button>');
+   if(S.owner.bond===me)btns.push('<button class="act" data-act="bondmageddon"'+(p.money>=16&&p.intel>=4&&!S.bondmageddonUsed&&S.players.length>1?'':' disabled')+' title="Four missiles against the rival with the most CHART holdings. If they own ESG, three hit ESG and the fourth hits another holding. Costs $16 + 4 Intel; once per turn.">💥 BONDMAGEDDON — 4 missiles ($16 + 4 🛈)</button>');
    for(let k=1;k<=3;k++){
     btns.push('<button class="act" data-act="sell" data-n="'+k+'"'+(p.intel>=k?'':' disabled')+' title="Your action — sell Intel at the current market rate">💰 Sell '+k+' 🛈 → 
    btns.push('<button class="act" data-act="laylowcash">Lay low — pocket $1</button>');
@@ -5002,6 +5033,7 @@ function renderSide(){
    btns.push('<button class="act" data-act="sweep"'+(p.intel>=2?'':' disabled')+' title="Your action — remove all bugs on your nodes">🧹 Sweep for bugs — 2 🛈 (cleanse your nodes)</button>');
     btns.push('<button class="act" data-act="masspanic"'+(p.intel>=5?'':' disabled')+' title="Your action — every player gains 2 Cortisol">🔥 Mass panic — 5 🛈 (+2 Cortisol to everyone)</button>');
    btns.push('<button class="act" data-act="targetpanic"'+(p.intel>=30&&S.players.length>1?'':' disabled')+' title="Choose one rival to receive +6 Cortisol; costs 30 Intel">🔥 Overload a rival — 30 🛈 (+6 Cortisol)</button>');
+   if(S.owner.bond===me)btns.push('<button class="act" data-act="bondmageddon"'+(p.money>=16&&p.intel>=4&&!S.bondmageddonUsed&&S.players.length>1?'':' disabled')+' title="Four missiles against the rival with the most CHART holdings. If they own ESG, three hit ESG and the fourth hits another holding. Costs $16 + 4 Intel; once per turn.">💥 BONDMAGEDDON — 4 missiles ($16 + 4 🛈)</button>');
    for(let k=1;k<=3;k++){
     btns.push('<button class="act" data-act="sell" data-n="'+k+'"'+(p.intel>=k?'':' disabled')+' title="Your action — sell Intel at the current market rate">💰 Sell '+k+' 🛈 → 
    btns.push('<button class="act" data-act="laylowcash">Lay low — pocket $1</button>');
