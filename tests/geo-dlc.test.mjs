@@ -78,8 +78,8 @@ test('GD-01b every GEOGRAPHY node is structurally complete with a shipped asset'
   assert.equal(new Set(e.acc.GEO_NODES.map(n => n.id)).size, 12, 'and no duplicate ids');
 });
 
-/* ================= GD-02 — the DLC world deals a connected 80-pin board ================= */
-test('GD-02 with the toggle on, initGame deals 80 pins and every seed keeps the board connected', async t => {
+/* ================= GD-02 — the DLC world deals a connected 82-pin board ================= */
+test('GD-02 with the toggle on, initGame deals 82 pins and every seed keeps the board connected', async t => {
   const seeds = [77, 78, 79, 80, 81, 82, 83, 84];
   for (const seed of seeds) {
     const e = engineFor(t);
