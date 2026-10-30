@@ -29,7 +29,7 @@ Relevant implementation areas include `applyIntent()`, `addCortisol()`, `raid()`
 - `tests/multiplayer.test.mjs` (MP/DC) — 12 tests + DC-05 skipped.
 - `tests/board-generation.test.mjs` (RM) — 200-seed generator sweep + initGame wire checks + `pubState`→`adoptState` round-trip.
 - `tests/rules-consistency.test.mjs` (RC) — 22 tests: assets/copies on disk, deck completeness, every card's `run()` on a clean table, behaviour-driven action costs, cortisol constants, win types/goal clamp, dead-reference audit.
-- `tests/geo-dlc.test.mjs` (GD) — 31 tests for the Geography DLC: world rebuild both ways, 82-pin generation sweeps, missile and Shahed launchers, ESG vulnerability and takeover pricing, rubble/rebuild, board-wide synergy spacing, Intel operations, Bondmageddon, beach day, tribute income, Qantas grounding, oil crash, Stage 5 decline, Venice turn-cycle overtourism, Tuvalu claim, lobby mirroring, copy pins.
+- `tests/geo-dlc.test.mjs` (GD) — 35 tests for the Geography DLC: world rebuild both ways, 82-pin generation sweeps, missile and Shahed launchers, ESG vulnerability and takeover pricing, rubble/rebuild, board-wide synergy spacing, Intel operations, Bondmageddon, beach day, tribute income, Qantas grounding, oil crash, Stage 5 decline, Venice turn-cycle overtourism, Tuvalu claim, lobby mirroring, copy pins.
 
 **Engine findings recorded (no production code changed; each has a pinning test):**
 
