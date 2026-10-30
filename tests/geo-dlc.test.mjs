@@ -155,7 +155,8 @@ test('GD-04 missile guards: no self-strike, ESG is vulnerable, no charge on refu
   assert.equal(S.rubble.geo_pillars, 1, 'the ESG node becomes rubble');
   assert.equal(S.players[0].money, 28, 'the successful launch costs $4 before the quiet-quarter payout');
   assert.equal(S.players[0].intel, 2, 'the successful launch costs 1 Intel');
-  assert.equal(e.f.canMissileNode(0, 'sat'), false, 'rubble is not targetable');
+  assert.equal(e.f.canMissileNode(0, 'geo_pillars'), false, 'the destroyed ESG node is not targetable');
+  assert.equal(e.f.canMissileNode(0, 'sat'), true, 'ESG does not shield the rival holdings');
   assert.equal(e.f.canMissileNode(0, 'infl'), true, 'unprotected unowned pins stay targetable');
 });
 
