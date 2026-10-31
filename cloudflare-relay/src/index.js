@@ -65,6 +65,87 @@ export default {
       return Response.json({ access_token: tokenData.access_token }, { headers: cors });
     }
 
+    if (url.pathname === "/api/notify") {
+      const cors = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Cache-Control": "no-store",
+      };
+      if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+      if (request.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405, headers: cors });
+      if (!env.DISCORD_BOT_TOKEN) return Response.json({ error: "Discord bot is not configured. Add DISCORD_BOT_TOKEN to the Worker secrets." }, { status: 503, headers: cors });
+      const authorization = request.headers.get("Authorization") || "";
+      const accessToken = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
+      if (!accessToken || accessToken.length > 4096) return Response.json({ error: "Discord Activity authentication is required." }, { status: 401, headers: cors });
+      let body;
+      try {
+        const raw = await request.text();
+        if (raw.length > 8192) throw new Error("Request too large");
+        body = JSON.parse(raw);
+      } catch {
+        return Response.json({ error: "Invalid request body." }, { status: 400, headers: cors });
+      }
+      const channelId = typeof body?.channel_id === "string" ? body.channel_id : "";
+      if (!/^\d{17,20}$/.test(channelId)) return Response.json({ error: "A valid Activity channel ID is required." }, { status: 400, headers: cors });
+
+      // Validate the caller's short-lived Activity OAuth token before allowing
+      // a message to be sent with the server-side bot credential.
+      let identityResponse;
+      try {
+        identityResponse = await fetch("https://discord.com/api/v10/users/@me", {
+          headers: { Authorization: "Bearer " + accessToken },
+        });
+      } catch {
+        return Response.json({ error: "Could not validate Discord Activity authentication." }, { status: 502, headers: cors });
+      }
+      if (!identityResponse.ok) return Response.json({ error: "Discord Activity authentication expired or was rejected." }, { status: 401, headers: cors });
+
+      const event = body?.event;
+      let content = "";
+      if (event?.type === "turn") {
+        const turn = Number(event.turn);
+        const player = typeof event.player === "string" ? event.player.trim().slice(0, 80) : "";
+        if (!Number.isSafeInteger(turn) || turn < 1 || !player) return Response.json({ error: "Invalid turn notification." }, { status: 400, headers: cors });
+        content = "🔔 **THE BIG CON — Turn " + turn + "**\nIt is **" + player.replace(/[@<>]/g, "") + "**’s turn.";
+      } else if (event?.type === "game_over") {
+        const winner = typeof event.winner === "string" ? event.winner.trim().slice(0, 80) : "";
+        const scores = Array.isArray(event.scores) ? event.scores.slice(0, 8) : [];
+        if (!winner) return Response.json({ error: "Invalid game-end notification." }, { status: 400, headers: cors });
+        const scoreLines = scores.map((score) => {
+          const name = typeof score?.name === "string" ? score.name.trim().slice(0, 60).replace(/[@<>]/g, "") : "Player";
+          const money = Number(score?.money);
+          return name + ": $" + (Number.isFinite(money) ? Math.max(0, Math.min(999999, Math.floor(money))) : 0);
+        });
+        content = "🏆 **THE BIG CON — Game over**\n**" + winner.replace(/[@<>]/g, "") + "** wins the con!" +
+          (scoreLines.length ? "\n\nFinal standings:\n" + scoreLines.map((line, i) => (i + 1) + ". " + line).join("\n") : "");
+      } else {
+        return Response.json({ error: "Unsupported notification type." }, { status: 400, headers: cors });
+      }
+
+      let discordResponse;
+      try {
+        discordResponse = await fetch("https://discord.com/api/v10/channels/" + channelId + "/messages", {
+          method: "POST",
+          headers: {
+            Authorization: "Bot " + env.DISCORD_BOT_TOKEN,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
+        });
+      } catch {
+        return Response.json({ error: "Could not contact Discord's message API." }, { status: 502, headers: cors });
+      }
+      if (!discordResponse.ok) {
+        const detail = await discordResponse.json().catch(() => ({}));
+        return Response.json({
+          error: "Discord could not post to this Activity channel.",
+          detail: detail.message || ("Discord HTTP " + discordResponse.status),
+        }, { status: discordResponse.status === 403 ? 403 : 502, headers: cors });
+      }
+      return Response.json({ ok: true }, { headers: cors });
+    }
+
     if (url.pathname === "/health") {
       return Response.json({ ok: true, service: "bigcon-relay" });
     }
