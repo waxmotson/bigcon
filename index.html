@@ -256,7 +256,7 @@ const BUILD_COMMIT = '65e392a';
 const IS_DISCORD_ACTIVITY = new URLSearchParams(location.search).get('discord') === '1' || location.hostname.endsWith('.discordsays.com') || new URLSearchParams(location.search).has('instance_id');
 if(IS_DISCORD_ACTIVITY)window.__BIGCON_DISCORD_ACTIVITY__=true;
 const $=id=>document.getElementById(id);
-$('buildStamp').textContent='COMMIT '+BUILD_COMMIT;(function(){const img=$('splashLogo');if(!img)return;let done=false;const swap=()=>{if(done)return;done=true;img.src='/title-assets/big%20con%20logo.png';img.alt='THE BIG CON'};setTimeout(swap,5000)})();
+$('buildStamp').textContent='COMMIT '+BUILD_COMMIT;(function(){const img=$('splashLogo');if(!img)return;img.onerror=()=>{if(img.dataset.fallback)return;img.dataset.fallback='1';img.src='https://raw.githubusercontent.com/waxmotson/The-big-con-desktop/master/big%20con%20logo.png';img.alt='THE BIG CON'};})();
 
 /* ================= DISCORD RICH PRESENCE BRIDGE =================
    window.discordRPC is injected ONLY by the desktop (Electron) build's
@@ -267,6 +267,7 @@ $('buildStamp').textContent='COMMIT '+BUILD_COMMIT;(function(){const img=$('spla
    to Discord directly; it only ever talks to window.discordRPC. */
 const Presence=(function(){
  let lastKey=null,startedAt=null,currentActivity=null,discordSdk=null;
+ let discordAccessToken=null,lastTurnNoticeKey=null,lastGameOverNoticeKey=null;
  function bridge(){return(typeof window!=='undefined'&&window.discordRPC)||null}
  function sendToDiscord(activity){
   if(discordSdk&&discordSdk.commands&&discordSdk.commands.setActivity){
@@ -299,9 +300,22 @@ const Presence=(function(){
   lastKey=key;
   sendToDiscord(activity);
  }
- /* Every uploaded Rich Presence asset for a character is named
-    "<characterId>_big" — exactly the id used in CHARS below — so no
-    separate lookup table is needed, just this one suffix rule. */
+ async function notifyDiscord(event){
+  const channelId=discordSdk&&discordSdk.channelId;
+  if(!channelId||!discordAccessToken)return;
+  try{
+   const response=await fetch('/relay/api/notify',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+discordAccessToken},
+    cache:'no-store',
+    body:JSON.stringify({channel_id:channelId,event})
+   });
+   if(!response.ok){
+    const data=await response.json().catch(()=>({}));
+    console.warn('[BigCon Discord] Channel notification failed:',data.error||response.status);
+   }
+  }catch(error){console.warn('[BigCon Discord] Channel notification failed:',error)}
+ }
  function withChar(p,charId){
   if(!charId)return p;
   p.smallImageKey=charId+'_big';
@@ -309,16 +323,12 @@ const Presence=(function(){
   p.smallImageText=m?m.name:charId;
   return p;
  }
- /* Join secret is what Discord hands the other client when they hit
-    Join on an invite card. It is NOT shown on the profile — the buzzword
-    stays in the lobby / website only. Same encoding on every seat so any
-    player in the room can send the invite. */
  function joinSecretFor(code){
   const slug=codeSlug(code||'');
   return slug?('bc1.'+slug):'';
  }
  return{
-  attachDiscordSDK(sdk){discordSdk=sdk||null;lastKey=null;if(currentActivity)send(currentActivity)},
+  attachDiscordSDK(sdk,accessToken){discordSdk=sdk||null;discordAccessToken=accessToken||null;lastKey=null;if(currentActivity)send(currentActivity)},
   encodeJoinSecret:joinSecretFor,
   decodeJoinSecret(secret){
    let s=String(secret||'').trim();
@@ -328,7 +338,7 @@ const Presence=(function(){
    return matchBuzzword(s);
   },
   menu(){
-   startedAt=null;
+   startedAt=null;lastTurnNoticeKey=null;lastGameOverNoticeKey=null;
    send({details:'In the menu',state:'Setting up the con',largeImageKey:'big_con_logo',largeImageText:'THE BIG CON'});
   },
   lobby(asHost,code,have,max,charId){
@@ -337,17 +347,27 @@ const Presence=(function(){
    if(secret&&have<max){p.joinSecret=secret;p.instance=true}
    send(p);
   },
-  inGame(turn,curName,isMe,myMoney,goal,connected,charId,code,curCharId){
+  inGame(turn,curName,isMe,myMoney,goal,connected,charId,code,curCharId,isHost){
    if(!startedAt)startedAt=Date.now();
    const large=curCharId?curCharId+'_big':'big_con_logo';
    const lm=(typeof charMeta==='function'&&curCharId)?charMeta(curCharId):null;
-   const p={details:'Turn '+turn+(' — '+curName+'’s move'),state:'$'+myMoney+' of $'+goal+' target',startTimestamp:startedAt,largeImageKey:large,largeImageText:lm?lm.name:'THE BIG CON',partyId:'bigcon-'+(codeSlug(code)||'solo'),partySize:connected,partyMax:MAXPLAYERS};
+   const p={details:'Turn '+turn+' — '+curName+'’s move',state:'$'+myMoney+' of $'+goal+' target',startTimestamp:startedAt,largeImageKey:large,largeImageText:lm?lm.name:'THE BIG CON',partyId:'bigcon-'+(codeSlug(code)||'solo'),partySize:connected,partyMax:MAXPLAYERS};
    send(withChar(p,charId));
+   const noticeKey=turn+':'+curName;
+   if(isHost&&noticeKey!==lastTurnNoticeKey){
+    lastTurnNoticeKey=noticeKey;
+    notifyDiscord({type:'turn',turn,player:curName});
+   }
   },
-  gameOver(winnerName,winnerChar){
+  gameOver(winnerName,winnerChar,scores){
    const large=winnerChar?winnerChar+'_big':'big_con_logo';
    const lm=(typeof charMeta==='function'&&winnerChar)?charMeta(winnerChar):null;
    send({details:'Game over',state:winnerName+' pulled off the con',largeImageKey:large,largeImageText:lm?lm.name:'THE BIG CON'});
+   const resultKey=winnerName+':'+JSON.stringify(scores||[]);
+   if(resultKey!==lastGameOverNoticeKey){
+    lastGameOverNoticeKey=resultKey;
+    notifyDiscord({type:'game_over',winner:winnerName,scores:scores||[]});
+   }
   },
   clear(){
    const b=bridge();if(!b||!b.clearActivity)return;
@@ -355,9 +375,7 @@ const Presence=(function(){
    lastKey=null;startedAt=null;
   }
  };
-})();
-
-/* ================= THE COMPLETE EVIDENCE BOARD — 70 exhibits · +12 with the GEOGRAPHY DLC ================= */
+})();/* ================= THE COMPLETE EVIDENCE BOARD — 70 exhibits · +12 with the GEOGRAPHY DLC ================= */
 const BASE_NODES=[
 {id:'citi',image:'./static/citi tower.webp',name:['CITI TOWER'],icon:'🏦',type:'BANK',shape:'logo',band:'#1a5fa8',income:3,cost:8,x:210,y:150,rot:-2,sub:'too big to fail · 007 on payroll',sp:'+$1 income per CORPORATE node you own (James Bond is on the payroll).'},
 {id:'commbank',image:'./static/cba.png',name:['COMMONWEALTH BANK'],icon:'🏦',type:'BANK',shape:'logo',band:'#d4a017',income:2,cost:6,x:400,y:95,rot:2,sub:'can’t be beat? we’ll see',sp:'+$2 income while you own any other BANK (the big four stick together).'},
@@ -1660,7 +1678,7 @@ async function winCheck(){
  if(win<0)return false;
  S.over=true;S.phase='over';sync(true);
  const w=S.players[win];
- Presence.gameOver(w.name,w.char);
+ Presence.gameOver(w.name,w.char,S.players.map(pl=>({name:pl.name,money:pl.money})));
  log('🏆 '+pname(win)+' banks $'+w.money+' with the full set of node types — the target was $'+goal+'. The con is complete.');
  const wc=charMeta(w.char);
  const charHtml=wc?'<div style="margin:10px 0 14px;text-align:center"><img src="'+charSrc(w.char)+'" alt="'+esc(wc.name)+'" style="width:96px;height:96px;object-fit:contain;border-radius:12px;border:2px solid '+w.color+';background:#111;padding:4px"><div style="font-weight:800;margin-top:5px">'+esc(wc.name)+'</div></div>':'';
@@ -1712,7 +1730,7 @@ function render(){
  if(!S.over){
   const me=S.players[Net.myIdx];
   const cur=S.players[S.cur];
-  Presence.inGame(S.turn,pname(S.cur),S.cur===Net.myIdx,me?me.money:0,goalAmount(),S.players.filter(pl=>!pl.dc).length,me?me.char:null,Net.roomLabel||Net.roomCode,cur?cur.char:null);
+  Presence.inGame(S.turn,pname(S.cur),S.cur===Net.myIdx,me?me.money:0,goalAmount(),S.players.filter(pl=>!pl.dc).length,me?me.char:null,Net.roomLabel||Net.roomCode,cur?cur.char:null,Net.role==='host');
  }
 }
 function moodBoost(n){
@@ -2905,7 +2923,7 @@ if (IS_DISCORD_ACTIVITY) {
           access_token: tokenData.access_token
         });
         if (!auth) throw new Error("Discord SDK authentication returned no user.");
-        Presence.attachDiscordSDK(discordSdk);
+        Presence.attachDiscordSDK(discordSdk, tokenData.access_token);
         console.info("[BigCon Discord] Rich Presence authorised and SDK authenticated.");
       } catch (presenceError) {
         console.warn("[BigCon Discord] Rich Presence permission unavailable:", presenceError);
