@@ -2837,7 +2837,10 @@ if (IS_DISCORD_ACTIVITY) {
       const { DiscordSDK, patchUrlMappings } = await import("/static/discord-sdk.bundle.js");
       // Route Cloudflare WebSocket traffic through Discord's Activity proxy.
       // Configure /relay -> bigconhosting.wax-no-bones.workers.dev in Developer Portal.
-      patchUrlMappings([{ prefix: "/relay", target: "bigconhosting.wax-no-bones.workers.dev" }]);
+      patchUrlMappings([
+        { prefix: "/relay", target: "bigconhosting.wax-no-bones.workers.dev" },
+        { prefix: "/", target: "thebigcon.onrender.com" }
+      ]);
       const discordSdk = new DiscordSDK(appId);
       await discordSdk.ready();
       window.bigconDiscordSDK = discordSdk;
