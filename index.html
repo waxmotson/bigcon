@@ -266,14 +266,38 @@ $('buildStamp').textContent='COMMIT '+BUILD_COMMIT;(function(){const img=$('spla
    web version behaves exactly as it always has. Nothing here ever talks
    to Discord directly; it only ever talks to window.discordRPC. */
 const Presence=(function(){
- let lastKey=null,startedAt=null;
+ let lastKey=null,startedAt=null,currentActivity=null,discordSdk=null;
  function bridge(){return(typeof window!=='undefined'&&window.discordRPC)||null}
+ function sendToDiscord(activity){
+  if(discordSdk&&discordSdk.commands&&discordSdk.commands.setActivity){
+   const a={
+    details:activity.details||null,
+    state:activity.state||null,
+    timestamps:activity.startTimestamp?{start:Math.floor(activity.startTimestamp/1000)}:null,
+    assets:{
+     large_image:activity.largeImageKey||null,
+     large_text:activity.largeImageText||null,
+     small_image:activity.smallImageKey||null,
+     small_text:activity.smallImageText||null
+    },
+    party:activity.partyId?{id:activity.partyId,size:[activity.partySize||1,activity.partyMax||MAXPLAYERS]}:null,
+    secrets:activity.joinSecret?{join:activity.joinSecret}:null,
+    instance:!!activity.instance
+   };
+   Object.keys(a.assets).forEach(k=>{if(!a.assets[k])delete a.assets[k]});
+   if(!Object.keys(a.assets).length)delete a.assets;
+   Object.keys(a).forEach(k=>{if(a[k]===null)delete a[k]});
+   Promise.resolve(discordSdk.commands.setActivity({activity:a})).catch(e=>console.warn('[BigCon Discord] Rich Presence update failed:',e));
+   return;
+  }
+  const b=bridge();if(b&&b.setActivity){try{b.setActivity(activity)}catch(e){}}
+ }
  function send(activity){
-  const b=bridge();if(!b||!b.setActivity)return;
+  currentActivity=activity;
   const key=JSON.stringify(activity);
   if(key===lastKey)return;
   lastKey=key;
-  try{b.setActivity(activity)}catch(e){}
+  sendToDiscord(activity);
  }
  /* Every uploaded Rich Presence asset for a character is named
     "<characterId>_big" — exactly the id used in CHARS below — so no
@@ -294,6 +318,7 @@ const Presence=(function(){
   return slug?('bc1.'+slug):'';
  }
  return{
+  attachDiscordSDK(sdk){discordSdk=sdk||null;lastKey=null;if(currentActivity)send(currentActivity)},
   encodeJoinSecret:joinSecretFor,
   decodeJoinSecret(secret){
    let s=String(secret||'').trim();
@@ -2854,6 +2879,22 @@ if (IS_DISCORD_ACTIVITY) {
       const discordSdk = new DiscordSDK(appId);
       await discordSdk.ready();
       window.bigconDiscordSDK = discordSdk;
+
+      // Request only the scope needed to publish this player's Rich Presence.
+      // Gameplay continues normally if the user declines the permission.
+      try {
+        await discordSdk.commands.authorize({
+          client_id: appId,
+          response_type: "code",
+          state: "",
+          prompt: "none",
+          scope: ["rpc.activities.write"]
+        });
+        Presence.attachDiscordSDK(discordSdk);
+        console.info("[BigCon Discord] Rich Presence authorised.");
+      } catch (presenceError) {
+        console.warn("[BigCon Discord] Rich Presence permission unavailable:", presenceError);
+      }
 
       if (inviteButton) {
         inviteButton.style.display = "inline-block";
