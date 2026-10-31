@@ -191,7 +191,7 @@ body.game-open{overflow:hidden}
 
 <div id="setup">
  <div class="setupcard">
-  <div class="splash-logo"><img id="splashLogo" src="https://raw.githubusercontent.com/waxmotson/The-big-con-desktop/master/whatsappbigcon_1.gif" alt="THE BIG CON"></div>
+  <div class="splash-logo"><img id="splashLogo" src="/title-assets/whatsappbigcon_1.gif" alt="THE BIG CON"></div>
   <div class="chooserow">
    <button class="modebtn" id="btnHost">HOST</button>
    <button class="modebtn" id="btnJoin">JOIN</button>
@@ -256,7 +256,7 @@ const BUILD_COMMIT = 'ba8c873';
 const IS_DISCORD_ACTIVITY = new URLSearchParams(location.search).get('discord') === '1' || location.hostname.endsWith('.discordsays.com') || new URLSearchParams(location.search).has('instance_id');
 if(IS_DISCORD_ACTIVITY)window.__BIGCON_DISCORD_ACTIVITY__=true;
 const $=id=>document.getElementById(id);
-$('buildStamp').textContent='COMMIT '+BUILD_COMMIT;(function(){const img=$('splashLogo');if(!img)return;let done=false;const swap=()=>{if(done)return;done=true;img.src='https://raw.githubusercontent.com/waxmotson/The-big-con-desktop/master/big%20con%20logo.png';img.alt='THE BIG CON'};setTimeout(swap,5000)})();
+$('buildStamp').textContent='COMMIT '+BUILD_COMMIT;(function(){const img=$('splashLogo');if(!img)return;let done=false;const swap=()=>{if(done)return;done=true;img.src='/title-assets/big%20con%20logo.png';img.alt='THE BIG CON'};setTimeout(swap,5000)})();
 
 /* ================= DISCORD RICH PRESENCE BRIDGE =================
    window.discordRPC is injected ONLY by the desktop (Electron) build's
@@ -2838,6 +2838,7 @@ if (IS_DISCORD_ACTIVITY) {
       // Route Cloudflare WebSocket traffic through Discord's Activity proxy.
       // Configure /relay -> bigconhosting.wax-no-bones.workers.dev in Developer Portal.
       patchUrlMappings([
+        { prefix: "/title-assets", target: "raw.githubusercontent.com/waxmotson/The-big-con-desktop/master" },
         { prefix: "/characters", target: "raw.githubusercontent.com/waxmotson/bigcon/main/characters" },
         { prefix: "/relay", target: "bigconhosting.wax-no-bones.workers.dev" },
         { prefix: "/", target: "thebigcon.onrender.com" }
