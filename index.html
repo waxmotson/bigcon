@@ -207,7 +207,7 @@ body.game-open{overflow:hidden}
    <button class="gobtn" id="btnJoinGo">JOIN GAME</button>
   </div>
   <div id="lobbyView">
-   <div class="codeline"><div class="cl">ROOM CODE — OR SEND A DISCORD INVITE FROM YOUR PROFILE / + IN CHAT</div><div class="cc" id="roomCodeBig">·····</div><button class="copybtn" id="btnCopy">📋 copy code</button><div class="gn" style="margin-top:8px;font-size:11px;color:#9ad;letter-spacing:0;text-transform:none">Desktop build: friends can Join from the Discord invite card. The buzzword still works on the website.</div></div>\n   <div class="setcard" style="justify-content:center"><a href="exhibits.html" target="_blank" rel="noopener" style="color:aqua;font-weight:800;letter-spacing:1px">▦ BROWSE THE EXHIBITS — review every node and its abilities</a></div>
+   <div class="codeline"><div class="cl">ROOM CODE — OR SEND A DISCORD INVITE FROM YOUR PROFILE / + IN CHAT</div><div class="cc" id="roomCodeBig">·····</div><button class="copybtn" id="btnCopy">📋 copy code</button><button class="copybtn" id="btnDiscordShare" type="button" style="display:none;margin-left:6px">SHARE ROOM IN DISCORD</button><button class="copybtn" id="btnDiscordInvite" type="button" style="display:none;margin-left:6px">INVITE TO ACTIVITY</button><div class="gn" style="margin-top:8px;font-size:11px;color:#9ad;letter-spacing:0;text-transform:none">Desktop build: friends can Join from the Discord invite card. The buzzword still works on the website.</div></div>\n   <div class="setcard" style="justify-content:center"><a href="exhibits.html" target="_blank" rel="noopener" style="color:aqua;font-weight:800;letter-spacing:1px">▦ BROWSE THE EXHIBITS — review every node and its abilities</a></div>
    <div class="goalrow">
     <div class="cl">WIN TARGET — REACH THIS MUCH MONEY <i>AND</i> HOLD ONE OF EVERY NODE TYPE</div>
     <div class="goalctl"><span class="gd">$</span><input id="goalInput" type="number" min="20" max="999" step="5" value="100"><span class="gn" id="goalNote">the host sets the target</span></div>
@@ -253,6 +253,8 @@ body.game-open{overflow:hidden}
 'use strict';
 /* Keep this equal to the parent commit's 7-character SHA; CI enforces updates. */
 const BUILD_COMMIT = 'ba8c873';
+const IS_DISCORD_ACTIVITY = new URLSearchParams(location.search).get('discord') === '1';
+if(IS_DISCORD_ACTIVITY)window.__BIGCON_DISCORD_ACTIVITY__=true;
 const $=id=>document.getElementById(id);
 $('buildStamp').textContent='COMMIT '+BUILD_COMMIT;(function(){const img=$('splashLogo');if(!img)return;let done=false;const swap=()=>{if(done)return;done=true;img.src='https://raw.githubusercontent.com/waxmotson/The-big-con-desktop/master/big%20con%20logo.png';img.alt='THE BIG CON'};setTimeout(swap,5000)})();
 
@@ -560,7 +562,7 @@ function applyQuikSlot(slot){
 const TYPE_COLORS={BANK:'#a87511',COMMODITY:'#c05621',MEDIA:'#b5308c',CORPORATE:'#1f6f8b',REGULATOR:'#5c6b73',CHART:'#2e8b57',WILD:'#6b4fa0'};
 const PCOLORS=['#f5c542','#55c1ff','#e19bff','#7fe08d','#ff5e9c','#ffffff','#00e5c0','#ffa94d'];
 const MAXPLAYERS=8;
-const CHARURL='https://raw.githubusercontent.com/waxmotson/bigcon/main/characters/';
+const CHARURL='/characters/';
 const CHARS=[
  {id:'markwatson',name:'Mark Watson',file:'markwatson.png',color:'#f5c542'},
  {id:'tomkins',name:'Tomkins',file:'tomkins.png',color:'#55c1ff'},
@@ -570,10 +572,10 @@ const CHARS=[
  {id:'denialswan',name:'Denial Swan',file:'denialswan.png',color:'#ffffff'},
  {id:'japsnchen',name:'Japsn Chen',file:'japsnchen.png',color:'#00e5c0'},
  {id:'thousandyardwax',name:'Thousand Yard Wax',file:'thousandyardwax.png',color:'#ffa94d'},
- {id:'Alexander_Lane',name:'The guy from Toktimer',file:'Alexander_Lane.png',url:'https://raw.githubusercontent.com/waxmotson/bigcon3D/master/characters/Alexander_Lane.png',color:'#ff6b5e'},
- {id:'DJT',name:'QUITE FRANKLY',file:'DJT.png',url:'https://raw.githubusercontent.com/waxmotson/bigcon3D/master/characters/DJT.png',color:'#9b8cff'},
- {id:'thebigag',name:'The Big Ag',file:'thebigag.png',url:'https://raw.githubusercontent.com/waxmotson/bigcon3D/master/characters/thebigag.png',color:'#d6e85c'},
- {id:'thebigwegrzyn',name:'Seth Wegrzyn',file:'thebigwegrzyn.png',url:'https://raw.githubusercontent.com/waxmotson/bigcon3D/master/characters/thebigwegrzyn.png',color:'#e8a07a'}
+ {id:'Alexander_Lane',name:'The guy from Toktimer',file:'Alexander_Lane.png',color:'#ff6b5e'},
+ {id:'DJT',name:'QUITE FRANKLY',file:'DJT.png',color:'#9b8cff'},
+ {id:'thebigag',name:'The Big Ag',file:'thebigag.png',color:'#d6e85c'},
+ {id:'thebigwegrzyn',name:'Seth Wegrzyn',file:'thebigwegrzyn.png',color:'#e8a07a'}
 ];
 function charMeta(id){return CHARS.find(c=>c.id===id)||null}
 function charSrc(id){const c=charMeta(id);return c?(c.url||CHARURL+c.file):''}
@@ -2209,11 +2211,13 @@ function showFatal(msg){
    all players in a room must use the same transport. */
 const BIGCON_RELAY_URL='https://bigconhosting.wax-no-bones.workers.dev';
 function transportSettings(){
+ if(IS_DISCORD_ACTIVITY)return {mode:'cloudflare',url:'/relay'};
  const mode=$('transportMode')?.value||'cloudflare';
  try{localStorage.setItem('bigcon-transport-mode-v2',mode)}catch(_){}
  return {mode,url:BIGCON_RELAY_URL.replace(/^https:/i,'wss:').replace(/^http:/i,'ws:').replace(/\/+$/,'')};
 }
 function loadTransportSettings(){
+ if(IS_DISCORD_ACTIVITY){const panel=$('transportSettings');if(panel)panel.style.display='none';return}
  try{
   const mode=localStorage.getItem('bigcon-transport-mode-v2')||'cloudflare';
   if($('transportMode'))$('transportMode').value=mode;
@@ -2728,7 +2732,7 @@ function showLobby(asHost){
  $('btnHost').onclick=()=>{$('hostForm').classList.add('show');$('joinForm').classList.remove('show');$('lobbyView').style.display='none';setNetStatus('')};
  $('btnJoin').onclick=()=>{$('joinForm').classList.add('show');$('hostForm').classList.remove('show');$('lobbyView').style.display='none';setNetStatus('')};
  $('btnCreate').onclick=()=>{
- if(typeof Peer==='undefined'){setNetStatus('Could not load the networking library — check your internet connection and reload.',true);return}
+ if(!IS_DISCORD_ACTIVITY&&typeof Peer==='undefined'){setNetStatus('Could not load the networking library — check your internet connection and reload.',true);return}
  const nm=cleanName($('hostName').value);if(!nm){setNetStatus('Enter your name first.',true);return}requestTurnNotificationPermission();
  $('btnCreate').disabled=true;hostCreate(nm);
 };
@@ -2773,7 +2777,7 @@ function showLobby(asHost){
  if(dl)dl.innerHTML=BUZZWORDS.map(b=>'<option value="'+b+'"></option>').join('');
 })();
 document.querySelector('.setuplinks button[data-srules]').onclick=()=>showRules();
-if(typeof Peer==='undefined'){setNetStatus('⚠ Networking library failed to load — you need an internet connection the first time you connect.',true)}
+if(!IS_DISCORD_ACTIVITY&&typeof Peer==='undefined'){setNetStatus('⚠ Networking library failed to load — you need an internet connection the first time you connect.',true)}
 Presence.menu();
 
 /* Discord "Invite to join" — the desktop build delivers the join secret
@@ -2817,6 +2821,81 @@ Presence.menu();
   Promise.resolve(b.takePendingJoin()).then(s=>{if(s)applySecret(s)}).catch(()=>{});
  }
 })();
+</script>
+<script type="module">
+if (IS_DISCORD_ACTIVITY) {
+
+/* Discord Embedded App SDK — loaded only for Discord Activity sessions. */
+{
+  // WebRTC and direct-browser networking are deliberately not supported.
+  (async () => {
+    const appId = "1565709969913815060";
+    const inviteButton = document.getElementById("btnDiscordInvite");
+    const shareButton = document.getElementById("btnDiscordShare");
+    try {
+      // Load the official SDK from this Activity's own static assets.
+      const { DiscordSDK, patchUrlMappings } = await import("/static/discord-sdk.bundle.js");
+      // Route Cloudflare WebSocket traffic through Discord's Activity proxy.
+      // Configure /relay -> bigconhosting.wax-no-bones.workers.dev in Developer Portal.
+      patchUrlMappings([{ prefix: "/relay", target: "bigconhosting.wax-no-bones.workers.dev" }]);
+      const discordSdk = new DiscordSDK(appId);
+      await discordSdk.ready();
+      window.bigconDiscordSDK = discordSdk;
+
+      if (inviteButton) {
+        inviteButton.style.display = "inline-block";
+        inviteButton.addEventListener("click", async () => {
+          inviteButton.disabled = true;
+          try {
+            await discordSdk.commands.openInviteDialog();
+          } catch (error) {
+            console.warn("[BigCon Discord] Invite dialog unavailable:", error);
+          } finally {
+            inviteButton.disabled = false;
+          }
+        });
+      }
+
+      if (shareButton) {
+        shareButton.style.display = "inline-block";
+        shareButton.addEventListener("click", async () => {
+          const code = (document.getElementById("roomCodeBig")?.textContent || "").trim();
+          if (!code || code === "·····") {
+            alert("Create a room first, then share its code.");
+            return;
+          }
+          shareButton.disabled = true;
+          try {
+            await discordSdk.commands.shareLink({
+              message: "Join my Big Con game. Open the Big Con Activity and enter room code: " + code,
+              custom_id: "bigcon-room-share"
+            });
+          } catch (error) {
+            console.warn("[BigCon Discord] Room share failed:", error);
+          } finally {
+            shareButton.disabled = false;
+          }
+        });
+      }
+      window.dispatchEvent(new CustomEvent("bigcon-discord-ready"));
+      const status = document.getElementById("netStatus");
+      if (status) { status.textContent = "Discord connected — Cloudflare relay ready."; status.classList.remove("err"); }
+      console.info("[BigCon Discord] Embedded App SDK ready.");
+    } catch (error) {
+      console.error("[BigCon Discord] Activity SDK could not initialise:", error);
+      const detail = error && (error.message || error.toString()) || "Unknown SDK error";
+      const status = document.getElementById("netStatus");
+      if (status) {
+        status.textContent = "Discord SDK failed to initialise: " + detail;
+        status.classList.add("err");
+      }
+      document.querySelectorAll("#btnHost,#btnJoin,#btnCreate,#btnJoinGo").forEach(button => button.disabled = true);
+      window.dispatchEvent(new CustomEvent("bigcon-discord-sdk-error", { detail }));
+    }
+  })();
+}
+
+}
 </script>
 </body>
 </html>
