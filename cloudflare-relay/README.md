@@ -45,3 +45,17 @@ npx wrangler deploy
 Paste the application's **OAuth2 Client Secret** into Wrangler's secure prompt; do not commit it or put it in the game page. The Worker uses the fixed Big Con application client ID and exchanges codes against Discord's OAuth2 token endpoint. The browser receives only the short-lived access token needed to authenticate the Embedded App SDK.
 
 Discord may restrict `rpc.activities.write` to approved applications. A successful code exchange does not itself grant that scope; if Discord rejects the scope, Big Con must request the relevant access from Discord.
+
+
+## Discord channel notifications
+
+Turn and game-end announcements are sent to the text channel in which the Activity is running. The Activity host sends one turn notice when the active player changes and one final standings message when the game ends. The Worker validates the caller's Discord OAuth access token and uses the bot token only on the server; neither token is embedded in the page.
+
+After creating a bot on the **existing Big Con Discord application**, invite it to the server with the `bot` scope and `Send Messages` permission. Then, from `cloudflare-relay/`, configure the bot token as a Worker secret:
+
+```sh
+npx wrangler secret put DISCORD_BOT_TOKEN
+npx wrangler deploy
+```
+
+The bot must have permission to send messages in the channel where the Activity is launched. If the secret is not configured, channel notifications stay disabled and the game itself continues to work. The existing `DISCORD_CLIENT_SECRET` OAuth secret remains required for Activity authentication.
