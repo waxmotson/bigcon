@@ -1,0 +1,39 @@
+name: Build Discord Embedded App SDK
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "static/discord-sdk.bundle.js"
+      - "static/discord-sdk-entry.js"
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build browser bundle
+        run: npm run build
+      - name: Commit generated SDK bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$(git status --porcelain -- static/discord-sdk.bundle.js package-lock.json)" ]]; then
+            echo "SDK bundle is already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add static/discord-sdk.bundle.js package-lock.json
+          git commit -m "Build local Discord Embedded App SDK bundle"
+          git push
