@@ -2880,20 +2880,41 @@ if (IS_DISCORD_ACTIVITY) {
       await discordSdk.ready();
       window.bigconDiscordSDK = discordSdk;
 
-      // Request only the scope needed to publish this player's Rich Presence.
-      // Gameplay continues normally if the user declines the permission.
+      // The Embedded App SDK handles its own OAuth redirect. Exchange the
+      // returned one-time code on the Cloudflare Worker, then authenticate
+      // the SDK before attempting Rich Presence updates.
       try {
-        await discordSdk.commands.authorize({
+        const { code } = await discordSdk.commands.authorize({
           client_id: appId,
           response_type: "code",
-          state: "",
+          state: crypto.randomUUID(),
           prompt: "none",
-          scope: ["rpc.activities.write"]
+          scope: ["identify", "rpc.activities.write"]
         });
+        const tokenResponse = await fetch("/relay/api/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify({ code })
+        });
+        const tokenData = await tokenResponse.json().catch(() => ({}));
+        if (!tokenResponse.ok || !tokenData.access_token) {
+          throw new Error(tokenData.error || "Discord token exchange failed (HTTP " + tokenResponse.status + ").");
+        }
+        const auth = await discordSdk.commands.authenticate({
+          access_token: tokenData.access_token
+        });
+        if (!auth) throw new Error("Discord SDK authentication returned no user.");
         Presence.attachDiscordSDK(discordSdk);
-        console.info("[BigCon Discord] Rich Presence authorised.");
+        console.info("[BigCon Discord] Rich Presence authorised and SDK authenticated.");
       } catch (presenceError) {
         console.warn("[BigCon Discord] Rich Presence permission unavailable:", presenceError);
+        const status = document.getElementById("netStatus");
+        if (status) {
+          status.textContent = "Discord connected; Rich Presence unavailable: " +
+            (presenceError?.message || String(presenceError));
+          status.classList.remove("err");
+        }
       }
 
       if (inviteButton) {
