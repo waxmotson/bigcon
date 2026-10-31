@@ -6,6 +6,65 @@ const ROOM_RE = /^[A-Z0-9-]{1,40}$/;
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // Discord Embedded App SDK OAuth code exchange. Keep the client secret
+    // in a Worker secret; never send it to the Activity/browser.
+    if (url.pathname === "/api/token") {
+      const cors = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Cache-Control": "no-store",
+      };
+      if (request.method === "OPTIONS") {
+        return new Response(null, { status: 204, headers: cors });
+      }
+      if (request.method !== "POST") {
+        return Response.json({ error: "Method not allowed" }, { status: 405, headers: cors });
+      }
+      if (!env.DISCORD_CLIENT_SECRET) {
+        return Response.json({ error: "Discord OAuth is not configured on the relay." }, { status: 503, headers: cors });
+      }
+      let body;
+      try {
+        const raw = await request.text();
+        if (raw.length > 8192) throw new Error("Request too large");
+        body = JSON.parse(raw);
+      } catch {
+        return Response.json({ error: "Invalid request body." }, { status: 400, headers: cors });
+      }
+      const code = typeof body?.code === "string" ? body.code.trim() : "";
+      if (!code || code.length > 2048) {
+        return Response.json({ error: "A valid Discord authorisation code is required." }, { status: 400, headers: cors });
+      }
+
+      const form = new URLSearchParams({
+        client_id: "1565709969913815060",
+        client_secret: env.DISCORD_CLIENT_SECRET,
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: "https://127.0.0.1",
+      });
+      let discordResponse;
+      try {
+        discordResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: form,
+        });
+      } catch {
+        return Response.json({ error: "Could not contact Discord OAuth." }, { status: 502, headers: cors });
+      }
+      const tokenData = await discordResponse.json().catch(() => ({}));
+      if (!discordResponse.ok || !tokenData.access_token) {
+        return Response.json({
+          error: "Discord rejected the authorisation code.",
+          detail: tokenData.error_description || tokenData.error || "OAuth token exchange failed.",
+        }, { status: 401, headers: cors });
+      }
+      return Response.json({ access_token: tokenData.access_token }, { headers: cors });
+    }
+
     if (url.pathname === "/health") {
       return Response.json({ ok: true, service: "bigcon-relay" });
     }
