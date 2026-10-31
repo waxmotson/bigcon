@@ -1252,7 +1252,8 @@ async function applyIntent(pi,m){
     log('💥 '+pname(pi)+'’s '+launcherName+' is destroyed in the backblast — rubble, no payout, no refund.');
     sync();
     await projPause(); /* the warhead flies to the island before anything lands */
-    const pool=NODES.filter(nn=>S.owner[nn.id]===pi&&nn.id!==launcherId&&nn.id!=='geo_tuvalu'&&!S.rubble[nn.id]);
+    /* The ESG shield absorbs a reflected strike before it can reach the owner's other holdings. */
+    const pool=NODES.filter(nn=>S.owner[nn.id]===pi&&nn.id!==launcherId&&nn.id!=='geo_tuvalu'&&!S.rubble[nn.id]&&(S.owner.geo_pillars!==pi||nn.id==='geo_pillars'));
     /* ESG does not shield the owner's holdings from missile impacts. */
     if(pool.length){
      const hit=pool[Math.floor(Math.random()*pool.length)];
