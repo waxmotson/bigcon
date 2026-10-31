@@ -1,0 +1,14 @@
+{
+  "name": "bigcon",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "esbuild static/discord-sdk-entry.js --bundle --format=esm --platform=browser --target=es2020 --outfile=static/discord-sdk.bundle.js"
+  },
+  "dependencies": {
+    "@discord/embedded-app-sdk": "2.5.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.11"
+  }
+}
