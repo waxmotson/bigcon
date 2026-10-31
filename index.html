@@ -1234,6 +1234,7 @@ async function applyIntent(pi,m){
    const n=NMAP[m.id];
    if(!n||!S.rubble||S.rubble[m.id]){sysTo(pi,'Pick a target that still stands.');S.mode=null;sync();return}
    if(S.owner[m.id]===pi){sysTo(pi,'You cannot missile your own node.');S.mode=null;sync();return}
+   if(isPillarShieldedNode(m.id)){sysTo(pi,'ESG SHIELD — that holding is protected while its owner controls the Pillars. Strike the Pillars to break the shield.');S.mode=null;sync();return}
    const launcherId=S.owner.geo_missile===pi?'geo_missile':(S.owner.geo_shahed===pi?'geo_shahed':null);
    if(!launcherId||!canFireMissileFrom(pi)){sysTo(pi,'You no longer control an armed missile launcher.');S.mode=null;sync();return}
    /* ESG holdings are valid missile targets. */
@@ -1448,8 +1449,12 @@ function strikeNode(pi,nid,opts){
  }
  sync();
 }
+function isPillarShieldedNode(nid){
+ const owner=S&&S.owner[nid];
+ return owner!=null&&nid!=='geo_pillars'&&S.owner.geo_pillars===owner;
+}
 function canMissileNode(me,nid){
- return !!(S&&S.dlcGeo&&!S.rubble[nid]&&S.owner[nid]!==me);
+ return !!(S&&S.dlcGeo&&!S.rubble[nid]&&S.owner[nid]!==me&&!isPillarShieldedNode(nid));
 }
 function ownsMissileLauncher(pi){return !!(S&&S.dlcGeo&&(S.owner.geo_missile===pi||S.owner.geo_shahed===pi))}
 function canFireMissileFrom(pi){if(!S||!S.players[pi]||!ownsMissileLauncher(pi))return false;const pos=S.players[pi].pos;return (pos==='geo_missile'&&S.owner.geo_missile===pi)||(pos==='geo_shahed'&&S.owner.geo_shahed===pi)||S.owner.geo_kim===pi}
@@ -2151,6 +2156,8 @@ function handleNodeTap(t){
   case 'tweetmode':dispatch({act:'tweetmode'});break;
    case 'pressure':dispatch({act:'pressure'});break;
    case 'missilemode':dispatch({act:'missilemode'});break;
+  case 'bondmageddon':dispatch({act:'bondmageddon'});break;
+  case 'sellall':dispatch({act:'sellall'});break;
    case 'rebuild':dispatch({act:'rebuild'});break;
    case 'beach':dispatch({act:'beach'});break;
    case 'qantasdown':dispatch({act:'qantasdown'});break;
