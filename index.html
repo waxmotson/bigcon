@@ -2737,7 +2737,7 @@ function showLobby(asHost){
  $('btnCreate').disabled=true;hostCreate(nm);
 };
  $('btnJoinGo').onclick=()=>{
- if(typeof Peer==='undefined'){setNetStatus('Could not load the networking library — check your internet connection and reload.',true);return}
+ if(!IS_DISCORD_ACTIVITY&&typeof Peer==='undefined'){setNetStatus('Could not load the networking library — check your internet connection and reload.',true);return}
  const nm=cleanName($('joinName').value);const code=matchBuzzword($('joinCode').value);requestTurnNotificationPermission();
  if(!nm){setNetStatus('Enter your name first.',true);return}
  if(!code){setNetStatus('Enter the buzzword the host read out — e.g. NESA or LOW CORTISOL.',true);return}
