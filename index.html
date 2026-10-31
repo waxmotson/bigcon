@@ -1385,12 +1385,12 @@ async function applyIntent(pi,m){
    addCortisol(pi,1,'the forced divestment');await endOfTurn();
   }
   else if(act==='bondmageddon'&&S.phase==='action'&&!S.mode&&S.owner.bond===pi&&S.owner.leak===pi&&!S.bondmageddonUsed&&p.money>=16&&p.intel>=4){
-   const rivals=S.players.map((pl,j)=>j).filter(j=>j!==pi);
-   if(!rivals.length){sysTo(pi,'There is nobody else at the table.');return}
-   const chartCount=j=>NODES.filter(nn=>nn.type==='CHART'&&S.owner[nn.id]===j).length;
-   const most=Math.max(...rivals.map(chartCount));
-   const leaders=rivals.filter(j=>chartCount(j)===most);
-   const target=leaders[Math.floor(Math.random()*leaders.length)];
+   const rivals=S.players.map((pl,j)=>j).filter(j=>j!==pi&&NODES.some(nn=>S.owner[nn.id]===j&&!S.rubble[nn.id]));
+   if(!rivals.length){sysTo(pi,'There are no rivals with intact holdings to target.');return}
+   const target=await askPlayer(pi,{title:'BONDMAGEDDON — CHOOSE TARGET',body:'Choose which rival to target with all four missiles.',options:rivals.map(j=>({label:pname(j)+' · '+NODES.filter(nn=>nn.type==='CHART'&&S.owner[nn.id]===j).length+' CHART holdings',v:j})).concat([{label:'Cancel',v:-1}]),def:-1});
+   if(target<0){sync();return}
+   if(!Number.isInteger(target)||target===pi||!rivals.includes(target)){sysTo(pi,'Choose a valid rival with intact holdings.');sync();return}
+   if(S.cur!==pi||S.phase!=='action'||S.mode||S.over||S.owner.bond!==pi||S.owner.leak!==pi||S.bondmageddonUsed||p.money<16||p.intel<4){sysTo(pi,'Bondmageddon is no longer available.');sync();return}
    const owned=NODES.filter(nn=>S.owner[nn.id]===target&&!S.rubble[nn.id]);
    if(!owned.length){sysTo(pi,'The chart leader has no intact holdings to strike.');return}
    const esg=owned.find(nn=>nn.id==='geo_pillars');
