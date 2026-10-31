@@ -29,3 +29,19 @@ No API token should be placed in the game page.
 This is a transport relay, not a game-state database or host-migration system. The host remains authoritative. If the host browser closes or loses its connection permanently, the game still needs the host's existing reconnect/recovery behaviour; the relay does not elect a new host. WebSocket connections can still be interrupted by network changes, and the client retry logic remains responsible for reconnecting.
 
 Test with two browsers first, then test lobby chat, character selection, starting a game, private prompts, event announcements, reconnects, and 8-player rooms. The Worker must be deployed before selecting Cloudflare mode. Cloudflare account limits and usage charges may apply.
+
+
+## Discord Activity Rich Presence OAuth
+
+The Worker also exchanges Embedded App SDK authorisation codes for Discord access tokens at `POST /api/token`. The Activity calls this through its configured `/relay` URL mapping.
+
+Before deploying, add the Discord application's OAuth2 redirect URI `https://127.0.0.1` in the Developer Portal (the Embedded App SDK handles returning to the Activity). Then configure the application client secret as a Cloudflare Worker secret:
+
+```sh
+npx wrangler secret put DISCORD_CLIENT_SECRET
+npx wrangler deploy
+```
+
+Paste the application's **OAuth2 Client Secret** into Wrangler's secure prompt; do not commit it or put it in the game page. The Worker uses the fixed Big Con application client ID and exchanges codes against Discord's OAuth2 token endpoint. The browser receives only the short-lived access token needed to authenticate the Embedded App SDK.
+
+Discord may restrict `rpc.activities.write` to approved applications. A successful code exchange does not itself grant that scope; if Discord rejects the scope, Big Con must request the relevant access from Discord.
