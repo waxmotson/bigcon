@@ -562,7 +562,7 @@ function applyQuikSlot(slot){
 const TYPE_COLORS={BANK:'#a87511',COMMODITY:'#c05621',MEDIA:'#b5308c',CORPORATE:'#1f6f8b',REGULATOR:'#5c6b73',CHART:'#2e8b57',WILD:'#6b4fa0'};
 const PCOLORS=['#f5c542','#55c1ff','#e19bff','#7fe08d','#ff5e9c','#ffffff','#00e5c0','#ffa94d'];
 const MAXPLAYERS=8;
-const CHARURL='/characters/';
+const CHARURL='https://raw.githubusercontent.com/waxmotson/bigcon/main/characters/';
 const CHARS=[
  {id:'markwatson',name:'Mark Watson',file:'markwatson.png',color:'#f5c542'},
  {id:'tomkins',name:'Tomkins',file:'tomkins.png',color:'#55c1ff'},
@@ -2737,7 +2737,7 @@ function showLobby(asHost){
  $('btnCreate').disabled=true;hostCreate(nm);
 };
  $('btnJoinGo').onclick=()=>{
- if(typeof Peer==='undefined'){setNetStatus('Could not load the networking library — check your internet connection and reload.',true);return}
+ if(!IS_DISCORD_ACTIVITY&&typeof Peer==='undefined'){setNetStatus('Could not load the networking library — check your internet connection and reload.',true);return}
  const nm=cleanName($('joinName').value);const code=matchBuzzword($('joinCode').value);requestTurnNotificationPermission();
  if(!nm){setNetStatus('Enter your name first.',true);return}
  if(!code){setNetStatus('Enter the buzzword the host read out — e.g. NESA or LOW CORTISOL.',true);return}
