@@ -992,6 +992,7 @@ test('GD-25 targeted Cortisol overload costs 30 Intel and adds 6 to one selected
 test('GD-26 Bondmageddon targets the chart leader and prioritises ESG before one other random holding', async t => {
   const { e, S } = await geoGame(t, 3);
   S.owner.bond = 0;
+  S.owner.leak = 0; // Bondmageddon requires both the Bond Desk and The Leak
   S.owner.us = 1; S.owner.japan = 1;  // player 1 has two charts
   S.owner.aus = 2;                    // player 2 has only one chart
   S.owner.geo_pillars = 1; S.owner.oil = 1; S.owner.westpac = 1;
@@ -1079,4 +1080,38 @@ test('GD-28 ESG Pillars never inflate on hostile takeover', t => {
   e.f.rebuildWorld(true);
   assert.equal(e.f.flatSeize('geo_pillars'), true, 'the Pillars are a flat-price takeover node');
   assert.equal(e.f.takeoverCost(0, 'geo_pillars', 6), 6, 'repeat takeovers remain at list price');
+});
+
+
+test('GD-28 Fog of War missiles automatically strike a random owned square, including your own', async t => {
+  const { e, S } = await geoGame(t);
+  S.fogOfWar = true;
+  S.owner.geo_missile = 0;
+  S.owner.oil = 0; // both eligible squares belong to the launcher owner
+  S.players[0].pos = 'geo_missile';
+  S.players[0].money = 30;
+  S.players[0].intel = 5;
+  armAction(e);
+  await e.f.applyIntent(0, { act: 'missilemode' });
+  assert.equal(S.mode, null, 'the random strike resolves immediately rather than opening a target picker');
+  assert.ok(S.rubble.geo_missile === 1 || S.rubble.oil === 1,
+    'one of the actor\'s own owned squares can be struck');
+  assert.equal(S.geoMissiled, true, 'the once-per-turn launch is consumed');
+});
+
+test('GD-29 Fog of War Qantas flies to a random undiscovered square', async t => {
+  const { e, S } = await geoGame(t);
+  S.fogOfWar = true;
+  S.owner.qantas = 0;
+  S.players[0].money = 30;
+  S.players[0].pos = 'quik';
+  S.players[0].visited = {};
+  for (const n of e.acc.NODES) if (n.id !== 'geo_venice') S.players[0].visited[n.id] = true;
+  S.players[0].visited.quik = true;
+  S.phase = 'move';
+  S.cur = 0;
+  await e.f.applyIntent(0, { act: 'flymode' });
+  assert.equal(S.players[0].pos, 'geo_venice', 'the only undiscovered square is selected automatically');
+  assert.equal(S.players[0].visited.geo_venice, true, 'the landing reveals that square to this player');
+  assert.equal(S.phase, 'action', 'the flight ends movement as usual');
 });
