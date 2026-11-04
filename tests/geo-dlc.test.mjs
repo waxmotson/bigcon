@@ -998,6 +998,7 @@ test('GD-26 Bondmageddon targets the chart leader and prioritises ESG before one
   S.owner.geo_pillars = 1; S.owner.oil = 1; S.owner.westpac = 1;
   S.players[0].money = 40; S.players[0].intel = 10;
   armAction(e);
+  e.queueModal(1); // choose the first listed rival in the explicit target picker
   const barrage = e.f.applyIntent(0, { act: 'bondmageddon' });
   for (let i = 0; i < 8; i++) { e.clock.advance(e.acc.PROJ_PAUSE_MS + 100); await settle(); }
   await barrage; await settle();
