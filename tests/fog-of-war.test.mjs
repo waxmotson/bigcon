@@ -64,13 +64,15 @@ test('Fog of War does not reveal a normal square when the player ends their turn
   e.acc.Net.fogOfWar = true;
   const S = await makeGame(e, 2);
   const pi = S.cur;
-  S.phase = 'action';
-  S.players[pi].pos = 'infl';
+  const from = S.players[pi].pos;
+  const destination = e.acc.ADJ[from].find(id => !['sisy','asics','geo_wonsan','geo_venice','term','timeline','geo_missile','geo_shahed'].includes(id));
+  assert.ok(destination, 'a normal adjacent destination exists');
+  await e.f.doMove(pi, destination);
   await e.f.endOfTurn();
-  assert.ok(!S.log.some(line => line.includes(e.acc.NMAP.infl.name.join(' '))),
+  assert.ok(!S.log.some(line => line.includes(e.acc.NMAP[destination].name.join(' '))),
     'the normal square remains undisclosed at turn end');
-  assert.ok(S.log.some(line => line.includes('undisclosed square')),
-    'the chat log can still report movement without revealing the destination');
+  assert.ok(S.log.some(line => line.includes('moves to an undisclosed square')),
+    'the chat log still reports movement without revealing the destination');
 });
 
 test('Fog of War reveals a special ability square at turn end even without a seizure', async t => {
