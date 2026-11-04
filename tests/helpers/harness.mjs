@@ -186,11 +186,11 @@ export function loadEngine(opts = {}) {
       warn: (...a) => consoleOut.warn.push(a.join(' ')),
       error: (...a) => consoleOut.error.push(a.join(' ')),
     },
-    Math, Date, JSON,
+    Math, Date, JSON, URL, URLSearchParams,
     setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout,
     setInterval: clock.setInterval, clearInterval: clock.clearInterval,
     requestAnimationFrame: () => 0,
-    document: documentStub, window: { addEventListener() {}, removeEventListener() {} }, location: locationStub,
+    document: documentStub, window: { location: { search: '' }, addEventListener() {}, removeEventListener() {} }, location: locationStub,
     navigator: { clipboard: { writeText: async () => {} } },
     crypto: { randomUUID: () => 'pc-' + ++uuidSeq },
     localStorage: {
