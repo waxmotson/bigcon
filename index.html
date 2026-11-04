@@ -1614,7 +1614,7 @@ async function doSeize(pi){
  S.owner[nid]=pi;if(nid==='sisy')S.sisyPayout=10;
  S.seizeCount[nid]=(S.seizeCount[nid]||0)+1;
  const via=useInt>0?' (paid $'+cash+' + '+useInt+' 🛈)':'';
- log(S.fogOfWar?'📝 '+pname(pi)+(isTake?' takes over an undisclosed holding':' seizes an undisclosed node')+via+'.':'📝 '+pname(pi)+(isTake?' muscles in on ':' seizes ')+n.name.join(' ')+via+'.');
+ log(S.fogOfWar?'📝 '+pname(pi)+(isTake?' takes over ':' seizes ')+n.name.join(' ')+via+'.':'📝 '+pname(pi)+(isTake?' muscles in on ':' seizes ')+n.name.join(' ')+via+'.');
  if(!S.fogOfWar)fx(n.x,n.y-64,'📝 SEIZED',S.players[pi].color);
  if(nid==='bond')giveIntel(pi,2,'desk gossip flows');
  if(nid==='leak')giveIntel(pi,1,'the leak pays');
@@ -1654,6 +1654,12 @@ function drawCard(){
 }
 async function endOfTurn(){
  if(!S||S.over||S.phase==='event')return;
+ if(S.fogOfWar){
+  const p=S.players[S.cur],id=p&&p.pos;
+  const abilitySquares=['geo_missile','geo_shahed','sisy','asics','geo_wonsan','geo_venice','term','timeline'];
+  if(id&&abilitySquares.includes(id))log('📍 '+pname(S.cur)+' ends the turn at '+NMAP[id].name.join(' ')+'.');
+  else log('📍 '+pname(S.cur)+' ends the turn at an undisclosed square.');
+ }
  S.mode=null;S.phase='event';sync(true);
  const jtO=S.owner.jt;
  if(jtO!=null&&!S.jtUsed&&!(S.players[jtO]&&S.players[jtO].dc)){
