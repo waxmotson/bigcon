@@ -1497,7 +1497,7 @@ function strikeNode(pi,nid,opts){
  S.rubble[nid]=1;
  if(S.ov&&S.ov.nid===nid)S.ov=null;
  fx(n.x,n.y-70,'💥 MISSILE','#ff6b5e');
- log(S.fogOfWar?'🚀 A missile strikes an undisclosed square'+(prev!=null?' — its owner is expropriated with NO payout.':' — an unowned exhibit goes up in smoke.')+' What is left is rubble.':'🚀 '+pname(pi)+' launches a missile at '+n.name.join(' ')+(prev!=null?' — '+pname(prev)+' is expropriated with NO payout.':' — an unowned exhibit goes up in smoke.')+' What is left is rubble: no income, nothing to seize, until someone arrives and pays 
+ log(S.fogOfWar?'🚀 A missile strikes an undisclosed square'+(prev!=null?' — its owner is expropriated with NO payout.':' — an unowned exhibit goes up in smoke.')+' What is left is rubble.':'🚀 '+pname(pi)+' launches a missile at '+n.name.join(' ')+(prev!=null?' — '+pname(prev)+' is expropriated with NO payout.':' — an unowned exhibit goes up in smoke.')+' The node becomes rubble.');
  /* 🌍 REGULATOR PROBE — a warhead on a regulator is a career-ending event: an
     investigation opens and lands on the striker's NEXT turn (50/50 indictment). */
  if(!silent&&n.type==='REGULATOR'){
