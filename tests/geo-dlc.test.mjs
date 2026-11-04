@@ -1097,7 +1097,7 @@ test('GD-28 Fog of War missiles automatically strike a random owned square, incl
   assert.equal(S.mode, null, 'the random strike resolves immediately rather than opening a target picker');
   assert.ok(S.rubble.geo_missile === 1 || S.rubble.oil === 1,
     'one of the actor\'s own owned squares can be struck');
-  assert.equal(S.players[0].money, 26, 'the random launch still charges its $4 cost');
+  assert.equal(S.players[0].money, 28, 'the $4 launch cost is followed by the quiet-event +$2');
   assert.ok(S.log.some(line => line.includes('A missile strikes an undisclosed square')), 'the impact resolves without revealing its location');
 });
 
