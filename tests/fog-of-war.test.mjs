@@ -51,8 +51,37 @@ test('Fog of War hides seizure location popups and location-bearing log entries 
   await e.f.applyIntent(pi, { act: 'seize' });
   assert.equal(S.owner.infl, pi, 'the seizure still resolves');
   assert.equal(S.fx.length, 0, 'no shared board popup gives away the square');
+  assert.ok(S.log.some(line => line.includes(e.acc.NMAP.infl.name.join(' '))),
+    'the successful seizure reveals the exact node in the shared record');
+  assert.ok(S.log.some(line => line.includes('seizes '+e.acc.NMAP.infl.name.join(' '))),
+    'the record identifies the seized location');
+});
+
+
+test('Fog of War does not reveal a normal square when the player ends their turn without seizing', async t => {
+  const e = loadEngine();
+  t.after(() => e.dispose());
+  e.acc.Net.fogOfWar = true;
+  const S = await makeGame(e, 2);
+  const pi = S.cur;
+  S.phase = 'action';
+  S.players[pi].pos = 'infl';
+  await e.f.endOfTurn();
   assert.ok(!S.log.some(line => line.includes(e.acc.NMAP.infl.name.join(' '))),
-    'the shared record does not disclose the seized node name');
-  assert.ok(S.log.some(line => line.includes('undisclosed node')),
-    'the record still reports that a seizure happened');
+    'the normal square remains undisclosed at turn end');
+  assert.ok(S.log.some(line => line.includes('undisclosed square')),
+    'the chat log can still report movement without revealing the destination');
+});
+
+test('Fog of War reveals a special ability square at turn end even without a seizure', async t => {
+  const e = loadEngine();
+  t.after(() => e.dispose());
+  e.acc.Net.fogOfWar = true;
+  const S = await makeGame(e, 2);
+  const pi = S.cur;
+  S.phase = 'action';
+  S.players[pi].pos = 'sisy';
+  await e.f.endOfTurn();
+  assert.ok(S.log.some(line => line.includes('ends the turn at '+e.acc.NMAP.sisy.name.join(' '))),
+    'the Sisyphus ability square is disclosed');
 });
