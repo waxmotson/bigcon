@@ -1100,7 +1100,7 @@ async function startTurn(){
  log('—— TURN '+S.turn+' · '+pname(S.cur)+' ——');
  S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;
  if(S.dlcGeo){S.geoMissiled=false;S.geoBeach=false;S.geoBoeing=false;S.geoCrash=false;S.geoStage5=false;S.geoVenice=false}
- S.bondmageddonUsed=false;
+ S.bondmageddonUsed=false;S.fogSeizedThisTurn=false;
  if(S.fx.length>30)S.fx=S.fx.slice(-30);
  /* Expired blockades come down the moment the rotation that blocked them is done. */
  if(S.blockades)Object.keys(S.blockades).forEach(id=>{if(S.blockades[id]<=S.turn)delete S.blockades[id]});
@@ -1611,7 +1611,7 @@ async function doSeize(pi){
   S.players[prev].money+=n.cost;log('💸 '+pname(prev)+' pockets a $'+n.cost+' buyout.');fxAt(prev,'+$'+n.cost,'#7fe08d');
   if(S.owner.accc===prev&&p.money>=2){p.money-=2;S.players[prev].money+=2;log('🧐 ACCC review fee: '+pname(pi)+' pays '+pname(prev)+' $2.')}
  }
- S.owner[nid]=pi;if(nid==='sisy')S.sisyPayout=10;
+ S.owner[nid]=pi;if(S.fogOfWar)S.fogSeizedThisTurn=true;if(nid==='sisy')S.sisyPayout=10;
  S.seizeCount[nid]=(S.seizeCount[nid]||0)+1;
  const via=useInt>0?' (paid $'+cash+' + '+useInt+' 🛈)':'';
  log(S.fogOfWar?'📝 '+pname(pi)+(isTake?' takes over ':' seizes ')+n.name.join(' ')+via+'.':'📝 '+pname(pi)+(isTake?' muscles in on ':' seizes ')+n.name.join(' ')+via+'.');
@@ -1657,8 +1657,7 @@ async function endOfTurn(){
  if(S.fogOfWar){
   const p=S.players[S.cur],id=p&&p.pos;
   const abilitySquares=['geo_missile','geo_shahed','sisy','asics','geo_wonsan','geo_venice','term','timeline'];
-  if(id&&abilitySquares.includes(id))log('📍 '+pname(S.cur)+' ends the turn at '+NMAP[id].name.join(' ')+'.');
-  else log('📍 '+pname(S.cur)+' ends the turn at an undisclosed square.');
+  if(!S.fogSeizedThisTurn&&id&&abilitySquares.includes(id))log('📍 '+pname(S.cur)+' ends the turn at '+NMAP[id].name.join(' ')+'.');
  }
  S.mode=null;S.phase='event';sync(true);
  const jtO=S.owner.jt;
