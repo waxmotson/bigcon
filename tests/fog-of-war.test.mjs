@@ -35,3 +35,24 @@ test('Fog of War masks unexplored map nodes, hides unseen edges and rival tokens
   assert.match(SOURCE, /S\.fogOfWar&&pi!==Net\.myIdx/);
   assert.match(SOURCE, /stroke-dasharray="7 6"/);
 });
+
+
+test('Fog of War hides seizure location popups and location-bearing log entries from the shared record', async t => {
+  const e = loadEngine();
+  t.after(() => e.dispose());
+  e.acc.Net.fogOfWar = true;
+  const S = await makeGame(e, 2);
+  const pi = S.cur;
+  S.phase = 'action';
+  S.steps = 0;
+  S.players[pi].pos = 'infl';
+  S.players[pi].money = 50;
+  S.fx = [];
+  await e.f.applyIntent(pi, { act: 'seize' });
+  assert.equal(S.owner.infl, pi, 'the seizure still resolves');
+  assert.equal(S.fx.length, 0, 'no shared board popup gives away the square');
+  assert.ok(!S.log.some(line => line.includes(e.acc.NMAP.infl.name.join(' '))),
+    'the shared record does not disclose the seized node name');
+  assert.ok(S.log.some(line => line.includes('undisclosed node')),
+    'the record still reports that a seizure happened');
+});
