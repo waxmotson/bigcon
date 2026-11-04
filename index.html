@@ -252,7 +252,7 @@ body.game-open{overflow:hidden}
 <script>
 'use strict';
 /* Keep this equal to the parent commit's 7-character SHA; CI enforces updates. */
-const BUILD_COMMIT = '59af15a';
+const BUILD_COMMIT = 'c8631f8';
 const IS_DISCORD_ACTIVITY = new URLSearchParams(location.search).get('discord') === '1' || location.hostname.endsWith('.discordsays.com') || new URLSearchParams(location.search).has('instance_id');
 if(IS_DISCORD_ACTIVITY)window.__BIGCON_DISCORD_ACTIVITY__=true;
 const $=id=>document.getElementById(id);
@@ -1220,7 +1220,7 @@ async function doMissile(pi,id){
   const launcherName=NMAP[launcherId].name.join(' ');
   projFx('missile',launcherId,'geo_tuvalu');
   log(S.fogOfWar
-   ?'🚀 '+pname(pi)+' launches a missile — TUVALU reflects it back onto the launcher.'
+   ?'🚀 '+pname(pi)+' launches a missile — the island reflects it back onto the launcher.'
    :'🚀 '+pname(pi)+' launches a missile at TUVALU — the island REFUSES it. The warhead comes back down on '+pname(pi)+'’s own holdings.');
   delete S.owner[launcherId];delete S.bugs[launcherId];S.rubble[launcherId]=1;
   fx(NMAP[launcherId].x,NMAP[launcherId].y-70,'💥 BACKFIRE','#ff6b5e');
@@ -1502,7 +1502,7 @@ function strikeNode(pi,nid,opts){
     investigation opens and lands on the striker's NEXT turn (50/50 indictment). */
  if(!silent&&n.type==='REGULATOR'){
   S.missileProbe={by:pi};
-  log('🔎 Striking '+n.name.join(' ')+' opens a REGULATOR INVESTIGATION — '+pname(pi)+' will answer to ASIC or the ACCC next turn.');
+  log(S.fogOfWar?'🔎 A regulator strike opens an investigation — '+pname(pi)+' will answer to ASIC or the ACCC next turn.':'🔎 Striking '+n.name.join(' ')+' opens a REGULATOR INVESTIGATION — '+pname(pi)+' will answer to ASIC or the ACCC next turn.');
  }
  sync();
 }
@@ -1549,7 +1549,7 @@ async function doMove(pi,id){
  if(S.dlcGeo&&id==='geo_tuvalu'&&S.owner[id]==null&&!S.rubble[id]){
   S.owner[id]=pi;const n=NMAP[id];
   fx(n.x,n.y-64,'🏝️ CLAIMED','#7fe08d');
-  log('🏝️ '+pname(pi)+' lands in TUVALU — THE JOIN IS FREE. First arrival claims it: no action, no cost, no Cortisol.');
+  log(S.fogOfWar?'🏝️ '+pname(pi)+' discovers and claims an undisclosed square — the landing is free.':'🏝️ '+pname(pi)+' lands in TUVALU — THE JOIN IS FREE. First arrival claims it: no action, no cost, no Cortisol.');
  }
  if(!S.players[pi].visited)S.players[pi].visited={};S.players[pi].visited[id]=true;
  if(prevPos==='sisy'&&id!=='sisy'&&S.owner.back!==pi)S.sisyPayout=10;
@@ -1567,7 +1567,7 @@ async function doFly(pi,id){
  if(S.dlcGeo&&id==='geo_tuvalu'&&S.owner[id]==null&&!S.rubble[id]){
   S.owner[id]=pi;const n=NMAP[id];
   fx(n.x,n.y-64,'🏝️ CLAIMED','#7fe08d');
-  log('🏝️ '+pname(pi)+' jets into TUVALU — THE JOIN IS FREE. First arrival claims it: no action, no cost, no Cortisol.');
+  log(S.fogOfWar?'🏝️ '+pname(pi)+' discovers and claims an undisclosed square — the landing is free.':'🏝️ '+pname(pi)+' jets into TUVALU — THE JOIN IS FREE. First arrival claims it: no action, no cost, no Cortisol.');
  }
  if(!p.visited)p.visited={};p.visited[id]=true;
  if(prevFlyPos==='sisy'&&id!=='sisy'&&S.owner.back!==pi)S.sisyPayout=10;
