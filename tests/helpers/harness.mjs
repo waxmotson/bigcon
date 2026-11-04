@@ -177,7 +177,7 @@ export function loadEngine(opts = {}) {
     const def = o.def !== undefined ? o.def : (o.options && o.options[0] ? o.options[0].v : 0);
     return Promise.resolve(def);
   };
-  const locationStub = { reloadCount: 0, reload() { this.reloadCount++; } };
+  const locationStub = { hostname: 'localhost', search: '', href: 'http://localhost/', reloadCount: 0, reload() { this.reloadCount++; } };
   const store = new Map();
   let uuidSeq = 0;
   const ctx = {
@@ -190,7 +190,7 @@ export function loadEngine(opts = {}) {
     setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout,
     setInterval: clock.setInterval, clearInterval: clock.clearInterval,
     requestAnimationFrame: () => 0,
-    document: documentStub, window: { location: { search: '' }, addEventListener() {}, removeEventListener() {} }, location: locationStub,
+    document: documentStub, window: { location: locationStub, addEventListener() {}, removeEventListener() {} }, location: locationStub,
     navigator: { clipboard: { writeText: async () => {} } },
     crypto: { randomUUID: () => 'pc-' + ++uuidSeq },
     localStorage: {
