@@ -2,11 +2,6 @@
 html,body{margin:0;padding:0;width:100%;height:100%}
 body{font-family:'Bricolage Grotesque',system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#f2f2f2;background:#1d201f}
 body.game-open{overflow:hidden}
-#app{display:none;flex-wrap:nowrap;gap:0;padding:0;align-items:stretch;width:100vw;height:100dvh;overflow:hidden}
-#boardWrap{flex:1 1 auto;min-width:0;height:100%;position:relative;overflow:hidden;background:#1d201f}
-#board{display:block;width:100%;height:100%;border-radius:0;box-shadow:none;cursor:grab;touch-action:none}
-#side{flex:0 0 390px;width:390px;max-width:42vw;height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px;display:flex;flex-direction:column;gap:10px}
-@media(max-width:900px){body.game-open{overflow:auto}#app{display:none;flex-direction:column;width:100%;height:auto;min-height:100dvh;overflow:visible}#boardWrap{flex:none;width:100%;height:62dvh;min-height:320px}#side{flex:1 1 auto;width:100%;max-width:none;height:auto;overflow:visible;padding:10px}}
 .serif,.bigtitle,.brand .t1,.winname,.turnname,.codeline .cc,.mtitle,.etitle{font-family:'Tomkins Display',system-ui,sans-serif}
 #toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-70px);background:#168388;color:#fff;font-weight:800;padding:10px 24px;border-radius:0;border:2px solid #000;box-shadow:0 10px 30px rgba(0,0,0,.6);opacity:0;transition:all .35s;z-index:90;pointer-events:none;font-size:14px;letter-spacing:1px;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
 #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -52,17 +47,11 @@ body.game-open{overflow:hidden}
 .lrow .lh{margin-left:auto;font-size:10.5px;letter-spacing:1px;color:#8a7a5f}
 .setuplinks{margin-top:12px;text-align:center}
 .setuplinks button,.setuplinks a{background:none;border:none;color:aqua;font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;padding:4px}.setuplinks a{display:inline-block}
-#app{display:none;flex-wrap:wrap;gap:14px;padding:14px;align-items:flex-start}
-#boardWrap{flex:1 1 640px;min-width:300px;position:relative}
-#board{display:block;width:100%;height:auto;border-radius:12px;box-shadow:0 14px 50px rgba(0,0,0,.65);cursor:grab;touch-action:none}
 #board.panning{cursor:grabbing}
 .zoombar{position:absolute;top:10px;right:12px;display:flex;gap:6px;z-index:5}
 .zoombar button{width:34px;height:34px;border-radius:0;border:1px solid #168388;background:#000;color:#fff;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer}
 .zoombar button:hover{background:#168388}
 .panhint{position:absolute;left:12px;bottom:10px;font-size:11px;letter-spacing:1px;color:#9ad;background:#000;padding:4px 10px;border-radius:0;border:1px solid #168388;z-index:5;pointer-events:none}
-#side{flex:0 1 384px;max-width:100%;display:flex;flex-direction:column;gap:10px}
-#side>*{flex-shrink:0;min-width:0}
-@media(max-width:900px){#app{flex-direction:column}#side{flex:1 1 auto;width:100%}}
 .netstrip{background:#000;border:1px solid #168388;border-radius:0;padding:6px 11px;font-size:11px;letter-spacing:1px;color:#cde;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .netstrip b{color:aqua;letter-spacing:3px}
 .moodstrip{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#000;border:1px solid #168388;border-radius:0;padding:6px 11px;font-size:11px;letter-spacing:.5px;color:#cde}
@@ -159,7 +148,7 @@ button.mini:hover{background:#168388}
 .charpick:hover:not(.taken){border-color:#168388}
 .pface{width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid var(--pc,#168388);flex:0 0 28px;background:#000}
 
-/* v1.13 UI: the map is a fixed, full-height left viewport; only the sidebar scrolls. */
+/* Canonical game layout: fixed full-height board with independently scrolling sidebar. */
 body.game-open{overflow:hidden}
 #app{display:none;flex-wrap:nowrap;gap:0;padding:0;align-items:stretch;width:100vw;height:100vh;height:100dvh;overflow:hidden}
 #boardWrap{flex:1 1 auto;min-width:0;height:100%;position:relative;overflow:hidden;background:#1d201f}
