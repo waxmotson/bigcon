@@ -1,14 +1,14 @@
 /* landing.html — the highlight reel. The 3D stage is one fixed canvas; everything else scrolls over it. */
-:root{--bg:#060d0c;--ink:#f4f0e6;--mute:#a3b8b5;--teal:#168388;--teal2:#2fd1c5;--red:#ff4a3d;--gold:#f5c542;--line:rgba(47,209,197,.26);--glass:rgba(6,13,12,.8);
+:root{--bg:#060d0c;--ink:#f4f0e6;--mute:#a3b8b5;--teal:#168388;--teal2:#2fd1c5;--red:#ff4a3d;--gold:#f5c542;--line:rgba(47,209,197,.26);--glass:rgba(6,13,12,.9);
   --display:'Tomkins Display','Bricolage Grotesque',system-ui,sans-serif;--body:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
 *{box-sizing:border-box}
-html{scroll-snap-type:y proximity;scroll-behavior:auto;-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;overflow-x:hidden}
 a{color:inherit}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
-#stage{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;background:radial-gradient(120% 90% at 60% 40%,#10201e 0,#060d0c 70%);opacity:0;transition:opacity 1.2s}
+#stage{position:fixed;left:0;top:0;width:100%;height:100vh;height:100lvh;display:block;z-index:0;background:radial-gradient(120% 90% at 60% 40%,#10201e 0,#060d0c 70%);opacity:0;transition:opacity 1.2s}
 .gl-ready #stage{opacity:1}
 .no-gl #stage{opacity:.5;background:#060d0c url('../the big con.png') center/cover no-repeat}
 #pops{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
@@ -49,7 +49,7 @@ main{position:relative;z-index:2}
 
 /* ---------- chapters ---------- */
 .ch{position:relative;min-height:100vh;min-height:100svh;display:flex;align-items:center;padding:90px clamp(16px,4vw,64px) 96px;scroll-snap-align:start;pointer-events:none}
-.cap{pointer-events:auto;position:relative;width:min(440px,100%);padding:28px 28px 24px;background:var(--glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);border-left:3px solid var(--red);opacity:.25;transform:translateY(18px);transition:opacity .5s,transform .5s}
+.cap{pointer-events:auto;position:relative;width:min(440px,100%);padding:28px 28px 24px;background:var(--glass);border:1px solid var(--line);border-left:3px solid var(--red);opacity:.25;transform:translateY(18px);transition:opacity .5s,transform .5s}
 .ch.active .cap{opacity:1;transform:none}
 .cap::before{content:'';position:absolute;left:-8px;top:-8px;width:13px;height:13px;border-radius:50%;background:var(--red);box-shadow:0 0 14px var(--red),0 2px 0 #000}
 .cap .num{font-family:var(--display);font-size:13px;letter-spacing:.2em;color:var(--red);margin:0 0 6px}
@@ -68,9 +68,9 @@ main{position:relative;z-index:2}
 /* ---------- HUD ---------- */
 #hud{position:fixed;z-index:4;top:64px;right:clamp(12px,3vw,40px);width:292px;opacity:0;transform:translateY(-8px);transition:opacity .5s,transform .5s;pointer-events:none}
 #hud.on{opacity:1;transform:none}
-#mood{--mc:#8fbf7f;font-size:11px;font-weight:800;letter-spacing:.14em;font-stretch:85%;color:var(--mc);padding:7px 10px;margin-bottom:6px;background:var(--glass);border:1px solid var(--mc);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:color .6s,border-color .6s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mood{--mc:#8fbf7f;font-size:11px;font-weight:800;letter-spacing:.14em;font-stretch:85%;color:var(--mc);padding:7px 10px;margin-bottom:6px;background:var(--glass);border:1px solid var(--mc);transition:color .6s,border-color .6s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mood::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mc);margin-right:8px;box-shadow:0 0 10px var(--mc)}
-#ledger{background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#ledger{background:var(--glass);border:1px solid var(--line)}
 #ledger::before{content:'THE SYNDICATE';display:block;font-size:10px;font-weight:800;letter-spacing:.24em;color:var(--mute);padding:8px 10px 2px}
 .lrow{display:grid;grid-template-columns:30px 1fr auto auto;grid-template-areas:'f n m i' 'f c c c';column-gap:8px;align-items:center;padding:6px 10px;border-top:1px solid rgba(47,209,197,.12)}
 .lrow img{grid-area:f;width:30px;height:30px;border-radius:50%;object-fit:cover;background:#000;border:2px solid var(--pc)}
@@ -109,9 +109,9 @@ main{position:relative;z-index:2}
 .tick{flex:1;min-width:0;background:none;border:0;padding:8px 0 0;cursor:pointer;text-align:left}
 .tick span{display:block;font-size:10px;font-weight:800;letter-spacing:.12em;color:#5d706d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;text-transform:uppercase;font-stretch:80%}
 .tick i{display:block;height:3px;background:#22302e;position:relative;overflow:hidden}
-.tick i::after{content:'';position:absolute;inset:0;background:var(--red);transform-origin:left;transform:scaleX(0)}
+.tick i b{position:absolute;inset:0;background:var(--red);transform-origin:left;transform:scaleX(0);will-change:transform}
 .tick.on span{color:var(--ink)}
-.tick.on i::after{transform:scaleX(var(--p,0));box-shadow:0 0 8px var(--red)}
+
 .tick:hover span{color:var(--teal2)}
 
 /* ---------- closing ---------- */
@@ -162,5 +162,5 @@ main{position:relative;z-index:2}
   .stats{grid-template-columns:1fr 1fr}
 }
 @media(max-width:420px){#reelplay span{display:none}}
-@media(prefers-reduced-motion:reduce){.ticker div{animation:none}.cap{transition:none}html{scroll-snap-type:none}}
+@media(prefers-reduced-motion:reduce){.ticker div{animation:none}.cap{transition:none}}
 [hidden]{display:none!important}

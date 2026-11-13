@@ -96,6 +96,8 @@ page's import map). The exhibit thumbnails come from one atlas image; after addi
 replacing a node image run `python scripts/build_landing_atlas.py` (needs Pillow) and commit
 `static/landing/atlas.webp` + `atlas.js`. `landing.html?scene=<id>&t=<seconds>` freezes a
 single frame of one scene.
+`?perf` shows frame time, draw calls and the current quality tier; `?q=0..5` pins a tier
+(0 = sharpest; otherwise the page starts at ≤1.5× pixel ratio and steps down on slow frames).
 
 ### Tests
 
