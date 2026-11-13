@@ -27,7 +27,7 @@ test('every local <script src> and stylesheet referenced by index.html exists on
     assert.ok(href, 'stylesheet link has an href: ' + m[0]);
     refs.push(href[1]);
   }
-  assert.ok(refs.some(r => r.endsWith('game.css')), 'game.css is linked');
+  assert.ok(refs.some(r => r.endsWith('bigcon-ui.css')), 'game.css is linked');
   assert.ok(refs.some(r => r.endsWith('static/js/main.js')), 'main.js is referenced');
   for (const r of refs) {
     if (isRemote(r)) continue;
