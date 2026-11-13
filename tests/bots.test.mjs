@@ -188,6 +188,7 @@ const PLAYER_ACTS = [
   'venicecool', 'overmode', 'overtour', 'blockmode', 'blockade',
   'spy', 'dossier', 'sweep', 'masspanic', 'targetpanic', 'divestmade',
   'bondmageddon', 'sell', 'sellall', 'laylow',
+  'marketsell', 'lobby', 'refermode', 'refer', 'dealmode', 'deal',
 ];
 const BOT_SKIPS = ['sweep', 'cancel'];
 
@@ -902,11 +903,23 @@ test('BT-24 bots remember a takeover: the seat that took the node becomes the ta
   const g = Bots().memory[0].grudge;
   assert.ok(g[1] > 0 && g[2] > 0, 'simultaneous takeovers are both attributed');
 
-  /* an ACCC divestment empties a whole group: the regulator, not a heist */
-  const accc = (o, turn) => { const v = mk(o, turn); v.industryIds = [{ id: 'bank', ids: ['x', 'y', 'z'] }]; v.nmap = { ...book, z: { id: 'z', type: 'BANK', income: 2, cost: 5 } }; return v; };
+  /* a regulator's ruling returns the excess to the market: nobody holds it after,
+     so nobody is blamed */
+  const accc = (o, turn) => { const v = mk(o, turn); v.industryIds = [{ id: 'bank', ids: ['x', 'y', 'z'], trigger: 3 }]; v.nmap = { ...book, z: { id: 'z', type: 'BANK', income: 2, cost: 5 } }; return v; };
   await leakTargets(accc({ x: 0, y: 0, z: 0 }), true);
-  await leakTargets(accc({ x: 2 }, 13), false);
-  assert.equal(Bots().memory[0].grudge[2], undefined, 'nobody is blamed for a forced divestment');
+  await leakTargets(accc({ y: 0, z: 0 }, 13), false);
+  assert.deepEqual({ ...Bots().memory[0].grudge }, {}, 'nobody is blamed for a ruling');
+
+  /* a node I sold in a deal during my own turn is not a heist either */
+  const dealing = mk({ x: 0 });
+  const dapi = {
+    applyIntent: async (pi, m) => { if (m.act === 'leak') { dealing.owner.x = 2; dealing.phase = 'move'; dealing.curSeat = -1; } },
+    viewOf: () => dealing, chat: () => {},
+  };
+  Bots().resetForGame(11);
+  await Bots().takeTurn(0, dealing, dapi);
+  await leakTargets(mk({ x: 2 }, 13), false);
+  assert.equal(Bots().memory[0].grudge[2], undefined, 'a node that left during my own turn was my own doing');
 });
 
 test('BT-25 pacing: production realms pace bots like humans, test realms run instant', async t => {
@@ -1238,4 +1251,152 @@ test('BT-37 pacing and banter never touch the decision stream', async t => {
   const paced = await run(150);
   assert.equal(paced.stream, unpaced.stream, 'the same decision stream state, paced or not');
   assert.ok(unpaced.chat !== undefined, 'banter has its own stream');
+});
+
+/* ---------- the regulators' files: rulings, outs, referrals, deals ---------- */
+const BANK4 = {
+  b1: { id: 'b1', type: 'BANK', income: 1, cost: 3 }, b2: { id: 'b2', type: 'BANK', income: 4, cost: 6 },
+  b3: { id: 'b3', type: 'BANK', income: 2, cost: 4 }, b4: { id: 'b4', type: 'BANK', income: 3, cost: 5 },
+};
+const askBot = async (t, view, opt) => {
+  const Bots = (await engineWithBots(t)).ctx.window.BigConBots;
+  Bots.resetForGame(11);
+  return Bots.answerPrompt(0, opt, { viewOf: () => view, applyIntent: async () => {}, chat: () => {} });
+};
+const ruling = ids => ({ title: 'ACCC RULING — DIVEST 1 OF 2', options: ids.map(id => ({ label: id, v: id })), def: ids[ids.length - 1], meta: { kind: 'ruling' } });
+
+test('BT-36 at a ruling the bot gives up what it values least — income first, but never a lone set piece', async t => {
+  const view = fakeView({
+    owner: { b1: 0, b2: 0, b3: 0, b4: 0 }, nmap: BANK4,
+    industryIds: [{ id: 'bank', ids: ['b1', 'b2', 'b3', 'b4'], trigger: 3 }],
+    acccFiles: [{ pi: 0, ind: 'bank', s: 3, agency: 'ACCC' }],
+    players: [fakePlayer({ pos: 'b2' })],
+  });
+  assert.equal(await askBot(t, view, ruling(['b2', 'b4', 'b3', 'b1'])), 'b1', 'the $1 bank goes first');
+  assert.equal(await askBot(t, view, ruling(['b2', 'b4', 'b3'])), 'b3', 'then the $2 bank — the two best are kept');
+  /* a themed book mixes types: the lone WILD is a win-set piece, worth more than its $0 */
+  const coal = {
+    c1: { id: 'c1', type: 'COMMODITY', income: 3, cost: 5 }, c2: { id: 'c2', type: 'COMMODITY', income: 2, cost: 5 },
+    c3: { id: 'c3', type: 'WILD', income: 0, cost: 6 },
+  };
+  const v2 = fakeView({ owner: { c1: 0, c2: 0, c3: 0 }, nmap: coal, industryIds: [{ id: 'coal', ids: ['c1', 'c2', 'c3'], trigger: 3 }], players: [fakePlayer({ pos: 'c1' })] });
+  assert.equal(await askBot(t, v2, ruling(['c1', 'c2', 'c3'])), 'c2', 'the duplicate commodity goes, the only WILD stays');
+});
+
+test('BT-37 with a ruling at the next turn start the bot takes an out; earlier it waits', async t => {
+  const mk = s => fakeView({
+    owner: { b1: 0, b2: 0, b3: 0 }, nmap: BANK4,
+    industryIds: [{ id: 'bank', ids: ['b1', 'b2', 'b3', 'b4'], trigger: 3 }],
+    acccFiles: [{ pi: 0, ind: 'bank', s, agency: 'ACCC' }],
+    players: [fakePlayer({ pos: 'b2', money: 100 })],
+  });
+  const first = (await botDecides(t, mk(2)))[0];
+  assert.equal(first.act, 'marketsell', 'a ruling is imminent: sell back to the market instead of eating the fine');
+  assert.equal(first.id, 'b1', 'the node a ruling would take anyway');
+  assert.notEqual((await botDecides(t, mk(0)))[0].act, 'marketsell', 'two rounds out, the excess still pays — no hurry');
+  /* an excess that pays more a round than 3 Intel is worth: lobby, keep it paying */
+  const rich = mk(2); rich.players[0].intel = 3;
+  rich.nmap = { b1: { id: 'b1', type: 'BANK', income: 8, cost: 9 }, b2: { id: 'b2', type: 'BANK', income: 9, cost: 9 }, b3: { id: 'b3', type: 'BANK', income: 10, cost: 9 }, b4: BANK4.b4 };
+  const acts = (await botDecides(t, rich, m => m.act !== 'lobby')).map(m => m.act);
+  assert.equal(acts[0], 'lobby', 'an $8/turn excess is worth 3 Intel to keep a round');
+  assert.ok(!acts.includes('marketsell'), 'and the lobby replaces the sale: ' + acts.join(','));
+});
+
+test('BT-38 a deal offer: the bot declines an overpriced node and buys one it needs', async t => {
+  const nmap = { x: { id: 'x', type: 'MEDIA', income: 1, cost: 4 }, h: { id: 'h', type: 'BANK', income: 1, cost: 4 } };
+  const view = fakeView({ owner: { x: 1, h: 0 }, nmap, players: [fakePlayer({ pos: 'h', money: 60 }), fakePlayer({ pos: 'x', money: 20 })] });
+  const offer = price => ({ title: 'DEAL OFFERED — X FOR $' + price, options: [{ label: 'Accept', v: 1 }, { label: 'Decline', v: 0 }], def: 0, meta: { kind: 'deal', node: 'x', price, from: 1 } });
+  assert.equal(await askBot(t, view, offer(55)), 0, 'a $1/turn duplicate is not worth $55');
+  view.missingTypes = seat => (seat === 0 ? ['MEDIA'] : []);
+  assert.equal(await askBot(t, view, offer(5)), 1, 'a missing win-set type at near list price is bought');
+  assert.equal(await askBot(t, view, offer(61)), 0, 'never more than the bot holds');
+});
+
+test('BT-39 the ACCC owner refers a rival file — the leader’s first', async t => {
+  const nmap = { accc: { id: 'accc', type: 'REGULATOR', income: 1, cost: 5 } };
+  ['p1', 'p2', 'p3', 'q1', 'q2', 'q3'].forEach(id => { nmap[id] = { id, type: 'BANK', income: 2, cost: 4 }; });
+  const view = fakeView({
+    owner: { accc: 0, p1: 1, p2: 1, p3: 1, q1: 2, q2: 2, q3: 2 }, nmap,
+    industryIds: [{ id: 'bank', ids: ['p1', 'p2', 'p3', 'q1', 'q2', 'q3'], trigger: 3 }],
+    acccFiles: [{ pi: 1, ind: 'bank', s: 0, agency: 'ACCC' }, { pi: 2, ind: 'bank', s: 0, agency: 'ACCC' }],
+    players: [fakePlayer({ pos: 'accc', money: 40 }), fakePlayer({ pos: 'p1', money: 60 }), fakePlayer({ pos: 'q1', money: 95 })],
+  });
+  const intents = await botDecides(t, view, m => m.act === 'refer');
+  const refer = intents.find(m => m.act === 'refer');
+  assert.ok(refer, 'the bot refers: ' + intents.map(m => m.act).join(','));
+  assert.equal(refer.target, 2, 'the seat closest to winning');
+  assert.equal(refer.kind, 'bank');
+  /* never its own file, and ASIC files are not the ACCC's to refer */
+  view.acccFiles = [{ pi: 0, ind: 'bank', s: 0, agency: 'ACCC' }, { pi: 2, ind: 'monetary', s: 0, agency: 'ASIC' }];
+  view.phase = 'action'; view.curSeat = 0;
+  assert.ok(!(await botDecides(t, view)).some(m => m.act === 'refer'), 'nothing referable');
+});
+
+test('BT-40 a bot sheds an excess node to a non-leading rival who wants it, at or above list', async t => {
+  const nmap = { ...BANK4, m1: { id: 'm1', type: 'MEDIA', income: 2, cost: 4 }, m2: { id: 'm2', type: 'MEDIA', income: 2, cost: 4 } };
+  const view = fakeView({
+    owner: { b1: 0, b2: 0, b3: 0, m1: 1, m2: 2 }, nmap,
+    industryIds: [{ id: 'bank', ids: ['b1', 'b2', 'b3', 'b4'], trigger: 3 }],
+    acccFiles: [{ pi: 0, ind: 'bank', s: 2, agency: 'ACCC' }],
+    players: [fakePlayer({ pos: 'b2', money: 30 }), fakePlayer({ pos: 'm1', money: 99 }), fakePlayer({ pos: 'm2', money: 20 })],
+  });
+  view.missingTypes = seat => (seat === 2 ? ['BANK'] : []);
+  const intents = await botDecides(t, view, m => m.act === 'deal' || m.act === 'marketsell');
+  const deal = intents.find(m => m.act === 'deal');
+  assert.ok(deal, 'a deal beats a plain market sale here: ' + intents.map(m => m.act).join(','));
+  assert.equal(deal.target, 2, 'to the rival who is not winning');
+  assert.equal(deal.id, 'b1');
+  assert.ok(deal.n >= nmap.b1.cost && deal.n <= 20, 'at or above list, within their cash (' + deal.n + ')');
+});
+
+test('BT-41 MONOPOLY ALERT is priced on my open files, not on cortisol', async t => {
+  const Bots = (await engineWithBots(t)).ctx.window.BigConBots;
+  const view = fakeView({
+    owner: { b1: 0, b2: 0, b3: 0 }, nmap: BANK4,
+    industryIds: [{ id: 'bank', ids: ['b1', 'b2', 'b3', 'b4'], trigger: 3 }],
+    players: [fakePlayer({ money: 100, cortisol: 8 }), fakePlayer({ cortisol: 0 })],
+  });
+  assert.equal(Bots.cardEV('crackdown', view, 0).money, 0, 'no file: the sweep costs nothing, however hot');
+  view.acccFiles = [{ pi: 0, ind: 'bank', s: 1, agency: 'ACCC' }];
+  assert.ok(Bots.cardEV('crackdown', view, 0).money < 0, 'an open file: the sweep brings the ruling closer');
+  assert.equal(Bots.cardEV('crackdown', view, 0).mood, 'PANIC');
+});
+
+test('BT-42 an all-bot table with the regulators’ files still finishes cleanly', async t => {
+  const engine = await botEngine(t, 9191);
+  const S = await makeGame(engine, 4, { bots: [0, 1, 2, 3], goal: 100 });
+  await driveToOver(engine, S);
+  assert.equal(S.over, true, 'the con ends');
+  const rec = engine.ctx.__rec;
+  const rejects = rec.sys.filter(s => REJECT_RE.test(s.msg));
+  assert.equal(rejects.length, 0, 'no rejections: ' + rejects.slice(0, 3).map(r => r.msg).join(' | '));
+  assert.ok(!engine.consoleOut.error.some(l => String(l).includes('bot turn error')), 'no bot turn crashed');
+});
+
+test('BT-43 bots leave MADE alone unless they are losing badly', async t => {
+  const Bots = (await engineWithBots(t)).ctx.window.BigConBots;
+  const W = Bots.weights;
+  const made = { id: 'made', type: 'WILD', income: 0, cost: 8 };
+  const rig = (turn, moneys, extra = {}, rivalSet = true) => {
+    const b = fullSet('b');
+    const view = fakeView({ turn, owner: { ...(rivalSet ? ownedBy(b, 1) : {}), ...extra }, nmap: { made, ...b } });
+    view.players = moneys.map(money => fakePlayer({ money }));
+    view.missingTypes = realMissing(view);
+    return view;
+  };
+  /* off spawn: level table, nobody is desperate */
+  const spawn = rig(1, [15, 15, 15], {}, false);
+  assert.equal(Bots.madeAppetite(spawn, 0), W.madeTruce, 'off spawn the truce holds');
+  /* mid-game, seat 0 is far behind a rival with the full set and the cash */
+  const losing = rig(12, [5, 90, 40]);
+  assert.equal(Bots.madeAppetite(losing, 0), 1, 'the seat with nothing to lose goes for it');
+  assert.equal(Bots.madeAppetite(losing, 1), W.madeTruce, 'the front-runner keeps the truce');
+  /* the same losing position in round 1 is not yet desperation */
+  assert.equal(Bots.madeAppetite(rig(1, [5, 90, 40]), 0), W.madeTruce, 'nobody is desperate in the opening rounds');
+  /* a rival already holds it: the truce is broken, the appetite recovers part-way */
+  assert.equal(Bots.madeAppetite(rig(12, [50, 50, 50], { made: 2 }), 1), W.madeBrokenTruce, 'a broken truce is fair game, somewhat');
+  assert.ok(W.madeTruce > 0 && W.madeTruce < W.madeBrokenTruce && W.madeBrokenTruce < 1, 'appetite bands are ordered');
+  /* and the valuation itself moves with it */
+  const calm = Bots.nodeOwnValue(spawn, 0, 'made'), wild = Bots.nodeOwnValue(losing, 0, 'made');
+  assert.ok(calm > 0 && wild > calm * 3, 'MADE is worth several times more to the desperate seat (' + calm.toFixed(1) + ' vs ' + wild.toFixed(1) + ')');
 });

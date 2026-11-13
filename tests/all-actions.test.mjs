@@ -361,6 +361,57 @@ test('laylow: cash (+$1) and cool (−2 Cortisol) both end the turn', async t =>
   used('laylow');
 });
 
+/* ---------------- the regulators' files and node deals ---------------- */
+const fileOn = (e, S, pi, ind) => { e.f.acccReconcile(); return e.f.findFile(pi, ind); };
+test('marketsell: a node from an open-file book goes back to the market at list price', async t => {
+  const { e, S, P } = await game(t);
+  give(S, 0, ['citi', 'commbank', 'nab']);
+  assert.ok(fileOn(e, S, 0, 'bank'), 'three banks open an ACCC file');
+  S.bugs.nab = 1;
+  await act(e, { act: 'marketsell', id: 'nab' });
+  assert.equal(S.owner.nab, undefined, 'the node is unowned again');
+  assert.equal(S.bugs.nab, undefined, 'bugs on it are cleared');
+  assert.ok(P[0].money >= 60 + e.acc.NMAP.nab.cost, 'list price paid out');
+  assert.equal(e.f.findFile(0, 'bank'), null, 'the book is back to the allowed count — the file closes');
+  assert.ok(advanced(S), 'the sale is your action');
+  used('marketsell');
+});
+test('lobby: 3 Intel, −1 scrutiny, free and once per turn', async t => {
+  const { e, S, P } = await game(t);
+  give(S, 0, ['citi', 'commbank', 'nab']);
+  fileOn(e, S, 0, 'bank').s = 2;
+  await act(e, { act: 'lobby', kind: 'bank' });
+  assert.equal(e.f.findFile(0, 'bank').s, 1); assert.equal(P[0].intel, 7);
+  assert.equal(S.phase, 'action', 'lobbying does not use the action');
+  await act(e, { act: 'lobby', kind: 'bank' });
+  assert.equal(e.f.findFile(0, 'bank').s, 1, 'second lobby refused'); assert.equal(P[0].intel, 7);
+  used('lobby');
+});
+test('refermode / refer: the ACCC owner pays $4 for +1 scrutiny on a rival file', async t => {
+  const { e, S, P } = await game(t);
+  S.owner.accc = 0;
+  give(S, 1, ['citi', 'commbank', 'nab']);
+  fileOn(e, S, 1, 'bank');
+  await act(e, { act: 'refermode' });
+  assert.equal(S.mode, 'refer');
+  await act(e, { act: 'refer', target: 1, kind: 'bank' });
+  assert.equal(e.f.findFile(1, 'bank').s, 2, 'referral +1, then the offender’s own turn start +1');
+  assert.equal(P[0].money, 60 - 4 + 2, 'the referral cost $4 (then the quiet quarter paid $2)');
+  assert.ok(advanced(S), 'a referral is your action');
+  used('refermode', 'refer');
+});
+test('dealmode / deal: sell a node to a rival for a named price', async t => {
+  const { e, S, P } = await game(t);
+  give(S, 0, ['citi', 'anz']);
+  await act(e, { act: 'dealmode' });
+  assert.equal(S.mode, 'deal');
+  await act(e, { act: 'deal', id: 'citi', target: 1, n: 12 });
+  assert.equal(S.owner.citi, 1, 'the guest auto-accepts (first option)');
+  assert.ok(logged(S, 'DEAL DONE'), 'the deal is on the record');
+  assert.ok(advanced(S));
+  used('dealmode', 'deal');
+});
+
 /* ---------------- guards ---------------- */
 test('acts out of phase or off-turn are ignored, not applied', async t => {
   const { e, S, P } = await game(t, { phase: 'move' });

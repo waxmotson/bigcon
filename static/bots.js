@@ -275,10 +275,11 @@ export const BigConBots = (function () {
       if (p != null && v.players.length > 1) return { money: 0, fire: 2 / (v.players.length - 1), intel: 0, mood: 'FRENZY' };
       return { money: 0, fire: 0, intel: 0, mood: 'FRENZY' };
     },
+    /* MONOPOLY ALERT: every open file +1 scrutiny — mine bring their rulings closer */
     crackdown: (v, s) => {
-      const bs = OWN(v, 'bigshort') === s ? 3 : 0;
-      if (isMaxFire(v, s)) return { money: -4 + bs, fire: 0, intel: 0, mood: 'PANIC' };
-      return { money: bs, fire: 0, intel: 0, mood: 'PANIC' };
+      let money = OWN(v, 'bigshort') === s ? 3 : 0;
+      for (const f of filesOf(v, s)) money -= fileStepCost(v, s, f) / cardScale(v); /* cardEV rescales */
+      return { money, fire: 0, intel: 0, mood: 'PANIC' };
     },
     tapes: (v, s) => {
       let intel = 0;
@@ -299,8 +300,14 @@ export const BigConBots = (function () {
   function cardEV(cardId, view, seat) {
     const f = CARD_EV[cardId];
     if (!f) return { money: 0, fire: 0, intel: 0, mood: null };
-    try { return f(view, seat); } catch (e) { return { money: 0, fire: 0, intel: 0, mood: null }; }
+    try {
+      const r = f(view, seat);
+      if (r && r.money) r.money *= cardScale(view); /* mirrors the engine's cs() */
+      return r;
+    } catch (e) { return { money: 0, fire: 0, intel: 0, mood: null }; }
   }
+  /* event-card dollars scale with the table's goal ($100 is the written scale) */
+  function cardScale(v) { return ((v && v.goal) || 100) / 100; }
 
   /* Expected next draw: uniform over the unseen multiset — what the wire
      legitimately exposes (deckCount plus the public discard pile). */
@@ -333,9 +340,13 @@ export const BigConBots = (function () {
     setTurns: 1.6,         /* rounds to walk to and seize one missing type */
     setCost: 5,            /* typical cash price of one missing type */
     homeStretch: 4,        /* a seat within this many rounds of winning is a threat */
-    acccHazard: 0.5,       /* 1/3 per turn, and a concentrated book stays exposed */
+    acccRuling: 3,         /* a regulator's file is ruled at this scrutiny (engine ACCC_RULING) */
+    acccAction: 3,         /* the action a market sale spends, in money */
     bugLife: 9,            /* rounds a planted bug is assumed to keep paying */
-    blockDelay: 0.35,      /* a wall delays a rival's best target for one rotation */
+    blockDelay: 0.35,
+    madeTruce: 0.12,       /* appetite for an unowned MADE while not desperate */
+    madeBrokenTruce: 0.45, /* ...once a rival already holds it */
+    madeTruceRounds: 4,    /* nobody is desperate before this round */      /* a wall delays a rival's best target for one rotation */
   };
   /* the one price of 1 Intel, for every cost and position score in this file */
   const INTEL = W.intel * 2;
@@ -622,26 +633,59 @@ export const BigConBots = (function () {
   }
 
   /* ================= NODE & SEIZURE VALUE ================= */
-  /* ACCC/ASIC concentration, mirrored from acccInvestigate. Each turn with any
-     tracked industry past two nodes carries a 1-in-3 chance of an investigation,
-     which hits only the single most concentrated group (Watson exempts coal):
-     the whole group is divested and 20% of the cash and Intel is fined. So the
-     exposure is the loss from that one group, however many others qualify. The
-     view carries the groups as id lists (botView.industryIds). */
+  /* ACCC/ASIC concentration, mirrored from the engine's public files. No dice: a
+     book at its industry's trigger (botView.industryIds[].trigger — 3 for the
+     themed books, max(3, ceil(size/3)) for the type-based ones) has an open file
+     (botView.acccFiles), scrutiny climbs +1 at each of the offender's turn starts,
+     and the ruling at W.acccRuling takes only the excess back to the market, with
+     a fine of 10% of cash and of Intel per excess node (30% cap). The out is a
+     market sale at list price: an action, but no fine. So an excess node is worth
+     its income until the ruling, plus the cheaper of the fine and the sale. */
+  const trigOf = g => g.trigger || 3;
+  function fileOf(v, seat, ind) { return (v.acccFiles || []).find(f => f.pi === seat && f.ind === ind) || null; }
+  function filesOf(v, seat) { return (v.acccFiles || []).filter(f => f.pi === seat); }
+  function groupOf(v, ind) { return (v.industryIds || []).find(g => g.id === ind) || null; }
+  function finePct(excess) { return Math.min(30, 10 * Math.max(0, excess)); }
+  function fineValue(v, seat, excess) {
+    const p = v.players[seat];
+    return Math.floor(p.money * finePct(excess) / 100) * W.money + Math.floor(p.intel * finePct(excess) / 100) * INTEL;
+  }
+  /* what a seat would rather keep at a ruling: the income it adds, a lone win-set
+     piece, its own plan; ties go to the dearer node, as the engine's default does */
+  function keepValue(v, seat, nid) {
+    const n = v.nmap[nid];
+    if (!n) return -Infinity;
+    let k = marginalIncome(v, seat, nid) * horizon(v);
+    if (typeCount(v, seat, n.type) === 1) k += setPieceValue(n.type);
+    if (strOf(v, seat).nodes.indexOf(nid) >= 0) k += 8;
+    return k + n.cost * 0.01;
+  }
+  /* the seat's held ids in one group, the ones a ruling would take first */
+  function heldIn(v, seat, g) { return g.ids.filter(id => v.owner[id] === seat && v.nmap[id]); }
+  function worstFirst(v, seat, ids) { return ids.slice().sort((a, b) => keepValue(v, seat, a) - keepValue(v, seat, b)); }
+  /* the excess of a hypothetical book, cheapest income first (the engine's default keep order) */
+  function excessOf(v, g, book) {
+    const held = g.ids.filter(id => book.has(id) && v.nmap[id]);
+    const allowed = trigOf(g) - 1;
+    if (held.length <= allowed) return [];
+    return held.sort((a, b) => (v.nmap[a].income - v.nmap[b].income) || (v.nmap[a].cost - v.nmap[b].cost)).slice(0, held.length - allowed);
+  }
   function acccLoss(v, seat, book) {
     if (!v.industryIds) return 0;
-    let hitCount = 0, hitBook = 0;
     const H = horizon(v);
+    let loss = 0;
     for (const g of v.industryIds) {
       if (g.id === 'coal' && book.has('watson')) continue;
-      const held = g.ids.filter(id => book.has(id));
-      if (held.length <= 2) continue;
-      const worth = held.reduce((sum, id) => sum + (v.nmap[id] ? v.nmap[id].income * H : 0), 0);
-      if (held.length > hitCount || (held.length === hitCount && worth > hitBook)) { hitCount = held.length; hitBook = worth; }
+      const drop = excessOf(v, g, book);
+      if (!drop.length) continue;
+      const f = fileOf(v, seat, g.id);
+      /* incomes still collected before the out is taken: a fresh file pays twice */
+      const left = Math.max(0, W.acccRuling - 1 - (f ? f.s : 0));
+      let lost = 0, sale = 0;
+      for (const id of drop) { lost += v.nmap[id].income * Math.max(0, H - left); sale += W.acccAction - v.nmap[id].cost * W.money; }
+      loss += lost + Math.min(fineValue(v, seat, drop.length), sale);
     }
-    if (!hitCount) return 0;
-    const p = v.players[seat];
-    return hitBook + Math.floor(p.money * 0.2) * W.money + Math.floor(p.intel * 0.2) * INTEL;
+    return loss;
   }
   /* only what THIS node changes: a deal outside the exposed group costs nothing
      extra, and picking up Watson over a stacked coal book comes out as a saving */
@@ -649,7 +693,19 @@ export const BigConBots = (function () {
     const without = bookOf(v, seat); without.delete(nid);
     const withIt = new Set(without); withIt.add(nid);
     const tol = strOf(v, seat).accc; /* personalities differ on risk tolerance */
-    return (acccLoss(v, seat, withIt) - acccLoss(v, seat, without)) * W.acccHazard * tol;
+    return (acccLoss(v, seat, withIt) - acccLoss(v, seat, without)) * tol;
+  }
+  /* what one more point of scrutiny on this file costs its offender: a third of
+     the fine, plus a round of the excess income lost sooner */
+  function fileStepCost(v, seat, f) {
+    const g = groupOf(v, f.ind);
+    if (!g) return 0;
+    const held = heldIn(v, seat, g);
+    const excess = held.length - (trigOf(g) - 1);
+    if (excess <= 0) return 0;
+    let inc = 0;
+    for (const id of excessOf(v, g, new Set(held))) inc += v.nmap[id].income;
+    return fineValue(v, seat, excess) / W.acccRuling + inc;
   }
   function nodeOwnValue(v, seat, nid) {
     const n = v.nmap[nid];
@@ -696,7 +752,32 @@ export const BigConBots = (function () {
       const cur = v.players[seat].cortisol;
       if (cur >= 2) v2 += (fireOf(v, seat, cur) - fireOf(v, seat, Math.max(0, cur - relief))) * 4;
     }
+    if (nid === 'made' && v.owner['made'] !== seat && v2 > 0) v2 *= madeAppetite(v, seat);
     return v2;
+  }
+  /* MADE is mutually assured destruction: on paper it is the best node on the
+     board, but people at a real table leave it alone — taking it taxes everyone
+     and paints a target — unless they are losing badly and have nothing better.
+     Bots do the same: a seat that is not desperate barely wants it (a little
+     more once a rival has already broken the truce), a desperate seat wants it
+     at full value. Desperate = a few rounds in, clearly the slowest seat in the
+     race, and well behind the front-runner. */
+  function madeDesperate(v, seat) {
+    if ((v.turn || 1) < W.madeTruceRounds) return false;
+    const mine = etaOf(v, seat);
+    let best = Infinity, worst = true;
+    for (let j = 0; j < v.players.length; j++) {
+      if (j === seat) continue;
+      const e = etaOf(v, j);
+      if (e < best) best = e;
+      if (e > mine) worst = false;
+    }
+    if (best === Infinity) return false;
+    return worst && mine >= best * 1.5 && mine - best >= W.homeStretch;
+  }
+  function madeAppetite(v, seat) {
+    if (madeDesperate(v, seat)) return 1;
+    return v.owner['made'] != null ? W.madeBrokenTruce : W.madeTruce;
   }
   function seizeCandidate(v, seat, nid) {
     const n = v.nmap[nid];
@@ -771,16 +852,12 @@ export const BigConBots = (function () {
         mem.grudge[k] *= 0.85;
         if (mem.grudge[k] < 0.05) delete mem.grudge[k];
       }
-      /* An ACCC divestment empties a whole group of three or more at once and
-         hands the pieces out: that is the regulator, not a heist. */
-      const divested = {};
-      for (const g of (v.industryIds || [])) {
-        const had = g.ids.filter(id => prev.mine.indexOf(id) >= 0);
-        if (had.length > 2 && !had.some(id => v.owner[id] === pi)) for (const id of had) divested[id] = true;
-      }
+      /* A regulator's ruling returns the excess to the market — nobody owns it
+         after, so nobody is blamed — and a node I sold in a deal left during my own
+         turn, before the end-of-turn snapshot. Only a rival-held node was taken. */
       for (const nid of prev.mine) {
         const o = v.owner[nid];
-        if (o != null && o !== pi && !divested[nid]) mem.grudge[o] = (mem.grudge[o] || 0) + 1;
+        if (o != null && o !== pi) mem.grudge[o] = (mem.grudge[o] || 0) + 1;
       }
     }
     mem.guard = null;
@@ -1462,6 +1539,53 @@ export const BigConBots = (function () {
         }
       }
     }
+    /* ---- the regulators' files ----
+       Mine: once the next turn start would rule, take an out — sell the node a
+       ruling would take anyway back to the market (no fine), shed it to a rival
+       who is not winning for a premium, or lobby a round off when the fine is
+       heavy and the excess still pays. Theirs: REFER, with the ACCC or ASIC. */
+    for (const f of filesOf(v, pi)) {
+      const g = groupOf(v, f.ind);
+      if (!g) continue;
+      const held = heldIn(v, pi, g);
+      const excess = held.length - (trigOf(g) - 1);
+      if (excess <= 0 || f.s + 1 < W.acccRuling) continue;
+      const order = worstFirst(v, pi, held);
+      const worst = order[0], wn = v.nmap[worst];
+      const fineCut = fineValue(v, pi, excess) - fineValue(v, pi, excess - 1);
+      const sell = fineCut + wn.cost * W.money - marginalIncome(v, pi, worst);
+      /* a lobby and a sale both dodge the fine; the lobby keeps the excess paying
+         one more round for 3 Intel (and a seat about to win only needs rounds) */
+      let exInc = 0;
+      for (const id of order.slice(0, excess)) exInc += marginalIncome(v, pi, id);
+      const lobby = exInc - 3 * INTEL + (isHomeStretch(v, pi) ? fineValue(v, pi, excess) * 0.5 : 0);
+      if (me.intel >= 3 && !v.lobbied && f.s > 0 && lobby > 0) {
+        list.push({ kind: 'lobby', ind: f.ind, val: Math.max(lobby, sell + 0.5), continuing: true });
+        continue;
+      }
+      list.push({ kind: 'marketsell', nid: worst, val: sell });
+      const deal = pickDealOffer(v, pi, worst, sell);
+      if (deal) list.push(deal);
+    }
+    if (me.money >= 4 && !v.referred && (v.owner['accc'] === pi || v.owner['asic'] === pi)) {
+      let br = null;
+      for (const f of (v.acccFiles || [])) {
+        if (f.pi === pi || !v.players[f.pi]) continue;
+        if ((f.agency === 'ASIC' ? v.owner['asic'] : v.owner['accc']) !== pi) continue;
+        const g = groupOf(v, f.ind);
+        if (!g) continue;
+        const held = heldIn(v, f.pi, g);
+        const excess = held.length - (trigOf(g) - 1);
+        if (excess <= 0) continue;
+        /* a point of scrutiny is a round sooner; at 2 the next turn start rules
+           anyway, so it only cancels a lobby */
+        const speed = f.s + 1 >= W.acccRuling ? 0.25 : 1;
+        let val = fileStepCost(v, f.pi, f) * 1.5 * speed * (1 + closeness(v, f.pi)) - 4 * W.money;
+        if (f.pi === leader) val = val * 1.4 + 3;
+        if (!br || val > br.val) br = { kind: 'refer', target: f.pi, ind: f.ind, val };
+      }
+      if (br && br.val > 0) list.push(br);
+    }
     /* the dossier as a takeover prelude */
     if (me.intel >= 3 && !v.dossier) {
       const take = list.filter(x => x.kind === 'seize' && x.isTake)[0];
@@ -1471,7 +1595,7 @@ export const BigConBots = (function () {
     }
     /* apply the character's temperament: hostility through urg, cash plays
        through cashRush (see the convergence block at the top) */
-    const ATTACK = { leak: 1, audit: 1, tweet: 1, roast: 1, targetpanic: 1, masspanic: 1, bondmageddon: 1, pressure: 1, stage5: 1, qantasdown: 1, oilcrash: 1, missile: 1, overtour: 1, divestmade: 1, blockade: 1 };
+    const ATTACK = { refer: 1, leak: 1, audit: 1, tweet: 1, roast: 1, targetpanic: 1, masspanic: 1, bondmageddon: 1, pressure: 1, stage5: 1, qantasdown: 1, oilcrash: 1, missile: 1, overtour: 1, divestmade: 1, blockade: 1 };
     for (const c of list) {
       if (ATTACK[c.kind]) c.val *= urg;
       else if (c.kind === 'bug') c.val *= 1 + (urg - 1) * 0.5;
@@ -1483,6 +1607,30 @@ export const BigConBots = (function () {
     for (const c of open) if (!best || c.val > best.val) best = c;
     if (best && best.val < 0.55 && !(refused && refused.laylow)) return { kind: 'laylow', choice: me.cortisol >= 3 ? 'cool' : 'cash' };
     return best;
+  }
+
+  /* Shed a node a ruling would take to a rival who is not winning, for a premium
+     over list. Their acceptance is read off the same table-visible valuation a
+     bot buyer uses (answer 'DEAL OFFERED'); a human may well decline. Both are
+     priced against the ruling: a sale banks the fine it avoids plus list price,
+     a declined offer has spent the action and leaves the ruling to land. */
+  function pickDealOffer(v, pi, nid, sellVal) {
+    const n = v.nmap[nid];
+    if (!n || v.players.length < 2) return null;
+    const leader = leaderSeat(v, pi);
+    let best = null;
+    for (let j = 0; j < v.players.length; j++) {
+      const pj = v.players[j];
+      if (j === pi || j === leader || !pj || pj.dc || isHomeStretch(v, j)) continue;
+      const price = Math.min(pj.money, n.cost + Math.max(2, Math.ceil(n.cost * 0.5)));
+      if (price <= n.cost) continue;
+      const theirs = nodeOwnValue(v, j, nid);
+      if (theirs - price * W.money < 2) continue;
+      const p = pj.bot ? 0.9 : 0.5;
+      const val = p * (sellVal + (price - n.cost) * W.money) - Math.max(0, theirs) * 0.05 * closeness(v, j);
+      if (!best || val > best.val) best = { kind: 'deal', nid, target: j, price, val };
+    }
+    return best && best.val > sellVal ? best : null;
   }
 
   function victimsOf(v, pi) {
@@ -1660,6 +1808,16 @@ export const BigConBots = (function () {
       case 'bondmageddon':
         await tryIntent(api, pi, { act: 'bondmageddon', target: pick.target });
         return true;
+      case 'marketsell': await tryIntent(api, pi, { act: 'marketsell', id: pick.nid }); return true;
+      case 'lobby': await tryIntent(api, pi, { act: 'lobby', kind: pick.ind }); return false;
+      case 'refer':
+        await tryIntent(api, pi, { act: 'refermode' });
+        await tryIntent(api, pi, { act: 'refer', target: pick.target, kind: pick.ind });
+        return true;
+      case 'deal':
+        await tryIntent(api, pi, { act: 'dealmode' });
+        await tryIntent(api, pi, { act: 'deal', id: pick.nid, target: pick.target, n: pick.price });
+        return true;
       default: return false;
     }
   }
@@ -1741,6 +1899,21 @@ export const BigConBots = (function () {
       if (oil === coal) return r32(pi) < 0.5 ? 'oil' : 'coal';
       return oil > coal ? 'oil' : 'coal';
     }
+    /* a regulator's ruling: give up the node worth least to me */
+    if ((byTitle('ACCC RULING') || byTitle('ASIC RULING')) && view) {
+      const ids = (opt.options || []).map(o => o.v).filter(id => typeof id === 'string' && view.nmap[id]);
+      return ids.length ? worstFirst(view, pi, ids)[0] : undefined;
+    }
+    /* a rival's offer: buy only when the node is worth more to me than the price
+       (the price also funds the seller's race) */
+    if (byTitle('DEAL OFFERED') && view && opt.meta && opt.meta.kind === 'deal') {
+      const nid = opt.meta.node, price = opt.meta.price, from = opt.meta.from;
+      const me = view.players[pi];
+      if (!view.nmap[nid] || !me || !(price >= 0) || me.money < price) return 0;
+      let worth = nodeOwnValue(view, pi, nid) - price * W.money;
+      if (typeof from === 'number' && view.players[from]) worth -= price * 0.5 * closeness(view, from);
+      return worth > 1 ? 1 : 0;
+    }
     if (byTitle('FOX SPIN') || byTitle('SPIN THE PRESS')) {
       if (committed && committed.kind === 'roast') return 'cortisol';
       if (committed && committed.kind === 'spincool') return 'cool';
@@ -1776,6 +1949,10 @@ export const BigConBots = (function () {
   B.leaderSeat = leaderSeat;
   B.marginalIncome = marginalIncome;
   B.raidValue = raidValue;
+  B.keepValue = keepValue;
+  B.acccLoss = acccLoss;
+  B.nodeOwnValue = nodeOwnValue;
+  B.madeAppetite = madeAppetite;
   B.takeTurn = takeTurn;
   B.answerPrompt = answerPrompt;
   B.resetForGame = resetForGame;

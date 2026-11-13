@@ -203,13 +203,13 @@ const GAME_MODULE_NAMES = ['hooks', 'util', 'data', 'state', 'boards', 'engine',
 const ACC_NAMES = [
   'S', 'Net', 'NODES', 'NMAP', 'EDGES', 'ADJ', 'CLEAN_EDGES', 'BASE_EDGES', 'BASE_NODES', 'GEO_NODES', 'GEO_EDGES', 'GEO_NODE_IDS',
   'GEO_HIGH_VALUE_IDS', 'GEO_NK_IDS', 'PROJ_PAUSE_MS', 'OIL_IDS', 'WORLD_EDGES', 'WORLD_GEO', 'REMOVED_NODE_IDS', 'ORIGINAL_LAYOUT_BY_ID',
-  'CARDS', 'CARDBYID', 'MOODS', 'CHARS', 'BUZZWORDS', 'INDUSTRIES', 'WIN_TYPES', 'QUIK_SLOTS', 'QUIK_HOME', 'HIGH_VALUE_NODE_IDS', 'PCOLORS',
+  'CARDS', 'CARDBYID', 'MOODS', 'CHARS', 'BUZZWORDS', 'INDUSTRIES', 'INDBYID', 'ACCC_RULING', 'WIN_TYPES', 'QUIK_SLOTS', 'QUIK_HOME', 'HIGH_VALUE_NODE_IDS', 'PCOLORS',
   'TYPE_COLORS', 'MAXPLAYERS', 'GOAL_MIN', 'GOAL_MAX', 'GOAL_DEF', 'COUNTRY',
 ];
 /* …and through `engine.f` (functions). */
 const F_NAMES = [
   'applyIntent','startTurn','endOfTurn','nextTurn','winCheck','initGame','income','addCortisol','raid','madePay',
-  'acccInvestigate','concentratedIndustries','ownedInIndustry','industryNodes','generateRandomBoard','generateRingworldBoard','generateMegaRingBoard','megaRingMetrics','ringworldMetrics','boardViewBounds','resetBoardView','rebuildAdj',
+  'cs','cardText','cardFace','acccReview','acccAdvance','acccRule','acccReconcile','industryTrigger','industryAllowed','findFile','filesOf','fileForNode','concentratedIndustries','ownedInIndustry','industryNodes','generateRandomBoard','generateRingworldBoard','generateMegaRingBoard','megaRingMetrics','ringworldMetrics','boardViewBounds','resetBoardView','rebuildAdj',
   'separateNodes','applyQuikSlot','nodeBox','pubState','adoptState','mergeTail','sendLogParts','adoptLogPart','flushState','sendAll','sendTo',
   'sysTo','askPlayer','announceAll','revealAll','drawCard','handleHello','onHostClose','onHostData','broadcastLobby','setGeoUI',
   'addLobbyChat','addChat','applyChar','lobbyPlayers','clampGoal','matchBuzzword','codeSlug','codeLabel','genCode',
@@ -428,7 +428,7 @@ export function makeState(engine, over = {}) {
     log: [], chat: [], logN: 0, chatN: 0, quikSlot: 0, boardLayout: null, boardEdges: null, auditedOnce: false,
     dlcGeo: false, rubble: {}, ov: null, geoMissiled: false, geoBeach: false, geoBoeing: false,
     geoCrash: false, geoStage5: false, geoVenice: false, blockades: {}, blockadeUsed: false,
-    missileProbe: null, qantasGroundUntil: 0, decline: null,
+    missileProbe: null, qantasGroundUntil: 0, decline: null, acccFiles: [], lobbied: false, referred: false,
   };
   /* Overriding defaults is merged always, so fixture authors only set what they care about. */
   for (const [k, v] of Object.entries(over)) if (k !== 'players') s[k] = v;
@@ -460,7 +460,7 @@ export async function withSeedAsync(seed, fn) {
 }
 
 /* Deterministic sequence RNG: values are consumed in order (looping). Handy for
-   controlling probability gates like the ACCC 1-in-3 check. */
+   controlling probability gates like the MADE payout roll. */
 export function withRandomSeq(values, fn) {
   const real = Math.random.bind(Math);
   let i = 0;

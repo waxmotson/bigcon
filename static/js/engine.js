@@ -16,7 +16,8 @@ import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, app
 export { hooks, setHooks };
 /* The host services the rules call, bound late so a hook swapped in by setHooks
    (or wrapped by a test) is always the one that runs. */
-const sync=now=>hooks.sync(now),sysTo=(pi,msg)=>hooks.sysTo(pi,msg),askPlayer=(pi,opt)=>hooks.askPlayer(pi,opt),announceAll=(title,html)=>hooks.announceAll(title,html),revealAll=(title,html)=>hooks.revealAll(title,html);
+/* every publish reconciles the regulators' files against ownership first */
+const sync=now=>{acccReconcile();hooks.sync(now)},sysTo=(pi,msg)=>hooks.sysTo(pi,msg),askPlayer=(pi,opt)=>hooks.askPlayer(pi,opt),announceAll=(title,html)=>hooks.announceAll(title,html),revealAll=(title,html)=>hooks.revealAll(title,html);
 /* ================= STATE & HELPERS ================= */
 let fxSeq=0;
 export function pname(i){return S.players[i].name}
@@ -99,7 +100,15 @@ export function raid(i){
   +'<li>Cortisol resets to <b>0</b>; next turn brings no income and a single step</li></ul>');
 }
 
-/* ACCC concentration: more than 2 holdings in one industry (charts excluded). */
+/* ACCC concentration — a public file the table can see coming, not a dice roll.
+   A book is concentrated once a player holds the industry's trigger count: 3 in the
+   themed id-list industries, max(3, ceil(size/3)) in the five type-based ones, sized
+   on the live board (the Geography DLC grows them). Charts and WILD nodes count only
+   where a themed list names them. While a book is concentrated a file is open on that
+   (player, industry): +1 scrutiny at each of the offender's turn starts, a ruling at
+   ACCC_RULING, and it closes the moment the book drops back to the allowed count —
+   reconciled against ownership on every sync, so no mutation has to remember it. */
+export const ACCC_RULING=3;
 export const INDUSTRIES=[
  {id:'bank',name:'BANKING',pick:n=>n.type==='BANK'},
  {id:'regulator',name:'REGULATORS',pick:n=>n.type==='REGULATOR'},
@@ -114,53 +123,93 @@ export const INDUSTRIES=[
  {id:'bessent',name:'BIG BESSENT',ids:['bessent','bess','bond']},
  {id:'monetary',name:'MONETARY POLICY',ids:['mpc','rba','cash','bullock','infl']}
 ];
+export const INDBYID={};INDUSTRIES.forEach(g=>INDBYID[g.id]=g);
 export function industryNodes(g){
  if(g.ids)return g.ids.map(id=>NMAP[id]).filter(Boolean);
  return NODES.filter(g.pick);
 }
+export function industryTrigger(g){return g.ids?3:Math.max(3,Math.ceil(industryNodes(g).length/3))}
+export function industryAllowed(g){return industryTrigger(g)-1}
 export function ownedInIndustry(pi,g){return industryNodes(g).filter(n=>S.owner[n.id]===pi)}
+/* Mark Watson exempts the holder's COAL book only. */
 export function concentratedIndustries(pi){
- return INDUSTRIES.map(g=>{const owned=ownedInIndustry(pi,g);return {g,owned,n:owned.length}}).filter(x=>x.n>2);
+ return INDUSTRIES.map(g=>{const owned=ownedInIndustry(pi,g);return {g,owned,n:owned.length,trigger:industryTrigger(g)}}).filter(x=>x.n>=x.trigger&&!(x.g.id==='coal'&&S.owner.watson===pi));
 }
-export function acccInvestigate(pi){
- if(!S||S.over)return;
- let hits=concentratedIndustries(pi);
- // Mark Watson exempts the holder from ACCC action against the COAL industry only.
- if(S.owner.watson===pi)hits=hits.filter(x=>x.g.id!=='coal');
- if(!hits.length)return;
- if(Math.random()>=1/3)return
- hits.sort((a,b)=>b.n-a.n||a.g.name.localeCompare(b.g.name));
- const hit=hits[0],offender=S.players[pi];
- /* MONETARY POLICY books are market manipulation — ASIC's file, not the ACCC's.
-    Mechanics are unchanged: 33% trigger, 20% fines, forced divestment. */
- const isAsic=hit.g.id==='monetary';
- const agency=isAsic?'ASIC':'ACCC';
- const crime=isAsic?'MARKET MANIPULATION':'MONOPOLY ALERT';
- const divested=shuffle(hit.owned.slice());
- // Give at most one node to each rival; any remaining nodes return to the market.
+/* MONETARY POLICY books are market manipulation — ASIC's file, not the ACCC's. */
+export function fileAgency(ind){return ind==='monetary'?'ASIC':'ACCC'}
+export function acccFileList(){if(!S)return [];if(!Array.isArray(S.acccFiles))S.acccFiles=[];return S.acccFiles}
+export function findFile(pi,ind){return acccFileList().find(f=>f.pi===pi&&f.ind===ind)||null}
+export function filesOf(pi){return acccFileList().filter(f=>f.pi===pi)}
+/* the open file (if any) whose book contains this node */
+export function fileForNode(pi,nid){return filesOf(pi).find(f=>INDBYID[f.ind]&&industryNodes(INDBYID[f.ind]).some(n=>n.id===nid))||null}
+const fileIcon=f=>f.agency==='ASIC'?'⚖️':'🧐';
+const fileName=f=>'the '+f.agency+' file on '+pname(f.pi)+'’s '+INDBYID[f.ind].name+' book';
+export function acccReconcile(){
+ if(!S||!Array.isArray(S.players)||!S.owner||S.over)return;
+ const files=acccFileList();
+ for(let k=files.length-1;k>=0;k--){
+  const f=files[k];
+  if(S.players[f.pi]&&INDBYID[f.ind]&&concentratedIndustries(f.pi).some(x=>x.g.id===f.ind))continue;
+  files.splice(k,1);
+  if(S.players[f.pi]&&INDBYID[f.ind]){log(fileIcon(f)+' CASE CLOSED — '+fileName(f)+' is closed: the book is back to '+industryAllowed(INDBYID[f.ind])+' or fewer. Scrutiny discarded.');fxAt(f.pi,'📁 FILE CLOSED','#8fbf7f')}
+ }
+ S.players.forEach((_,pi)=>concentratedIndustries(pi).forEach(x=>{
+  if(findFile(pi,x.g.id))return;
+  const f={pi,ind:x.g.id,s:0,agency:fileAgency(x.g.id)};files.push(f);
+  log(fileIcon(f)+' THE '+f.agency+' OPENS A FILE on '+pname(pi)+'’s '+x.g.name+' book — '+x.n+' held, '+(x.trigger-1)+' allowed. Scrutiny 0/'+ACCC_RULING+': +1 at each of their turn starts, ruling at '+ACCC_RULING+'.');
+  fxAt(pi,'📁 '+f.agency+' FILE','#55c1ff');
+ }));
+}
+/* Turn start: every open file of the offender gains +1 scrutiny; returns the
+   industries whose file has reached the ruling. */
+export function acccAdvance(pi){
+ if(!S||S.over)return [];
+ acccReconcile();
+ const due=[];
+ filesOf(pi).forEach(f=>{f.s++;log(fileIcon(f)+' '+fileName(f)+' advances — scrutiny '+f.s+'/'+ACCC_RULING+(f.s>=ACCC_RULING?'. The ruling is in.':'.'));if(f.s>=ACCC_RULING)due.push(f.ind)});
+ return due;
+}
+export async function acccRuleAll(pi,due){
+ for(const ind of due){if(!S||S.over)return;acccReconcile();if(findFile(pi,ind))await acccRule(pi,ind)}
+}
+export async function acccReview(pi){return acccRuleAll(pi,acccAdvance(pi))}
+/* The ruling is proportional: the offender keeps the allowed count (their choice;
+   away seats and the default keep the highest income, ties by cost), only the excess
+   is divested back to the market unowned — never gifted — and the fine is 10% of cash
+   and of Intel per divested node, capped at 30% each. */
+export async function acccRule(pi,ind){
+ const g=INDBYID[ind],f=findFile(pi,ind);
+ if(!S||!g||!f||!S.players[pi])return;
+ const p=S.players[pi],agency=f.agency,isAsic=agency==='ASIC',allowed=industryAllowed(g);
+ const held=ownedInIndustry(pi,g),excess=held.length-allowed;
+ if(excess<=0){acccReconcile();return}
+ const keepOrder=(a,b)=>b.income-a.income||b.cost-a.cost;
+ const chosen=[];
+ for(let k=0;k<excess;k++){
+  const pool=held.filter(n=>chosen.indexOf(n)<0).sort(keepOrder);
+  const def=pool[pool.length-1];
+  const v=await askPlayer(pi,{title:agency+' RULING — DIVEST '+(k+1)+' OF '+excess,body:'The '+agency+' rules on your '+g.name+' book: you may keep '+allowed+' of '+held.length+'. Choose a node to give up — it returns to the market unowned. The fine is '+Math.min(30,10*excess)+'% of your cash and Intel.',options:pool.map(n=>({label:'Divest '+n.name.join(' ')+' · $'+n.income+'/turn · list $'+n.cost,v:n.id})),def:def.id,timeout:30000,meta:{kind:'ruling',ind,excess,keep:allowed}});
+  if(!S||S.over)return;
+  chosen.push(pool.find(n=>n.id===v)||def);
+ }
+ const divested=chosen.filter(n=>S.owner[n.id]===pi);
  divested.forEach(n=>{delete S.owner[n.id];delete S.bugs[n.id];fx(n.x,n.y-70,'🧐 DIVESTED','#55c1ff')});
  if(divested.some(n=>n.id==='sisy'))S.sisyPayout=10;
- const recipients=shuffle(S.players.map((_,i)=>i).filter(i=>i!==pi));
- const transfers=[];
- for(let i=0;i<Math.min(divested.length,recipients.length);i++){
-  const node=divested[i],recipient=recipients[i];
-  S.owner[node.id]=recipient;
-  transfers.push({node,recipient});
-  fxAt(recipient,'+'+node.name.join(' '),'#55c1ff');
- }
- const moneyFine=Math.floor(offender.money*0.20);
- const intelFine=Math.floor(offender.intel*0.20);
- if(moneyFine>0)payVoid(pi,moneyFine,isAsic?'ASIC market-manipulation fine (20%)':'ACCC monopoly fine (20%)');
- if(intelFine>0){offender.intel-=intelFine;fxAt(pi,'🛈−'+intelFine,'#55c1ff');log('🛈 '+pname(pi)+' pays an '+agency+' fine of '+intelFine+' Intel (20%).')}
- const transferText=transfers.length?transfers.map(t=>esc(t.node.name.join(' '))+' → '+esc(S.players[t.recipient].name)).join('; '):'none — all divested nodes return to the market';
- const lost=divested.slice(transfers.length).map(n=>n.name.join(' '));
- log((isAsic?'⚖️':'🧐')+' '+(isAsic?'MARKET MANIPULATION! ':'MONOPOLY ALERT! ')+pname(pi)+' is forced to dump the whole '+hit.g.name+' book ('+hit.owned.map(n=>n.name.join(' ')).join(', ')+'). Redistributed: '+(transfers.length?transfers.map(t=>t.node.name.join(' ')+' to '+pname(t.recipient)).join(', '):'none')+'. '+(lost.length?'Returned to market: '+lost.join(', ')+'. ':'')+'Fine: $'+moneyFine+' and '+intelFine+' Intel.');
+ const pct=Math.min(30,10*divested.length);
+ const moneyFine=Math.floor(p.money*pct/100),intelFine=Math.floor(p.intel*pct/100);
+ if(moneyFine>0)payVoid(pi,moneyFine,isAsic?'ASIC market-manipulation fine ('+pct+'%)':'ACCC monopoly fine ('+pct+'%)');
+ if(intelFine>0){p.intel-=intelFine;fxAt(pi,'🛈−'+intelFine,'#55c1ff');log('🛈 '+pname(pi)+' pays an '+agency+' fine of '+intelFine+' Intel ('+pct+'%).')}
+ const files=acccFileList(),at=files.indexOf(f);if(at>=0)files.splice(at,1);
+ const names=divested.map(n=>n.name.join(' '));
+ const kept=ownedInIndustry(pi,g).map(n=>n.name.join(' '));
+ log((isAsic?'⚖️ MARKET MANIPULATION! ':'🧐 MONOPOLY ALERT! ')+pname(pi)+'’s '+g.name+' book is ruled on: '+names.join(', ')+' divested and returned to the market'+(kept.length?'; kept: '+kept.join(', '):'')+'. Fine: $'+moneyFine+' and '+intelFine+' Intel ('+pct+'%). The file is closed.');
  fxAt(pi,isAsic?'MARKET MANIPULATION':'MONOPOLY ALERT','#55c1ff',true);
  announceAll(isAsic?'ASIC MARKET MANIPULATION':'MONOPOLY ALERT',
-  monopolyAlertFace(esc(offender.name)+' held more than two '+esc(hit.g.name)+' properties.',isAsic)
-  +'<p>The '+agency+' breaks up the book. Divested: <b>'+hit.owned.map(n=>esc(n.name.join(' '))).join('</b>, <b>')+'</b>.</p>'
-  +'<p>Randomly redistributed (max one node per rival): '+transferText+'.'+(lost.length?' Remaining nodes return to the market: <b>'+lost.map(esc).join('</b>, <b>')+'</b>.':'')+'</p>'
-  +'<p>Fine: <b>$'+moneyFine+'</b> and <b>'+intelFine+' Intel</b> (20% of current balances).</p>');
+  monopolyAlertFace(esc(p.name)+' held '+held.length+' '+esc(g.name)+' properties — the limit is '+allowed+'.',isAsic)
+  +'<p>The '+agency+' file reached '+ACCC_RULING+' scrutiny. Divested back to the market, unowned: <b>'+names.map(esc).join('</b>, <b>')+'</b>.'+(kept.length?' Kept: '+kept.map(esc).join(', ')+'.':'')+'</p>'
+  +'<p>Fine: <b>$'+moneyFine+'</b> and <b>'+intelFine+' Intel</b> ('+pct+'% of current balances — 10% per divested node, capped at 30%).</p>');
+ acccReconcile();
+ sync();
 }
 /* MADE rolls on every seat's turn, so a flat chance skims big tables far harder: at
    33%, 8 seats saw 2.7 payouts a round and no seat could hold a high goal. Every
@@ -197,7 +246,7 @@ export function initGame(defs){
   Net.myIdx=order.indexOf(hostWas);
  }
  const goal=clampGoal(Net.goal);
- setS({backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false,bot:!!d.bot})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,layoutKind:boardLayout,ringworld:boardLayout==='ringworld',dlcGeo:!!Net.dlcGeo,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,bondmageddonUsed:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null});
+ setS({backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false,bot:!!d.bot})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,layoutKind:boardLayout,ringworld:boardLayout==='ringworld',dlcGeo:!!Net.dlcGeo,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,bondmageddonUsed:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null,acccFiles:[],lobbied:false,referred:false});
  const slot=QUIK_SLOTS[quikSlot];
  {const bots=hooks.bots();if(bots&&bots.resetForGame)bots.resetForGame((hooks.botSeed()|0)||((Math.random()*0x7fffffff)|0))}
  const generated=boardLayout==='megaring'?generateMegaRingBoard():(boardLayout==='ringworld'?generateRingworldBoard():generateRandomBoard(slot));S.boardLayout=generated.positions;S.boardEdges=generated.edges;
@@ -219,7 +268,7 @@ export async function startTurn(){
  if(S)S.backroomAbilityUsed=false;
  if(!S||S.over)return;
  log('—— TURN '+S.turn+' · '+pname(S.cur)+' ——');
- S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;
+ S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;S.lobbied=false;S.referred=false;
  if(S.dlcGeo){S.geoMissiled=false;S.geoBeach=false;S.geoBoeing=false;S.geoCrash=false;S.geoStage5=false;S.geoVenice=false}
  S.bondmageddonUsed=false;
  if(S.fx.length>30)S.fx=S.fx.slice(-30);
@@ -270,8 +319,8 @@ export async function startTurn(){
  const media=NODES.filter(n=>n.type==='MEDIA'&&S.owner[n.id]===S.cur).length;
  if(own('news')&&media>=2)giveIntel(S.cur,1,'you read everything');
  if(S.owner.made!=null&&Math.random()<madeChance())madePay();
- acccInvestigate(S.cur);
- 
+ /* the regulators' files: +1 scrutiny on each of this seat's open files; a file at ACCC_RULING is ruled on now */
+ {const due=acccAdvance(S.cur);if(due.length){const ep=Net.gameEpoch;await acccRuleAll(S.cur,due);if(!S||S.over||Net.gameEpoch!==ep)return}}
  const rail=(S.owner.train===S.cur||S.owner.bullet===S.cur)?1:0;
  S.steps=underCaution?1:3+(S.owner.coal===S.cur?1:0)+rail+(S.owner.asics===S.cur?1:0);
  p.raided=0;
@@ -317,7 +366,8 @@ export function botView(pi){
  out.oilIds=OIL_IDS.slice();
  out.edges=EDGES.map(e=>e.slice());
  out.nodes=NODES.map(n=>({id:n.id,type:n.type,income:n.income,cost:n.cost}));
- out.industryIds=INDUSTRIES.map(g=>({id:g.id,ids:industryNodes(g).map(n=>n.id)}));
+ out.industryIds=INDUSTRIES.map(g=>({id:g.id,ids:industryNodes(g).map(n=>n.id),trigger:industryTrigger(g)}));
+ out.acccRuling=ACCC_RULING;
  out.nmap={};NODES.forEach(n=>{out.nmap[n.id]={id:n.id,type:n.type,income:n.income,cost:n.cost}});
  out.moodRate=(MOODS[S.mood]||{rate:2}).rate;
  out.geo={qantasGrounded:!!(S.dlcGeo&&qantasGrounded())};
@@ -650,6 +700,72 @@ export async function applyIntent(pi,m){
    }
    await endOfTurn();
   }
+  /* ---- 🧐 THE REGULATORS' FILES ---- */
+  else if(act==='marketsell'&&S.phase==='action'&&!S.mode){
+   const n=typeof m.id==='string'?NMAP[m.id]:null;
+   if(!n||S.owner[m.id]!==pi){sysTo(pi,'Pick a node you own.');return}
+   const f=fileForNode(pi,m.id);
+   if(!f){sysTo(pi,'Only a node in a book with an open ACCC or ASIC file can be sold back to the market.');return}
+   delete S.owner[m.id];delete S.bugs[m.id];if(m.id==='sisy')S.sisyPayout=10;
+   fx(n.x,n.y-64,'🏷️ SOLD','#7fe08d');
+   log('🏷️ '+pname(pi)+' sells '+n.name.join(' ')+' back to the market for its $'+n.cost+' list price, with '+fileName(f)+' open. It is unowned again.');
+   gain(pi,n.cost,'market sale of '+n.name.join(' '));
+   acccReconcile();sync();
+   if(await winCheck())return;
+   await endOfTurn();
+  }
+  else if(act==='lobby'&&S.phase==='action'&&!S.mode){
+   const f=typeof m.kind==='string'?findFile(pi,m.kind):null;
+   if(!f){sysTo(pi,'You have no open file in that industry to lobby against.');return}
+   if(S.lobbied){sysTo(pi,'You have already lobbied this turn.');return}
+   if(p.intel<3){sysTo(pi,'Lobbying costs 3 Intel.');return}
+   if(f.s<=0){sysTo(pi,'That file is already at 0 scrutiny.');return}
+   p.intel-=3;S.lobbied=true;f.s=Math.max(0,f.s-1);fxAt(pi,'🛈−3','#55c1ff');
+   log(fileIcon(f)+' '+pname(pi)+' lobbies the '+f.agency+' (3 Intel) — '+fileName(f)+' drops to scrutiny '+f.s+'/'+ACCC_RULING+'.');
+   sync();
+  }
+  else if(act==='refermode'&&S.phase==='action'&&!S.mode&&(S.owner.accc===pi||S.owner.asic===pi)&&p.money>=4&&!S.referred){S.mode='refer';sync()}
+  else if(act==='refer'&&S.phase==='action'&&(!S.mode||S.mode==='refer')){
+   const bail=msg=>{sysTo(pi,msg);if(S.mode==='refer'){S.mode=null;sync()}};
+   if(!isRival(pi,m.target)){bail('Pick a rival with an open file — never your own.');return}
+   const f=typeof m.kind==='string'?findFile(m.target,m.kind):null;
+   if(!f){bail('That rival has no open file in that industry.');return}
+   const need=f.agency==='ASIC'?'asic':'accc';
+   if(S.owner[need]!==pi){bail(need==='asic'?'Only the ASIC owner can refer a monetary-policy file.':'Only the ACCC owner can refer this file.');return}
+   if(S.referred){bail('You have already made a referral this turn.');return}
+   if(p.money<4){bail('A referral costs $4.');return}
+   p.money-=4;S.referred=true;S.mode=null;f.s++;
+   fxAt(pi,'−$4','#ff6b5e');fxAt(m.target,'📁 +1 SCRUTINY','#55c1ff');
+   log(fileIcon(f)+' '+pname(pi)+' refers '+pname(m.target)+'’s '+INDBYID[f.ind].name+' book to the '+f.agency+' ($4) — scrutiny '+f.s+'/'+ACCC_RULING+'. Any ruling waits for '+pname(m.target)+'’s turn start.');
+   await endOfTurn();
+  }
+  /* ---- 🤝 NODE DEALS: sell one of yours to one rival for a price you name ---- */
+  else if(act==='dealmode'&&S.phase==='action'&&!S.mode&&S.players.length>1&&NODES.some(nn=>S.owner[nn.id]===pi)){S.mode='deal';sync()}
+  else if(act==='deal'&&S.phase==='action'&&(!S.mode||S.mode==='deal')){
+   const bail=msg=>{sysTo(pi,msg);if(S.mode==='deal'){S.mode=null;sync()}};
+   const buyer=m.target,n=typeof m.id==='string'?NMAP[m.id]:null,price=m.n;
+   if(!isRival(pi,buyer)){bail('Offer the deal to a rival at the table.');return}
+   if(!n||S.owner[m.id]!==pi){bail('You can only offer a node you own.');return}
+   if(!Number.isInteger(price)||price<0||price>S.players[buyer].money){bail('Name a whole-dollar price from $0 to '+pname(buyer)+'’s cash ($'+S.players[buyer].money+').');return}
+   S.mode=null;
+   const nm=n.name.join(' ');
+   log('🤝 '+pname(pi)+' offers '+nm+' to '+pname(buyer)+' for $'+price+'.');
+   sync();
+   const v=await askPlayer(buyer,{title:'DEAL OFFERED — '+nm+' FOR $'+price,body:pname(pi)+' offers to sell you '+nm+' ('+n.type+', $'+n.income+'/turn, list $'+n.cost+') for $'+price+'. Any bugs on it are cleared. No Cortisol either way.',options:[{label:'Accept — pay $'+price,v:1},{label:'Decline',v:0}],def:0,timeout:30000,meta:{kind:'deal',node:n.id,price,from:pi}});
+   if(!S||S.over||S.cur!==pi||S.phase!=='action')return;
+   if(v===1&&S.owner[m.id]===pi&&S.players[buyer]&&S.players[buyer].money>=price){
+    S.players[buyer].money-=price;p.money+=price;
+    S.owner[m.id]=buyer;delete S.bugs[m.id];if(m.id==='sisy')S.sisyPayout=10;
+    if(price>0){fxAt(buyer,'−$'+price,'#ff6b5e');fxAt(pi,'+$'+price,'#7fe08d')}
+    fx(n.x,n.y-64,'🤝 SOLD',S.players[buyer].color);
+    log('🤝 DEAL DONE — '+pname(buyer)+' buys '+nm+' from '+pname(pi)+' for $'+price+'. Bugs on it are cleared.');
+    acccReconcile();sync();
+    if(await winCheck())return;
+   }
+   else if(v===1)log('🤝 The deal for '+nm+' falls through — it is no longer on the table. The offer still used the turn.');
+   else log('🤝 '+pname(buyer)+' declines — '+nm+' stays with '+pname(pi)+'. The offer still used the turn.');
+   await endOfTurn();
+  }
   else if((act==='sell'||act==='sellall')&&S.phase==='action'&&!S.mode){
    const rate=MOODS[S.mood].rate;const n=act==='sellall'?p.intel:Math.min(Math.floor(+m.n)||0,p.intel);
    if(n<=0){sysTo(pi,'No Intel to sell.');return}
@@ -869,6 +985,10 @@ export async function endOfTurn(){
 }
 export function nextTurn(){if(!S||S.over)return;S.cur=(S.cur+1)%S.players.length;if(S.cur===0)S.turn++;Promise.resolve(startTurn()).catch(e=>console.error(e))}
 export function goalAmount(){return clampGoal(S&&S.goal?S.goal:Net.goal)}
+/* Event-card dollars are written for the default $100 table and scale with the
+   host's goal, so the deck matters as much at $20 as at $999 (never below $1). */
+export function cs(n){return Math.max(1,Math.round(n*goalAmount()/100))}
+export function cardText(c){return String(c.text).replace(/[$](\d+)/g,(m,n)=>'$'+cs(+n))}
 /* Money alone no longer takes it: the con needs a finished portfolio. */
 export const WIN_TYPES=['BANK','REGULATOR','CHART','WILD','CORPORATE','COMMODITY','MEDIA'];
 export function hasType(i,t){return NODES.some(n=>n.type===t&&S.owner[n.id]===i)}
@@ -903,62 +1023,62 @@ export function addChat(pi,text){
 }
 /* ================= EVENT FACES (pure HTML strings) ================= */
 export function monopolyAlertFace(sub,asic){const img=asic?'./static/asic.png':'./static/accc.png';const lab=asic?'ASIC':'ACCC';const title=asic?'ASIC MARKET-MANIPULATION ALERT':'MONOPOLY ALERT';return '<div class="eventcard"><div style="display:flex;gap:16px;justify-content:center;align-items:center;margin:10px 0 8px"><img src="./static/the rock.gif" alt="The Rock" style="width:120px;height:120px;object-fit:cover;border:2px solid #168388;background:#000"><img src="'+img+'" alt="'+lab+'" style="width:120px;height:120px;object-fit:contain;border:2px solid #168388;background:#111;padding:8px"></div><div class="etitle">'+title+'</div><div class="etext">'+(sub||'')+'</div></div>';}
-export function cardFace(c){if(c.id==='crackdown')return monopolyAlertFace(c.text);return '<div class="eventcard"><div class="eicon">'+c.icon+'</div><div class="etitle">'+c.title+'</div><div class="etext">'+c.text+'</div></div>'}
+export function cardFace(c){if(c.id==='crackdown')return monopolyAlertFace(cardText(c));return '<div class="eventcard"><div class="eicon">'+c.icon+'</div><div class="etitle">'+c.title+'</div><div class="etext">'+cardText(c)+'</div></div>'}
 /* ================= MARKET EVENT DECK (24 cards) — every card moves the mood ================= */
 export const CARDS=[
 {id:'oilspike',icon:'🛢️',title:'OIL SPIKES — WTI +12%',text:'Crude goes vertical. The pit pays out, the tankers get rich, and everyone but the QuikStop owner pays $1 at the pump.',
- run(){setMood('BOOM','WTI +12% — crude goes vertical');[['oil',6,'crude windfall'],['oilgraph',2,'the graph called it'],['tanker',3,'tankers rechartered at panic rates'],['petronas',3,'the national oil company'],['barrels',2,'the barrel yard']].forEach(a=>{const o=S.owner[a[0]];if(o!=null)gain(o,a[1],a[2])});const q=S.owner.quik;S.players.forEach((pl,i)=>{if(i===q)return;if(q==null)payVoid(i,1,'fuel costs — nobody minds the till');else payTo(i,1,q,'fuel costs → QuikStop')});}},
+ run(){setMood('BOOM','WTI +12% — crude goes vertical');[['oil',6,'crude windfall'],['oilgraph',2,'the graph called it'],['tanker',3,'tankers rechartered at panic rates'],['petronas',3,'the national oil company'],['barrels',2,'the barrel yard']].forEach(a=>{const o=S.owner[a[0]];if(o!=null)gain(o,cs(a[1]),a[2])});const q=S.owner.quik;S.players.forEach((pl,i)=>{if(i===q)return;if(q==null)payVoid(i,cs(1),'fuel costs — nobody minds the till');else payTo(i,cs(1),q,'fuel costs → QuikStop')});}},
 {id:'coalrush',icon:'🚃',title:'COAL RUSH',text:'Demand for black rock goes nuclear. Everything on rails and water makes money.',
- run(){setMood('BOOM','coal rush — everything on rails makes money');[['port',4,'the docks work overtime'],['train',2,'the train runs all night'],['tanker',3,'freight rates through the roof'],['coal',2,'COAL Corp books all of it'],['forklift',1,'pallets upon pallets'],['bhp',3,'the Big Australian books the tonnes']].forEach(a=>{const o=S.owner[a[0]];if(o!=null)gain(o,a[1],a[2])});}},
+ run(){setMood('BOOM','coal rush — everything on rails makes money');[['port',4,'the docks work overtime'],['train',2,'the train runs all night'],['tanker',3,'freight rates through the roof'],['coal',2,'COAL Corp books all of it'],['forklift',1,'pallets upon pallets'],['bhp',3,'the Big Australian books the tonnes']].forEach(a=>{const o=S.owner[a[0]];if(o!=null)gain(o,cs(a[1]),a[2])});}},
 {id:'rates',icon:'🏛️',title:'RBA CASH-RATE DECISION',text:'Governor Bullock leans into the microphone. Money gets expensive — everyone pays $2, except the insiders.',
- run(){setMood('CALM','the RBA decides — the market holds its breath, then exhales');const r=S.owner.rba,b=S.owner.bullock;S.players.forEach((pl,i)=>{if(i===r||i===b)return;payFee(i,2,'the cost of money')});if(r!=null)log('🏛️ '+pname(r)+' set the rate — pays nothing.');if(b!=null)log('👩‍💼 The Governor takes '+pname(b)+'’s calls — pays nothing.');const c=S.owner.cash;if(c!=null)gain(c,2,'you literally set it');const j=S.owner.jim;if(j!=null)gain(j,2,'the headline sells papers');const be=S.owner.bess;if(be!=null)gain(be,2,'“BIG BESSENT” reacts live');const hs=S.owner.herald;if(hs!=null)gain(hs,2,'THE JIM REAPER reprints the decision');}},
+ run(){setMood('CALM','the RBA decides — the market holds its breath, then exhales');const r=S.owner.rba,b=S.owner.bullock;S.players.forEach((pl,i)=>{if(i===r||i===b)return;payFee(i,cs(2),'the cost of money')});if(r!=null)log('🏛️ '+pname(r)+' set the rate — pays nothing.');if(b!=null)log('👩‍💼 The Governor takes '+pname(b)+'’s calls — pays nothing.');const c=S.owner.cash;if(c!=null)gain(c,cs(2),'you literally set it');const j=S.owner.jim;if(j!=null)gain(j,cs(2),'the headline sells papers');const be=S.owner.bess;if(be!=null)gain(be,cs(2),'“BIG BESSENT” reacts live');const hs=S.owner.herald;if(hs!=null)gain(hs,cs(2),'THE JIM REAPER reprints the decision');}},
 {id:'bondrevolt',icon:'💥',title:'BONDMAGEDDON',text:'“Government Bond: the collapse of the world’s safest investment.” Yields go vertical from Tokyo to Toronto.',
- run(){setMood('PANIC','“the collapse of the world’s safest investment”');const bd=S.owner.bond;S.players.forEach((pl,i)=>{const banks=NODES.filter(n=>n.type==='BANK'&&S.owner[n.id]===i).length;if(!banks)return;const amt=banks*2;if(bd!=null)payTo(i,amt,bd,'the revolt eats '+banks+' bank position'+(banks>1?'s':'')+' → The Bond Desk');else payVoid(i,amt,'the revolt eats the banking book')});COUNTRY.forEach(c=>{const o=S.owner[c];if(o!=null)gain(o,c==='japan'?3:1,NMAP[c].name.join(' ')+' pays its reader')});const t=S.owner.tenyear;if(t!=null)gain(t,2,'the master chart was right');const be=S.owner.bess;if(be!=null)gain(be,2,'Big Bessent called it on air');const br=S.owner.brad;if(br!=null)gain(br,2,'he had it explained in the movie');const bs=S.owner.bigshort;if(bs!=null)gain(bs,3,'the cinema saw it coming');const lk=S.owner.leak;if(lk!=null)gain(lk,2,'the leak was first with it');}},
+ run(){setMood('PANIC','“the collapse of the world’s safest investment”');const bd=S.owner.bond;S.players.forEach((pl,i)=>{const banks=NODES.filter(n=>n.type==='BANK'&&S.owner[n.id]===i).length;if(!banks)return;const amt=banks*cs(2);if(bd!=null)payTo(i,amt,bd,'the revolt eats '+banks+' bank position'+(banks>1?'s':'')+' → The Bond Desk');else payVoid(i,amt,'the revolt eats the banking book')});COUNTRY.forEach(c=>{const o=S.owner[c];if(o!=null)gain(o,cs(c==='japan'?3:1),NMAP[c].name.join(' ')+' pays its reader')});const t=S.owner.tenyear;if(t!=null)gain(t,cs(2),'the master chart was right');const be=S.owner.bess;if(be!=null)gain(be,cs(2),'Big Bessent called it on air');const br=S.owner.brad;if(br!=null)gain(br,cs(2),'he had it explained in the movie');const bs=S.owner.bigshort;if(bs!=null)gain(bs,cs(3),'the cinema saw it coming');const lk=S.owner.leak;if(lk!=null)gain(lk,cs(2),'the leak was first with it');}},
 {id:'ceophoto',icon:'📸',title:'CEO PHOTO LEAKS — COAL CORP',text:'Mark Watson, photographed exactly where he should not have been. Someone is holding matches.',
- run(){setMood('FRENZY','CEO photo leaks — the front pages feed');const c=S.owner.coal;if(c==null){log('🚂 COAL CORP HQ is unowned — Watson denies everything to an empty room.');return}if(S.owner.watson===c){log('🕴️ Watson fronts the cameras himself — the photos are dismissed as “old”. No Cortisol.');return}if(S.owner.port===c)gain(c,5,'shipped the coal before the news broke');if(S.owner.press===c||S.owner.fox===c){gain(c,3,'the press room spins it beautifully');return}addCortisol(c,3,'the photos run on every front page','event');}},
+ run(){setMood('FRENZY','CEO photo leaks — the front pages feed');const c=S.owner.coal;if(c==null){log('🚂 COAL CORP HQ is unowned — Watson denies everything to an empty room.');return}if(S.owner.watson===c){log('🕴️ Watson fronts the cameras himself — the photos are dismissed as “old”. No Cortisol.');return}if(S.owner.port===c)gain(c,cs(5),'shipped the coal before the news broke');if(S.owner.press===c||S.owner.fox===c){gain(c,cs(3),'the press room spins it beautifully');return}addCortisol(c,3,'the photos run on every front page','event');}},
 {id:'tariffs',icon:'🦅',title:'TRUMP TWEETS TARIFFS',text:'ALL CAPS. Exclamation points. Global markets do a synchronized swan dive.',
- async run(){setMood('PANIC','TARIFFS! ALL CAPS! markets swan-dive');const t=S.owner.trump;let chain;const opts=[{label:'🛢️ OIL chain +$3 each',v:'oil'},{label:'🚂 COAL chain +$3 each',v:'coal'}];
+ async run(){setMood('PANIC','TARIFFS! ALL CAPS! markets swan-dive');const t=S.owner.trump;let chain;const opts=[{label:'🛢️ OIL chain +$'+cs(3)+' each',v:'oil'},{label:'🚂 COAL chain +$'+cs(3)+' each',v:'coal'}];
  if(t!=null)chain=await askPlayer(t,{title:'TRUMP TWEETS TARIFFS',body:'You own THE DONALD — which chain gets the windfall?',options:opts,def:Math.random()<.5?'oil':'coal'});
  else chain=Math.random()<.5?'oil':'coal';
  const list=chain==='oil'?['oil','oilgraph','barrels','tanker','petronas']:['coal','train','port','watson','forklift','bhp'];
- const winners=new Set();list.forEach(id=>{const o=S.owner[id];if(o!=null){gain(o,3,chain+' windfall via '+NMAP[id].name[0]);winners.add(o)}});
- const u=S.owner.us;if(u!=null){gain(u,2,'the safe-haven bid');winners.add(u)}
- S.players.forEach((pl,i)=>{if(!winners.has(i))payVoid(i,1,'the tariff bill')});
+ const winners=new Set();list.forEach(id=>{const o=S.owner[id];if(o!=null){gain(o,cs(3),chain+' windfall via '+NMAP[id].name[0]);winners.add(o)}});
+ const u=S.owner.us;if(u!=null){gain(u,cs(2),'the safe-haven bid');winners.add(u)}
+ S.players.forEach((pl,i)=>{if(!winners.has(i))payVoid(i,cs(1),'the tariff bill')});
  if(t!=null)log('🦅 The tweet did numbers.');}},
 {id:'besspeak',icon:'🎤',title:'BIG BESSENT SPEAKS',text:'The Treasury clears its throat. Bond desks straighten their ties. Markets listen.',
- run(){setMood('CALM','Big Bessent soothes the desk');const b=S.owner.bessent;if(b!=null)gain(b,3,'the big man speaks');const d=S.owner.bond;if(d!=null)gain(d,2,'the desk frontran the speech');const t=S.owner.tenyear;if(t!=null)gain(t,2,'yields obey');const br=S.owner.brad;if(br!=null)gain(br,2,'he had it explained to him');}},
+ run(){setMood('CALM','Big Bessent soothes the desk');const b=S.owner.bessent;if(b!=null)gain(b,cs(3),'the big man speaks');const d=S.owner.bond;if(d!=null)gain(d,cs(2),'the desk frontran the speech');const t=S.owner.tenyear;if(t!=null)gain(t,cs(2),'yields obey');const br=S.owner.brad;if(br!=null)gain(br,cs(2),'he had it explained to him');}},
 {id:'budget',icon:'📰',title:'THE JIM DELIVERS THE BUDGET',text:'“The Jim…” reads numbers to a sleepy chamber. Somebody, somewhere, is counting.',
- run(){setMood('CALM','the budget is delivered — mostly numbers');const s=S.owner.spend;if(s!=null)gain(s,3,'the spending graphic glows');const ch=S.owner.chalmers;if(ch!=null)gain(ch,2,'the Treasurer delivers');const j=S.owner.jim;if(j!=null)gain(j,2,'the exclusive pays');const hs=S.owner.herald;if(hs!=null)gain(hs,2,'THE JIM REAPER special edition');const a=S.owner.albo;if(a!=null)gain(a,1,'the PM signs it');S.players.forEach((pl,i)=>{if(i!==s&&i!==ch&&i!==j&&i!==a&&i!==hs)payVoid(i,1,'return to sender (taxes)')});}},
+ run(){setMood('CALM','the budget is delivered — mostly numbers');const s=S.owner.spend;if(s!=null)gain(s,cs(3),'the spending graphic glows');const ch=S.owner.chalmers;if(ch!=null)gain(ch,cs(2),'the Treasurer delivers');const j=S.owner.jim;if(j!=null)gain(j,cs(2),'the exclusive pays');const hs=S.owner.herald;if(hs!=null)gain(hs,cs(2),'THE JIM REAPER special edition');const a=S.owner.albo;if(a!=null)gain(a,cs(1),'the PM signs it');S.players.forEach((pl,i)=>{if(i!==s&&i!==ch&&i!==j&&i!==a&&i!==hs)payVoid(i,cs(1),'return to sender (taxes)')});}},
 {id:'mpcfinals',icon:'🏆',title:'MONETARY POLICY COMPETITION FINALS',text:'The RBA’s big night. Schools. Charts. Trophies. JTPortal is rumoured to be judging.',
- run(){setMood('BOOM','monetary policy finals — the schools deliver');const m=S.owner.mpc;if(m!=null){gain(m,4,'the champions’ purse');giveIntel(m,1,'the finalists’ data')}const sc=S.owner.school;if(sc!=null)gain(sc,2,'the school places');const ib=S.owner.ib;if(ib!=null)gain(ib,2,'the IB cohort delivers');const jt=S.owner.jt;if(jt!=null)giveIntel(jt,1,'JTPortal judged the submissions');}},
+ run(){setMood('BOOM','monetary policy finals — the schools deliver');const m=S.owner.mpc;if(m!=null){gain(m,cs(4),'the champions’ purse');giveIntel(m,1,'the finalists’ data')}const sc=S.owner.school;if(sc!=null)gain(sc,cs(2),'the school places');const ib=S.owner.ib;if(ib!=null)gain(ib,cs(2),'the IB cohort delivers');const jt=S.owner.jt;if(jt!=null)giveIntel(jt,1,'JTPortal judged the submissions');}},
 {id:'sisyroll',icon:'🪨',title:'THE BOULDER ROLLS BACK DOWN',text:'Empires, portfolios, homework — everything heavy slides. The biggest players feel it most.',
- run(){setMood('CALM','the boulder rolls back down, as ever');const counts=S.players.map((pl,i)=>NODES.filter(n=>S.owner[n.id]===i).length);const mx=Math.max(0,...counts);if(mx<=0){log('🪨 Nobody holds anything yet — the boulder rolls past an empty table.');return}S.players.forEach((pl,i)=>{if(counts[i]===mx&&S.owner.sisy!==i)payVoid(i,2,'the boulder finds the biggest stack')});const s=S.owner.sisy;if(s!=null)log('🪨 '+pname(s)+' is used to this — immune.');}},
+ run(){setMood('CALM','the boulder rolls back down, as ever');const counts=S.players.map((pl,i)=>NODES.filter(n=>S.owner[n.id]===i).length);const mx=Math.max(0,...counts);if(mx<=0){log('🪨 Nobody holds anything yet — the boulder rolls past an empty table.');return}S.players.forEach((pl,i)=>{if(counts[i]===mx&&S.owner.sisy!==i)payVoid(i,cs(2),'the boulder finds the biggest stack')});const s=S.owner.sisy;if(s!=null)log('🪨 '+pname(s)+' is used to this — immune.');}},
 {id:'goldrush',icon:'🪙',title:'GOLD RUSH',text:'The gold-coloured coins gleam. Paper money suddenly looks like a rumor.',
- run(){setMood('BOOM','gold gleams — paper looks like a rumor');const g=S.owner.gold;if(g!=null)gain(g,5,'everything gleams');const n=S.owner.notes;if(n!=null)gain(n,2,'collectors pay up');const bh=S.owner.bhp;if(bh!=null)gain(bh,3,'ore prices sneak up with the gold');S.players.forEach((pl,i)=>{if(i!==g&&i!==n&&i!==bh)payVoid(i,1,'inflation bites')});}},
+ run(){setMood('BOOM','gold gleams — paper looks like a rumor');const g=S.owner.gold;if(g!=null)gain(g,cs(5),'everything gleams');const n=S.owner.notes;if(n!=null)gain(n,cs(2),'collectors pay up');const bh=S.owner.bhp;if(bh!=null)gain(bh,cs(3),'ore prices sneak up with the gold');S.players.forEach((pl,i)=>{if(i!==g&&i!==n&&i!==bh)payVoid(i,cs(1),'inflation bites')});}},
 {id:'rockcooks',icon:'💪',title:'THE ROCK COOKS',text:'A gym, a blender, a set of books that needed cooking. The smell is unmistakable.',
- run(){setMood('CALM','the books are cooked; the gym is calm');const r=S.owner.rock;if(r!=null){gain(r,3,'ladder of opportunity');addCortisol(r,-1,'the calm after the cook')}else log('💪 Nobody owns The Rock. The books stay raw.');}},
+ run(){setMood('CALM','the books are cooked; the gym is calm');const r=S.owner.rock;if(r!=null){gain(r,cs(3),'ladder of opportunity');addCortisol(r,-1,'the calm after the cook')}else log('💪 Nobody owns The Rock. The books stay raw.');}},
 {id:'davos',icon:'🏔️',title:'DAVOS — THE CONFERENCE STAGE',text:'Lanyards, panels, fondue. Global networks tighten over canapés.',
- run(){setMood('FRENZY','Davos — lanyards, panels, fondue');const w=S.owner.wef;if(w!=null)gain(w,3,'the big table pays out');const b=S.owner.bessent;if(b!=null)gain(b,2,'a familiar face on the panel');Object.keys(S.bugs).forEach(nid=>{const o=S.bugs[nid];S.players[o].money+=1;log('🏔️ Global skim from '+NMAP[nid].name.join(' ')+': '+pname(o)+' +$1.')});}},
+ run(){setMood('FRENZY','Davos — lanyards, panels, fondue');const w=S.owner.wef;if(w!=null)gain(w,cs(3),'the big table pays out');const b=S.owner.bessent;if(b!=null)gain(b,cs(2),'a familiar face on the panel');Object.keys(S.bugs).forEach(nid=>{const o=S.bugs[nid];S.players[o].money+=cs(1);log('🏔️ Global skim from '+NMAP[nid].name.join(' ')+': '+pname(o)+' +$'+cs(1)+'.')});}},
 {id:'quikrob',icon:'🎭',title:'QUIKSTOP ROBBERY',text:'A ski mask, a shopping bag, an empty register. The tapes are… missing.',
- run(){setMood('CALM','a ski mask, a shopping bag, an empty register');const q=S.owner.quik;if(q==null){S.players.forEach((pl,i)=>payVoid(i,1,'nobody was watching the till'));return}payVoid(q,2,'gone, just gone');const b=S.owner.bond007;if(b!=null)gain(b,2,'he was there in disguise (allegedly)');}},
+ run(){setMood('CALM','a ski mask, a shopping bag, an empty register');const q=S.owner.quik;if(q==null){S.players.forEach((pl,i)=>payVoid(i,cs(1),'nobody was watching the till'));return}payVoid(q,cs(2),'gone, just gone');const b=S.owner.bond007;if(b!=null)gain(b,cs(2),'he was there in disguise (allegedly)');}},
 {id:'ibexams',icon:'📝',title:'IB EXAMS',text:'Papers, calculators, despair. The Diploma Programme does not grade on charisma.',
  run(){setMood('CALM','IB exams — despair, indexed');const ib=S.owner.ib;if(ib!=null)giveIntel(ib,2,'HL Economics pays off');const sc=S.owner.school;if(sc!=null)giveIntel(sc,1,'the cohort crammed');S.players.forEach((pl,i)=>{const charts=NODES.filter(n=>n.type==='CHART'&&S.owner[n.id]===i).length;if(charts===0&&pl.intel>0){pl.intel-=1;fxAt(i,'🛈−1','#55c1ff');log('📝 '+pname(i)+' didn’t do the reading: −1 Intel.')}});}},
 {id:'profit',icon:'⛽',title:'PROFIT WARNING… FOR OTHERS',text:'Markets wobble, people stress-eat. Quikstop does just fine.',
- run(){setMood('CALM','profit warning… for others');const q=S.owner.quik;if(q!=null)gain(q,4,'snack economics');else log('⛽ Quikstop is unowned — the profits drift away.');}},
+ run(){setMood('CALM','profit warning… for others');const q=S.owner.quik;if(q!=null)gain(q,cs(4),'snack economics');else log('⛽ Quikstop is unowned — the profits drift away.');}},
 {id:'quiet',icon:'🌙',title:'A QUIET QUARTER',text:'No tweets, no leaks, no rate decisions. Everyone quietly pockets a little extra.',
- run(){setMood('CALM','a quiet quarter — no tweets, no leaks');S.players.forEach((pl,i)=>gain(i,2,'a quiet quarter'));}},
+ run(){setMood('CALM','a quiet quarter — no tweets, no leaks');S.players.forEach((pl,i)=>gain(i,cs(2),'a quiet quarter'));}},
 {id:'snoop',icon:'🔍',title:'REGULATORS SNOOP AROUND',text:'Somebody asked one question too many. The sweatiest players get a second look.',
  run(){setMood('CALM','regulators asking one question too many');const mx=Math.max(0,...S.players.map(pl=>pl.cortisol));if(mx<=0){log('🔍 Nobody has any Cortisol — the regulators go for coffee.');return}S.players.forEach((pl,i)=>{if(pl.cortisol===mx)addCortisol(i,1,'regulators circling','event')});}},
 {id:'tip',icon:'✉️',title:'ANONYMOUS TIP',text:'A brown envelope with no return address. Everyone learns something.',
  run(){setMood('CALM','a brown envelope, no return address');S.players.forEach((pl,i)=>giveIntel(i,1,'the envelope'));log('✉️ Every player gains 1 Intel.');}},
 {id:'frenzy',icon:'🗣️',title:'MEDIA FRENZY',text:'“Quite frankly…” The press needs a villain before deadline. Whoever owns the narrative picks one.',
  async run(){setMood('FRENZY','the press needs a villain before deadline');const pi=S.owner.press;if(pi==null){log('🗣️ The Press Room is unowned — the story dies in committee.');return}const rivals=S.players.map((pl,i)=>i).filter(i=>i!==pi);const opts=rivals.map(i=>({label:S.players[i].name+' +2 🔥',v:i}));opts.push({label:'Sit on the story',v:-1});const v=await askPlayer(pi,{title:'MEDIA FRENZY',body:'You control the PRESS ROOM — torch which rival?',options:opts,def:-1});if(isRival(pi,v))addCortisol(v,2,'front-page frenzy','event');}},
-{id:'crackdown',icon:'🚨',title:'MONOPOLY ALERT',text:'The regulator finally does something. The hottest player pays for it.',
- run(){setMood('PANIC','crackdown — the regulator finally does something');const mx=Math.max(0,...S.players.map(pl=>pl.cortisol));if(mx<=0){log('🚨 Nobody is hot — the crackdown hits an empty office.');return}S.players.forEach((pl,i)=>{if(pl.cortisol===mx)payFee(i,4,'crackdown fine')});const bs=S.owner.bigshort;if(bs!=null)gain(bs,3,'the cinema called it');}},
+{id:'crackdown',icon:'🚨',title:'MONOPOLY ALERT',text:'The regulators finally do something: every open ACCC and ASIC file on the table gains +1 scrutiny. Rulings still wait for each offender’s turn start.',
+ run(){setMood('PANIC','crackdown — the regulators sweep the table');acccReconcile();const files=acccFileList();if(!files.length)log('🚨 The regulators sweep the table — no open files, the sweep finds nothing.');else files.forEach(f=>{f.s++;log('🚨 The sweep lands on '+fileName(f)+' — scrutiny '+f.s+'/'+ACCC_RULING+(f.s>=ACCC_RULING?'; the ruling lands at their turn start.':'.'));fxAt(f.pi,'📁 +1 SCRUTINY','#55c1ff')});const bs=S.owner.bigshort;if(bs!=null)gain(bs,cs(3),'the cinema called it');}},
 {id:'tapes',icon:'🗑️',title:'THE TAPES GO MISSING',text:'A shredder runs all night. What you knew, you no longer know — unless you kept copies.',
  run(){setMood('CALM','the tapes go missing — a shredder runs all night');S.players.forEach((pl,i)=>{if(S.owner.whistle===i){giveIntel(i,2,'the Whistleblower kept copies')}else if(S.owner.jt===i){giveIntel(i,2,'JTPortal keeps backups')}else if(pl.intel>0){pl.intel-=1;fxAt(i,'🛈−1','#55c1ff');log('🗑️ '+pname(i)+' loses 1 Intel — the tapes are gone.')}});}},
 {id:'bigscreen',icon:'🎬',title:'THE BIG SHORT SCREENING',text:'Brad Pitt explains subprime with a Jenga tower. Everyone watches. Nobody learns.',
- run(){setMood('FRENZY','The Big Short screens to a packed house');const bs=S.owner.bigshort;if(bs!=null)gain(bs,3,'packed house');const br=S.owner.brad;if(br!=null)gain(br,2,'he was right there on screen');const h=S.owner.hedge;if(h!=null)gain(h,2,'somebody was short the whole time');}},
+ run(){setMood('FRENZY','The Big Short screens to a packed house');const bs=S.owner.bigshort;if(bs!=null)gain(bs,cs(3),'packed house');const br=S.owner.brad;if(br!=null)gain(br,cs(2),'he was right there on screen');const h=S.owner.hedge;if(h!=null)gain(h,cs(2),'somebody was short the whole time');}},
 {id:'madeout',icon:'🟣',title:'MADE PAYS OUT… PROBABLY',text:'The purple graphic does… something. Money appears. Explanations do not.',
  run(){setMood(S.mood,'MADE does… something');if(Math.random()<1/3){madePay();log('🟣 MADE has paid out. Nobody knows why. NOBODY.')}else log('🟣 MADE remains unexplained. Again.');}}
 ];

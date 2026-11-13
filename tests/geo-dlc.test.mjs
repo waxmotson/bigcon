@@ -866,17 +866,17 @@ test('GD-23 monetary-policy concentration is an ASIC market-manipulation file, n
   e.acc.Net.role = 'host';               // the bulletin needs a host to announce
   const S = makeState(e, { dlcGeo: false, players: [{ money: 50, intel: 10 }, { money: 30, intel: 10 }] });
   e.acc.S = S;
-  S.owner.mpc = 0; S.owner.rba = 0; S.owner.cash = 0; S.owner.bullock = 0; S.owner.infl = 0;
-  let fired = false;
-  for (let s = 1; s <= 80 && !fired; s++) {
-    withSeed(s, () => e.f.acccInvestigate(0));
-    fired = S.log.some(l => l.includes('MARKET MANIPULATION'));
-  }
-  assert.ok(fired, 'a seed tripped the 33% gate');
+  S.owner.rba = 0; S.owner.cash = 0; S.owner.bullock = 0; S.owner.infl = 0;
+  e.f.acccReconcile();
+  const f = e.f.findFile(0, 'monetary');
+  assert.ok(f && f.agency === 'ASIC', 'the monetary book is ASIC’s file');
+  assert.ok(S.log.some(l => l.includes('THE ASIC OPENS A FILE')), 'the opening names ASIC');
+  for (let i = 0; i < 3; i++) await e.f.acccReview(0);
+  assert.ok(S.log.some(l => l.includes('MARKET MANIPULATION!')), 'the ruling is market manipulation');
   assert.ok(!S.log.some(l => l.includes('MONOPOLY ALERT!')), 'no ACCC monopoly branding on a monetary book');
-  assert.ok(S.log.some(l => l.includes('ASIC market-manipulation fine (20%)')), 'the cash fine names ASIC');
+  assert.ok(S.log.some(l => l.includes('ASIC market-manipulation fine (20%)')), 'the cash fine names ASIC (2 excess → 20%)');
   assert.ok(S.log.some(l => l.includes('pays an ASIC fine of')), 'the Intel fine names ASIC');
-  assert.ok(S.owner.mpc !== 0, 'the book was divested');
+  assert.equal(e.f.ownedInIndustry(0, e.acc.INDBYID.monetary).length, 2, 'the book is cut back to two');
   const card = e.modalRec.find(m => m.title === 'ASIC MARKET MANIPULATION');
   assert.ok(card, 'the table saw ASIC’s announcement');
   assert.ok(card.html.includes('./static/asic.png'), 'the card carries ASIC’s face');
@@ -889,12 +889,8 @@ test('GD-23 monetary-policy concentration is an ASIC market-manipulation file, n
   const S2 = makeState(e2, { dlcGeo: false, players: [{ money: 50, intel: 10 }, { money: 30, intel: 10 }] });
   e2.acc.S = S2;
   S2.owner.citi = 0; S2.owner.commbank = 0; S2.owner.nab = 0;
-  let fired2 = false;
-  for (let s = 1; s <= 80 && !fired2; s++) {
-    withSeed(s, () => e2.f.acccInvestigate(0));
-    fired2 = S2.log.some(l => l.includes('MONOPOLY ALERT!'));
-  }
-  assert.ok(fired2, 'a seed tripped the ACCC on a bank book');
+  for (let i = 0; i < 3; i++) await e2.f.acccReview(0);
+  assert.ok(S2.log.some(l => l.includes('MONOPOLY ALERT!')), 'the ACCC rules on a bank book');
   assert.ok(e2.modalRec.some(m => m.title === 'MONOPOLY ALERT' && m.html.includes('./static/accc.png')), 'the ACCC keeps its face');
 });
 
