@@ -148,12 +148,35 @@ export function nodeSVG(n,cls){
  if(bl)tip+='&#10;🚧 BLOCKADED — entry and Qantas landing are prohibited until the blockade expires.';
  if(rb)tip+='&#10;💥 RUBBLE — arrive and pay $'+n.cost+' in your action phase to rebuild. No income, nothing to seize until rebuilt.';
  if(ot)tip+='&#10;🛳️ OVERTOURISM — its owner takes +1 Cortisol on their next turn (one rotation, or until Venice changes hands).';
+ if(S&&!rb)tip+=priceTip(n,o);
  return '<g class="node '+cls+'" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+') rotate('+n.rot+')">'
   +ownerGlow+moodGlow+halo
   +'<image class="node-image" href="'+n.image+'" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" preserveAspectRatio="none"/>'
   +(rb?'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="rgba(8,6,6,0.72)"/><text x="0" y="-4" text-anchor="middle" font-size="22">💥</text><text x="0" y="16" text-anchor="middle" font-size="9" font-weight="900" fill="#ffb08a" letter-spacing="1">REBUILD $'+n.cost+'</text>':'')
   +ownerTag+bugTag+badges
   +'<title>'+esc(n.name.join(' '))+' — '+n.type+' · $'+n.income+'/turn · seize $'+n.cost+'&#10;'+esc(n.sub)+'&#10;'+esc(n.sp)+tip+'</title></g>';
+}
+/* Hover price line: what the NEXT seizure of this node costs. Mirrors doSeize —
+   your own discounts (seizeListPrice, Slipstream), then the takeover doubling
+   (2× after the first seizure, doubling again each time it changes hands; the
+   Dossier and the flat nodes pay list). Spectators see the undiscounted price. */
+export function priceTip(n,o){
+ const me=Net.myIdx,seated=me!=null&&me>=0&&me<S.players.length;
+ const taken=S.seizeCount[n.id]||0,flat=flatSeize(n.id);
+ const mult=flat?1:Math.pow(2,Math.max(1,taken));
+ const times=taken?' · taken '+taken+'×':'';
+ if(o==null){
+  if(!seated)return '&#10;💰 Seize: $'+n.cost+(flat?' — never inflates':'');
+  let base=seizeListPrice(me,n);if(S.slipped===true&&S.cur===me&&S.owner.f1===me)base=Math.max(1,base-2);
+  return '&#10;💰 Seize for you: $'+base+(flat?' — never inflates':' · once owned, a takeover costs $'+n.cost*Math.pow(2,Math.max(1,taken+1))+times);
+ }
+ if(seated&&o===me)return '&#10;⚔️ A rival’s takeover costs $'+n.cost*mult+' (list $'+n.cost+(flat?', never inflates':'')+times+') — you pocket the $'+n.cost+' buyout'+(S.owner.accc===me?' + $2 ACCC fee':'')+'.';
+ const fee=S.owner.accc===o?' + $2 ACCC fee':'';
+ if(!seated)return '&#10;⚔️ Takeover: $'+n.cost*mult+fee+(flat?' — never inflates':times);
+ let base=seizeListPrice(me,n);if(S.slipped===true&&S.cur===me&&S.owner.f1===me)base=Math.max(1,base-2);
+ const dossier=!flat&&S.dossier&&S.cur===me;
+ const cost=flat||dossier?base:base*mult;
+ return '&#10;⚔️ Takeover for you: $'+cost+fee+(flat?' — never inflates':dossier?' — the Dossier holds it to list':' ('+(mult)+'× list'+times+'; doubles again after)')+'.';
 }
 export function tokenLayer(){
  const byPos={};S.players.forEach((p,i)=>{(byPos[p.pos]=byPos[p.pos]||[]).push(i)});

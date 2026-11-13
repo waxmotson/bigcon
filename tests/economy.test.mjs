@@ -469,3 +469,26 @@ test('EC-20 event-card dollars scale with the table goal and never drop below $1
     assert.ok(face.includes('everyone pays $' + engine.f.cs(2) + ','), `goal ${c.goal}: the card face quotes the scaled amount`);
   }
 });
+
+/* ================= EC-21 — hover shows the next takeover price ================= */
+test('EC-21 the node hover quotes the next seizure price, doubling with every takeover', async t => {
+  const engine = await ctx_engine(t);
+  const S = fixture(engine, { players: [{ money: 50 }, { money: 50 }], owner: {} });
+  engine.acc.Net.myIdx = 0;
+  const n = engine.acc.NMAP.citi, tip = o => engine.f.priceTip(n, o);
+  const has = (s, sub, msg) => assert.ok(s.includes(sub), (msg || 'tip') + ': expected "' + sub + '" in "' + s + '"');
+  has(tip(null), 'Seize for you: $' + n.cost + ' · once owned, a takeover costs $' + n.cost * 2, 'unowned');
+  S.owner.citi = 1; S.seizeCount.citi = 1;
+  has(tip(1), 'Takeover for you: $' + n.cost * 2 + ' (2× list · taken 1×', 'first takeover is double');
+  S.seizeCount.citi = 2;
+  has(tip(1), 'Takeover for you: $' + n.cost * 4, 'then four times list');
+  S.owner.accc = 1;
+  has(tip(1), '+ $2 ACCC fee', 'the ACCC review fee is quoted');
+  S.cur = 0; S.dossier = true;
+  has(tip(1), '$' + n.cost + ' + $2 ACCC fee — the Dossier', 'the Dossier holds it to list');
+  S.dossier = false; S.owner.citi = 0;
+  has(tip(0), 'A rival’s takeover costs $' + n.cost * 4, 'my own node shows what rivals pay');
+  const made = engine.acc.NMAP.made; S.owner.made = 1; S.seizeCount.made = 5;
+  has(engine.f.priceTip(made, 1), 'Takeover for you: $' + made.cost + ' + $2 ACCC fee — never inflates', 'MADE stays at list');
+  assert.equal(engine.f.takeoverCost(0, 'citi', n.cost), n.cost * 4, 'the quote matches the engine');
+});
