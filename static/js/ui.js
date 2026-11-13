@@ -184,25 +184,24 @@ export function redArrow(x1,y1,x2,y2){
 export function scribText(x,y,rot,txt){return '<text x="'+x+'" y="'+y+'" transform="rotate('+rot+' '+x+' '+y+')" font-size="15" font-style="italic" font-weight="700" fill="#d92b1f" opacity=".85" pointer-events="none">'+txt+'</text>'}
 export function bugTargetable(n){
  const me=Net.myIdx;
- return S&&S.phase==='action'&&S.mode==='bug'&&S.cur===me
+ return S&&S.phase==='action'&&S.mode==='bug'&&myTurn()
   &&S.owner[n.id]!=null&&S.owner[n.id]!==me
   &&S.bugs[n.id]==null
   &&(ADJ[S.players[me].pos]||[]).includes(n.id);
 }
 export function missileTargetable(n){
  const me=Net.myIdx;
- return S&&(S.phase==='action'||S.phase==='move')&&S.mode==='missile'&&S.cur===me&&S.dlcGeo
+ return S&&(S.phase==='action'||S.phase==='move')&&S.mode==='missile'&&myTurn()&&S.dlcGeo
   &&canMissileNode(me,n.id);
 }
 export function overtourTargetable(n){
  const me=Net.myIdx;
- return S&&S.phase==='action'&&S.mode==='overtour'&&S.cur===me&&S.dlcGeo
-  &&S.owner[n.id]!=null&&S.owner[n.id]!==me&&!S.rubble[n.id]
-  &&S.owner[n.id]!==S.owner.geo_pillars;
+ return S&&S.phase==='action'&&S.mode==='overtour'&&myTurn()&&S.dlcGeo
+  &&S.owner[n.id]!=null&&S.owner[n.id]!==me&&!S.rubble[n.id];
 }
 export function blockadeTargetable(n){
  const me=Net.myIdx;
- return S&&S.phase==='action'&&S.mode==='blockade'&&S.cur===me&&S.owner.albo===me
+ return S&&S.phase==='action'&&S.mode==='blockade'&&myTurn()&&S.owner.albo===me
   &&!S.rubble[n.id]&&!blockaded(n.id);
 }
 /* Edge geometry shared by the board and the hover/path overlay. Under fog of war an edge only shows once both
@@ -404,8 +403,8 @@ export function renderBoard(){
  NODES.forEach(n=>{
   let cls='';
   if(S&&!S.over){
-   if(S.mode==='fly')cls=canReach(n.id)?'click':'';
-   else if(S.mode!=='missile'&&S.phase==='move'&&S.cur===Net.myIdx&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id))cls='click reach';
+   if(S.mode==='fly')cls=(myTurn()&&n.id!==curpos&&canReach(n.id)&&!blockaded(n.id))?'click':'';
+   else if(S.mode!=='missile'&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))cls='click reach';
    else if(bugTargetable(n))cls='click target';
    else if(missileTargetable(n))cls='click target';
    else if(overtourTargetable(n))cls='click target';
@@ -464,7 +463,7 @@ export function renderBoard(){
 }
 export function renderSide(){
  const side=$('side');
- const me=Net.myIdx;const p=S.players[S.cur];const isTurn=S.cur===me;
+ const me=Net.myIdx;const p=S.players[S.cur];const isTurn=myTurn();
  const md=MOODS[S.mood]||MOODS.CALM;
  const ownedIcons=NODES.filter(n=>S.owner[n.id]===me).map(n=>'<span title="'+n.name.join(' ')+'">'+(n.icon||({BANK:'🏦',COMMODITY:'🛢️',MEDIA:'🗞️',CORPORATE:'🏢',REGULATOR:'⚖️',CHART:'📈',WILD:'🎭'}[n.type]||'◆'))+'</span>').join('')||'<span style="opacity:.4">—</span>';
  const curN=NMAP[p.pos];
@@ -536,7 +535,7 @@ export function renderSide(){
     if(nid==='sisy')btns.push('<button class="act primary" data-act="push">Push the boulder — +$'+(S.sisyPayout||10)+' (next push doubles)</button>');
     if(nid==='asics')btns.push('<button class="act primary" data-act="jog">Jog a lap — free −1 🔥</button>');
    }else if(S.dlcGeo&&S.rubble&&S.rubble[nid]){
-    btns.push('<button class="act primary" data-act="rebuild"'+(p.money>=cost?'':' disabled')+'>♻️ Rebuild '+n.name.join(' ')+' — $'+cost+' (returns unowned — first bids from next turn)</button>');
+    btns.push('<button class="act primary" data-act="rebuild"'+(p.money>=n.cost?'':' disabled')+'>♻️ Rebuild '+n.name.join(' ')+' — $'+n.cost+' (returns unowned — first bids from next turn)</button>');
     btns.push('<div class="ownnote">Rubble since a missile strike — no income, nothing to seize, until it is rebuilt.</div>');
    }else{
     const afford=maxPay>=cost;
@@ -625,8 +624,15 @@ export function sendChat(t){
  if(Net.role==='host'){addChat(Net.myIdx,t)}
  else if(Net.conn&&Net.conn.open){Net.conn.send({t:'chat',text:t})}
 }
+/* It is this screen's turn to act: our seat is up, and it is not a bot seat
+   (a spectating host watches its bot play — it never clicks for it). */
+export function myTurn(){
+ if(!S||S.cur!==Net.myIdx)return false;
+ const me=S.players[Net.myIdx];
+ return !!me&&!me.bot&&!Net.spect;
+}
 export function dispatch(m){
- if(!S||S.over)return;
+ if(!S||S.over||!myTurn())return;
  if(Net.role==='host')applyIntent(Net.myIdx,m);
  else if(Net.conn&&Net.conn.open)Net.conn.send({t:'intent',act:m.act,id:m.id,target:m.target,kind:m.kind,choice:m.choice,n:m.n});
 }
@@ -664,7 +670,7 @@ export function handleNodeTap(t){
  if(!t||!t.closest)return;
  const g=t.closest('g.node');
  if(!g||!S||S.over)return;
- if(S.cur!==Net.myIdx)return;
+ if(!myTurn())return;
  const id=g.dataset.id;
  if(S.phase==='move'){
   if(S.mode==='fly'){dispatch({act:'fly',id});return}
@@ -804,7 +810,7 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
   else{const v=await hooks.modal({title:'LEAVE THE TABLE?',body:'Your seat will be held — rejoin later with the same name and room code.',options:[{label:'Yes — leave',v:1},{label:'Stay',v:0}]});if(v)location.reload()}
   return;
  }
- if(S.cur!==Net.myIdx||S.over)return;
+ if(!myTurn()||S.over)return;
  switch(act){
   case 'endmove':dispatch({act:'endmove'});break;
   case 'flymode':dispatch({act:'flymode'});break;

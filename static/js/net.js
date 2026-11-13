@@ -89,7 +89,9 @@ export function askPlayer(pi,opt){return new Promise(res=>{
  const c=Net.conns[pi];
  if(!c||!c.open){res(def);return}
  const pid=++Net.promptSeq;
- Net.pendingPrompts.set(pid,{res,def,pi});
+ /* a guest may only pick one of the options it was offered — anything else is the default */
+ const allowed=(opt.options||[]).map(o=>o.v);
+ Net.pendingPrompts.set(pid,{res:v=>res(allowed.some(a=>a===v)?v:def),def,pi});
  flushState();
  sendTo(pi,{t:'prompt',pid,title:opt.title,html:opt.html,body:opt.body,options:opt.options});
  setTimeout(()=>{const p=Net.pendingPrompts.get(pid);if(p){Net.pendingPrompts.delete(pid);res(p.def)}},opt.timeout||45000);
@@ -106,10 +108,15 @@ export async function revealAll(title,html){
  if(Net.role!=='host'){await hooks.modal({title,html,options:[{label:'Continue',v:1}]});return}
  const eid=++Net.evSeq;const need=new Set();
  flushState();
- for(let i=0;i<Net.conns.length;i++){if(i===Net.myIdx)continue;const c=Net.conns[i];if(c&&c.open){sendTo(i,{t:'event',eid,title,html});need.add(i)}}
+ for(let i=0;i<Net.conns.length;i++){if(i===Net.myIdx)continue;const c=Net.conns[i];if(c&&c.open)need.add(i)}
+ /* listen for acks before anything is sent, so an instant ack is never dropped;
+    the 5 s grace starts once the host has dismissed its own card */
+ let acked=Promise.resolve();
+ if(need.size){acked=new Promise(res=>{Net.acks={eid,set:need,res,timer:null}})}
+ need.forEach(i=>sendTo(i,{t:'event',eid,title,html}));
  await hooks.modal({title,html,options:[{label:'Continue',v:1}]});
- /* the table has already seen the card — a short grace, then play moves on */
- if(need.size){await new Promise(res=>{Net.acks={eid,set:need,res,timer:setTimeout(()=>{if(Net.acks){Net.acks=null;res()}},5000)}})}
+ if(Net.acks&&Net.acks.eid===eid){const a=Net.acks;a.timer=setTimeout(()=>{if(Net.acks===a){Net.acks=null;a.res()}},5000)}
+ await acked;
 }
 
 /* ================= NETWORKING ================= */
@@ -194,6 +201,7 @@ export class CloudflarePeer extends RelayEvents{
   ws.addEventListener('message',ev=>{
    let m;try{m=JSON.parse(ev.data)}catch(_){return}
    if(m.type==='ready'){
+    this._retries=0;
     if(role==='host'){this.emit('open',this.id);return}
     const c=this.connections.get('outgoing');if(c&&!c.open){c.id=m.id;c.open=true;c.emit('open');}
    }else if(m.type==='incoming'&&role==='host'){
@@ -237,8 +245,17 @@ export class CloudflarePeer extends RelayEvents{
   try{this._connectSocket(room,'guest')}catch(e){queueMicrotask(()=>this.emit('error',{type:'configuration',message:e.message}))}
   return c;
  }
- reconnect(){if(this.destroyed||this.fatal)return;this._connectSocket(this.id?this.id.slice(PFX.length):Net.roomCode,this.hostSide?'host':'guest')}
- destroy(){this.destroyed=true;for(const c of this.connections.values())c.close();if(this.socket){try{this.socket.close()}catch(_){}}this.emit('close')}
+ /* The first retry is immediate; after that the waits double (capped at 10 s) until
+    the relay says ready again, so a dead network can't spin a reconnect loop. */
+ reconnect(){
+  if(this.destroyed||this.fatal)return;
+  clearTimeout(this._retryT);
+  const n=this._retries=(this._retries||0)+1;
+  const delay=n<=1?0:Math.min(10000,500*Math.pow(2,n-2));
+  const go=()=>{this._retryT=null;if(this.destroyed||this.fatal)return;this._connectSocket(this.id?this.id.slice(PFX.length):Net.roomCode,this.hostSide?'host':'guest')};
+  if(delay)this._retryT=setTimeout(go,delay);else go();
+ }
+ destroy(){this.destroyed=true;clearTimeout(this._retryT);for(const c of this.connections.values())c.close();if(this.socket){try{this.socket.close()}catch(_){}}this.emit('close')}
 }
 export function selectedPeerClass(){
  const cfg=transportSettings();
@@ -362,7 +379,7 @@ export function onHostData(c,d){
  if(d.t==='hello'){handleHello(c,cleanName(d.name)||'Player',String(d.playerId||''));return}
  if(d.t==='joinmode'){handleJoinMode(c,d);return}
  if(d.t==='joinchar'){handleJoinChar(c,d);return}
- if(d.t==='pick'){const pi=Net.conns.indexOf(c);if(pi>=0)applyChar(pi,d.char);return}
+ if(d.t==='pick'){const pi=Net.conns.indexOf(c);if(pi>=0&&!Net.started)applyChar(pi,d.char);return}
  const pi=Net.conns.indexOf(c);
  if(pi<0)return;
  if(d.t==='logreq'){sendLogParts(c);return}
@@ -483,8 +500,11 @@ export function seatMidgamePlayer(c,char){
  if(Net.roster.length>=MAXPLAYERS)return midJoinReject(c,'Room is full (8 players).');
  if(!charMeta(char)||Net.roster.some(e=>e.char===char))return midJoinReject(c,'That face was just taken — join the room again to pick another.');
  const mj=c.__midjoin;if(!mj)return;delete c.__midjoin;
- const idx=Net.roster.length;
- Net.roster.push({name:mj.name,playerId:mj.playerId,conn:c,char});
+ /* roster rows 0..players-1 are the seats; spectators sit after them. The new
+    seat goes in right behind the last seat, and every spectator it pushes down
+    a row is told its new row index. */
+ const idx=S.players.length;
+ Net.roster.splice(idx,0,{name:mj.name,playerId:mj.playerId,conn:c,char});
  Net.conns=Net.roster.map(e=>e.conn);
  c.__bigconClosed=false;c.__lastSeen=Date.now();
  const meta=charMeta(char);
@@ -492,6 +512,7 @@ export function seatMidgamePlayer(c,char){
  log('🔔 '+mj.name+' joins the con — dealt in at Quikstop with $15 and 2 Intel.');
  hooks.toast('🔔 '+mj.name+' joined — dealt in at Quikstop.');
  c.send({t:'welcome',idx,s:pubState(true)});
+ for(let i=idx+1;i<Net.roster.length;i++){const sc=Net.conns[i];if(sc&&sc.open){try{sc.send({t:'welcome',idx:i,spect:true,s:pubState(true)})}catch(_){}}}
  sync(true);
 }
 export function handleJoinMode(c,d){
@@ -784,7 +805,7 @@ export function onGuestData(d){
   case 'state':adoptState(d.s);scheduleRender();break;
   case 'logpart':adoptLogPart(d);break;
   case 'prompt':hooks.modal({title:d.title,html:d.html,body:d.body,options:d.options}).then(v=>{if(Net.conn&&Net.conn.open)Net.conn.send({t:'answer',pid:d.pid,v})});break;
-  case 'event':hooks.modal({title:d.title,html:d.html,options:[{label:'Continue',v:1}]});break;
+  case 'event':hooks.modal({title:d.title,html:d.html,options:[{label:'Continue',v:1}]}).then(()=>{if(d.eid!=null&&Net.conn&&Net.conn.open){try{Net.conn.send({t:'ack',eid:d.eid})}catch(_){}}});break;
   case 'midjoin':hooks.modal({title:'THE CON IS ALREADY ON',body:d.over?'The table just wrapped up. Take the spectator rail — when the host deals the next con, you are in it.':'The table is mid-heist. You can deal in fresh at Quikstop — $15 and 2 Intel, the same stake every con starts with — or take the spectator rail and just watch.',options:d.over?[{label:'👁 WATCH AS A SPECTATOR',v:'spect'}]:[{label:'🎲 DEAL ME IN AT QUIKSTOP',v:'player'},{label:'👁 SPECTATE — JUST WATCHING',v:'spect'}]}).then(v=>{if(Net.conn&&Net.conn.open)Net.conn.send({t:'joinmode',v:v||'spect'})});break;
   case 'joinface':hooks.modal({title:'PICK YOUR FACE',body:'Every free face at the table. Pick who you are for this con.',options:(d.free||[]).map(id=>{const m=charMeta(id);return{label:m?m.name:id,v:id}})}).then(id=>{if(Net.conn&&Net.conn.open)Net.conn.send({t:'joinchar',char:id})});break;
   case 'tolobby':setS(null);Net.begun=false;Net.spect=false;if(d.idx!=null)Net.myIdx=d.idx;showLobby(false);break;
@@ -836,6 +857,15 @@ export function setRingworldUI(v){
 export function backToLobby(){
  if(Net.role!=='host'||!S||!S.over)return;
  Net.started=false;Net.begun=false;setS(null);
+ /* The lobby (and the next initGame) keeps the host on row 0, but the game
+    seated the roster in shuffled order: put the host row back on top. Rows of
+    players who are no longer connected leave the table — dealt into the next
+    con they would hold a seat nobody can play. Bots stay. */
+ const rows=Net.roster.map((e,i)=>({e,c:Net.conns[i]||null,host:i===Net.myIdx}));
+ const kept=rows.filter(r=>r.host||r.e.bot||(r.c&&r.c.open));
+ kept.sort((a,b)=>(b.host?1:0)-(a.host?1:0));
+ Net.roster=kept.map(r=>r.e);Net.conns=kept.map(r=>r.host?null:r.c);Net.myIdx=0;
+ Net.roster.forEach((e,i)=>{if(!e.bot)e.conn=Net.conns[i]});
  /* spectators step off the rail and pick a face like anyone else for the next con */
  Net.roster.forEach(e=>{if(e.spect)e.spect=false});
  for(let i=0;i<Net.roster.length;i++){

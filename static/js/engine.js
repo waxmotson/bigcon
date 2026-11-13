@@ -419,6 +419,7 @@ export async function applyIntent(pi,m){
   else if(act==='bugmode'&&S.phase==='action'&&!S.mode){S.mode='bug';sync()}
   else if(act==='bug'&&S.phase==='action'&&S.mode==='bug'){await doBug(pi,m.id)}
   else if(act==='leakmode'&&abilityPhase(pi)&&!S.mode&&p.intel>=2){S.mode='leak';sync()}
+  else if((act==='leak'||act==='audit'||act==='tweet'||act==='roast')&&!isRival(pi,m.target)){sysTo(pi,'Pick a rival in THE SYNDICATE list.');return}
   else if(act==='leak'&&abilityPhase(pi)&&S.mode==='leak'&&m.target!==pi){
    if(p.intel<2){sysTo(pi,'Not enough Intel.');S.mode=null;sync();return}
    p.intel-=2;fxAt(pi,'🛈−2','#55c1ff');log('🗣️ '+pname(pi)+' leaks dirt on '+pname(m.target)+'.');S.mode=null;addCortisol(m.target,2,'dirt in the morning paper');await finishNodeAbility(pi)}
@@ -613,6 +614,7 @@ export async function applyIntent(pi,m){
    const oldOwner=S.owner.made;
    const confirm=await askPlayer(pi,{title:'DIVEST MADE — 5 INTEL + $7',body:'Force MADE away from '+pname(oldOwner)+'? They receive $7 compensation.',options:[{label:'Pay 5 Intel + $7 compensation',v:1},{label:'Cancel',v:0}],def:0});
    if(!confirm){sync();return}
+   if(S.cur!==pi||S.phase!=='action'||S.mode||S.over||S.owner.made!==oldOwner||p.intel<5||p.money<7){sysTo(pi,'The divestment is no longer available.');sync();return}
    p.intel-=5;p.money-=7;S.players[oldOwner].money+=7;delete S.owner.made;delete S.bugs.made;
    fxAt(pi,'🛈−5 · −$7','#55c1ff');fxAt(oldOwner,'+$7 compensation','#7fe08d');
    log('🟣 '+pname(pi)+' forces MADE to divest from '+pname(oldOwner)+', paying $7 compensation.');
@@ -649,7 +651,7 @@ export async function applyIntent(pi,m){
    await endOfTurn();
   }
   else if((act==='sell'||act==='sellall')&&S.phase==='action'&&!S.mode){
-   const rate=MOODS[S.mood].rate;const n=act==='sellall'?p.intel:Math.min(+m.n,p.intel);
+   const rate=MOODS[S.mood].rate;const n=act==='sellall'?p.intel:Math.min(Math.floor(+m.n)||0,p.intel);
    if(n<=0){sysTo(pi,'No Intel to sell.');return}
    p.intel-=n;fxAt(pi,'🛈−'+n,'#55c1ff');
    gain(pi,n*rate,'sold '+n+' Intel at the market ($'+rate+'/🛈)');
@@ -660,6 +662,8 @@ export async function applyIntent(pi,m){
    await endOfTurn()}
  } finally {hooks.clearTimeout(Net.lockTimer);Net.lockTimer=null;Net.lock=false}
 }
+/* A seat index from the wire: a real seat at this table that is not the actor. */
+export function isRival(pi,t){return Number.isInteger(t)&&t!==pi&&!!(S&&S.players[t])}
 export function canUseBackroomAbility(pi){return !!(S&&S.phase==='move'&&S.cur===pi&&S.owner.back===pi&&!S.backroomAbilityUsed&&S.steps>=2)}
 export function abilityPhase(pi){return !!(S&&(S.phase==='action'||canUseBackroomAbility(pi)))}
 export async function finishNodeAbility(pi){
@@ -737,6 +741,7 @@ export async function doMove(pi,id){
 }
 export async function doFly(pi,id){
  const p=S.players[pi];
+ if(!NMAP[id]||id===p.pos){sysTo(pi,'Pick somewhere else on the board to land.');return}
  if(!canReach(id)){sysTo(pi,qantasGroundedReason()+' — you cannot land there yet.');S.mode=null;sync();return}
  if(blockaded(id)){sysTo(pi,NMAP[id].name.join(' ')+' is BLOCKADED — you cannot land there.');S.mode=null;sync();return}
  if(p.money<3){sysTo(pi,'The Flying Kangaroo wants $3 for the seat.');S.mode=null;sync();return}
@@ -778,7 +783,9 @@ export async function doSeize(pi){
  if(prev===pi)return;
  if(S.dlcGeo&&((nid==='geo_shahed'&&S.owner.geo_missile===pi)||(nid==='geo_missile'&&S.owner.geo_shahed===pi))){sysTo(pi,'You can own either MISSILE COMMAND or the SHAHED DRONE, not both.');return}
  let base=seizeListPrice(pi,n);
- if(S.slipped&&S.owner.f1===pi){base=Math.max(1,base-2);S.slipped='spent';log('🏎️ The slipstream carries '+pname(pi)+' into the deal — $2 off.')}
+ /* the slipstream discount is only spent once the deal actually goes through */
+ const slip=S.slipped===true&&S.owner.f1===pi;
+ if(slip)base=Math.max(1,base-2);
  const isTake=prev!=null;
  const cost=isTake?takeoverCost(pi,nid,base):base;
  if(isTake&&flatSeize(nid))log('📌 '+n.name.join(' ')+' does not get more expensive — list price, always.');
@@ -790,8 +797,10 @@ export async function doSeize(pi){
   const need=cost-p.money;
   const v=await askPlayer(pi,{title:'BACKROOM DEALS',body:'Cover the $'+need+' shortfall with '+need+' Intel (1 🛈 = $1)?',options:[{label:'Pay $'+p.money+' + '+need+' 🛈',v:1},{label:'Walk away',v:0}],def:0});
   if(!v)return;
-  cash=p.money;useInt=need;
+  if(S.cur!==pi||S.phase!=='action'||S.over||S.owner[nid]!==prev||p.pos!==nid||S.owner.back!==pi||p.money+Math.min(3,p.intel)<cost){sysTo(pi,'That deal is no longer on the table.');return}
+  useInt=Math.max(0,cost-p.money);cash=cost-useInt;
  }
+ if(slip){S.slipped='spent';log('🏎️ The slipstream carries '+pname(pi)+' into the deal — $2 off.')}
  p.money-=cash;p.intel-=useInt;
  if(useInt>0)fxAt(pi,'🛈−'+useInt,'#55c1ff');
  if(cash>0)fxAt(pi,'−$'+cash,'#ff6b5e');
@@ -923,7 +932,7 @@ export const CARDS=[
 {id:'mpcfinals',icon:'🏆',title:'MONETARY POLICY COMPETITION FINALS',text:'The RBA’s big night. Schools. Charts. Trophies. JTPortal is rumoured to be judging.',
  run(){setMood('BOOM','monetary policy finals — the schools deliver');const m=S.owner.mpc;if(m!=null){gain(m,4,'the champions’ purse');giveIntel(m,1,'the finalists’ data')}const sc=S.owner.school;if(sc!=null)gain(sc,2,'the school places');const ib=S.owner.ib;if(ib!=null)gain(ib,2,'the IB cohort delivers');const jt=S.owner.jt;if(jt!=null)giveIntel(jt,1,'JTPortal judged the submissions');}},
 {id:'sisyroll',icon:'🪨',title:'THE BOULDER ROLLS BACK DOWN',text:'Empires, portfolios, homework — everything heavy slides. The biggest players feel it most.',
- run(){setMood('CALM','the boulder rolls back down, as ever');const counts=S.players.map((pl,i)=>NODES.filter(n=>S.owner[n.id]===i).length);const mx=Math.max(...counts);S.players.forEach((pl,i)=>{if(counts[i]===mx&&S.owner.sisy!==i)payVoid(i,2,'the boulder finds the biggest stack')});const s=S.owner.sisy;if(s!=null)log('🪨 '+pname(s)+' is used to this — immune.');}},
+ run(){setMood('CALM','the boulder rolls back down, as ever');const counts=S.players.map((pl,i)=>NODES.filter(n=>S.owner[n.id]===i).length);const mx=Math.max(0,...counts);if(mx<=0){log('🪨 Nobody holds anything yet — the boulder rolls past an empty table.');return}S.players.forEach((pl,i)=>{if(counts[i]===mx&&S.owner.sisy!==i)payVoid(i,2,'the boulder finds the biggest stack')});const s=S.owner.sisy;if(s!=null)log('🪨 '+pname(s)+' is used to this — immune.');}},
 {id:'goldrush',icon:'🪙',title:'GOLD RUSH',text:'The gold-coloured coins gleam. Paper money suddenly looks like a rumor.',
  run(){setMood('BOOM','gold gleams — paper looks like a rumor');const g=S.owner.gold;if(g!=null)gain(g,5,'everything gleams');const n=S.owner.notes;if(n!=null)gain(n,2,'collectors pay up');const bh=S.owner.bhp;if(bh!=null)gain(bh,3,'ore prices sneak up with the gold');S.players.forEach((pl,i)=>{if(i!==g&&i!==n&&i!==bh)payVoid(i,1,'inflation bites')});}},
 {id:'rockcooks',icon:'💪',title:'THE ROCK COOKS',text:'A gym, a blender, a set of books that needed cooking. The smell is unmistakable.',
@@ -943,7 +952,7 @@ export const CARDS=[
 {id:'tip',icon:'✉️',title:'ANONYMOUS TIP',text:'A brown envelope with no return address. Everyone learns something.',
  run(){setMood('CALM','a brown envelope, no return address');S.players.forEach((pl,i)=>giveIntel(i,1,'the envelope'));log('✉️ Every player gains 1 Intel.');}},
 {id:'frenzy',icon:'🗣️',title:'MEDIA FRENZY',text:'“Quite frankly…” The press needs a villain before deadline. Whoever owns the narrative picks one.',
- async run(){setMood('FRENZY','the press needs a villain before deadline');const pi=S.owner.press;if(pi==null){log('🗣️ The Press Room is unowned — the story dies in committee.');return}const rivals=S.players.map((pl,i)=>i).filter(i=>i!==pi);const opts=rivals.map(i=>({label:S.players[i].name+' +2 🔥',v:i}));opts.push({label:'Sit on the story',v:-1});const v=await askPlayer(pi,{title:'MEDIA FRENZY',body:'You control the PRESS ROOM — torch which rival?',options:opts,def:-1});if(v>=0)addCortisol(v,2,'front-page frenzy','event');}},
+ async run(){setMood('FRENZY','the press needs a villain before deadline');const pi=S.owner.press;if(pi==null){log('🗣️ The Press Room is unowned — the story dies in committee.');return}const rivals=S.players.map((pl,i)=>i).filter(i=>i!==pi);const opts=rivals.map(i=>({label:S.players[i].name+' +2 🔥',v:i}));opts.push({label:'Sit on the story',v:-1});const v=await askPlayer(pi,{title:'MEDIA FRENZY',body:'You control the PRESS ROOM — torch which rival?',options:opts,def:-1});if(isRival(pi,v))addCortisol(v,2,'front-page frenzy','event');}},
 {id:'crackdown',icon:'🚨',title:'MONOPOLY ALERT',text:'The regulator finally does something. The hottest player pays for it.',
  run(){setMood('PANIC','crackdown — the regulator finally does something');const mx=Math.max(0,...S.players.map(pl=>pl.cortisol));if(mx<=0){log('🚨 Nobody is hot — the crackdown hits an empty office.');return}S.players.forEach((pl,i)=>{if(pl.cortisol===mx)payFee(i,4,'crackdown fine')});const bs=S.owner.bigshort;if(bs!=null)gain(bs,3,'the cinema called it');}},
 {id:'tapes',icon:'🗑️',title:'THE TAPES GO MISSING',text:'A shredder runs all night. What you knew, you no longer know — unless you kept copies.',
