@@ -464,6 +464,11 @@ export function renderBoard(){
 }
 export function renderSide(){
  const side=$('side');
+ // Preserve the reader's position while the sidebar is rebuilt after each game update.
+ const sideScrollTop=side.scrollTop;
+ const previousLog=side.querySelector('#logbox');
+ const previousLogAtBottom=previousLog ? previousLog.scrollHeight-previousLog.scrollTop-previousLog.clientHeight<24 : true;
+ const previousLogScrollTop=previousLog ? previousLog.scrollTop : 0;
  const me=Net.myIdx;const p=S.players[S.cur];const isTurn=S.cur===me;
  const md=MOODS[S.mood]||MOODS.CALM;
  const ownedIcons=NODES.filter(n=>S.owner[n.id]===me).map(n=>'<span title="'+n.name.join(' ')+'">'+(n.icon||({BANK:'🏦',COMMODITY:'🛢️',MEDIA:'🗞️',CORPORATE:'🏢',REGULATOR:'⚖️',CHART:'📈',WILD:'🎭'}[n.type]||'◆'))+'</span>').join('')||'<span style="opacity:.4">—</span>';
@@ -612,7 +617,9 @@ export function renderSide(){
   +'<div class="paneltitle">THE RECORD<span style="float:right;display:inline-flex;gap:6px;margin-top:-4px"><button class="mini" data-act="copyrecord" style="flex:0 0 auto;padding:3px 8px;font-size:10px;">COPY</button><button class="mini" data-act="reviewlog" style="flex:0 0 auto;padding:3px 8px;font-size:10px;" title="Open this record in the log reviewer">🔬 REVIEW</button></span></div><div class="log" id="logbox">'+(S.over?S.log:S.log.slice(-LOG_SHOWN)).map(l=>'<div>'+l+'</div>').join('')+'</div>'
   +'<div class="paneltitle">THE WIRE (chat)</div><div class="chatbox"><div class="chatlist" id="chatbox">'+chatHtml+'</div><div class="chatrow"><input id="chatInput" maxlength="140" placeholder="talk your book…" value="'+esc(chatVal)+'"><button id="chatSend">SEND</button></div></div>'
   +'<div class="footbtns"><button class="mini" data-act="notifications">🔔 TURN ALERTS: '+(turnAlertsEnabled()?'ON':'OFF')+'</button><button class="mini" data-act="rules">📖 RULES</button><a class="mini" href="exhibits.html" target="_blank" rel="noopener">▦ EXHIBITS</a><button class="mini" data-act="leave">↺ LEAVE</button></div>';
- const lb=$('logbox');if(lb)lb.scrollTop=lb.scrollHeight;
+ const lb=$('logbox');
+ if(lb)lb.scrollTop=previousLogAtBottom?lb.scrollHeight:Math.min(previousLogScrollTop,lb.scrollHeight-lb.clientHeight);
+ side.scrollTop=sideScrollTop;
  const cb=$('chatbox');if(cb)cb.scrollTop=cb.scrollHeight;
  const ci=$('chatInput');
  if(ci){ci.addEventListener('input',()=>{chatDraft=ci.value});
