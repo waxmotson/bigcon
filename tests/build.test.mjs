@@ -124,7 +124,7 @@ test('no unhashed local .js/.css reference remains, and no unhashed .js/.css fil
   const html = fs.readFileSync(path.join(outA, 'index.html'), 'utf8');
   const order = [...html.matchAll(/<script\b[^>]*\bsrc="\.\/static\/(?:js\/)?([a-z]+)\.[0-9a-f]{10}\.js"/g)].map(m => m[1]);
   assert.deepEqual(order, ['main']);
-  assert.match(html, /<link rel="stylesheet" href="\.\/static\/css\/game\.[0-9a-f]{10}\.css">/);
+  assert.match(html, /<link rel="stylesheet" href="\.\/static\/css\/bigcon-ui\.[0-9a-f]{10}\.css">/);
 });
 
 test('hashes are deterministic across builds and match the file content', () => {
