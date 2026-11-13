@@ -486,11 +486,12 @@ export function renderSide(){
    phaseHtml='<div class="phlabel">PHASE 1 · MOVE</div>'
     +'<p>Click a <b>highlighted node</b> to move along the red threads (3 steps, plus bonuses from your holdings). Tolls: <b>$1</b> entering a rival’s node (<b>$2</b> if they hold ALBANESE, <b>free</b> if you hold JAMES BOND).</p>'
     +'<div class="dots">'+dots+' <span>'+S.steps+' step'+(S.steps!==1?'s':'')+' left</span></div>'
-    +'<button class="act" data-act="endmove">Stay put — end movement</button>'
+    +'<div class="btns"><button class="act" data-act="endmove">Stay put — end movement</button>'
     +((!S.extraStep&&p.intel>=1)?'<button class="act" data-act="favor">🛈 Burn a favor — 1 🛈 (+1 step this turn)</button>':'')
     +((S.owner.qantas===me)?'<button class="act" data-act="flymode"'+(p.money>=3?'':' disabled')+'>✈️ Fly the Qantas jet — $3 (anywhere)</button>':'')
     +((S.owner.f1===me&&!S.slipped)?'<button class="act" data-act="slip"'+(p.money>=2?'':' disabled')+'>🏎️ Slipstream — $2 (+2 steps, $2 off next seizure)</button>':'')
-    +((S.dlcGeo&&ownsMissileLauncher(me)&&canFireMissileFrom(me))?'<button class="act" data-act="missilemode"'+((p.money>=4&&p.intel>=1&&!S.geoMissiled)?'':' disabled')+' title="From either launcher (anywhere with Kim Jong Un): strike any node that still stands — the launch ends your move; your action still follows ($4 + 1 Intel, once per turn)">🚀 Launch a missile — $4 + 1🛈 (ends the move)</button>':'');
+    +((S.dlcGeo&&ownsMissileLauncher(me)&&canFireMissileFrom(me))?'<button class="act" data-act="missilemode"'+((p.money>=4&&p.intel>=1&&!S.geoMissiled)?'':' disabled')+' title="From either launcher (anywhere with Kim Jong Un): strike any node that still stands — the launch ends your move; your action still follows ($4 + 1 Intel, once per turn)">🚀 Launch a missile — $4 + 1🛈 (ends the move)</button>':'')
+    +'</div>';
     if(S.owner.back===me&&!S.backroomAbilityUsed){
      phaseHtml+='<div class="sublabel">BACKROOM DEALS · ONE NODE ABILITY · COSTS 2 MOVEMENT STEPS</div><div class="btns">';
      const backroomStepLock=S.steps<2?' disabled':'';
