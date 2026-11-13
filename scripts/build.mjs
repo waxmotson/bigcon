@@ -12,7 +12,9 @@
  *   3. bundles the game: the page's single entry module (static/js/main.js and
  *      everything it imports — the rules engine, net, ui, bots, Discord glue)
  *      becomes ONE ES-module file, and the individual source modules are not
- *      shipped. Only the dynamic import of the SDK bundle stays external;
+ *      shipped. Only the dynamic import of the SDK bundle stays external.
+ *      landing.html's reel (static/landing/reel.js) is bundled the same way,
+ *      with three.js left external for the page's import map;
  *   4. stamps BUILD_COMMIT in the output's index.html from $RENDER_GIT_COMMIT,
  *      falling back to `git rev-parse HEAD`, then 'dev' (first 7 characters);
  *   5. cache-busts: every local .js/.css file becomes name.<sha256-10>.ext and
@@ -47,6 +49,11 @@ const SDK_OUT = 'static/discord-sdk.bundle.js';
 const GAME_ENTRY = 'static/js/main.js';
 const GAME_SOURCE_DIRS = ['static/js'];
 const GAME_SOURCE_FILES = ['static/bots.js'];
+/* landing.html's reel: bundled the same way (it imports the game's data.js), with
+ * three.js left to the page's import map. Its other modules are folded in. */
+const LANDING_ENTRY = 'static/landing/reel.js';
+const LANDING_DIR = 'static/landing';
+const LANDING_EXTERNAL = ['three', 'three/addons/*'];
 
 const toPosix = p => p.split(path.sep).join('/');
 const isExternal = u => /^[a-z][a-z0-9+.-]*:|^\/\/|^#/i.test(u);
@@ -144,6 +151,14 @@ export async function build({ root = repoRoot, out, commit } = {}) {
   });
   if (bundled.outputFiles.length !== 1) throw new Error('expected one game bundle, got ' + bundled.outputFiles.length);
   const bundleText = bundled.outputFiles[0].text;
+  const landing = await esbuild.build({
+    absWorkingDir: out, entryPoints: [LANDING_ENTRY],
+    bundle: true, format: 'esm', platform: 'browser', target: 'es2020',
+    external: LANDING_EXTERNAL, write: false, logLevel: 'warning', legalComments: 'none',
+  });
+  if (landing.outputFiles.length !== 1) throw new Error('expected one landing bundle, got ' + landing.outputFiles.length);
+  for (const rel of walk(out, LANDING_DIR)) if (rel.endsWith('.js')) fs.rmSync(path.join(out, rel));
+  fs.writeFileSync(path.join(out, LANDING_ENTRY), landing.outputFiles[0].text);
   for (const d of GAME_SOURCE_DIRS) fs.rmSync(path.join(out, d), { recursive: true, force: true });
   for (const f of GAME_SOURCE_FILES) fs.rmSync(path.join(out, f), { force: true });
   fs.mkdirSync(path.dirname(entryPath), { recursive: true });

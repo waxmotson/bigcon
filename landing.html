@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BIG CON — the highlight reel</title>
+<meta name="description" content="THE BIG CON is a market-rigging board game for 2–8 players: 82 exhibits on one evidence board, a 24-card event deck, missiles, regulators and a purple graphic nobody can explain. Watch the highlight reel, then start a con.">
+<meta name="theme-color" content="#060d0c">
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="./static/css/fonts.css">
+<link rel="stylesheet" href="./static/landing/landing.css">
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<canvas id="stage" aria-hidden="true"></canvas>
+<div id="pops" aria-hidden="true"></div>
+
+<header class="top">
+ <a class="brand" href="#top"><i></i>THE BIG CON</a>
+ <nav>
+  <a class="opt" href="#seize" data-play-reel>THE REEL</a>
+  <a class="opt" href="exhibits.html">EXHIBITS</a>
+  <a class="play" href="index.html">PLAY</a>
+ </nav>
+</header>
+
+<aside id="hud" aria-hidden="true">
+ <div id="mood">MARKET: CALM</div>
+ <div id="ledger"></div>
+</aside>
+<div id="eventcard" aria-hidden="true"></div>
+<div id="types" aria-hidden="true"><span>BANK</span><span>REGULATOR</span><span>CHART</span><span>WILD</span><span>CORPORATE</span><span>COMMODITY</span><span>MEDIA</span></div>
+
+<main id="top">
+ <section class="hero" data-scene="board" data-title="The board">
+  <p class="kick">A MARKET-RIGGING BOARD GAME · 2–8 PLAYERS · IN YOUR BROWSER</p>
+  <h1>THE BIG <b>CON</b></h1>
+  <p class="lede">Eighty-two exhibits pinned to one evidence board and strung together with red thread. Seize them, bug them, blow them up — and stay calm enough that the regulators don’t come through the door. <em>No dice. The dice were rigged from the start.</em></p>
+  <div class="cta">
+   <a class="btn primary" href="index.html">START A CON →</a>
+   <a class="btn" href="#seize" data-play-reel>▶ WATCH THE HIGHLIGHT REEL</a>
+  </div>
+  <div class="ticker" aria-hidden="true"><div>
+   <b>BREAKING</b> · BONDMAGEDDON: THE COLLAPSE OF THE WORLD’S SAFEST INVESTMENT · QUITE FRANKLY, IT NEVER HAPPENED · CEO OF COAL PHOTOGRAPHED EXACTLY WHERE HE SHOULD NOT HAVE BEEN · LOW CORTISOL · THE JIM DELIVERS THE BUDGET · MADE PAYS OUT, PROBABLY · TUVALU: THE JOIN IS FREE · REGULATORS SNOOP AROUND · THE BOULDER ROLLS BACK DOWN · BIG BESSENT SPEAKS · <b>BREAKING</b> · BONDMAGEDDON: THE COLLAPSE OF THE WORLD’S SAFEST INVESTMENT · QUITE FRANKLY, IT NEVER HAPPENED · CEO OF COAL PHOTOGRAPHED EXACTLY WHERE HE SHOULD NOT HAVE BEEN · LOW CORTISOL · THE JIM DELIVERS THE BUDGET · MADE PAYS OUT, PROBABLY · TUVALU: THE JOIN IS FREE · REGULATORS SNOOP AROUND · THE BOULDER ROLLS BACK DOWN · BIG BESSENT SPEAKS ·
+  </div></div>
+ </section>
+
+ <section class="ch" id="seize" data-scene="seize" data-title="Seize">
+  <article class="cap">
+   <p class="num">REEL 01 / 11</p>
+   <img class="exhibit" src="./static/quikstop.png" alt="Quikstop" loading="lazy">
+   <p class="kick">THE TURN · EVERYONE STARTS AT QUIKSTOP</p>
+   <h2>WALK IN. TAKE IT.</h2>
+   <p>Every player opens with $15 and 2 Intel. Three steps along the red threads, then one action — and the obvious action is to seize whatever you are standing on.</p>
+   <dl class="sys">
+    <div><dt>INCOME</dt><dd><b>$3 salary</b> plus everything you hold, at the start of every turn.</dd></div>
+    <div><dt>TOLLS</dt><dd>Rivals pay <b>$1</b> to step onto your node. $2 if you hold Albanese; nothing if they hold James Bond.</dd></div>
+    <div><dt>THE MARKET</dt><dd>Each turn ends with one of <b>24 event cards</b>. It pays someone, bills someone, and sets the mood for the whole table.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="qantas" data-scene="qantas" data-title="Qantas">
+  <article class="cap">
+   <p class="num">REEL 02 / 11</p>
+   <img class="exhibit cut" src="./static/qantas_jet_travelling.png" alt="The Qantas jet" loading="lazy">
+   <p class="kick">QANTAS · CORPORATE · $20</p>
+   <h2>FLY THE JET</h2>
+   <p>The most expensive exhibit on the board, because it deletes the board. Pay $3 mid-move and land on any node you like.</p>
+   <dl class="sys">
+    <div><dt>COST</dt><dd><b>$3, during movement.</b> Landing ends your move; your action still follows.</dd></div>
+    <div><dt>SYSTEM</dt><dd>Distance stops mattering: the prized nodes are dealt far from Quikstop, and the jet owner reaches them first.</dd></div>
+    <div><dt>COUNTER</dt><dd>The Corporate Boeing can <b>ground it</b> for a round. A blockade closes the runway.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="sisyphus" data-scene="sisyphus" data-title="Sisyphus">
+  <article class="cap">
+   <p class="num">REEL 03 / 11</p>
+   <img class="exhibit" src="./static/sisyphus.webp" alt="The Sisyphus boulder" loading="lazy">
+   <p class="kick">THE SISYPHUS BOULDER · WILD · $4</p>
+   <h2>PUSH THE BOULDER</h2>
+   <p>Stand on it and push. $10 the first time, then double for every turn you stay: $10, $20, $40, $80…</p>
+   <dl class="sys">
+    <div><dt>COST</dt><dd>Your action. <b>No Cortisol.</b></dd></div>
+    <div><dt>THE CATCH</dt><dd>Walk off or lose the node and it rolls back to <b>$10</b>. Backroom Deals keeps the streak.</dd></div>
+    <div><dt>SYSTEM</dt><dd>A player camped on the hill isn’t seizing anything — and everyone knows exactly where to find them.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="made" data-scene="made" data-title="MADE">
+  <article class="cap">
+   <p class="num">REEL 04 / 11</p>
+   <img class="exhibit cut" src="./static/made logo.png" alt="The MADE logo" loading="lazy">
+   <p class="kick">MADE (???) · WILD · $7</p>
+   <h2>MADE PAYS OUT. PROBABLY.</h2>
+   <p>Nobody knows what the purple graphic is. At the start of every turn it might pay: +$10 and +1 Intel to whoever holds it.</p>
+   <dl class="sys">
+    <div><dt>THE ODDS</dt><dd><b>33%</b> a turn at two seats, falling to 8% at eight.</dd></div>
+    <div><dt>THE BILL</dt><dd>Every other player with more than two nodes and at least $50 loses <b>15% of their cash</b>. To the void.</dd></div>
+    <div><dt>COUNTER</dt><dd>Anyone can force a divestment for <b>5 Intel + $7</b>.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="raid" data-scene="raid" data-title="The raid">
+  <article class="cap">
+   <p class="num">REEL 05 / 11</p>
+   <img class="exhibit" src="./static/asic.png" alt="ASIC" loading="lazy">
+   <p class="kick">ASIC · ACCC · THE CORTISOL METER</p>
+   <h2>CORTISOL 9: THE RAID</h2>
+   <p>Every seizure is +1 Cortisol. A hostile takeover is +2. At nine the regulators come through the door, and the whole table watches.</p>
+   <dl class="sys">
+    <div><dt>THE DAMAGE</dt><dd>Your <b>two highest-income nodes</b> are seized. A fine of $5 or 30% of your cash. Intel burned down to 1. Next turn: one step, no income.</dd></div>
+    <div><dt>WHO PROFITS</dt><dd>The Hedge Fund collects <b>$3 on every raid</b> — even its owner’s.</dd></div>
+    <div><dt>STAY CALM</dt><dd>Spin, cook the books, lay low. Or raise everyone else’s Cortisol instead.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="venice" data-scene="venice" data-title="Overtourism">
+  <article class="cap">
+   <p class="num">REEL 06 / 11</p>
+   <img class="exhibit" src="./static/GeographyDLC/geo_venice.jpg" alt="Venice" loading="lazy">
+   <p class="kick">VENICE DI CCTV · MEDIA · $8 · GEOGRAPHY DLC</p>
+   <h2>OVERTOURISM</h2>
+   <p>Own Venice and you can ride a gondola to calm down — or pay $2 and send the tourists to somebody else’s node.</p>
+   <dl class="sys">
+    <div><dt>EFFECT</dt><dd>Pick a rival’s node. Its owner takes <b>+1 Cortisol</b> at the start of their next turn.</dd></div>
+    <div><dt>SYSTEM</dt><dd>The one attack the ESG Pillars don’t stop. Point it at whoever is sitting on eight.</dd></div>
+    <div><dt>EITHER / OR</dt><dd>Gondola Therapy (−1 Cortisol, free) or Overtourism. Once per turn, not both.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="missile" data-scene="missile" data-title="Missiles">
+  <article class="cap">
+   <p class="num">REEL 07 / 11</p>
+   <img class="exhibit cut" src="./static/GeographyDLC/missile_travelling.png" alt="A missile in flight" loading="lazy">
+   <p class="kick">MISSILE COMMAND · REGULATOR · $8 · GEOGRAPHY DLC</p>
+   <h2>LAUNCH A MISSILE</h2>
+   <p>Missile Command — or the Shahed drone; nobody holds both — turns $4 and 1 Intel into a hole in the board.</p>
+   <dl class="sys">
+    <div><dt>EFFECT</dt><dd>The target is <b>expropriated with no payout</b> and becomes rubble: no income, no seizing, until someone rebuilds it at list price.</dd></div>
+    <div><dt>RANGE</dt><dd>You must stand on your launcher to fire. Unless you own Kim Jong Un.</dd></div>
+    <div><dt>BLOWBACK</dt><dd>Strike a regulator and an investigation opens on you. The Pyongyang Hotel takes $2 on every rebuild.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="tuvalu" data-scene="tuvalu" data-title="Tuvalu">
+  <article class="cap">
+   <p class="num">REEL 08 / 11</p>
+   <img class="exhibit" src="./static/GeographyDLC/geo_tuvalu.png" alt="The flag of Tuvalu" loading="lazy">
+   <p class="kick">TUVALU .TV · WILD · THE FIRST ONE’S FREE</p>
+   <h2>THE JOIN IS FREE</h2>
+   <p>The first player to arrive simply owns it. No action, no cost, no Cortisol. Then somebody tries to bomb it.</p>
+   <dl class="sys">
+    <div><dt>THE SHIELD</dt><dd>A missile aimed at Tuvalu is <b>reflected</b> back onto the launcher’s own holdings.</dd></div>
+    <div><dt>AND</dt><dd>Their silo is destroyed in the backblast. No payout, no refund.</dd></div>
+    <div><dt>SYSTEM</dt><dd>After the first owner, normal rules apply — it can still be taken the old-fashioned way.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="blockade" data-scene="blockade" data-title="Blockade">
+  <article class="cap">
+   <p class="num">REEL 09 / 11</p>
+   <img class="exhibit" src="./static/albo.png" alt="Anthony Albanese" loading="lazy">
+   <p class="kick">ANTHONY ALBANESE · WILD · $8</p>
+   <h2>THE PM CLOSES THE ROAD</h2>
+   <p>Once per turn, for free, wall off literally any node until the end of next round.</p>
+   <dl class="sys">
+    <div><dt>EFFECT</dt><dd><b>Nobody walks in. Nobody lands.</b> Not even you.</dd></div>
+    <div><dt>USE IT ON</dt><dd>The node a rival needs to finish a set, the boulder they are farming, or the launcher they have to stand on.</dd></div>
+    <div><dt>ALSO</dt><dd>Tolls on your own nodes are $2 while you hold him.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="bondmageddon" data-scene="bondmageddon" data-title="Bondmageddon">
+  <article class="cap">
+   <p class="num">REEL 10 / 11</p>
+   <img class="exhibit" src="./static/bondmageddon 2.png" alt="Bondmageddon: the collapse of the world’s safest investment" loading="lazy">
+   <p class="kick">THE BOND DESK + “BOND MARKETS REVOLT” — THE LEAK</p>
+   <h2>BONDMAGEDDON</h2>
+   <p>Hold both halves and you unlock the biggest button on the board: $16 and 4 Intel for four missiles at one rival’s holdings.</p>
+   <dl class="sys">
+    <div><dt>EFFECT</dt><dd><b>Four random holdings become rubble.</b> No DLC required.</dd></div>
+    <div><dt>THE SHIELD</dt><dd>If they hold the ESG Pillars, three of the four hit the Pillars first.</dd></div>
+    <div><dt>THE CARD</dt><dd>The event card of the same name turns the mood to <b>PANIC</b>: yields go vertical and every bank position pays the Bond Desk.</dd></div>
+   </dl>
+  </article>
+ </section>
+
+ <section class="ch" id="win" data-scene="win" data-title="The win">
+  <article class="cap">
+   <p class="num">REEL 11 / 11</p>
+   <p class="kick">THE WIN</p>
+   <h2>MONEY AND A FINISHED PORTFOLIO</h2>
+   <p>Reach the host’s cash target while holding one of every node type. If several players qualify at once, the richest takes the con.</p>
+   <dl class="sys">
+    <div><dt>THE SET</dt><dd>Bank, regulator, chart, wild, corporate, commodity, media.</dd></div>
+    <div><dt>THE RACE</dt><dd>There are only <b>four regulators</b> on the base board.</dd></div>
+   </dl>
+   <a class="btn primary" href="index.html">START A CON →</a>
+  </article>
+ </section>
+</main>
+
+<section class="closing">
+ <div class="inner">
+  <p class="kick">HOW IT PLAYS</p>
+  <h2>A TURN, IN FOUR MOVES</h2>
+  <p class="lede">Host a room, read out the buzzword, and up to eight players join from a browser or a Discord Activity. Short a friend? Seat a bot.</p>
+  <ol class="turn">
+   <li><h3>INCOME</h3><p>$3 salary, plus your holdings, their synergies, and whatever the mood is doing to them.</p></li>
+   <li><h3>MOVE</h3><p>Three steps along the threads. More with a train, a shoe or a burned favour. Or just fly.</p></li>
+   <li><h3>ONE ACTION</h3><p>Seize, bug, leak, spin, audit, deal, push, launch. Intel ops are free on top.</p></li>
+   <li><h3>MARKET EVENT</h3><p>One card hits the whole table and moves the mood: calm, boom, panic or media frenzy.</p></li>
+  </ol>
+  <div class="stats">
+   <div><b>82</b><span>EXHIBITS WITH THE DLC</span></div>
+   <div><b>24</b><span>MARKET EVENT CARDS</span></div>
+   <div><b>2–8</b><span>PLAYERS, BOTS WELCOME</span></div>
+   <div><b>0</b><span>DICE</span></div>
+  </div>
+  <div class="final">
+   <p>THE BOARD IS DEALT FRESH EVERY GAME.</p>
+   <div class="cta"><a class="btn primary" href="index.html">START A CON →</a><a class="btn" href="exhibits.html">BROWSE THE EXHIBITS</a></div>
+  </div>
+  <div class="foot"><span>THE BIG CON</span><span>A parody. Any resemblance to real markets is the markets’ fault.</span></div>
+ </div>
+</section>
+
+<div class="reelbar">
+ <button id="reelplay" type="button" aria-pressed="false"><span>PLAY THE REEL</span></button>
+ <nav id="reelnav" aria-label="Reel chapters"></nav>
+</div>
+
+<script type="module" src="./static/landing/reel.js"></script>
+</body>
+</html>

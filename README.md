@@ -87,6 +87,16 @@ existing dashboard headers/routes that are not in the file untouched.
 
 `index.html` can still be opened straight from the repo root (the `BUILD_COMMIT` there is the placeholder `dev`). The Discord SDK bundle is **not** committed any more; to try the Discord Activity code path from the repo root run `npm run build:sdk` once (writes the git-ignored `static/discord-sdk.bundle.js`), or just serve `dist/`.
 
+### Landing page
+
+`landing.html` is the highlight reel: a three.js board built from the real node data
+(`static/landing/world.js`), eleven scripted scenes (`scenes.js`) and the scroll/HUD glue
+(`reel.js`, the entry — bundled by the build, with three.js loaded from a CDN through the
+page's import map). The exhibit thumbnails come from one atlas image; after adding or
+replacing a node image run `python scripts/build_landing_atlas.py` (needs Pillow) and commit
+`static/landing/atlas.webp` + `atlas.js`. `landing.html?scene=<id>&t=<seconds>` freezes a
+single frame of one scene.
+
 ### Tests
 
 ```sh
