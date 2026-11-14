@@ -51,7 +51,7 @@ const GAME_SOURCE_DIRS = ['static/js'];
 const GAME_SOURCE_FILES = ['static/bots.js'];
 /* landing.html's reel: bundled the same way (it imports the game's data.js), with
  * three.js left to the page's import map. Its other modules are folded in. */
-const LANDING_ENTRY = 'static/landing/reel.js';
+const LANDING_ENTRIES = ['static/landing/reel.js', 'static/landing/film.js'];   // landing.html, film.html
 const LANDING_DIR = 'static/landing';
 const LANDING_EXTERNAL = ['three', 'three/addons/*'];
 
@@ -151,14 +151,18 @@ export async function build({ root = repoRoot, out, commit } = {}) {
   });
   if (bundled.outputFiles.length !== 1) throw new Error('expected one game bundle, got ' + bundled.outputFiles.length);
   const bundleText = bundled.outputFiles[0].text;
-  const landing = await esbuild.build({
-    absWorkingDir: out, entryPoints: [LANDING_ENTRY],
-    bundle: true, format: 'esm', platform: 'browser', target: 'es2020',
-    external: LANDING_EXTERNAL, write: false, logLevel: 'warning', legalComments: 'none',
-  });
-  if (landing.outputFiles.length !== 1) throw new Error('expected one landing bundle, got ' + landing.outputFiles.length);
+  const landings = [];
+  for (const entry of LANDING_ENTRIES) {
+    const built = await esbuild.build({
+      absWorkingDir: out, entryPoints: [entry],
+      bundle: true, format: 'esm', platform: 'browser', target: 'es2020',
+      external: LANDING_EXTERNAL, write: false, logLevel: 'warning', legalComments: 'none',
+    });
+    if (built.outputFiles.length !== 1) throw new Error('expected one bundle for ' + entry + ', got ' + built.outputFiles.length);
+    landings.push([entry, built.outputFiles[0].text]);
+  }
   for (const rel of walk(out, LANDING_DIR)) if (rel.endsWith('.js')) fs.rmSync(path.join(out, rel));
-  fs.writeFileSync(path.join(out, LANDING_ENTRY), landing.outputFiles[0].text);
+  for (const [entry, text] of landings) fs.writeFileSync(path.join(out, entry), text);
   for (const d of GAME_SOURCE_DIRS) fs.rmSync(path.join(out, d), { recursive: true, force: true });
   for (const f of GAME_SOURCE_FILES) fs.rmSync(path.join(out, f), { force: true });
   fs.mkdirSync(path.dirname(entryPath), { recursive: true });

@@ -1,0 +1,95 @@
+/* film.html — one whole game. Builds on landing.css: same stage, HUD and bar; the page itself never scrolls. */
+html,body.film{height:100%;overflow:hidden}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+body.film main{position:static}
+
+/* ---------- the caption: what is happening right now ---------- */
+#now{position:fixed;z-index:4;left:clamp(12px,3vw,40px);top:74px;width:min(400px,calc(100vw - 24px));padding:16px 20px 14px;background:var(--glass);border:1px solid var(--line);border-left:3px solid var(--red);opacity:0;transform:translateY(-8px);transition:opacity .5s,transform .5s;pointer-events:none}
+.started #now{opacity:1;transform:none}
+.ended #now,.acts-open #now{opacity:0}
+.nowhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;font-size:11px;font-weight:800;letter-spacing:.2em;color:var(--red);font-stretch:85%}
+#nphase{display:flex;gap:3px}
+#nphase i{font-style:normal;font-size:9.5px;letter-spacing:.12em;padding:3px 6px;border:1px solid #2a3936;color:#5d706d}
+#nphase i.on{color:#000;background:var(--teal2);border-color:#000}
+.nowwho{--pc:#f5c542;display:flex;align-items:center;gap:9px;margin:0 0 8px;min-height:30px}
+.nowwho img{flex:none;width:30px;height:30px;border-radius:50%;object-fit:cover;background:#000;border:2px solid var(--pc)}
+#nname{font-weight:800;font-size:14px;color:var(--pc);white-space:nowrap}
+#nwhat{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;font-stretch:85%}
+#ntitle{font-family:var(--display);font-weight:400;font-size:clamp(28px,2.9vw,40px);line-height:.94;letter-spacing:.01em;margin:0 0 9px;text-wrap:balance;overflow-wrap:anywhere}
+#nrule{margin:0 0 12px;font-size:14.5px;line-height:1.42;color:#e3ebe9;text-wrap:pretty;min-height:4.2em}
+#nlog{margin:0;padding:9px 0 0;list-style:none;border-top:1px solid var(--line);min-height:5.4em}
+#nlog li{font-size:11.5px;line-height:1.4;color:var(--mute);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px}
+#nlog::before{content:'THE RECORD';display:block;font-size:9.5px;font-weight:800;letter-spacing:.24em;color:#5d706d;margin-bottom:5px}
+
+/* ---------- opening and closing titles ---------- */
+#intro,#outro{position:fixed;z-index:3;left:0;right:0;bottom:0;padding:120px clamp(16px,4vw,64px) 104px;background:linear-gradient(180deg,#060d0c00 0,#060d0cc9 45%,#060d0cf2);transition:opacity .6s,transform .6s}
+#intro h2,#outro h2{font-family:var(--display);font-weight:400;font-size:clamp(48px,9.5vw,138px);line-height:.86;letter-spacing:.01em;margin:0 0 18px;text-shadow:0 6px 40px #000}
+#intro h2 b,#outro h2 b{font-weight:400;color:var(--teal2)}
+#outro h2{font-size:clamp(40px,7.5vw,108px)}
+#outro h2 span{color:var(--gold)}
+#intro .lede,#outro .lede{max-width:36em;font-size:clamp(15px,1.4vw,19px);color:#dfe8e6;margin:0 0 24px;text-wrap:pretty}
+.started #intro{opacity:0;transform:translateY(20px);pointer-events:none}
+.ended #hud,.ended #eventcard{opacity:0}
+
+/* ---------- the ledger grows a line: the seven-type set, and what the regulators think ---------- */
+.film .lrow{grid-template-areas:'f n m i' 'f c c c' 'f t t t';transition:background .3s}
+.film .lrow.cur{background:rgba(47,209,197,.1);box-shadow:inset 3px 0 0 var(--pc)}
+.lt{grid-area:t;display:flex;align-items:center;gap:3px;margin-top:5px}
+.lt i{width:9px;height:9px;border:1px solid #33423f;background:none}
+.lt i.on{background:var(--gold);border-color:#000}
+.lt em{margin-left:auto;font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#5d706d;white-space:nowrap}
+.lt em.hot{color:var(--red)}
+.film #ledger::before{content:'THE SYNDICATE · $200 + ALL 7 TYPES'}
+#eventcard.secret{background:#101a19;color:var(--ink);border-color:var(--teal2)}
+#eventcard.secret .ek{color:var(--teal2)}
+.film #eventcard{bottom:84px}
+
+/* ---------- the bar: play, speed, rounds, the checklist ---------- */
+.filmbar{gap:8px}
+#speed,#actsbtn{flex:none;font-size:11.5px;font-weight:800;letter-spacing:.14em;background:#000;border:1px solid var(--teal);padding:9px 11px;cursor:pointer;font-variant-numeric:tabular-nums}
+#speed{min-width:46px}
+#speed:hover,#actsbtn:hover,#actsbtn[aria-expanded=true]{background:var(--teal)}
+#actsbtn b{font-weight:800;color:var(--gold)}
+#actsbtn.bump{animation:bump .5s}
+@keyframes bump{0%{box-shadow:0 0 0 0 var(--gold);border-color:var(--gold)}100%{box-shadow:0 0 0 10px #f5c54200}}
+.filmbar .tick span{text-align:left;font-size:10px}
+.filmbar .tick.on span{color:var(--gold)}
+.filmbar #reelnav{margin:0 6px}
+
+#acts{position:fixed;z-index:5;left:0;right:0;bottom:58px;max-height:min(72vh,640px);overflow:auto;padding:20px clamp(16px,4vw,48px) 22px;background:#060d0cf7;border-top:1px solid var(--teal)}
+#acts header{display:flex;align-items:baseline;gap:16px;margin-bottom:14px}
+#acts h2{font-family:var(--display);font-weight:400;font-size:clamp(22px,2.6vw,34px);line-height:1;margin:0}
+#acts header p{margin:0;font-size:13px;color:var(--mute);flex:1}
+#actsclose{background:none;border:1px solid var(--line);width:34px;height:34px;cursor:pointer}
+#actsclose:hover{background:var(--teal)}
+#actlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px 26px}
+.actgroup h3{margin:0 0 8px;font-size:10.5px;font-weight:800;letter-spacing:.24em;color:var(--teal2)}
+.actgroup{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.chip{font-size:11.5px;font-weight:800;letter-spacing:.1em;font-stretch:85%;text-align:left;padding:6px 9px;background:none;border:1px solid #2a3936;color:#6f8380;cursor:pointer;width:100%}
+.chip::before{content:'○';margin-right:8px}
+.chip.on{color:var(--ink);border-color:var(--line)}
+.chip.on::before{content:'●';color:var(--gold)}
+.chip.live{background:var(--gold);color:#000;border-color:#000}
+.chip.live::before{color:#000}
+.chip:hover:not(:disabled){border-color:var(--teal2);color:#fff}
+.chip:disabled{opacity:.4;cursor:default}
+
+@media(max-width:959px){
+  #now{top:auto;bottom:62px;left:10px;right:10px;width:auto;padding:11px 14px 9px;transform:translateY(8px)}
+  .nowhead{margin-bottom:6px}
+  #ntitle{font-size:25px;margin-bottom:5px}
+  #nrule{font-size:13px;min-height:0;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  #nlog{min-height:0;padding-top:6px}
+  #nlog::before{display:none}
+  #nlog li:nth-child(n+2){display:none}
+  #nlog li{-webkit-line-clamp:1;margin:0}
+  .film .lrow{grid-template-areas:'f m' 'c c'}
+  .lt{display:none}
+  .film #eventcard{top:118px;bottom:auto}
+  #intro,#outro{padding:90px 16px 84px}
+  .filmbar .tick span{display:none}
+  .filmbar{padding-left:10px;padding-right:10px}
+  #actsbtn{letter-spacing:.06em}
+}
+@media(max-width:520px){#reelplay span{display:none}#speed{min-width:40px;padding:9px 6px}.filmbar #reelnav{gap:2px;margin:0 2px}}
+@media(prefers-reduced-motion:reduce){#now,#intro,#outro{transition:none}}

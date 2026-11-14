@@ -107,3 +107,14 @@ node --test tests/*.test.mjs
 ```
 
 `tests/build.test.mjs` runs the real build into a temp directory.
+
+`film.html` replays one whole game on the same board and shows every action in the rules.
+The game is real: `scripts/film_script.mjs` says what each seat does (and which event card
+is on top of the deck), `node scripts/build_film.mjs` plays that through `static/js/engine.js`
+and writes the recording to `static/landing/match.js`. Re-run it after changing the rules or
+the script — an illegal step fails the build with the engine's own refusal (`--check` plays
+without writing, `--table` prints one line per turn, `--trace` prints the record).
+`static/landing/acts.js` is the catalogue of actions the film must show; `tests/film.test.mjs`
+fails if the recording is stale or misses one. `film.html?chip=<id>&u=0.5` freezes on the
+first beat showing that action (`?kind=`, `?beat=`, `?t=` also work), and `?perf` / `?q` work
+as on the landing page.

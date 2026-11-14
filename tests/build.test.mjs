@@ -69,7 +69,7 @@ test('without RENDER_GIT_COMMIT the stamp falls back to git HEAD or "dev" — al
 test('every local src/href/import in the dist HTML and JS resolves to an existing file', () => {
   const files = walk(outA);
   const pages = files.filter(f => f.endsWith('.html'));
-  assert.deepEqual(pages.sort(), ['discord.html', 'exhibits.html', 'index.html', 'landing.html', 'logs.html']);
+  assert.deepEqual(pages.sort(), ['discord.html', 'exhibits.html', 'film.html', 'index.html', 'landing.html', 'logs.html']);
   let checked = 0;
   for (const page of pages) {
     for (const ref of htmlRefs(path.join(outA, page))) {
@@ -94,7 +94,7 @@ test('every local src/href/import in the dist HTML and JS resolves to an existin
 test('the game ships as ONE bundled ES module: the source modules are folded in, not published', () => {
   const files = walk(outA);
   const js = files.filter(f => f.endsWith('.js'));
-  assert.deepEqual(js.map(f => f.replace(/\.[0-9a-f]{10}\.js$/, '.js')).sort(), ['static/discord-sdk.bundle.js', 'static/js/main.js', 'static/landing/reel.js']);
+  assert.deepEqual(js.map(f => f.replace(/\.[0-9a-f]{10}\.js$/, '.js')).sort(), ['static/discord-sdk.bundle.js', 'static/js/main.js', 'static/landing/film.js', 'static/landing/reel.js']);
   for (const gone of ['static/bots', 'static/js/engine', 'static/js/net', 'static/js/ui', 'static/js/hooks', 'static/js/discord', 'static/js/data'])
     assert.ok(!files.some(f => f.startsWith(gone)), gone + ' is bundled, not shipped separately');
   const main = files.find(f => /^static\/js\/main\.[0-9a-f]{10}\.js$/.test(f));
