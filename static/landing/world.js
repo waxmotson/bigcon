@@ -14,15 +14,14 @@
    · resolution adapts: it starts at ≤1.5× pixel ratio and steps down (then uses
      a smaller shadow map, then bloom) if frames run slow — see sample(). `?q=0..5` pins a tier. */
 import * as THREE from 'three';
-import { NODES, EDGES, TYPE_COLORS, PCOLORS, CHARS, rebuildWorld } from '../js/data.js';
+import { NODES, TYPE_COLORS, PCOLORS, CHARS } from '../js/data.js';
+import { buildLayout } from './layout.js';
 import { ATLAS } from './atlas.js';
 
 const PX = 0.01;                       // board pixels -> world units
 const CW = 1.0, IH = CW * ATLAS.tileH / ATLAS.tileW, LH = 0.17, PAD = 0.04;
 const FW = CW + PAD * 2, FH = IH + LH + PAD * 2, LEAN = -0.3;
 const LBL = Math.round(ATLAS.tileW * LH / CW);   // label strip height in texture pixels
-/* exhibits that get a 3D model beside their card, so the layout leaves them room */
-const LANDMARKS = new Set(['qantas', 'sisy', 'made', 'geo_missile', 'geo_tuvalu', 'geo_venice', 'geo_pillars', 'geo_shahed', 'barrels', 'gold']);
 export const MOOD_SKY = { CALM: 0x06100f, BOOM: 0x141005, PANIC: 0x200605, FRENZY: 0x140a19 };
 const MOOD_THREAD = { CALM: 0xff4a3d, BOOM: 0xffb52e, PANIC: 0xff2a1a, FRENZY: 0xe46bff };
 /* quality tiers, best first; the effective pixel ratio is also capped by the device's.
@@ -41,45 +40,11 @@ export const clamp01 = v => Math.max(0, Math.min(1, v));
 export const sm = (t, a, b) => { const u = clamp01((t - a) / (b - a)); return u * u * (3 - 2 * u); };
 export const lerp = (a, b, u) => a + (b - a) * u;
 
-/* ---------- layout: the canonical collage, pushed apart until nothing overlaps ---------- */
-function buildLayout() {
-  rebuildWorld(true);
-  const pts = NODES.map(n => ({ id: n.id, x: n.x, y: n.y }));
-  for (let it = 0; it < 400; it++) {
-    let moved = false;
-    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
-      const A = pts[i], B = pts[j];
-      const D = (LANDMARKS.has(A.id) || LANDMARKS.has(B.id)) ? 215 : 172;
-      let dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy);
-      if (d >= D) continue;
-      if (d < 0.01) { dx = Math.cos(i * 2.4); dy = Math.sin(i * 2.4); d = 1; }
-      const p = (D - d) / 2 + 0.5;
-      A.x -= dx / d * p; A.y -= dy / d * p * 0.9; B.x += dx / d * p; B.y += dy / d * p * 0.9;
-      moved = true;
-    }
-    for (const p of pts) { p.x = Math.max(-40, Math.min(2440, p.x)); p.y = Math.max(-30, Math.min(1590, p.y)); }
-    if (!moved) break;
-  }
+/* ---------- layout (see layout.js) in world units ---------- */
+function layout3() {
+  const { pts, edges, adj } = buildLayout();
   const pos = {};
   for (const p of pts) pos[p.id] = new THREE.Vector3((p.x - 1200) * PX, 0, (p.y - 780) * PX);
-  /* the DLC pins are only threaded to each other in the canonical data (every real game
-     deals fresh threads), so tie any stranded cluster to its nearest neighbour */
-  const edges = EDGES.filter(e => pos[e[0]] && pos[e[1]]).map(e => e.slice());
-  const adj = {};
-  const link = (a, b) => { (adj[a] = adj[a] || []).push(b); (adj[b] = adj[b] || []).push(a); };
-  edges.forEach(e => link(e[0], e[1]));
-  for (;;) {
-    const seen = new Set(['quik']), q = ['quik'];
-    while (q.length) for (const n of adj[q.shift()] || []) if (!seen.has(n)) { seen.add(n); q.push(n); }
-    const out = pts.filter(p => !seen.has(p.id));
-    if (!out.length) break;
-    let best = null;
-    for (const o of out) for (const s of seen) {
-      const d = pos[o.id].distanceTo(pos[s]);
-      if (!best || d < best.d) best = { d, a: o.id, b: s };
-    }
-    edges.push([best.a, best.b]); link(best.a, best.b);
-  }
   return { pos, edges, adj };
 }
 
@@ -121,7 +86,7 @@ class Pool {
 }
 
 export async function createWorld({ canvas, overlay, quality = null }) {
-  const { pos, edges, adj } = buildLayout();
+  const { pos, edges, adj } = layout3();
   const small = Math.min(window.innerWidth, window.innerHeight) < 620;
   const devDpr = window.devicePixelRatio || 1;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
