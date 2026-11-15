@@ -21,6 +21,10 @@ test('homepage script tags are balanced and every inline script parses', () => {
 
   for (const [index, block] of scriptBlocks.entries()) {
     if (/\bsrc\s*=/.test(block[1])) continue;
+    if (/\btype\s*=\s*["']?importmap/i.test(block[1])) {
+      assert.doesNotThrow(() => JSON.parse(block[2]), 'import map ' + (index + 1) + ' must be valid JSON');
+      continue;
+    }
     assert.doesNotThrow(
       () => new vm.Script(block[2], { filename: 'index.html:inline-script-' + (index + 1) }),
       'inline script ' + (index + 1) + ' must parse'

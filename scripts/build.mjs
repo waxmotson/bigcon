@@ -51,7 +51,10 @@ const GAME_SOURCE_DIRS = ['static/js'];
 const GAME_SOURCE_FILES = ['static/bots.js'];
 /* landing.html's reel: bundled the same way (it imports the game's data.js), with
  * three.js left to the page's import map. Its other modules are folded in. */
-const LANDING_ENTRIES = ['static/landing/reel.js', 'static/landing/film.js'];   // landing.html, film.html
+const LANDING_ENTRIES = ['static/landing/reel.js', 'static/landing/film.js', 'static/landing/board3d.js'];   // landing.html, film.html, the game's 3D board
+/* the game loads its optional 3D board at runtime (ui.js: import('../landing/board3d.js')); the game
+ * bundle keeps that import as-is and step 5 points it at the hashed file */
+const BOARD3D_IMPORT = '../landing/board3d.js';
 const LANDING_DIR = 'static/landing';
 const LANDING_EXTERNAL = ['three', 'three/addons/*'];
 
@@ -148,6 +151,7 @@ export async function build({ root = repoRoot, out, commit } = {}) {
     absWorkingDir: out, entryPoints: [GAME_ENTRY],
     bundle: true, format: 'esm', platform: 'browser', target: 'es2020',
     external: ['/' + SDK_OUT], write: false, logLevel: 'warning', legalComments: 'none',
+    plugins: [{ name: 'board3d-external', setup(b) { b.onResolve({ filter: /board3d\.js$/ }, a => a.path === BOARD3D_IMPORT ? { path: a.path, external: true } : undefined); } }],
   });
   if (bundled.outputFiles.length !== 1) throw new Error('expected one game bundle, got ' + bundled.outputFiles.length);
   const bundleText = bundled.outputFiles[0].text;

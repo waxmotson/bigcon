@@ -8,6 +8,10 @@
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link rel="stylesheet" href="./static/css/fonts.css">
 <link rel="stylesheet" href="./static/css/bigcon-ui.css">
+<!-- three.js is fetched only if a player switches on the 3D board (static/landing/board3d.js) -->
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+</script>
 </head>
 <body>
 <div id="toast"></div>
@@ -70,7 +74,7 @@
 
 <div id="app">
  <div id="boardWrap">
-  <div class="zoombar"><button id="zin">+</button><button id="zout">−</button><button id="zreset">⌂</button></div>
+  <div class="zoombar"><button id="z3d" type="button" aria-pressed="false" title="Switch to the 3D board">3D</button><button id="zin">+</button><button id="zout">−</button><button id="zreset">⌂</button></div>
   <div class="panhint">drag to pan · scroll to zoom</div>
   <svg id="board" viewBox="0 0 2400 1560" preserveAspectRatio="xMidYMid meet"></svg>
  </div>

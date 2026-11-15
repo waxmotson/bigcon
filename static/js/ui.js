@@ -93,7 +93,9 @@ export function showRules(){
 export function render(){
  if(!S)return;
  
- notifyCurrentTurn(false);applyLayoutFromState();renderBoard();renderSide();
+ notifyCurrentTurn(false);applyLayoutFromState();
+ if(want3d()&&!view3d&&!view3dPending)set3d(true);
+ renderBoard();renderSide();
  if(!S.over){
   const me=S.players[Net.myIdx];
   const cur=S.players[S.cur];
@@ -144,17 +146,25 @@ export function nodeSVG(n,cls){
  const bl=S&&blockaded(n.id);
  const badges=(ot?'<text x="'+(w/2-36)+'" y="'+(-h/2+18)+'" font-size="12">🛳️</text>':'')+(gq?'<text x="'+(-w/2+6)+'" y="'+(-h/2+18)+'" font-size="12">⛔</text>':'')+(bl?'<text x="'+(-w/2+7)+'" y="'+(-h/2+18)+'" font-size="15" font-weight="900">🚧</text>':'');
  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
- let tip='';
- if(bl)tip+='&#10;🚧 BLOCKADED — entry and Qantas landing are prohibited until the blockade expires.';
- if(rb)tip+='&#10;💥 RUBBLE — arrive and pay $'+n.cost+' in your action phase to rebuild. No income, nothing to seize until rebuilt.';
- if(ot)tip+='&#10;🛳️ OVERTOURISM — its owner takes +1 Cortisol on their next turn (one rotation, or until Venice changes hands).';
- if(S&&!rb)tip+=priceTip(n,o);
  return '<g class="node '+cls+'" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+') rotate('+n.rot+')">'
   +ownerGlow+moodGlow+halo
   +'<image class="node-image" href="'+n.image+'" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" preserveAspectRatio="none"/>'
   +(rb?'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="rgba(8,6,6,0.72)"/><text x="0" y="-4" text-anchor="middle" font-size="22">💥</text><text x="0" y="16" text-anchor="middle" font-size="9" font-weight="900" fill="#ffb08a" letter-spacing="1">REBUILD $'+n.cost+'</text>':'')
   +ownerTag+bugTag+badges
-  +'<title>'+esc(n.name.join(' '))+' — '+n.type+' · $'+n.income+'/turn · seize $'+n.cost+'&#10;'+esc(n.sub)+'&#10;'+esc(n.sp)+tip+'</title></g>';
+  +'<title>'+esc(nodeTip(n)).replace(/\n/g,'&#10;')+'</title></g>';
+}
+/* A node's hover text, as plain lines: the SVG board's <title> and the 3D board's tooltip. */
+export function nodeTip(n){
+ const o=S?S.owner[n.id]:null;
+ const rb=S&&S.dlcGeo&&S.rubble[n.id];
+ const ot=S&&S.dlcGeo&&S.ov&&S.ov.nid===n.id;
+ const bl=S&&blockaded(n.id);
+ let t=n.name.join(' ')+' — '+n.type+' · $'+n.income+'/turn · seize $'+n.cost+'\n'+(n.sub||'')+'\n'+(n.sp||'');
+ if(bl)t+='\n🚧 BLOCKADED — entry and Qantas landing are prohibited until the blockade expires.';
+ if(rb)t+='\n💥 RUBBLE — arrive and pay $'+n.cost+' in your action phase to rebuild. No income, nothing to seize until rebuilt.';
+ if(ot)t+='\n🛳️ OVERTOURISM — its owner takes +1 Cortisol on their next turn (one rotation, or until Venice changes hands).';
+ if(S&&!rb)t+=priceTip(n,o).replace(/&#10;/g,'\n');
+ return t;
 }
 /* Hover price line: what the NEXT seizure of this node costs. Mirrors doSeize —
    your own discounts (seizeListPrice, Slipstream), then the takeover doubling
@@ -303,16 +313,22 @@ function nodeRing(id,color,w,pad,dash){
  const b=nodeBox(n),bw=b[0],bh=b[1];
  return '<rect x="'+(n.x-bw/2-pad)+'" y="'+(n.y-bh/2-pad)+'" width="'+(bw+pad*2)+'" height="'+(bh+pad*2)+'" fill="none" stroke="'+color+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
 }
-export function drawHighlights(){
- const g=$('hlg');
- if(!g)return;
- if(!S){g.innerHTML='';return}
+/* what the hover and the pinned route light up, for both boards */
+function highlightState(){
  ensureEdgeIndex();
- let lines='',out='';
  const me=myPos();
  const hov=hoverId&&discoveredNode(hoverId)?hoverId:null;
  const path=(pinnedId&&discoveredNode(pinnedId)&&me)?shortestPath(me,pinnedId):null;
  const links=hov?(ADJ[hov]||[]).filter(v=>visibleLink(hov,v)):[];
+ return {hov,path,links};
+}
+export function drawHighlights(){
+ if(view3d&&S)view3d.update(boardScene());
+ const g=$('hlg');
+ if(!g)return;
+ if(!S){g.innerHTML='';return}
+ let lines='',out='';
+ const {hov,path,links}=highlightState();
  links.forEach(v=>{lines+=overlayEdge(hov,v,'#ffd24a',3.5,8)});
  if(path&&path.length>1)for(let i=0;i<path.length-1;i++)lines+=overlayEdge(path[i],path[i+1],'#ff5e9c',4.5,10);
  if(lines){
@@ -358,6 +374,90 @@ function pinPathTo(id){
  if(id===me){clearPin();hooks.toast('You are standing on it.');return}
  if(!shortestPath(me,id)){pinnedId=null;drawHighlights();hooks.toast('No known route there yet.');return}
  pinnedId=id;drawHighlights();
+}
+/* how a node answers a click right now: '' · 'click' (a Qantas landing) · 'click reach' (a step) · 'click target' */
+function nodeClass(n,curpos){
+ if(!S||S.over)return '';
+ if(S.mode==='fly')return (myTurn()&&n.id!==curpos&&canReach(n.id)&&!blockaded(n.id))?'click':'';
+ if(S.mode!=='missile'&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))return 'click reach';
+ if(bugTargetable(n)||missileTargetable(n)||overtourTargetable(n)||blockadeTargetable(n))return 'click target';
+ return '';
+}
+/* ---------- the optional 3D board (static/landing/board3d.js) ----------
+   Off by default and remembered per browser. It is loaded only when switched on, and it
+   draws from boardScene() — a plain snapshot — so it never touches S or the rules. If
+   three.js or WebGL is unavailable it says so and the classic board stays. */
+const B3D_KEY='bigcon-board3d';
+let view3d=null,view3dPending=false;
+function want3d(){try{return localStorage.getItem(B3D_KEY)==='on'}catch(_){return false}}
+function save3d(on){try{localStorage.setItem(B3D_KEY,on?'on':'off')}catch(_){}}
+function sync3dButton(){
+ const b=$('z3d');if(!b)return;
+ const on=!!view3d||view3dPending;
+ b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));
+ b.title=on?'Back to the classic board':'Switch to the 3D board';
+}
+export function set3d(on){
+ save3d(on);
+ const wrap=$('boardWrap');
+ if(!on){if(view3d){view3d.destroy();view3d=null}if(wrap)wrap.classList.remove('b3d');sync3dButton();return}
+ if(view3d||view3dPending||!S||!wrap){sync3dButton();return}
+ view3dPending=true;sync3dButton();
+ const fail=e=>{
+  view3dPending=false;if(e)console.warn('[board3d]',e);
+  if(view3d){view3d.destroy();view3d=null}
+  wrap.classList.remove('b3d');save3d(false);sync3dButton();
+  hooks.toast('The 3D board could not start here — you are on the classic board.');
+ };
+ import('../landing/board3d.js')
+  .then(m=>m.mountBoard3D(wrap,boardScene(),{tap:tapNode,hover:setHover,pin:pinPathTo,unpin:clearPin,fail:()=>fail()}))
+  .then(v=>{
+   view3dPending=false;
+   if(!want3d()||!S){v.destroy();sync3dButton();return}
+   view3d=v;wrap.classList.add('b3d');view3d.update(boardScene());sync3dButton();
+  })
+  .catch(fail);
+}
+/* Everything the 3D board draws, as plain data (board pixels, seat indices, ids). */
+export function boardScene(){
+ ensureEdgeIndex();
+ const curpos=S.players[S.cur].pos,viewer=S.players[Net.myIdx];
+ const known=id=>discoveredNode(id);
+ const nodes=NODES.map(n=>{
+  const cls=nodeClass(n,curpos),k=known(n.id);
+  /* ring layouts turn cards along the ring; standing up, every card faces the camera instead */
+  return {id:n.id,x:n.x,y:n.y,rot:Math.abs(n.rot||0)<=20?n.rot||0:0,type:n.type,name:n.name.join(' '),known:k,click:cls.indexOf('click')>=0,reach:cls.indexOf('reach')>=0,target:cls.indexOf('target')>=0,tip:k?nodeTip(n):''};
+ });
+ const seats=S.players.map((p,i)=>{
+  const seen=!S.fogOfWar||i===Net.myIdx||!!(viewer&&viewer.visited&&viewer.visited[p.pos]);
+  return {color:p.color,face:charSrc(p.char)||null,name:p.name,pos:seen&&NMAP[p.pos]?p.pos:null,raided:p.raided||0};
+ });
+ const edges=EDGES.filter(edgeVisible).map(e=>[e[0],e[1]]);
+ const owner={},rubble={},bugs={};
+ NODES.forEach(n=>{
+  if(!known(n.id))return;
+  if(S.owner[n.id]!=null)owner[n.id]=S.owner[n.id];
+  if(S.dlcGeo&&S.rubble&&S.rubble[n.id])rubble[n.id]=1;
+  if(S.bugs&&S.bugs[n.id]!=null)bugs[n.id]=S.bugs[n.id];
+ });
+ const moving=!S.over&&S.phase==='move'&&S.mode!=='fly'&&S.steps>0;
+ const {hov,path,links}=highlightState();
+ const sisyO=S.owner.sisy;
+ return {
+  fog:!!S.fogOfWar,
+  key:[S.layoutKind||'',S.dlcGeo?1:0,S.fogOfWar?1:0,NODES.map(n=>n.id+','+n.x+','+n.y+','+(n.rot||0)).join(';'),S.players.map(p=>p.color+'|'+p.char).join(';')].join('#'),
+  edgesKey:edges.map(e=>e[0]+'-'+e[1]).join(','),
+  bounds:boardViewBounds(),nodes,edges,seats,owner,rubble,bugs,
+  hot:moving?edges.filter(e=>e[0]===curpos||e[1]===curpos):[],
+  blockades:NODES.filter(n=>known(n.id)&&blockaded(n.id)).map(n=>n.id),
+  qg:!!(S.dlcGeo&&NMAP.qantas&&qantasGrounded()),
+  ov:S.dlcGeo&&S.ov&&known(S.ov.nid)?S.ov.nid:null,
+  sisy:Math.max(0,Math.min(5,Math.log2((S.sisyPayout||10)/10)))/5,
+  sisyActive:sisyO!=null&&S.players[sisyO]&&S.players[sisyO].pos==='sisy',
+  made:S.owner.made!=null,tuvalu:S.owner.geo_tuvalu!=null,
+  mood:S.mood,fx:S.fx.slice(),cur:S.cur,turn:S.turn,over:!!S.over,winner:S.winner!=null?S.winner:null,
+  hover:hov?{id:hov,links}:null,path:path&&path.length>1?path:null,
+ };
 }
 export function renderBoard(){
  const svg=$('board');
@@ -423,18 +523,7 @@ export function renderBoard(){
  const footerX=special?metrics.cx:1200,footerY=special?bounds.h-155:1490;
  s+='<g transform="translate('+footerX+','+footerY+')"><rect x="-800" y="-14" width="1600" height="25" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="'+(special?14:10.5)+'" font-weight="700" letter-spacing="1" fill="#fff">WIN CONDITION: $'+goalNow+' AND ONE OF EVERY NODE TYPE TAKES THE CON</text></g>';
  s+='<g transform="translate('+footerX+','+(footerY+38)+')"><rect x="-800" y="-12" width="1600" height="23" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="'+(special?13:10)+'" font-weight="700" letter-spacing="1" fill="aqua">FRONT RUNNER: '+esc(String(leader.name).toUpperCase())+' — $'+leader.money+' · $'+Math.max(0,goalNow-leader.money)+' TO GO</text></g>';
- NODES.forEach(n=>{
-  let cls='';
-  if(S&&!S.over){
-   if(S.mode==='fly')cls=(myTurn()&&n.id!==curpos&&canReach(n.id)&&!blockaded(n.id))?'click':'';
-   else if(S.mode!=='missile'&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))cls='click reach';
-   else if(bugTargetable(n))cls='click target';
-   else if(missileTargetable(n))cls='click target';
-   else if(overtourTargetable(n))cls='click target';
-   else if(blockadeTargetable(n))cls='click target';
-  }
-  s+=nodeSVG(n,cls);
- });
+ NODES.forEach(n=>{s+=nodeSVG(n,nodeClass(n,curpos))});
  if(S)s+=tokenLayer();
  root.innerHTML=s;
  drawHighlights();
@@ -740,9 +829,12 @@ let drag=null,lastTapTarget=null;
 export function handleNodeTap(t){
  if(!t||!t.closest)return;
  const g=t.closest('g.node');
- if(!g||!S||S.over)return;
+ if(g)tapNode(g.dataset.id);
+}
+/* a click on a node, from either board */
+export function tapNode(id){
+ if(!id||!S||S.over)return;
  if(!myTurn())return;
- const id=g.dataset.id;
  if(S.phase==='move'){
   if(S.mode==='fly'){dispatch({act:'fly',id});return}
   if(S.mode==='missile'){dispatch({act:'missile',id});return}
@@ -799,9 +891,10 @@ svgEl.addEventListener('contextmenu',e=>{
 window.addEventListener('keydown',e=>{if(e.key==='Escape')clearPin()});
 svgEl.addEventListener('pointercancel',()=>{drag=null;svgEl.classList.remove('panning')});
 window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!svgEl.contains(e.target)){drag=null;svgEl.classList.remove('panning')}});
- $('zin').onclick=()=>{const r=svgEl.getBoundingClientRect();zoomAt(0.8,r.left+r.width/2,r.top+r.height/2)};
- $('zout').onclick=()=>{const r=svgEl.getBoundingClientRect();zoomAt(1.25,r.left+r.width/2,r.top+r.height/2)};
- $('zreset').onclick=()=>resetBoardView();
+ $('zin').onclick=()=>{if(view3d){view3d.zoom(0.8);return}const r=svgEl.getBoundingClientRect();zoomAt(0.8,r.left+r.width/2,r.top+r.height/2)};
+ $('zout').onclick=()=>{if(view3d){view3d.zoom(1.25);return}const r=svgEl.getBoundingClientRect();zoomAt(1.25,r.left+r.width/2,r.top+r.height/2)};
+ $('zreset').onclick=()=>{if(view3d){view3d.reset();return}resetBoardView()};
+ if($('z3d')){$('z3d').onclick=()=>set3d(!(view3d||view3dPending));sync3dButton()}
 /* The syndicate hover card: hold the cursor over a rival's row and the table
    shows exactly which pins they hold and which win types they still need. */
 (function(){

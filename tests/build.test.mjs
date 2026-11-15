@@ -94,14 +94,18 @@ test('every local src/href/import in the dist HTML and JS resolves to an existin
 test('the game ships as ONE bundled ES module: the source modules are folded in, not published', () => {
   const files = walk(outA);
   const js = files.filter(f => f.endsWith('.js'));
-  assert.deepEqual(js.map(f => f.replace(/\.[0-9a-f]{10}\.js$/, '.js')).sort(), ['static/discord-sdk.bundle.js', 'static/js/main.js', 'static/landing/film.js', 'static/landing/reel.js']);
+  assert.deepEqual(js.map(f => f.replace(/\.[0-9a-f]{10}\.js$/, '.js')).sort(), ['static/discord-sdk.bundle.js', 'static/js/main.js', 'static/landing/board3d.js', 'static/landing/film.js', 'static/landing/reel.js']);
   for (const gone of ['static/bots', 'static/js/engine', 'static/js/net', 'static/js/ui', 'static/js/hooks', 'static/js/discord', 'static/js/data'])
     assert.ok(!files.some(f => f.startsWith(gone)), gone + ' is bundled, not shipped separately');
   const main = files.find(f => /^static\/js\/main\.[0-9a-f]{10}\.js$/.test(f));
   const text = fs.readFileSync(path.join(outA, main), 'utf8');
   for (const marker of ['function applyIntent', 'function pubState', 'function initUI', 'function initDiscord', 'BigConBots', 'function boot()'])
     assert.ok(text.includes(marker), 'the bundle contains ' + marker);
-  assert.deepEqual(jsImports(path.join(outA, main)).map(r => path.basename(r)).filter(n => !n.startsWith('discord-sdk.bundle.')), [], 'no relative module imports survive: the bundle is self-contained');
+  /* the only other import is the optional 3D board, loaded on demand from its own hashed bundle */
+  const lazy = jsImports(path.join(outA, main)).filter(r => !path.basename(r).startsWith('discord-sdk.bundle.'));
+  assert.deepEqual(lazy.map(r => path.basename(r).replace(/\.[0-9a-f]{10}\.js$/, '.js')), ['board3d.js'], 'no other module imports survive: the bundle is self-contained');
+  assert.ok(fs.existsSync(resolve(outA, main, lazy[0])), 'the 3D board import points at the hashed file');
+  assert.ok(!/from\s*["']three["']/.test(text), 'three.js is never a static import of the game');
   assert.match(text, /typeof BUILD_COMMIT/, 'the stamp is still read as a free identifier from the inline classic script');
   const html = fs.readFileSync(path.join(outA, 'index.html'), 'utf8');
   assert.match(html, /<script type="module" src="\.\/static\/js\/main\.[0-9a-f]{10}\.js"><\/script>/);

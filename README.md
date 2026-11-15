@@ -118,3 +118,14 @@ without writing, `--table` prints one line per turn, `--trace` prints the record
 fails if the recording is stale or misses one. `film.html?chip=<id>&u=0.5` freezes on the
 first beat showing that action (`?kind=`, `?beat=`, `?t=` also work), and `?perf` / `?q` work
 as on the landing page.
+
+**The 3D board.** In a game, the **3D** button in the zoom bar swaps the SVG board for the
+landing pages' 3D world, built from the live layout (random, Ringworld or Mega Ring, with or
+without the Geography DLC). The choice is remembered per browser. `static/landing/board3d.js`
+is loaded only when it is switched on, and `ui.js` hands it a plain snapshot (`boardScene()`)
+on every repaint, so it never reads game state or touches the rules. Clicks, hovers and
+right-click routes go back through the same handlers as the SVG board. It animates what
+changed between two snapshots: pawns walk the threads or fly Qantas, cards change hands,
+missiles land, the regulators raid, and the engine's pop-ups float up. Under fog of war, the
+landmark models and pop-ups at places you haven't visited stay hidden. If three.js (from the
+CDN) or WebGL is unavailable, it says so and the game stays on the classic board.
