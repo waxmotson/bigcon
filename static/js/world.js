@@ -19,6 +19,8 @@
 export const OIL_ALL=['oil','oilgraph','barrels','tanker','petronas','geo_scs','w_aramco','w_cushing','w_permian','w_tar','w_pemex','w_petrobras','w_pdvsa','w_dangote','w_gazprom'];
 /* nodes that begin the game as rubble (the World Expansion's casualties) and the ones that rename when rebuilt */
 export const WORLD_START_RUBBLE=['w_svb','w_cs','w_nordstream','w_evergrande'];
+/* the three overlapping claims on the Antarctic Peninsula */
+export const PENINSULA=['w_aq_chl','w_aq_gbr','w_aq_arg'];
 export const WORLD_CHOKEPOINTS=['w_panama','w_hormuz','w_suez','w_malacca'];
 export const BATTERY=['w_lithium','w_cobalt','w_nickel','w_baotou'];
 /* the offshore nodes: APPLE pays $2 for each one you own */
@@ -154,8 +156,27 @@ mk('fonterra',['FONTERRA'],'🥛','COMMODITY',2,5,-36.8485,174.7633,'milk · a l
 mk('nauru',['NAURU'],'🏝️','WILD',1,2,-0.5477,166.9209,'phosphate · a nation · a parking lot','+$3 on GOLD RUSH (everything shiny gets looked at) and +$1 income while you also own TUVALU.',{e:{goldrush:3},w:[['geo_tuvalu',1]]}),
 mk('fiji',['FIJI','WATER'],'💧','CORPORATE',2,5,-17.7134,178.065,'bottled somewhere very far from here','+$2 income while you also own QUIKSTOP (the bottled water sells best at the servo).',{w:[['quik',2]]}),
 mk('png',['PNG','GOLD'],'🪙','COMMODITY',2,5,-6.31,155.1,'a big pit · a small island','+$4 on GOLD RUSH; +$1 income per OTHER COMMODITY you own.',{e:{goldrush:4},t:[['COMMODITY',1,1]]}),
-mk('antarctica',['ANTARCTICA'],'🐧','WILD',2,9,-77.85,166.67,'nobody owns it · nobody pays rent',
+/* ── Antarctica: ten stops along the ice, west to east. Only four links leave the continent (see WORLD_ROUTES). ── */
+mk('aq_mbl',['MARIE BYRD','LAND'],'🧊','WILD',1,3,-79,-135,'unclaimed · nobody wanted it · nobody asked',
+ 'UNCLAIMED: the first player to arrive here owns it free: no action, no cost, no Cortisol (like Tuvalu). Income $1.',null),
+mk('aq_chl',['TERRITORIO CHILENO','ANTÁRTICO'],'🇨🇱','WILD',1,4,-76,-88,'drawn in 1940 · overlapping on purpose',
+ 'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute).',{i:[[PENINSULA,1]]}),
+mk('aq_gbr',['BRITISH ANTARCTIC','TERRITORY'],'🇬🇧','WILD',1,4,-71.5,-68,'the oldest claim · the thinnest ice',
+ 'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute).',{i:[[PENINSULA,1]]}),
+mk('aq_arg',['ANTÁRTIDA','ARGENTINA'],'🇦🇷','WILD',1,4,-77.5,-52,'it is on the map · it is on the 50 peso note',
+ 'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute).',{i:[[PENINSULA,1]]}),
+mk('antarctica',['THE ANTARCTIC','TREATY'],'🐧','WILD',2,9,-80,-25,'nobody owns it · nobody pays rent',
  'UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible (regulators and raids still reach it). Its income is a flat $2.',null),
+mk('aq_qml',['QUEEN MAUD','LAND'],'🇳🇴','COMMODITY',1,5,-73,18,'a Norwegian queen · a Norwegian claim · very cold',
+ '+$2 income while you also own NORWAY’S WEALTH FUND (the oil money bought a glacier).',{w:[['w_norway',2]]}),
+mk('aq_aatw',['AUSTRALIAN','ANTARCTIC TERRITORY'],'🇦🇺','WILD',1,5,-73,85,'42% of a continent · filed under Canberra',
+ '+$1 income per Australian or New Zealand node you own, up to $3 (the paperwork says it is basically Tasmania).',{an:[1,3]}),
+mk('aq_adelie',['TERRE','ADÉLIE'],'🐧','WILD',1,4,-72,139,'France claimed a penguin colony · and a wife’s name',
+ 'MARCH OF THE PENGUINS: −1 Cortisol at the start of each of your turns (the penguins are not judging you; much).',{c:-1}),
+mk('aq_aate',['AUSTRALIAN','ANTARCTIC · EAST'],'🛷','WILD',1,5,-74,158,'the other half · the Hobart supply run',
+ '+$2 income while you also own THE AUSTRALIAN MONETARY POLICY COMPETITION in Hobart (every ship leaves from Hobart).',{w:[['mpc',2]]}),
+mk('aq_ross',['ROSS','DEPENDENCY'],'🇳🇿','COMMODITY',1,5,-78,178,'New Zealand’s slice · sheep not included',
+ '+$2 income while you also own ANZCERTA (Christchurch is the gateway); +$1 while you also own FONTERRA (milk powder keeps well in the cold).',{w:[['w_anzcerta',2],['w_fonterra',1]]}),
 mk('greenland',['GREENLAND'],'❄️','WILD',2,6,64.1835,-51.7216,'it is not for sale · apparently it is','+$3 income while you also own DONALD TRUMP (he is, allegedly, interested). MAKE AN OFFER: if you own DONALD TRUMP, once per game and as your action, force-buy Greenland from whoever owns it at its list price. The owner cannot refuse; the money goes to them.',{w:[['trump',3]]}),
 mk('svalbard',['SVALBARD','SEED VAULT'],'🌱','WILD',1,6,78.2386,15.5086,'every seed on earth · in a very cold cupboard',
  'ANTI-RUBBLE: any node of yours that a missile would turn to rubble survives; once per game, you may rebuild a rubble node for free (stand on it in your action phase).',null),
@@ -259,11 +280,11 @@ export function geoOf(n){return n&&(n.geo||GEO_ANCHORS[n.id])||null}
 /* ───── REGIONS: the graph of the GLOBAL EDITION map is built region by region ─────
    Neighbours only link up INSIDE a region; the regions are joined by the curated routes below, and the chokepoints are the
    gateways: Panama (the two Americas), Suez (Europe, the Middle East and Africa), Hormuz (the Gulf and South Asia),
-   Malacca (South Asia and South-East Asia), Antarctica (South America, Africa and Australasia). Europe and North America
+   Malacca (South Asia and South-East Asia), and Antarctica (a long ice road that only touches South America, Africa, Australia and New Zealand at its four ends). Europe and North America
    touch ONLY through Iceland and Greenland. */
 export const REGION_NAMES={NAM:'North America',SAM:'South America',EUR:'Europe',ME:'Middle East',AFR:'Africa',CAS:'Central Asia',SAS:'South Asia',SEA:'South-East Asia',EAS:'East Asia',OCE:'Australasia & Pacific',
  PAN:'Panama',SUZ:'Suez',HRM:'Hormuz',MAL:'Malacca',ANT:'Antarctica',ISL:'Iceland',GRL:'Greenland'};
-const REGION_FIX={w_panama:'PAN',w_suez:'SUZ',w_hormuz:'HRM',w_malacca:'MAL',w_antarctica:'ANT',w_hdi:'ISL',w_greenland:'GRL'};
+const REGION_FIX={w_panama:'PAN',w_suez:'SUZ',w_hormuz:'HRM',w_malacca:'MAL',w_hdi:'ISL',w_greenland:'GRL'};
 /* the regions that are single gateways: nothing floats off them and nothing else joins them by proximity */
 export const GATEWAY_REGIONS=['PAN','SUZ','HRM','MAL','ANT','ISL','GRL'];
 export function regionOf(n){
@@ -271,6 +292,7 @@ export function regionOf(n){
  if(REGION_FIX[n.id])return REGION_FIX[n.id];
  const g=geoOf(n);if(!g)return 'OCE';
  const la=g[0],lo=g[1];
+ if(la<-60)return 'ANT'; /* the whole ice shelf: the Antarctic territories */
  if(lo>-170&&lo<-30){
   const south=lo>-130&&lo<-34&&(la<8.5||(la<12.4&&lo>-75));
   return south?'SAM':'NAM';
@@ -300,7 +322,7 @@ export const FLOAT_ZONES=[
  [24,44,4],[32,57,3],                                      /* the Arabian interior, the Iranian plateau */
  [66,75,8],[58,60,6],[-6,-70,5],[20,-6,5],[4,20,5],[50,-85,5],   /* more tundra, the Urals, the western Amazon, Mauritania, Central Africa, Ontario */
  [-26,-60,4],[8,-68,3],[40,62,4],[60,-70,4],                /* the Chaco, the Llanos, the Kazakh steppe, Labrador */
- [-78,40,10],[-78,-100,10]                                 /* the Antarctic ice */
+ [-17,-87,9],[-10,136,5]  /* the two slots the Antarctic ice used to take: kept so the seeded layouts stay stable (floaters drawn here mostly fall in water and are redrawn) */
 ];
 /* ───── batch C: water, trade blocs, the Australia/New Zealand area ───── */
 /* WATER nodes: straits, islands, ports and seas. The Cruise Ship sails between them. (Ids of nodes that are not on the board — the
@@ -341,7 +363,9 @@ export const WORLD_ROUTES=[
  /* Malacca: South Asia and South-East Asia */ ['w_malacca','w_srilanka'],['w_malacca','petronas'],['w_malacca','w_temasek'],
  /* the overland road across Eurasia: Moscow, the steppe, the Chinese north */ ['w_kremlin','w_kazatom'],['w_kazatom','w_baotou'],
  /* South-East Asia: the Pacific rim to the north, the Indonesian islands to the south */ ['geo_scs','w_hsbc'],['w_nickel','forklift'],
- /* Antarctica: the southern route between South America, Africa and Australasia */ ['w_antarctica','w_milei'],['w_antarctica','w_debeers'],['w_antarctica','w_anzcerta'],
+ /* Antarctica: ten territories chained west to east along the ice; ONLY FOUR links leave it: the Peninsula to South America, Queen Maud Land to South Africa, the Australian Antarctic Territory to Hobart and the Ross Dependency to Christchurch */
+ ['w_aq_mbl','w_aq_chl'],['w_aq_chl','w_aq_gbr'],['w_aq_gbr','w_aq_arg'],['w_aq_arg','w_antarctica'],['w_antarctica','w_aq_qml'],['w_aq_qml','w_aq_aatw'],['w_aq_aatw','w_aq_adelie'],['w_aq_adelie','w_aq_aate'],['w_aq_aate','w_aq_ross'],
+ ['w_aq_gbr','w_milei'],['w_aq_qml','w_debeers'],['w_aq_aate','mpc'],['w_aq_ross','w_anzcerta'],
  /* the Pacific islands */ ['w_fiji','geo_tuvalu'],['w_nauru','geo_tuvalu'],['w_png','w_nauru']
 ];
 

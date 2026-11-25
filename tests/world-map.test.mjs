@@ -84,7 +84,7 @@ test('worldmap layout places every node (base + geo + world) at its real place, 
     /* world landmarks are where the real world has them */
     const near = (id, lat, lon, r) => { const p = engine.f.projectGeo(lat, lon); assert.ok(Math.hypot(NMAP[id].x - p.x, NMAP[id].y - p.y) < r, id + ' near its real spot'); };
     near('citi', 40.7, -74, 500); near('uk', 51.5, -0.1, 500); near('japan', 35.7, 139.7, 500); near('petronas', 3.1, 101.7, 500);
-    near('wef', 46.8, 9.8, 500); near('w_aramco', 26.3, 50.1, 300); near('w_antarctica', -77.8, 166.7, 300); near('w_hormuz', 26.5, 56.2, 300);
+    near('wef', 46.8, 9.8, 500); near('w_aramco', 26.3, 50.1, 300); near('w_antarctica', -80, -25, 300); near('w_hormuz', 26.5, 56.2, 300);
     if (geo) { near('geo_shahed', 35.7, 51.4, 400); near('geo_tuvalu', -8.5, 179.2, 300); near('geo_kim', 39, 125.7, 500); }
     /* overlaps stay bounded: none at all in practice */
     assert.ok(overlaps(engine, gen.positions, 0) === 0, 'no node boxes overlap');
@@ -328,12 +328,11 @@ test('the chokepoints are gateways: each has neighbours in two or more regions',
   for (const geo of [false, true]) {
     const { NMAP, ADJ } = await seeded(t, 41, geo);
     const regions = id => new Set(ADJ[id].map(x => W.regionOf(NMAP[x])));
-    for (const id of ['w_panama', 'w_suez', 'w_hormuz', 'w_malacca', 'w_antarctica']) assert.ok(regions(id).size >= 2, id + ' joins regions: ' + [...regions(id)]);
+    for (const id of ['w_panama', 'w_suez', 'w_hormuz', 'w_malacca']) assert.ok(regions(id).size >= 2, id + ' joins regions: ' + [...regions(id)]);
     assert.ok(regions('w_panama').has('NAM') && regions('w_panama').has('SAM'));
     assert.ok(regions('w_suez').has('EUR') && regions('w_suez').has('ME') && regions('w_suez').has('AFR'));
     assert.ok(regions('w_hormuz').has('ME') && regions('w_hormuz').has('SAS'));
     assert.ok(regions('w_malacca').has('SAS') && regions('w_malacca').has('SEA'));
-    for (const r of ['SAM', 'AFR', 'OCE']) assert.ok(regions('w_antarctica').has(r), 'Antarctica links ' + r);
   }
   assert.ok(W.WORLD_CHOKEPOINTS.includes('w_malacca'));
   const mal = W.WORLD_NODES.find(n => n.id === 'w_malacca');
@@ -402,7 +401,7 @@ test('New Zealand sits across the Tasman Sea: east of every Australian node, wit
 /* ---------- the connection graph: rich local webs, few and slow ways between regions ---------- */
 test('connections: long journeys, a handful of inter-region links, rich local webs, tidy edges', { timeout: 240000 }, async t => {
   const FLOAT = new Set(W.WORLD_FLOATING);
-  const CORRIDOR = new Set(['w_hdi', 'w_greenland', 'w_antarctica', 'w_petrobras', 'w_kazatom']); /* the corridor, the southern route, the South Atlantic and the steppe: allowed to be long */
+  const CORRIDOR = new Set(['w_hdi', 'w_greenland', 'w_aq_gbr', 'w_aq_qml', 'w_aq_aate', 'w_aq_ross', 'w_petrobras', 'w_kazatom']); /* the corridor, the southern route, the South Atlantic and the steppe: allowed to be long */
   let worstInter = 0, worstQL = 99, worstSN = 99, worstEU = 99, worstDeg = 9, crossings = 0;
   for (const geo of [false, true]) for (const seed of [61, 62, 63, 64]) {
     const { e, gen, NODES, NMAP, ADJ } = await seeded(t, seed, geo);
@@ -418,7 +417,7 @@ test('connections: long journeys, a handful of inter-region links, rich local we
     worstQL = Math.min(worstQL, ql); worstSN = Math.min(worstSN, sn); worstEU = Math.min(worstEU, eu);
     /* few inter-region links, none of them long except the declared lanes */
     const inter = gen.edges.filter(([a, b]) => !FLOAT.has(a) && !FLOAT.has(b) && reg(a) !== reg(b));
-    assert.ok(inter.length <= 25, 'inter-region edges: ' + inter.length);
+    assert.ok(inter.length <= 26, 'inter-region edges: ' + inter.length);
     for (const [a, b] of inter) {
       const wrapped = Math.abs(NMAP[a].x - NMAP[b].x) > m.w * 0.6;
       if (!wrapped && !CORRIDOR.has(a) && !CORRIDOR.has(b)) assert.ok(len(a, b) <= 1100, 'inter-region edge ' + a + ' ' + b + ' is ' + Math.round(len(a, b)) + 'px');
@@ -465,5 +464,37 @@ test('connections: the board is connected over many seeds, with and without the 
       assert.equal(bfs(ADJ, 'quik').size, NODES.length, 'seed ' + s + ' geo ' + geo + ' is connected');
       assert.ok(ADJ.quik.length >= 4);
     }
+  }
+});
+
+/* ---------- Antarctica: ten territories on the ice, four ways in, no mega shortcut ---------- */
+test('Antarctica is a long chain of territories with four gateways and no continent-hopping hub', { timeout: 240000 }, async t => {
+  const ANT = W.WORLD_NODES.filter(n => W.regionOf(n) === 'ANT').map(n => n.id);
+  const ring = ['w_aq_mbl', 'w_aq_chl', 'w_aq_gbr', 'w_aq_arg', 'w_antarctica', 'w_aq_qml', 'w_aq_aatw', 'w_aq_adelie', 'w_aq_aate', 'w_aq_ross'];
+  assert.deepEqual(ANT.slice().sort(), ring.slice().sort(), 'exactly the ten territories are Antarctic');
+  for (const id of ring) {
+    const n = W.WORLD_NODES.find(x => x.id === id);
+    assert.ok(W.onLand(n.geo[0], n.geo[1]), id + ' lies on the Antarctic landmass');
+    assert.ok(n.geo[0] < -60 && !n.image && n.sp && n.sub, id + ' is a polar text card');
+  }
+  for (const geo of [false, true]) for (const seed of [71, 72, 73]) {
+    const { NMAP, ADJ, gen } = await seeded(t, seed, geo);
+    const reg = id => W.regionOf(NMAP[id]);
+    const off = gen.edges.filter(([a, b]) => (reg(a) === 'ANT') !== (reg(b) === 'ANT')).map(([a, b]) => (reg(a) === 'ANT' ? [a, b] : [b, a]).join('>')).sort();
+    assert.deepEqual(off, ['w_aq_aate>mpc', 'w_aq_gbr>w_milei', 'w_aq_qml>w_debeers', 'w_aq_ross>w_anzcerta'].sort(), 'the four gateways only');
+    for (const id of ring) {
+      const outside = new Set(ADJ[id].filter(o => reg(o) !== 'ANT').map(reg));
+      assert.ok(outside.size <= 1, id + ' touches at most one outside region: ' + [...outside]);
+      assert.ok(ADJ[id].some(o => reg(o) === 'ANT'), id + ' has Antarctic neighbours');
+    }
+    /* walking from South America to Australia THROUGH Antarctica takes at least four Antarctic stops */
+    const seen = new Map([['w_milei', 0]]), prev = {}, queue = ['w_milei'];
+    while (queue.length) { const c = queue.shift(); for (const o of ADJ[c]) if (!seen.has(o) && (reg(o) === 'ANT' || o === 'mpc')) { seen.set(o, seen.get(c) + 1); prev[o] = c; queue.push(o); } }
+    assert.ok(seen.has('mpc'), 'Hobart is reachable via the ice');
+    const walk = []; let c = 'mpc'; while (c !== 'w_milei') { c = prev[c]; walk.push(c); }
+    const stops = walk.filter(id => reg(id) === 'ANT').length;
+    assert.ok(stops >= 4, 'South America to Australia crosses ' + stops + ' Antarctic nodes');
+    const dist = bfs(ADJ, 'quik');
+    for (const id of Object.keys(NMAP)) assert.ok(dist.has(id), id + ' reachable (seed ' + seed + ', geo ' + geo + ')');
   }
 });

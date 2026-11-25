@@ -51,7 +51,7 @@ test('batch C: every new node exists with the right type, a witty sub, an sp and
 test('ANZCERTA replaced the NZ sheep: no w_sheep anywhere, Fonterra and Antarctica point at the treaty', () => {
   assert.ok(!W.WORLD_NODE_IDS.includes('w_sheep'));
   assert.ok(!JSON.stringify(W.WORLD_ROUTES).includes('w_sheep'), 'no route names the sheep');
-  assert.ok(W.WORLD_ROUTES.some(([a, b]) => a === 'w_antarctica' && b === 'w_anzcerta'), 'the southern route runs through the treaty');
+  assert.ok(W.WORLD_ROUTES.some(([a, b]) => a === 'w_aq_ross' && b === 'w_anzcerta'), 'the Ross Dependency is the Christchurch gateway');
   const fon = W.WORLD_NODES.find(n => n.id === 'w_fonterra');
   assert.deepEqual(fon.fx.w, [['w_anzcerta', 2]]);
   assert.ok(/ANZCERTA/.test(fon.sp) && !/SHEEP/.test(fon.sp));

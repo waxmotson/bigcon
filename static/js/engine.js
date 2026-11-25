@@ -14,7 +14,7 @@ import { clampGoal, esc, shuffle } from './util.js';
 import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld, setEdges, rebuildAdj } from './data.js';
 import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState } from './boards.js';
 import { regionOf, REGION_NAMES } from './world.js';
-import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays, WATER_NODES, TAX_HAVENS, TOURISM_NODES, IRON_NODES, SANCTIONED_NODES, COAL_CHAIN, AGRI_NODES, US_NODES, TRADE_BLOCS, BLOC_STEP, BLOC_MAX, BLOC_FREE, AUSNZ } from './world.js';
+import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays, WATER_NODES, TAX_HAVENS, TOURISM_NODES, IRON_NODES, SANCTIONED_NODES, COAL_CHAIN, AGRI_NODES, US_NODES, TRADE_BLOCS, BLOC_STEP, BLOC_MAX, BLOC_FREE, AUSNZ, PENINSULA } from './world.js';
 export { hooks, setHooks };
 /* The host services the rules call, bound late so a hook swapped in by setHooks
    (or wrapped by a test) is always the one that runs. */
@@ -350,6 +350,8 @@ export async function startTurn(){
   else if(f.c>0)addCortisol(S.cur,f.c,f.name+' weighs on you');
   if(f.s)giveIntel(S.cur,f.s,f.name);
  });
+ /* 🌐 ANTARCTIC PENINSULA: hold two of the three overlapping claims and the owner of the third takes +1 Cortisol (the sovereignty dispute) */
+ if(S.dlcWorld){const held=PENINSULA.filter(id=>S.owner[id]===S.cur);if(held.length===2){const third=PENINSULA.find(id=>!held.includes(id)),o=S.owner[third];if(o!=null&&o!==S.cur&&S.players[o]&&!S.rubble[third]&&!isVanished(o)){log('🇦🇶 SOVEREIGNTY DISPUTE: '+pname(S.cur)+' files against '+pname(o)+'’s claim on '+lname(NMAP[third])+'.');addCortisol(o,1,'a sovereignty dispute over the Peninsula',false,true)}}}
  /* 🌐 CRUISE EMISSIONS: +1 Cortisol each turn unless the owner also holds a REGULATOR */
  if(S.dlcWorld&&own('w_cruise')&&!S.rubble.w_cruise&&!NODES.some(n=>n.type==='REGULATOR'&&S.owner[n.id]===S.cur))addCortisol(S.cur,1,'the cruise ship’s emissions');
  /* 🌐 THE IMF: a bailout comes due at the start of the borrower's next-but-one turn */
@@ -1609,7 +1611,14 @@ export function seizeListPrice(pi,n){
  if(windowOn('eofy'))base=Math.max(1,base-2); /* EOFY SALE */
  return base;
 }
-/* 🌐 ANTARCTICA cannot be taken from its owner */
+/* 🌐 MARIE BYRD LAND: unclaimed, so the first player to arrive owns it free (like Tuvalu) */
+function claimMarieByrd(pi,id,verb){
+ if(id!=='w_aq_mbl'||S.owner[id]!=null||S.rubble[id])return;
+ S.owner[id]=pi;const n=NMAP[id];
+ fx(n.x,n.y-64,'🧊 CLAIMED','#7fe08d');
+ log('🧊 '+pname(pi)+' '+verb+' MARIE BYRD LAND — UNCLAIMED, SO IT IS YOURS. First arrival owns it: no action, no cost, no Cortisol.');
+}
+/* 🌐 ANTARCTICA (THE ANTARCTIC TREATY) cannot be taken from its owner */
 export function noTakeover(nid){return !!(S&&S.dlcWorld&&nid==='w_antarctica')}
 export function flatSeize(nid){return nid==='made'||nid==='qantas'||nid==='rba'||nid==='geo_pillars'}
 export function takeoverCost(pi,nid,base){
@@ -1640,6 +1649,7 @@ export async function doMove(pi,id){
   }
  }
  S.players[pi].pos=id;S.steps--;
+ if(S.dlcWorld)claimMarieByrd(pi,id,'lands in');
  if(S.dlcGeo&&id==='geo_tuvalu'&&S.owner[id]==null&&!S.rubble[id]){
   S.owner[id]=pi;const n=NMAP[id];
   fx(n.x,n.y-64,'🏝️ CLAIMED','#7fe08d');
@@ -1659,6 +1669,7 @@ export async function doFly(pi,id){
  const prevFlyPos=p.pos;
  p.money-=3;fxAt(pi,'−$3','#ff6b5e');S.mode=null;p.pos=id;S.steps=0;
  const flew=projFx('fly',prevFlyPos,id);
+ if(S.dlcWorld)claimMarieByrd(pi,id,'flies into');
  if(S.dlcGeo&&id==='geo_tuvalu'&&S.owner[id]==null&&!S.rubble[id]){
   S.owner[id]=pi;const n=NMAP[id];
   fx(n.x,n.y-64,'🏝️ CLAIMED','#7fe08d');
