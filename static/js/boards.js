@@ -365,34 +365,78 @@ export function generateWorldMapBoard(){
  separateNodes({pad:12,iters:900,pull:0.012,minX:110,maxX:m.w-110,minY:110,maxY:m.h-110,anchors,skip:float});
  NODES.forEach(n=>{n.x=Math.round(n.x);n.y=Math.round(n.y)});
  placeFloaters(float);
- /* edges, region by region: each exhibit to its two nearest neighbours IN ITS OWN REGION, then the cheapest links that join
-    any islands left over inside a region, then the deliberate routes (the gateways and the long-haul lanes) that are the
-    only way between regions. */
+ /* EDGES. Local webs first, region by region (the gateways and the floaters are handled apart): a Gabriel graph on the DRAWN positions
+    (an edge a-b survives only if no other card sits inside the circle on a-b as diameter, so webs are tidy and planar), no longer
+    than LOCAL_MAX px and never through another card; then a k-nearest top-up so every exhibit has LOCAL_MIN_DEG ways on (only
+    through free space: no crossings, no cards in the way); then the cheapest links that join any islands left in a region. The few
+    deliberate inter-region routes (WORLD_ROUTES) go in last: that is all that connects the regions. */
+ const LOCAL_MAX=650,LOCAL_MIN_DEG=3,LOCAL_REACH=1.45;
  const ids=NODES.filter(n=>!float.has(n.id)).map(n=>n.id),geo={},reg={};
  ids.forEach(id=>{geo[id]=geoOf(NMAP[id])||[0,0];reg[id]=regionOf(NMAP[id])});
- const edges=[],seen=new Set(),par={};ids.forEach(id=>par[id]=id);
+ const edges=[],seen=new Set(),par={},deg={};ids.forEach(id=>{par[id]=id;deg[id]=0});
  const find=x=>{while(par[x]!==x){par[x]=par[par[x]];x=par[x]}return x};
- const add=(a,b)=>{if(!NMAP[a]||!NMAP[b]||a===b)return false;const key=a<b?a+'|'+b:b+'|'+a;if(seen.has(key))return false;seen.add(key);edges.push([a,b]);if(par[a]!=null&&par[b]!=null)par[find(a)]=find(b);return true};
+ const add=(a,b)=>{if(!NMAP[a]||!NMAP[b]||a===b)return false;const key=a<b?a+'|'+b:b+'|'+a;if(seen.has(key))return false;seen.add(key);edges.push([a,b]);if(par[a]!=null&&par[b]!=null){par[find(a)]=find(b);deg[a]++;deg[b]++}return true};
+ const P=id=>NMAP[id],dist=(a,b)=>Math.hypot(P(a).x-P(b).x,P(a).y-P(b).y);
+ const ccw=(a,b,c)=>(c.y-a.y)*(b.x-a.x)-(b.y-a.y)*(c.x-a.x);
+ const cross=(a,b,c,d)=>ccw(a,c,d)*ccw(b,c,d)<0&&ccw(a,b,c)*ccw(a,b,d)<0;
+ const hitsCard=(a,b)=>{ /* does the line a-b pass through the card of any other node? (Liang-Barsky against the box) */
+  const A=P(a),B=P(b);
+  for(const id of ids){
+   if(id===a||id===b)continue;
+   const c=P(id),[w,h]=nodeBox(c),x0=c.x-w/2-4,x1=c.x+w/2+4,y0=c.y-h/2-4,y1=c.y+h/2+4;
+   let t0=0,t1=1;const dx=B.x-A.x,dy=B.y-A.y;
+   for(const [p,q] of [[-dx,A.x-x0],[dx,x1-A.x],[-dy,A.y-y0],[dy,y1-A.y]]){
+    if(p===0){if(q<0){t0=2;break}continue}
+    const r=q/p;if(p<0){if(r>t1){t0=2;break}if(r>t0)t0=r}else{if(r<t0){t0=2;break}if(r<t1)t1=r}
+   }
+   if(t0<=t1&&t0<=1)return true;
+  }
+  return false;
+ };
+ const wrap=(a,b)=>Math.abs(P(a).x-P(b).x)>m.w*0.6; /* the date-line edge leaves one side of the canvas and re-enters the other */
+ const crosses=(a,b)=>!wrap(a,b)&&edges.some(([c,d])=>c!==a&&c!==b&&d!==a&&d!==b&&!wrap(c,d)&&cross(P(a),P(b),P(c),P(d)));
+ WORLD_ROUTES.forEach(([a,b])=>add(a,b)); /* the skeleton first: the local webs then keep clear of it */
+ const members={};ids.forEach(id=>{if(!GATEWAY_REGIONS.includes(reg[id]))(members[reg[id]]=members[reg[id]]||[]).push(id)});
+ Object.keys(members).sort().forEach(r=>{
+  const M=members[r],cand=[],gab=M.length<=12?0.7:1; /* the small regions get a looser circle: fewer cards to make webs from */
+  for(let i=0;i<M.length;i++)for(let j=i+1;j<M.length;j++){const d=dist(M[i],M[j]);if(d<=LOCAL_MAX)cand.push([M[i],M[j],d])}
+  cand.sort((p,q)=>p[2]-q[2]);
+  cand.forEach(([a,b,d])=>{
+   const mx=(P(a).x+P(b).x)/2,my=(P(a).y+P(b).y)/2;
+   for(const w of ids){if(w===a||w===b)continue;if(Math.hypot(P(w).x-mx,P(w).y-my)<d/2*gab)return}
+   if(!hitsCard(a,b)&&!crosses(a,b))add(a,b);
+  });
+  const near=id=>M.filter(o=>o!==id).map(o=>[o,dist(id,o)]).sort((p,q)=>p[1]-q[1]);
+  M.slice().sort((a,b)=>deg[a]-deg[b]).forEach(a=>{
+   for(const [b,d] of near(a)){
+    if(deg[a]>=LOCAL_MIN_DEG)break;
+    if(d>LOCAL_MAX*LOCAL_REACH)break;
+    if(deg[b]>=LOCAL_MIN_DEG+2||seen.has(a<b?a+'|'+b:b+'|'+a))continue;
+    if(!crosses(a,b)&&!hitsCard(a,b))add(a,b);
+   }
+  });
+  const pr=[];for(let i=0;i<M.length;i++)for(let j=i+1;j<M.length;j++)pr.push([M[i],M[j],dist(M[i],M[j])]);
+  pr.sort((p,q)=>p[2]-q[2]);
+  pr.forEach(([a,b])=>{if(find(a)!==find(b)&&!crosses(a,b))add(a,b)});
+  pr.forEach(([a,b])=>{if(find(a)!==find(b))add(a,b)});
+ });
+
+ /* safety net: if something is still cut off, the cheapest link that is not a shortcut across the Atlantic or the Americas */
  const pairs=[];
  for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)pairs.push([ids[i],ids[j],haversine(geo[ids[i]],geo[ids[j]])]);
  pairs.sort((a,b)=>a[2]-b[2]);
- const same=pairs.filter(p=>reg[p[0]]===reg[p[1]]);
- const near={};ids.forEach(id=>near[id]=0);
- same.forEach(([a,b])=>{if(near[a]<2||near[b]<2){if(add(a,b)){near[a]++;near[b]++}}});
- same.forEach(([a,b])=>{if(find(a)!==find(b))add(a,b)});
- WORLD_ROUTES.forEach(([a,b])=>add(a,b));
- /* safety net: if something is still cut off, the cheapest link that is not a shortcut across the Atlantic or the Americas */
  const shortcut=(a,b)=>{const x=reg[a],y=reg[b],has=(p,q)=>(x===p&&y===q)||(x===q&&y===p);return has('EUR','NAM')||has('NAM','SAM')};
  pairs.forEach(([a,b])=>{if(find(a)!==find(b)&&!shortcut(a,b))add(a,b)});
  /* Quikstop is the hub of the home turf: always at least four ways out */
- same.filter(p=>p[0]==='quik'||p[1]==='quik').slice(0,4).forEach(([a,b])=>add(a,b));
+ pairs.filter(p=>(p[0]==='quik'||p[1]==='quik')&&reg[p[0]]===reg[p[1]]).slice(0,4).forEach(([a,b])=>add(a,b));
  /* the floating exhibits join the two nearest neighbours of ONE region, so they are reachable without creating a shortcut */
  const hubs=NODES.filter(n=>!float.has(n.id)&&!GATEWAY_REGIONS.includes(reg[n.id]));
  float.forEach(id=>{
   const f=NMAP[id],sorted=hubs.slice().sort((a,b)=>Math.hypot(a.x-f.x,a.y-f.y)-Math.hypot(b.x-f.x,b.y-f.y));
   if(!sorted.length)return;
   const r=reg[sorted[0].id];
-  sorted.filter(n=>reg[n.id]===r).slice(0,2).forEach(n=>add(id,n.id));
+  const own=sorted.filter(n=>reg[n.id]===r),clean=own.filter(n=>!crosses(id,n.id)&&!hitsCard(id,n.id));
+  clean.concat(own.filter(n=>!clean.includes(n))).slice(0,2).forEach(n=>add(id,n.id));
  });
  setEdges(edges);rebuildAdj();
  return {positions:NODES.map(n=>({id:n.id,x:n.x,y:n.y,rot:n.rot})),edges:EDGES.map(e=>e.slice())};

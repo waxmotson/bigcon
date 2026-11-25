@@ -75,7 +75,7 @@ test('worldmap layout places every node (base + geo + world) at its real place, 
     for (const [a, b] of gen.edges) { assert.ok(NMAP[a] && NMAP[b] && a !== b); const k = [a, b].sort().join('|'); assert.ok(!seen.has(k), 'dup ' + k); seen.add(k); }
     for (const id of BIG7) assert.ok(dist.has(id), id + ' reachable');
     assert.ok((ADJ.quik || []).length >= 4, 'Quikstop is a hub');
-    assert.ok(Math.max(...dist.values()) <= 16, 'the world is crossable in 16 hops');
+    assert.ok(Math.max(...dist.values()) <= 30, 'the world is still crossable in 30 hops');
     /* quik is the home spawn in the middle of Australia (Alice Springs) */
     const sydney = engine.f.projectGeo(-23.7, 133.9), london = engine.f.projectGeo(51.5, -0.1), nyc = engine.f.projectGeo(40.7, -74);
     const q = NMAP.quik;
@@ -397,4 +397,73 @@ test('New Zealand sits across the Tasman Sea: east of every Australian node, wit
   /* and their pins land on the New Zealand outline, not on the mainland one */
   const akl = e.f.projectGeo(-36.8, 174.8), syd = e.f.projectGeo(-33.9, 151.2);
   assert.ok(akl.x - syd.x > 500, 'Auckland is far east of Sydney on the board');
+});
+
+/* ---------- the connection graph: rich local webs, few and slow ways between regions ---------- */
+test('connections: long journeys, a handful of inter-region links, rich local webs, tidy edges', { timeout: 240000 }, async t => {
+  const FLOAT = new Set(W.WORLD_FLOATING);
+  const CORRIDOR = new Set(['w_hdi', 'w_greenland', 'w_antarctica', 'w_petrobras', 'w_kazatom']); /* the corridor, the southern route, the South Atlantic and the steppe: allowed to be long */
+  let worstInter = 0, worstQL = 99, worstSN = 99, worstEU = 99, worstDeg = 9, crossings = 0;
+  for (const geo of [false, true]) for (const seed of [61, 62, 63, 64]) {
+    const { e, gen, NODES, NMAP, ADJ } = await seeded(t, seed, geo);
+    const reg = id => W.regionOf(NMAP[id]);
+    const len = (a, b) => Math.hypot(NMAP[a].x - NMAP[b].x, NMAP[a].y - NMAP[b].y);
+    const m = e.f.worldMapMetrics();
+    const dist = bfs(ADJ, 'quik');
+    for (const n of NODES) assert.ok(dist.has(n.id), n.id + ' reachable from quik (seed ' + seed + ')');
+    /* long journeys, in hops on the walking graph (no flights) */
+    const ql = dist.get('uk'), sn = bfs(ADJ, 'bond').get('citi'), eu = bfs(ADJ, 'uk').get('japan');
+    assert.ok(ql >= 10, 'Quikstop to London takes ' + ql); assert.ok(sn >= 12, 'Sydney to New York takes ' + sn); assert.ok(eu >= 6, 'London to Tokyo overland takes ' + eu);
+    assert.ok(Math.max(...dist.values()) <= 30, 'but the world stays crossable');
+    worstQL = Math.min(worstQL, ql); worstSN = Math.min(worstSN, sn); worstEU = Math.min(worstEU, eu);
+    /* few inter-region links, none of them long except the declared lanes */
+    const inter = gen.edges.filter(([a, b]) => !FLOAT.has(a) && !FLOAT.has(b) && reg(a) !== reg(b));
+    assert.ok(inter.length <= 25, 'inter-region edges: ' + inter.length);
+    for (const [a, b] of inter) {
+      const wrapped = Math.abs(NMAP[a].x - NMAP[b].x) > m.w * 0.6;
+      if (!wrapped && !CORRIDOR.has(a) && !CORRIDOR.has(b)) assert.ok(len(a, b) <= 1100, 'inter-region edge ' + a + ' ' + b + ' is ' + Math.round(len(a, b)) + 'px');
+      worstInter = Math.max(worstInter, wrapped ? 0 : len(a, b));
+    }
+    /* no kangaroo route */
+    for (const id of ['qantas']) assert.ok(ADJ[id].every(o => reg(o) === 'OCE'), id + ' has local links only');
+    assert.ok(!ADJ.gold.includes('w_witz'));
+    /* local webs: degree and edge length */
+    const regions = {};
+    NODES.forEach(n => { if (!FLOAT.has(n.id) && !W.GATEWAY_REGIONS.includes(reg(n.id))) (regions[reg(n.id)] = regions[reg(n.id)] || []).push(n.id); });
+    let sum = 0, cnt = 0;
+    for (const [r, ids] of Object.entries(regions)) {
+      const degs = ids.map(id => ADJ[id].filter(o => !FLOAT.has(o) && reg(o) === r).length);
+      sum += degs.reduce((a, b) => a + b, 0); cnt += ids.length;
+      if (ids.length >= 15) { const avg = degs.reduce((a, b) => a + b, 0) / ids.length; assert.ok(avg >= 3, r + ' average local degree ' + avg.toFixed(2)); worstDeg = Math.min(worstDeg, avg); }
+    }
+    assert.ok(sum / cnt >= 3, 'average in-region degree ' + (sum / cnt).toFixed(2));
+    for (const [a, b] of gen.edges) if (!FLOAT.has(a) && !FLOAT.has(b) && reg(a) === reg(b) && !W.GATEWAY_REGIONS.includes(reg(a))) assert.ok(len(a, b) <= 1500, 'local edge ' + a + ' ' + b + ' is long');
+    /* tidiness: crossings among the non-floating edges stay rare (the date-line edge is excluded) */
+    const ccw = (a, b, c) => (c.y - a.y) * (b.x - a.x) - (b.y - a.y) * (c.x - a.x);
+    const E = gen.edges.filter(([a, b]) => !FLOAT.has(a) && !FLOAT.has(b) && Math.abs(NMAP[a].x - NMAP[b].x) < m.w * 0.6);
+    let cr = 0;
+    for (let i = 0; i < E.length; i++) for (let j = i + 1; j < E.length; j++) {
+      const [a, b] = E[i], [c, d] = E[j];
+      if (a === c || a === d || b === c || b === d) continue;
+      const A = NMAP[a], B = NMAP[b], C = NMAP[c], D = NMAP[d];
+      if (ccw(A, C, D) * ccw(B, C, D) < 0 && ccw(A, B, C) * ccw(A, B, D) < 0) cr++;
+    }
+    assert.ok(cr <= 3, 'crossing edges: ' + cr);
+    crossings = Math.max(crossings, cr);
+  }
+  console.log('    connections: min hops quik-uk ' + worstQL + ', bond-citi ' + worstSN + ', uk-japan ' + worstEU + '; longest inter-region ' + Math.round(worstInter) + 'px; worst crossings ' + crossings);
+});
+
+test('connections: the board is connected over many seeds, with and without the Geography DLC', { timeout: 280000 }, async t => {
+  const e = await loadEngine();
+  t.after(() => e.dispose());
+  for (const geo of [false, true]) {
+    e.f.rebuildWorld(geo, true);
+    for (let s = 0; s < 10; s++) {
+      withSeed(7000 + s, () => e.f.generateWorldMapBoard());
+      const { NODES, ADJ } = e.acc;
+      assert.equal(bfs(ADJ, 'quik').size, NODES.length, 'seed ' + s + ' geo ' + geo + ' is connected');
+      assert.ok(ADJ.quik.length >= 4);
+    }
+  }
 });

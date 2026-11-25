@@ -23,13 +23,20 @@ export const WORLD_CHOKEPOINTS=['w_panama','w_hormuz','w_suez','w_malacca'];
 export const BATTERY=['w_lithium','w_cobalt','w_nickel','w_baotou'];
 /* the offshore nodes: APPLE pays $2 for each one you own */
 export const TAX_HAVENS=['w_cayman','w_bvi','w_lux','w_vatican','w_bermuda','w_swiss','w_monaco'];
+/* MARKET-EVENT NODE SETS (the second batch of cards): who a card switches off, pays or taxes. Ids missing from the live board are simply skipped. */
+export const TOURISM_NODES=['qantas','market','quik','geo_venice','geo_wonsan','geo_tuvalu','geo_pyothotel','w_cruise','w_mbs','w_monaco','w_gbr','w_burj','w_pyramids','w_fiji']; /* SWIFTONOMICS */
+export const IRON_NODES=['bhp','w_vale','coal','w_codelco','w_potosi','w_nickel']; /* IRON ORE CRASH */
+export const SANCTIONED_NODES=['w_gazprom','w_nordstream','w_kremlin','geo_shahed','geo_missile','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_kim']; /* SANCTIONS: Russia, Iran, North Korea */
+export const COAL_CHAIN=['coal','train','port','watson','bhp']; /* CHINA BANS AUSTRALIAN COAL */
+export const AGRI_NODES=['w_fonterra','w_anzcerta','w_amazon','w_tulip']; /* EL NINO */
+export const US_NODES=['citi','hedge','us','oil','fox','leak','bess','bigshort','golf','bessent','trump','brad','geo_boeing','w_bell','w_fed','w_powell','w_sec','w_goldman','w_jpm','w_svb','w_cushing','w_permian','w_knox','w_cme','w_malago','w_area51','w_hollywood','w_imf','w_apple','w_tariffwall']; /* BRICS SUMMIT: the dollar's own nodes */
 const mk=(id,name,icon,type,income,cost,lat,lon,sub,sp,fx,todo)=>{
  const n={id:'w_'+id,name:[].concat(name),icon,type,shape:'card',income,cost,geo:[lat,lon],x:0,y:0,rot:0,sub,sp};
  if(fx)n.fx=fx;if(todo)n.todo=true;return n;
 };
 export const WORLD_NODES=[
 /* ── North America ── */
-mk('bell','WALL STREET BELL','🔔','MEDIA',2,5,40.707,-74.011,'rung by whoever paid the most this year','+$2 on BONDMAGEDDON, A QUIET QUARTER or THE BIG SHORT SCREENING (the bell rings either way).',{e:{bondrevolt:2,quiet:2,bigscreen:2}}),
+mk('bell','WALL STREET BELL','🔔','MEDIA',2,5,40.707,-74.011,'rung by whoever paid the most this year','+$2 on BONDMAGEDDON, A QUIET QUARTER or THE BIG SHORT SCREENING (the bell rings either way). RING THE BELL: once per turn, as your action, pay $2: the next market event is drawn and resolved RIGHT NOW, and an ASIC/ACCC investigation opens (or escalates by +1 scrutiny) on a rival you choose.',{e:{bondrevolt:2,quiet:2,bigscreen:2}}),
 mk('fed','THE FEDERAL RESERVE','🏛️','REGULATOR',2,9,38.893,-77.045,'dual mandate · triple vibes','−1 Cortisol at the start of each of your turns. +$2 on the RBA CASH-RATE DECISION and BIG BESSENT SPEAKS (the world is listening).',{c:-1,e:{rates:2,besspeak:2}}),
 mk('powell','JEROME POWELL','🎙️','WILD',1,7,38.886,-77.03,'“transitory” · still being said',
  'TRANSITORY: the first Cortisol you would take each round is cancelled outright. (He said it would pass. It passed.)',null),
@@ -43,7 +50,7 @@ mk('permian','THE PERMIAN BASIN','⛽','COMMODITY',3,7,31.9,-102.1,'fracked flat
 mk('knox','FORT KNOX','🥇','COMMODITY',2,6,37.89,-85.96,'audit pending since 1974','+$5 on GOLD RUSH. +$2 income while you also own the GOLD-COLOURED COINS (the gold is, allegedly, there).',{e:{goldrush:5},w:[['gold',2]]}),
 mk('cme','CME TRADING FLOOR','📟','CHART',2,5,41.8819,-87.6278,'open outcry, now silent','+$1 income per COMMODITY node you own (the futures all clear here).',{t:[['COMMODITY',1]]}),
 mk('malago','MAR-A-LAGO','⛳','WILD',2,7,26.6773,-80.0368,'the gold-plated clubhouse','+$3 income while you also own DONALD TRUMP (the member lives here).',{w:[['trump',3]]}),
-mk('area51','AREA 51','👽','WILD',1,5,37.2431,-115.793,'nothing to see here · see here','+1 Intel at the start of each of your turns (they have a file on everyone).',{s:1}),
+mk('area51','AREA 51','👽','WILD',1,5,37.2431,-115.793,'nothing to see here · see here','ALIEN ABDUCTION: once per game, as your action, pay $4 and 3 Intel to steal any rival’s node remotely. A coin flip decides: 50% it arrives intact, 50% it arrives as RUBBLE (nobody owns it). Not allowed on Antarctica, MADE, a holder of the Commonwealth Bank while its refusal is unused, nodes the Seed Vault protects, or the ESG Pillars owner’s holdings.',null),
 mk('panama','THE PANAMA CANAL','🚢','COMMODITY',3,8,9.08,-79.68,'one lock, ten thousand invoices',
  'CHOKEPOINT: every rival who walks into this node pays you a $2 transit toll (instead of the usual $1), and on the GLOBAL EDITION map it is the gateway between North and South America.',null),
 mk('bay','BAY STREET','🍁','BANK',2,6,43.6532,-79.3832,'polite · well-capitalised · sorry','+$2 income while you also own the ALBERTA TAR SANDS (the TSX is all mines and oil).',{w:[['w_tar',2]]}),
@@ -78,7 +85,7 @@ mk('greek',['THE GREEK','DEBT'],'🏺','CHART',3,2,37.9838,23.7275,'cursed · a 
 mk('cs',['CREDIT SUISSE'],'🏔️','BANK',2,3,47.3769,8.5417,'160 years · gone in a weekend',
  'STARTS AS RUBBLE. When rebuilt it comes back as UBS: a BANK that pays +$2 per BANK you own (itself included).',{t:[['BANK',2]]}),
 mk('bis',['THE BIS','BASEL'],'🌀','REGULATOR',1,6,47.5596,7.5886,'the central bank of central banks','+$1 income per OTHER REGULATOR you own (the committee of committees).',{t:[['REGULATOR',1,1]]}),
-mk('swiss',['THE SWISS','VAULT'],'🔒','WILD',2,7,46.948,7.4474,'discretion is the product','+1 Intel on THE TAPES GO MISSING and on ANONYMOUS TIP (the vault keeps copies).',{e:{tapes:[0,1],tip:[0,1]}}),
+mk('swiss',['THE SWISS','VAULT'],'🔒','WILD',2,7,46.948,7.4474,'discretion is the product','+1 Intel on THE TAPES GO MISSING and on ANONYMOUS TIP (the vault keeps copies). NUMBERED ACCOUNT: stash any amount of cash here as your action — raids, fines, events and loans cannot touch it, and it does NOT count toward the win goal until withdrawn. Withdraw all or part as a FREE action, once per turn, from anywhere. Losing the vault never loses the money; you just cannot deposit more.',{e:{tapes:[0,1],tip:[0,1]}}),
 mk('lux',['LUXEMBOURG','LETTERBOX'],'📮','CORPORATE',2,6,49.6117,6.1319,'two hundred thousand companies · one door','+$1 income per BANK you own; +$3 on A QUIET QUARTER.',{t:[['BANK',1]],e:{quiet:3}}),
 mk('asml',['ASML'],'🔬','CORPORATE',3,9,51.4096,5.4586,'the only machine that can make the machine','+$3 income while you also own TSMC; +$2 while you own SAMSUNG (the customers queue).',{w:[['w_tsmc',3],['w_samsung',2]]}),
 mk('tulip',['THE TULIP','BULB'],'🌷','COMMODITY',1,3,52.3676,4.9041,'1637 · the original bubble','+$4 on A QUIET QUARTER and +$3 on GOLD RUSH (the bubble loves a quiet room).',{e:{quiet:4,goldrush:3}}),
@@ -87,7 +94,7 @@ mk('gazprom','GAZPROM','🔥','COMMODITY',3,7,59.9876,30.1858,'the pipeline is t
 mk('nordstream',['NORD STREAM'],'💥','COMMODITY',2,4,54.9,15.5,'built · inspected · allegedly very quiet',
  'STARTS AS RUBBLE (the pipeline is already in pieces) and must be rebuilt before it pays; rebuilt and owned, it pays +$3 on OIL SPIKES.',{e:{oilspike:3}}),
 mk('kremlin',['THE KREMLIN'],'🏰','REGULATOR',2,8,55.752,37.6175,'a very long table · nobody sits','+1 Intel at the start of your turn; +$2 income while you also own GAZPROM.',{s:1,w:[['w_gazprom',2]]}),
-mk('lira',['THE TURKISH','LIRA'],'💸','CHART',1,2,39.9334,32.8597,'the line goes the other way','+$3 on BONDMAGEDDON (it was already in free fall).',{e:{bondrevolt:3}}),
+mk('lira',['THE TURKISH','LIRA'],'💸','CHART',1,2,39.9334,32.8597,'the line goes the other way','+$3 on BONDMAGEDDON (it was already in free fall). ERDOĞANOMICS: once per game, as your action, every rival loses 20% of their cash above $30.',{e:{bondrevolt:3}}),
 mk('monaco',['MONACO','CASINO'],'🎰','WILD',2,6,43.7384,7.4246,'the house always wins · the house is a principality','+$3 on A QUIET QUARTER and on MADE PAYS OUT… PROBABLY (the house collects on everything).',{e:{quiet:3,madeout:3}}),
 mk('vatican',['THE VATICAN','BANK'],'⛪','BANK',2,7,41.9022,12.4539,'works in mysterious ways · accounts in more','−1 Cortisol at the start of each of your turns (confession is free). REGULATOR-EXEMPT: no ACCC file can ever open on your BANKING book and no ASIC file on your MONETARY POLICY book.',{c:-1}),
 /* ── Middle East & Africa ── */
@@ -108,9 +115,9 @@ mk('dangote',['DANGOTE','REFINERY'],'🏭','COMMODITY',3,7,6.4474,3.9718,'the la
 mk('cobalt',['CONGO','COBALT'],'🔵','COMMODITY',3,6,-10.7167,25.4667,'every phone · every battery · very deep','+$2 income per other battery metal you own.',{i:[[BATTERY,2]]}),
 mk('witz',['WITWATERSRAND','GOLD'],'⛏️','COMMODITY',3,7,-26.2041,28.0473,'a third of all the gold ever mined','+$5 on GOLD RUSH.',{e:{goldrush:5}}),
 mk('debeers',['DE BEERS'],'💎','COMMODITY',3,8,-28.7282,24.7499,'a diamond is forever · the supply was not','+$3 on GOLD RUSH; +$2 income while you also own WITWATERSRAND GOLD.',{e:{goldrush:3},w:[['w_witz',2]]}),
-mk('zim',['ZIMBABWE','TRILLION-DOLLAR','NOTE'],'🧾','CHART',1,2,-17.8252,31.0335,'a trillion · buys a loaf · nearly','+$3 on BONDMAGEDDON and on A QUIET QUARTER (hyperinflation is at least predictable).',{e:{bondrevolt:3,quiet:3}}),
+mk('zim',['ZIMBABWE','TRILLION-DOLLAR','NOTE'],'🧾','CHART',1,2,-17.8252,31.0335,'a trillion · buys a loaf · nearly','+$3 on BONDMAGEDDON and on A QUIET QUARTER (hyperinflation is at least predictable). PRINT MONEY: once per game, as your action, gain 20% of the game’s target. Then INFLATION: every seizure on the board costs +$1 more for the rest of the game (it stacks with any later inflation).',{e:{bondrevolt:3,quiet:3}}),
 mk('mpesa',['M-PESA'],'📱','BANK',2,5,-1.2921,36.8219,'a bank in your pocket before the banks were','+$1 income per OTHER WILD node you own (the app reaches everywhere).',{t:[['WILD',1,1]]}),
-mk('pyramids',['THE PYRAMIDS'],'🔺','WILD',2,6,29.9792,31.1342,'the original pyramid scheme','+$1 income per three nodes you own (more at the bottom, more at the top).',{n:[1,3]}),
+mk('pyramids',['THE PYRAMIDS'],'🔺','WILD',2,6,29.9792,31.1342,'the original pyramid scheme','PYRAMID SCHEME: whenever a rival seizes a node ADJACENT (on the board graph) to any node you own, they pay you the current payout — $1, then $2, $4, $8… doubling each time it pays, capped by what they can pay — until THE BOULDER ROLLS BACK DOWN is drawn and it resets to $1. The payout is shown on the node.',null),
 /* ── Asia ── */
 mk('boj',['BANK OF','JAPAN'],'🏯','REGULATOR',2,8,35.6866,139.7735,'yield curve control · the rubber band','+$2 income while you also own JAPAN BOND YIELDS; +$3 on BONDMAGEDDON (the curve control fails here first).',{w:[['japan',2]],e:{bondrevolt:3}}),
 mk('watanabe',['MRS','WATANABE'],'👛','WILD',1,5,35.7,139.7,'the carry trade has a face',
@@ -137,10 +144,10 @@ mk('bangalore',['THE BANGALORE','CALL CENTRE'],'🎧','WILD',2,5,12.9716,77.5946
 mk('mdb',['1MDB'],'🦘','WILD',2,6,3.1479,101.6953,'the yacht · the paintings · the pink diamond','+$3 income while you also own PETRONAS (the fund-raising was local).',{w:[['petronas',3]]}),
 mk('nickel',['INDONESIAN','NICKEL'],'🪨','COMMODITY',3,6,-2.0,121.4,'the island that powers the EV','+$2 income per OTHER battery metal you own; +$3 on COAL RUSH (the smelters run on coal).',{i:[[BATTERY,2]],e:{coalrush:3}}),
 mk('kazatom',['KAZATOMPROM','URANIUM'],'☢️','COMMODITY',2,5,51.1694,71.4491,'two-fifths of the planet’s uranium','+$3 on COAL RUSH (the competition panics) and +$2 when OIL SPIKES.',{e:{coalrush:3,oilspike:2}}),
-mk('baht',['THE BAHT','1997'],'📉','CHART',1,3,13.7563,100.5018,'the contagion started in Bangkok','+$3 on BONDMAGEDDON (the flu begins here).',{e:{bondrevolt:3}}),
+mk('baht',['THE BAHT','1997'],'📉','CHART',1,3,13.7563,100.5018,'the contagion started in Bangkok','+$3 on BONDMAGEDDON (the flu begins here). CONTAGION: whenever any player is raided, every rival of the Baht’s owner who owns a node in the region the raided player’s pawn stood in takes +1 Cortisol.',{e:{bondrevolt:3}}),
 mk('baikonur',['THE BAIKONUR','COSMODROME'],'🚀','REGULATOR',2,8,45.965,63.305,'the first rocket · the first satellite · the lease is in roubles',
- 'LIFTOFF: +$2 income while you own MISSILE COMMAND or the IRANIAN SHAHED DRONE (the Geography DLC supplies the payload). LAUNCH WINDOW: once per game, in your MOVE phase, pay $3 to be launched to ANY node on the board (the Qantas jet, only once, and it burns more).',{w:[['geo_missile',2],['geo_shahed',2]]}),
-mk('srilanka',['SRI LANKA'],'🍃','WILD',1,2,6.9271,79.8612,'in default · the tea is still excellent','Pays $1 a turn and costs almost nothing: +$3 on BONDMAGEDDON (the default was early).',{e:{bondrevolt:3}}),
+ 'LIFTOFF: +$2 income while you own MISSILE COMMAND or the IRANIAN SHAHED DRONE (the Geography DLC supplies the payload). LAUNCH WINDOW: once per game, in your MOVE phase, pay $3 to be launched to ANY node on the board (the Qantas jet, only once, and it burns more). ESCAPE ON THE ROCKET: once per game, when you would be RAIDED, the raid is cancelled — your pawn is launched to the cosmodrome (or a node you choose) and your Cortisol drops to 5.',{w:[['geo_missile',2],['geo_shahed',2]]}),
+mk('srilanka',['SRI LANKA'],'🍃','WILD',1,2,6.9271,79.8612,'in default · the tea is still excellent','Pays $1 a turn and costs almost nothing: +$3 on BONDMAGEDDON (the default was early). DEFAULT: once per game, as a free action, wipe all your debts (the IMF loan, the Mrs Watanabe carry trade) — and every toll you would owe this turn is free.',{e:{bondrevolt:3}}),
 /* ── Oceania, polar & offshore ── */
 mk('rbnz',['THE RBNZ'],'🥝','REGULATOR',1,5,-41.2866,174.7756,'a cash rate · and a kiwi','+$2 income while you also own the RBA; +$2 on the RBA CASH-RATE DECISION (the Reserve Bank of the other island).',{w:[['rba',2]],e:{rates:2}}),
 mk('fonterra',['FONTERRA'],'🥛','COMMODITY',2,5,-36.8485,174.7633,'milk · a lot of it · powdered','+$3 on A QUIET QUARTER; +$2 income while you also own ANZCERTA (the dairy rides the treaty).',{e:{quiet:3},w:[['w_anzcerta',2]]}),
@@ -149,7 +156,7 @@ mk('fiji',['FIJI','WATER'],'💧','CORPORATE',2,5,-17.7134,178.065,'bottled some
 mk('png',['PNG','GOLD'],'🪙','COMMODITY',2,5,-6.31,155.1,'a big pit · a small island','+$4 on GOLD RUSH; +$1 income per OTHER COMMODITY you own.',{e:{goldrush:4},t:[['COMMODITY',1,1]]}),
 mk('antarctica',['ANTARCTICA'],'🐧','WILD',2,9,-77.85,166.67,'nobody owns it · nobody pays rent',
  'UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible (regulators and raids still reach it). Its income is a flat $2.',null),
-mk('greenland',['GREENLAND'],'❄️','WILD',2,6,64.1835,-51.7216,'it is not for sale · apparently it is','+$3 income while you also own DONALD TRUMP (he is, allegedly, interested).',{w:[['trump',3]]}),
+mk('greenland',['GREENLAND'],'❄️','WILD',2,6,64.1835,-51.7216,'it is not for sale · apparently it is','+$3 income while you also own DONALD TRUMP (he is, allegedly, interested). MAKE AN OFFER: if you own DONALD TRUMP, once per game and as your action, force-buy Greenland from whoever owns it at its list price. The owner cannot refuse; the money goes to them.',{w:[['trump',3]]}),
 mk('svalbard',['SVALBARD','SEED VAULT'],'🌱','WILD',1,6,78.2386,15.5086,'every seed on earth · in a very cold cupboard',
  'ANTI-RUBBLE: any node of yours that a missile would turn to rubble survives; once per game, you may rebuild a rubble node for free (stand on it in your action phase).',null),
 mk('cayman',['THE CAYMAN','ISLANDS'],'🏝️','CORPORATE',2,6,19.3133,-81.2546,'everyone is a director here','+$2 income while you also own THE HEDGE FUND (somebody is shorting from the beach); +$1 income per BANK you own.',{w:[['hedge',2]],t:[['BANK',1]]}),
@@ -268,6 +275,7 @@ export function regionOf(n){
   const south=lo>-130&&lo<-34&&(la<8.5||(la<12.4&&lo>-75));
   return south?'SAM':'NAM';
  }
+ if(la>=24&&la<40&&lo>=44&&lo<=64)return 'ME'; /* Iran and the Gulf shore */
  if(la>=34&&lo>=-30&&lo<=60)return 'EUR';
  if(la>=12&&la<=38&&lo>=34&&lo<=64)return 'ME';
  if(lo>=-20&&lo<=52&&la<38)return 'AFR';
@@ -319,23 +327,22 @@ const inAusNz=g=>!!g&&((g[0]<=-9&&g[0]>=-48&&g[1]>=112&&g[1]<=154)||(g[0]<=-34&&
 export const AUSNZ=new Set(Object.keys(GEO_ANCHORS).concat(WORLD_NODE_IDS).filter(id=>!WORLD_FLOATING.includes(id)&&inAusNz(geoById(id))));
 /* edges that cross the date line: drawn as a pair of arrows off the right edge and back in at the left */
 export const WORLD_WRAPS=[['rock','w_fiji']];
-/* Long-haul routes (shipping lanes and flight paths) that proximity alone would not create. Every route that joins two
-   regions is a deliberate gateway; there is no direct Europe to North America link, and none that skips a chokepoint. */
+/* The ONLY links between regions (everything else is a local web, see generateWorldMapBoard). Walking across the world is meant to be
+   slow: the chokepoints are the gateways (Panama, Suez, Hormuz, Malacca, Antarctica), the North Atlantic corridor is the single way from
+   Europe to North America (via Iceland and Greenland), and a handful of overland and island hops join neighbouring regions. There are
+   no kangaroo-route shortcuts: for those there are Qantas, the Cruise Ship and Baikonur. At most one or two links per pair of neighbours. */
 export const WORLD_ROUTES=[
- /* the North Atlantic: Europe, Iceland, Greenland, Canada: the only way across */ ['uk','w_hdi'],['w_norway','w_hdi'],['w_hdi','w_greenland'],['w_greenland','w_bay'],
+ /* the North Atlantic corridor: Europe, Iceland, Greenland, Canada */ ['uk','w_hdi'],['w_norway','w_hdi'],['w_hdi','w_greenland'],['w_greenland','w_bay'],
+ /* the date line: Hawaii wraps around the world to Fiji; and Hawaii's one link to the American mainland */ ['rock','w_fiji'],['rock','w_hollywood'],
  /* the South Atlantic */ ['w_petrobras','w_dangote'],
- /* the date line: The Rock wraps around the world to Fiji */ ['rock','w_fiji'],['rock','w_hollywood'],['citi','w_hollywood'],
- /* the kangaroo route */ ['qantas','w_temasek'],['qantas','w_hollywood'],['qantas','japan'],['qantas','w_fonterra'],['gold','w_witz'],
- /* the Asian ring */ ['w_temasek','w_hsbc'],['geo_scs','w_hsbc'],['geo_scs','w_tsmc'],['japan','w_hsbc'],['japan','w_pboc'],['w_samsung','japan'],['w_hsbc','w_pboc'],['port','japan'],['bhp','w_temasek'],['w_nickel','w_png'],
- /* Malacca: the Indian Ocean and the Pacific side */ ['w_malacca','w_srilanka'],['w_malacca','w_bangalore'],['w_malacca','petronas'],['w_malacca','w_temasek'],['w_malacca','tanker'],
- /* Hormuz: the Gulf and South Asia */ ['w_hormuz','w_aramco'],['w_hormuz','w_adia'],['w_hormuz','w_burj'],['w_hormuz','geo_shahed'],['w_hormuz','w_rbi'],['w_hormuz','w_adani'],['w_mpesa','w_rbi'],
- /* Suez: Europe, the Middle East and Africa */ ['w_suez','w_greek'],['w_suez','w_btp'],['w_suez','w_lira'],['w_suez','barrels'],['w_suez','w_neom'],['w_suez','w_burj'],['w_suez','w_pyramids'],['w_suez','w_hormuz'],
- /* the overland road across Eurasia */ ['w_kremlin','w_pboc'],['w_kremlin','w_bunds'],['w_kremlin','w_kazatom'],['w_kazatom','w_baikonur'],['w_kazatom','w_baotou'],
- /* Panama: the Americas */ ['w_panama','w_vale'],['w_panama','oil'],['w_panama','w_hollywood'],['w_panama','w_pdvsa'],['w_pemex','w_panama'],['w_cayman','w_panama'],['w_milei','w_petrobras'],['w_easter','w_milei'],
- /* the Caribbean */ ['w_cayman','w_bvi'],['w_cayman','w_bermuda'],['w_bermuda','citi'],
- /* the far north */ ['w_svalbard','w_norway'],
- /* Antarctica: the southern route between South America, Africa and Australasia */ ['w_antarctica','w_milei'],['w_antarctica','w_debeers'],['w_antarctica','w_anzcerta'],['w_antarctica','w_rbnz'],
- /* the Pacific islands */ ['w_nauru','geo_tuvalu'],['w_png','w_nauru'],['w_fiji','geo_tuvalu'],['w_fiji','w_fonterra'],['w_png','qantas']
+ /* Panama: the two Americas */ ['w_panama','w_pemex'],['w_panama','w_pdvsa'],['w_panama','w_vale'],
+ /* Suez: Europe, the Middle East and Africa */ ['w_suez','w_greek'],['w_suez','w_neom'],['w_suez','w_pyramids'],
+ /* Hormuz: the Gulf and South Asia */ ['w_hormuz','w_adia'],['w_hormuz','w_rbi'],['w_hormuz','w_adani'],
+ /* Malacca: South Asia and South-East Asia */ ['w_malacca','w_srilanka'],['w_malacca','petronas'],['w_malacca','w_temasek'],
+ /* the overland road across Eurasia: Moscow, the steppe, the Chinese north */ ['w_kremlin','w_kazatom'],['w_kazatom','w_baotou'],
+ /* South-East Asia: the Pacific rim to the north, the Indonesian islands to the south */ ['geo_scs','w_hsbc'],['w_nickel','forklift'],
+ /* Antarctica: the southern route between South America, Africa and Australasia */ ['w_antarctica','w_milei'],['w_antarctica','w_debeers'],['w_antarctica','w_anzcerta'],
+ /* the Pacific islands */ ['w_fiji','geo_tuvalu'],['w_nauru','geo_tuvalu'],['w_png','w_nauru']
 ];
 
 /* low-detail continent outlines: [lon,lat] rings. Hand-simplified; the look is "evidence board", not an atlas. */
