@@ -141,7 +141,7 @@ test('modules load one by one against the stub browser without load-time errors'
   const engine = await loadEngine();
   assert.deepEqual(engine.consoleOut.error, []);
   assert.equal(engine.acc.NODES.length, 70);
-  assert.equal(engine.acc.CARDS.length, 24);
+  assert.equal(engine.acc.CARDS.length, 36);
   for (const fn of ['applyIntent', 'startTurn', 'generateRandomBoard', 'pubState', 'adoptState', 'showRules', 'handleHello'])
     assert.equal(typeof engine.f[fn], 'function', fn + ' is an exported function');
   assert.equal(engine.elems.get('buildStamp').textContent, 'COMMIT ' + engine.env.BUILD_COMMIT, 'boot() stamped the build commit');

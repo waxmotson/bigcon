@@ -8,6 +8,7 @@ import { LOG_SHOWN, Net, S } from './state.js';
 import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
 import { CLASSIFIED_INTEL, CLASSIFIED_MONEY, classifiedBlocked, hiddenFrom, hiddenInfo, ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost, blocStatus, tariffFor, tariffOwner, blockSources, blockadeFree, reefBleached, fileAuthority, isWaterNode } from './engine.js';
 import { TRADE_BLOCS, blocOfMember } from './world.js';
+import { launderBooks, reworkBlocked, swissBalance, abductTargets, inflationExtra, pyramidPayout } from './engine.js';
 import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
 import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
@@ -67,15 +68,23 @@ export function showRules(){
  +'<h4>Intel ops (🛈)</h4><ul><li><b>Burn a favor</b> (1 🛈, while moving, once per turn) — +1 step this turn.</li><li><b>Spy on the deck</b> (2 🛈, free action) — privately see the next event card, anywhere.</li><li><b>The Dossier</b> (3 🛈, free action) — your hostile takeovers this turn cost <b>list price, not double</b>.</li><li><b>Sweep for bugs</b> (2 🛈, your action) — remove every bug on your nodes.</li><li><b>Mass panic</b> (5 🛈, your action) — every player gains +2 Cortisol (holders of only one node are immune).</li><li><b>Divest MADE</b> (5 🛈 + $7, your action) — strip MADE from any rival; the $7 goes to its former owner as compensation, and you take +1 Cortisol.</li><li><b>Sell intel</b> (your action, anywhere): sell 1–3 or <b>ALL</b> your Intel at once for the current market rate ($2–$4 each, set by the mood) — it uses your action. Bad news is good news.</li><li><b>Overload a rival</b> (30 🛈, your action): choose one rival to receive <b>+6 Cortisol</b>, bypassing the normal one-node immunity.</li><li><b>Lobby</b> (3 🛈, free, once per turn, while a regulator file is open on you) — −1 scrutiny on that file.</li></ul>'
  +'<h4>The board is the whole collage</h4><p><b>70 exhibits</b> (82 with the DLC), and everyone starts at <b>Quikstop</b> with $15 and 2 Intel. Every con deals a fresh board — the host picks <b>Random</b> (positions and threads reshuffled, the prized nodes seeded far from Quikstop, MADE out on the edge with one or two links, and Quikstop opening in a different neighbourhood each game), <b>RINGWORLD</b> (three concentric rings around Quikstop) or <b>MEGA RING</b> (one big ring plus a Quikstop hub). Red threads are the paths — long ones dash. <b>Fog of War</b> (host-toggled): you only see exhibits you have already visited, plus a <b>?</b> on the ones one step away. <i>Drag to pan, scroll to zoom; hover a node to light up its links, right-click to pin the route to it.</i></p>'
  +'<h4>Winning</h4><p><b>Money <i>and</i> a finished portfolio.</b> The host sets a cash target in the lobby (anything from $'+GOAL_MIN+' to $'+GOAL_MAX+'); to take the con you must reach it <b>while holding at least one '+WIN_TYPES.join(', one ')+' node</b> — the seven-type set (BANK, REGULATOR, CHART, WILD, CORPORATE, COMMODITY and MEDIA) is tracked in your sidebar. There are only four REGULATORS on the base board (seven with the DLC), so the set is a race of its own; if several players qualify at once, the richest wins. Nodes, synergies, bugs and the mood are all just ways of getting there faster — the board banner and the sidebar show the target and who is closest.</p>'
- +'<h4>Your turn</h4><p><b>1 · Income</b> — $3 salary (+$1 CPI-indexed with Inflation Compensation) + holdings &amp; powers &amp; mood. <b>2 · Move</b> — 3 steps (+1 with COAL CORP HQ, +1 with the Coal Train <i>or</i> the Bullet Train, +1 with the ASICS shoe, +1 by burning a favor). Tolls: $1 entering a rival’s node — $2 if they hold Albanese, free if you hold James Bond. <b>3 · One action</b> (plus free intel ops — Spy and the Dossier; most other ops are your action). <b>4 · Market event</b> — one card from the 24-card deck hits the whole table, and the mood moves. Card dollars are written for a $100 table and <b>scale with the host’s target</b> (a $300 table pays and charges three times as much; never less than $1). A raided player skips income and gets one step.</p>'
+ +'<h4>Your turn</h4><p><b>1 · Income</b> — $3 salary (+$1 CPI-indexed with Inflation Compensation) + holdings &amp; powers &amp; mood. <b>2 · Move</b> — 3 steps (+1 with COAL CORP HQ, +1 with the Coal Train <i>or</i> the Bullet Train, +1 with the ASICS shoe, +1 by burning a favor). Tolls: $1 entering a rival’s node — $2 if they hold Albanese, free if you hold James Bond. <b>3 · One action</b> (plus free intel ops — Spy and the Dossier; most other ops are your action). <b>4 · Market event</b> — one card from the 36-card deck (43 on the Global Edition) hits the whole table, and the mood moves. Card dollars are written for a $100 table and <b>scale with the host’s target</b> (a $300 table pays and charges three times as much; never less than $1). A raided player skips income and gets one step.</p>'
  +'<h4>Actions</h4><ul><li><b>Seize</b> the node you stand on (+1 🔥). Hostile takeover: double cost, doubling again every time the node is taken (list price with the Dossier; MADE, Qantas, the RBA and ESG Pillars never inflate), old owner pockets list price, +2 🔥, +$2 ACCC fee if they own the ACCC. Short on cash? Backroom Deals covers up to $3 with Intel.</li><li><b>Plant a bug</b> (1 🛈; free with INSIDER TRADING) on a rival node next to you — skim $1/turn ($2 with the WEF).</li><li><b>Offer a deal</b> (your action) — offer one of your nodes to one rival for a whole-dollar price you name, from $0 up to their cash. They accept or decline in private, and a declined offer still uses your action. On a yes the cash and the node change hands and any bugs on it are cleared; nobody takes Cortisol, and the node’s takeover price is unchanged.</li><li><b>Sell to the market</b> (your action, only for a node in a book with an open ACCC/ASIC file) — list price, and the node is unowned again · <b>Refer</b> ($4, the ACCC or ASIC owner, once per turn) — a rival’s open file +1 scrutiny.</li><li><b>Leak dirt</b> (2 🛈) — rival +2 Cortisol · <b>Audit</b> ($4, ASIC) — rival +1 Cortisol · <b>The Tweet</b> ($2, Trump) — rival loses the greater of 3 Intel or 50% of their Intel.</li><li><b>Spin</b> ($3 Press Room) / <b>Fox Spin</b> ($2 Fox Business) · <b>Cook the books</b> ($3, The Rock) · <b>Budget night</b> ($3, the Government: every rival pays you $1, +1 🛈) · <b>Lean on the table</b> (Backroom Deals: every rival +1 🔥; using a Backroom ability during movement costs 2 steps).</li><li><b>Push the boulder</b> — earns $10 the first time, then doubles every push ($10, $20, $40, $80…), resetting to $10 if you walk off (Backroom Deals keeps it) or the node changes hands. No Cortisol cost. · <b>Fly the Qantas jet</b> ($3, during movement, teleport anywhere — ends your move) · <b>Slipstream</b> ($2, Formula 1: +2 steps and $2 off the next seizure) · <b>Lay low</b> (choose $1 cash or −2 Cortisol). · <b>Blockade</b> (free, Albanese, once per turn) — wall off literally any node until the end of next round: nobody walks in, nobody lands, not even you.</li></ul>'
  +'<p><b>BONDMAGEDDON</b> (own both the Bond Desk and “Bond Markets Revolt” — The Leak; $16 + 4 🛈, once per turn): pick any rival with intact holdings and launch four missiles at random holdings — each becomes rubble (no DLC needed). If they own the ESG Pillars, three missiles hit ESG and the fourth hits another random holding.</p>'
  +'<p><b>JAMES BOND — CLASSIFIED</b> (own the “JAMES BOND, CITIBANK · 007” polaroid; 1 🛈 or $3, free, once per turn, in your move or action phase): file <b>any node</b> away until the end of next round. Everyone but you and the node’s holder sees only a <b>?</b> — no name, owner, ability or bugs. It is information only: rivals can still walk or fly onto it and seize it blind, but cannot pick it as a bug, missile, Overtourism or blockade target. Under <b>Fog of War</b> every rival who had been there also forgets it for good (they must visit again). It lapses if Bond changes hands. He still pays no tolls.</p>'
  +'<h4>Cortisol &amp; raids</h4><p>Cortisol is capped at 9, and a player holding only one node (or none) cannot gain Cortisol at all (only the 30-Intel Overload bypasses this). At 🔥9 the regulators raid you, and a raid hurts: your <b>two</b> highest-income nodes are seized, every bug you planted is pulled, you pay a fine of $5 or 30% of your cash (whichever is larger), your Intel is burned down to 1, Cortisol resets to 0 and your <b>next turn brings no income and a single step</b>. <b>The whole table sees the raid</b> — it pops up on every screen. The Hedge Fund pays $3 on every raid; the Group Photograph pays 1 🛈 Intel.</p>'
  +'<h4>ACCC concentration — the regulators keep a file</h4><p>Twelve industries are tracked. Five are type-based — banking, regulators, corporates, commodities and media (charts and WILD nodes don’t count toward them) — and seven are themed books listed by name: coal, oil, education, JTPortal, Jim Chalmers, Big Bessent and monetary policy (MONETARY POLICY also counts the CASH-RATE and INFLATION charts). A themed book is <b>concentrated at 3</b> holdings. A type-based industry is concentrated at <b>a third of its size on the live board, rounded up, never fewer than 3</b>: three banks, regulators or corporates, but <b>four</b> media or four commodities (there are 11 media and 10 commodities, 12 and 11 with the Geography DLC). Hold that many and the regulator <b>opens a public file</b> on the book — every player’s open files are listed in THE SYNDICATE. <b>ASIC</b> runs monetary-policy books as <b>market manipulation</b>; the <b>ACCC</b> takes every other industry. There are no dice: at the start of each of <b>your</b> turns every open file on you gains <b>+1 scrutiny</b>, and at <b>3</b> the ruling lands. You choose which nodes to keep, down to one fewer than the trigger; only the excess is divested, back to the market <b>unowned</b> (never to a rival, and any bugs on it are pulled), and you pay <b>10% of your cash and 10% of your Intel per divested node</b>, capped at 30% each. A file closes the moment the book drops back under the trigger, however that happens — a sale, a deal, a takeover, a raid, a missile — and its scrutiny is discarded. While a file is open you can <b>sell a node from that book to the market</b> for its list price (your action), or <b>lobby</b> (3 🛈, free, once per turn) for −1 scrutiny on one of your files (never below 0). The owner of the <b>ACCC</b> can <b>REFER</b> a rival’s file ($4, your action, once per turn) for +1 scrutiny; the owner of <b>ASIC</b> refers monetary-policy files the same way. You can’t refer your own file, and a referral never rules on the spot — rulings only land at the start of the offender’s own turn. The <b>MONOPOLY ALERT</b> event adds +1 scrutiny to every open file on the table. Owning <b>Mark Watson</b> exempts your holdings in the COAL industry from ACCC monopoly investigations.</p>'
  +'<h4>MADE (???)</h4><p>Nobody knows what the purple graphic is, but it moves money: at the <b>start of every player\'s turn</b> there is a chance MADE pays out (<b>33% at 2 seats, 22% at 3, 17% at 4, 13% at 5, 11% at 6, 10% at 7, 8% at 8</b>) — <b>+$10 and +1 Intel</b> to its owner. Every other player with <b>more than two nodes and at least $50</b> pays 15% of their cash to the void. Seizing MADE always costs list price — it never inflates after a takeover. You may also force MADE to divest from any rival for <b>5 Intel + $7</b> (the $7 goes to the former owner as compensation, and you take +1 Cortisol).</p>'
+ +'<h4>📰 Market events — the second batch</h4>'
+ +'<ul><li><b>BANK RUN</b> — everyone loses 25% of their cash above $40 unless they own a BANK or REGULATOR (the IMF collects $3). <b>THE ROYAL COMMISSION</b> — every open regulator file +2 scrutiny; every BANK owner +1 Cortisol. <b>ROBODEBT</b> — everyone pays 10% of their cash to the bank. <b>GAMESTOP SQUEEZE</b> — the poorest takes 20% of the richest’s cash; the Hedge Fund’s owner pays the poorest a further $3. <b>FTX COLLAPSES</b> — anyone with 6+ Intel loses half.</li>'
+ +'<li><b>CROWDSTRIKE BLUE SCREEN</b> — for one full round: no flights (Qantas, the Cruise Ship, launches), no Terminal peeks, no bug actions. <b>COVID LOCKDOWN</b> — next round everyone moves at most 1 step and flights are grounded; MEDIA nodes pay $2. <b>TOILET PAPER PANIC</b> — everyone +1 Cortisol; the Quikstop owner takes $10 from each rival. <b>EOFY SALE</b> — every seizure costs $2 less this round (min $1). <b>SWIFTONOMICS</b> — Qantas, the Marketplace, the Quikstop and the tourism nodes (Venice, Wonsan, Tuvalu, the Pyongyang Hotel, the Cruise Ship, Marina Bay, Monaco, the Reef, the Burj, the Pyramids, Fiji) pay $3 each. <b>IRON ORE CRASH</b> — BHP, Vale, COAL Corp, Codelco, Potosí and the Indonesian nickel pay nothing for a round. <b>RATE CUT</b> — everyone +$2 and −1 Cortisol.</li>'
+ +'<li><b>Global Edition only:</b> <b>HOUTHIS IN THE RED SEA</b> — all four chokepoints are blockaded until the end of next round; the Tanker Fleet pays $3. <b>SANCTIONS</b> — Gazprom, Nord Stream, the Kremlin, the Shahed drone and the North Korean cluster pay nothing for a round and their owners take +1 Cortisol. <b>CHINA BANS AUSTRALIAN COAL</b> — COAL Corp, the Coal Train, the Docks, Watson and BHP pay nothing for two rounds. <b>THE PANAMA PAPERS</b> — +2 Cortisol per tax haven you own; Apple’s owner +1 more. <b>BRICS SUMMIT</b> — BRICS members pay ×2 and American nodes half for a round. <b>EL NIÑO</b> — Fonterra, ANZCERTA, the Amazon and the Tulip Bulb pay nothing for a round, and the Reef bleaches. <b>A TARIFF WAR</b> — the Tariff Wall surcharge doubles until the end of next round; the WTO owner collects $3. A “round” is one full rotation of the table’s turns after the card.</li></ul>'
  +'<h4>🌐 THE BIG CON: GLOBAL EDITION</h4><p>Two host-chosen options in the lobby. <b>GLOBAL EDITION EXHIBITS</b> add <b>100+ global exhibits</b> — central banks, chokepoints, mines, wealth funds, a Nigerian prince — to <i>any</i> board layout (Random, Ringworld, Mega Ring) and combines freely with the Geography DLC. The <b>THE BIG CON: GLOBAL EDITION</b> map pins every exhibit to the place it really lives on a world map (and switches the exhibits on): <b>Quikstop opens in Sydney</b>, Wall Street is in New York, Hormuz is in the Gulf. Threads follow geography — neighbours link up inside their region and the regions meet at gateways: Panama joins the Americas, Suez joins Europe, the Middle East and Africa, Hormuz joins the Gulf to South Asia, Malacca joins South Asia to the Pacific side, and Antarctica is the southern route. Europe and North America touch <i>only</i> through Iceland and Greenland, and The Rock lets you sail off the right edge of the map and back in from the left. Exhibits that are not places (screens, charts, the boulder) float to a random open spot each game. The new exhibits ship as <b>text cards</b> (name and icon) until their pictures arrive. Most pay through simple synergies — per node type, a partner node, start-of-turn Cortisol or Intel, and windfalls on events like OIL SPIKES or GOLD RUSH; nodes marked ⚙ have income, price and seizing working while their special ability is still being wired up.</p>'
- +'<h4>🌐 Global Edition — trade blocs, the WTO, the water and the reef</h4>'
+ +'<h4>🎭 Node reworks</h4><ul>'
++'<li><b>NAB</b> — FEE FOR NO SERVICE: a rival who <i>ends their movement</i> on any node you own pays you an extra $2, on top of tolls. <b>WESTPAC</b> — 23 MILLION BREACHES (free, once per turn): burn 1 Intel for $3, and the laundering adds +1 scrutiny to an ASIC/ACCC file on you (BANKING or MONETARY POLICY, your pick); a file opened this way rules as a fine of 15% of your cash. <b>COMMONWEALTH BANK</b> — CAN’T BE BEAT: once per game you may refuse a hostile takeover of any of your nodes; it fails, they keep their money (but spend their action). <b>ANZ</b> — you are warned privately a turn ahead when BONDMAGEDDON is the next event.</li>'
++'<li><b>QUIKSTOP</b> — THE SERVO: +$2 a turn for every player at the table (4 players = +$8). <b>THE GOLF CLUB</b> — THE BACK NINE: once per turn, a free action in your action phase: swap one of your nodes for a rival’s, with cash from either side; they accept or decline in private (bugs on both are cleared; the old $1 seizure discount is gone). <b>JIM CHALMERS</b> — TREASURY BRIEF: at your turn start, privately see the next two market events and choose which is drawn next.</li>'
++'<li><b>Global Edition:</b> <b>BAIKONUR</b> also lets you ESCAPE ON THE ROCKET once per game: a raid on you is cancelled, your pawn flies to the cosmodrome (or a node you choose) and Cortisol drops to 5. <b>ZIMBABWE</b> — PRINT MONEY (once per game, your action): +20% of the goal, then every seizure costs +$1 more for good (inflation; shown on the strip above THE TURN). <b>THE SWISS VAULT</b> — stash cash (your action) beyond the reach of raids, fines, events and loans; withdraw freely once per turn from anywhere; stashed cash does not count toward the goal. <b>AREA 51</b> — ALIEN ABDUCTION (once per game, $4 + 3 Intel, your action): steal a rival’s node remotely; 50% it arrives as rubble. It cannot take Antarctica, MADE, anyone still holding an unused Commonwealth Bank refusal, Seed Vault holdings or Pillars holdings. <b>THE WALL STREET BELL</b> — RING THE BELL ($2, your action, once per turn): the next market event resolves now, and a rival’s regulator file opens or gains +1 scrutiny. <b>THE TURKISH LIRA</b> — once per game, every rival loses 20% of cash above $30. <b>THE BAHT 1997</b> — CONTAGION: when anyone is raided, every rival of the Baht’s owner with a node in the raided pawn’s region takes +1 Cortisol. <b>SRI LANKA</b> — DEFAULT (free, once per game): all your debts are wiped and your tolls this turn are free. <b>THE PYRAMIDS</b> — a rival who seizes a node adjacent to one of yours pays $1, then $2, $4, $8… (doubling each time; reset by THE BOULDER ROLLS BACK DOWN). <b>GREENLAND</b> — with DONALD TRUMP, force-buy Greenland at list price once per game.</li></ul>'
++'<h4>🌐 Global Edition — trade blocs, the WTO, the water and the reef</h4>'
  +'<ul><li><b>TRADE BLOCS</b> — <b>THE EU SINGLE MARKET</b> and <b>BRICS</b>. Own the bloc node and your income from its <b>member nodes</b> (EU: the ECB, Deutsche Bank, Bunds, BTP, Greek Debt, Luxembourg, ASML, Tulip, OPEC Vienna, Rotterdam, the Paris master chart, the Brussels Pillars, Venice; BRICS: nodes in Brazil, Russia, India, China and South Africa) is multiplied by <b>1 + 0.25 per member you hold, capped at ×2.5</b>. It is added at income time and logged; hover the bloc node to see your members, multiplier and file. The catch: with <b>3 or more members</b> a <b>WTO file</b> opens on you, each member held <b>beyond 2</b> adds that much scrutiny at each of your turn starts (3 members: +1, 4: +2, 5: +3), and at 3 the ruling lands — you keep 2 members, the rest return to the market, and you pay the usual 10% fine per node. Lobby, sell to the market or drop below 3 members to close it. The owner of <b>THE WTO</b> can <b>REFER</b> a rival’s bloc file ($4, your action, once per turn) for +1 scrutiny.</li>'
  +'<li><b>BLOCKADE</b> — ALBANESE, <b>THE GREAT BARRIER REEF</b> and <b>CRITICAL PATH ANALYSIS</b> each grant it. With one source it is a once-per-turn <b>action</b> (it ends your turn, as ever). Hold <b>any two</b> of the three and it becomes a <b>FREE action</b> — once per turn, in your move or action phase, using neither your action nor your movement. Only one blockade per turn, however many sources you hold. The Reef stops counting while it is bleached.</li>'
  +'<li><b>CORAL BLEACHING</b> — an extra market event that only exists on the Global Edition. The Reef’s blockade and income are off for the next 2 rounds and its owner takes +1 Cortisol.</li>'
@@ -171,7 +180,7 @@ export function nodeSVG(n,cls){
  const bugTag=bug?'<text x="'+(w/2-24)+'" y="'+(-h/2+18)+'" font-size="12">🐛</text>':'';
  const bl=S&&blockaded(n.id);
  const filed=hiddenInfo(n.id)&&!hiddenFromMe(n.id);
- const badges=(filed?'<text x="'+(w/2-48)+'" y="'+(-h/2+18)+'" font-size="12">🗂️</text>':'')+(ot?'<text x="'+(w/2-36)+'" y="'+(-h/2+18)+'" font-size="12">🛳️</text>':'')+(gq?'<text x="'+(-w/2+6)+'" y="'+(-h/2+18)+'" font-size="12">⛔</text>':'')+(bl?'<text x="'+(-w/2+7)+'" y="'+(-h/2+18)+'" font-size="15" font-weight="900">🚧</text>':'');
+ const badges=(filed?'<text x="'+(w/2-48)+'" y="'+(-h/2+18)+'" font-size="12">🗂️</text>':'')+(ot?'<text x="'+(w/2-36)+'" y="'+(-h/2+18)+'" font-size="12">🛳️</text>':'')+(gq?'<text x="'+(-w/2+6)+'" y="'+(-h/2+18)+'" font-size="12">⛔</text>':'')+(bl?'<text x="'+(-w/2+7)+'" y="'+(-h/2+18)+'" font-size="15" font-weight="900">🚧</text>':'')+(S&&S.dlcWorld&&n.id==='w_pyramids'?'<text x="0" y="'+(h/2-6)+'" text-anchor="middle" font-size="15" font-weight="900" fill="#ffd34d" stroke="#000" stroke-width="3" paint-order="stroke">🔺 $'+pyramidPayout()+'</text>':'')+(S&&S.dlcWorld&&n.id==='w_zim'&&inflationExtra()>0?'<text x="0" y="'+(h/2-6)+'" text-anchor="middle" font-size="15" font-weight="900" fill="#ff9a8a" stroke="#000" stroke-width="3" paint-order="stroke">📈 +$'+inflationExtra()+'</text>':'');
  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
  return '<g class="node '+cls+'" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+') rotate('+n.rot+')">'
   +ownerGlow+moodGlow+halo
@@ -199,6 +208,8 @@ export function worldTip(n){
  else if(S.tariffType===n.type&&tariffOwner()!=null)t+='\n🧱 TARIFF WALL: rivals of '+pname(tariffOwner())+' pay $2 extra to seize a '+n.type+' node.';
  if(n.id==='w_gbr'&&reefBleached())t+='\n🪸 BLEACHED: its blockade and income are off until the end of round '+(S.bleachUntil-1)+'.';
  if(isWaterNode(n.id))t+='\n🌊 A WATER node: the Cruise Ship calls here.';
+ if(n.id==='w_pyramids')t+='\n🔺 The next PYRAMID payout: $'+pyramidPayout()+' (it doubles every time it pays and resets when THE BOULDER ROLLS BACK DOWN).';
+ if(n.id==='w_zim'&&inflationExtra()>0)t+='\n📈 INFLATION: every seizure on the board costs +$'+inflationExtra()+'.';
  if(S.imf&&n.id==='w_imf'){const l=Object.keys(S.imf).map(k=>pname(+k)+' (due in '+S.imf[k].left+' of their turns)');if(l.length)t+='\n🆘 Open loans: '+l.join(', ')+'.'}
  return t;
 }
@@ -230,7 +241,7 @@ export function priceTip(n,o){
   if(!seated)return '&#10;💰 Seize: $'+n.cost+(flat?' — never inflates':'');
   let base=seizeListPrice(me,n);if(S.slipped===true&&S.cur===me&&S.owner.f1===me)base=Math.max(1,base-2);
   const tf0=tariffFor(me,n.id);
-  return '&#10;💰 Seize for you: $'+(base+tf0)+(tf0?' (incl. $'+tf0+' TARIFF WALL)':'')+(flat?' — never inflates':' · once owned, a takeover costs $'+n.cost*Math.pow(2,Math.max(1,taken+1))+times);
+  return '&#10;💰 Seize for you: $'+(base+tf0+inflationExtra())+(tf0?' (incl. $'+tf0+' TARIFF WALL)':'')+(inflationExtra()?' (incl. $'+inflationExtra()+' INFLATION)':'')+(flat?' — never inflates':' · once owned, a takeover costs $'+n.cost*Math.pow(2,Math.max(1,taken+1))+times);
  }
  if(seated&&o===me)return '&#10;⚔️ A rival’s takeover costs $'+n.cost*mult+' (list $'+n.cost+(flat?', never inflates':'')+times+') — you pocket the $'+n.cost+' buyout'+(S.owner.accc===me?' + $2 ACCC fee':'')+'.';
  const fee=S.owner.accc===o?' + $2 ACCC fee':'';
@@ -239,7 +250,7 @@ export function priceTip(n,o){
  const dossier=!flat&&S.dossier&&S.cur===me;
  const cost=flat||dossier?base:base*mult;
  const tf=seated?tariffFor(me,n.id):0;
- return '&#10;⚔️ Takeover for you: $'+(cost+tf)+fee+(tf?' (incl. $'+tf+' TARIFF WALL)':'')+(flat?' — never inflates':dossier?' — the Dossier holds it to list':' ('+(mult)+'× list'+times+'; doubles again after)')+'.';
+ return '&#10;⚔️ Takeover for you: $'+(cost+tf+inflationExtra())+fee+(tf?' (incl. $'+tf+' TARIFF WALL)':'')+(inflationExtra()?' (incl. $'+inflationExtra()+' INFLATION)':'')+(flat?' — never inflates':dossier?' — the Dossier holds it to list':' ('+(mult)+'× list'+times+'; doubles again after)')+'.';
 }
 export function tokenLayer(){
  const byPos={};S.players.forEach((p,i)=>{if(isVanished(i))return;(byPos[p.pos]=byPos[p.pos]||[]).push(i)});
@@ -704,6 +715,7 @@ export function renderSide(){
     +((S.owner.f1===me&&!S.slipped)?'<button class="act" data-act="slip"'+(p.money>=2?'':' disabled')+'>🏎️ Slipstream — $2 (+2 steps, $2 off next seizure)</button>':'')
     +classifiedButtons(me,p)
     +worldMoveButtons(me,p)
+    +reworkButtons(me,p,'move').join('')
     +((S.dlcGeo&&ownsMissileLauncher(me)&&canFireMissileFrom(me))?'<button class="act" data-act="missilemode"'+((p.money>=4&&p.intel>=1&&!S.geoMissiled)?'':' disabled')+' title="From either launcher (anywhere with Kim Jong Un): strike any node that still stands — the launch ends your move; your action still follows ($4 + 1 Intel, once per turn)">🚀 Launch a missile — $4 + 1🛈 (ends the move)</button>':'')
     +'</div>';
     if(S.owner.back===me&&!S.backroomAbilityUsed){
@@ -762,7 +774,7 @@ export function renderSide(){
    /* the slipstream's $2 off applies to this seizure (the engine takes it in doSeize) */
    if(S.slipped===true&&S.owner.f1===me)base=Math.max(1,base-2);
    const isTake=prev!=null&&prev!==me;
-   const cost=(isTake?takeoverCost(me,nid,base):base)+tariffFor(me,nid);
+   const cost=(isTake?takeoverCost(me,nid,base):base)+tariffFor(me,nid)+inflationExtra();
    const maxPay=p.money+(S.owner.back===me?Math.min(3,p.intel):0);
    const btns=[];
    if(prev===me){
@@ -819,6 +831,7 @@ export function renderSide(){
      ['doha','w_doha','doha','🕰️ START THE DOHA ROUND — +$2 per commodity for 3 turns (once per game)','Open a trade round: $2 per COMMODITY node you own at the start of each of your next 3 turns, then the talks stall.']
     ].forEach(([k,nid,act,label,tip])=>{if(S.owner[nid]!==me)return;const why=worldBlocked(me,k);btns.push('<button class="act" data-act="'+act+'"'+(why?' disabled':'')+' title="'+esc(why||tip)+'">'+label+'</button>')});
    }
+   reworkButtons(me,p,'action').forEach(h=>btns.push(h));
    /* ---- 🧐 THE REGULATORS' FILES & NODE DEALS ---- */
    const myFiles=filesOf(me);
    if(myFiles.length){
@@ -898,6 +911,8 @@ export function worldStrip(){
  if(tariffOwner()!=null)bits.push('🧱 TARIFF WALL on <b>'+S.tariffType+'</b> ($2 extra, paid to '+esc(pname(tariffOwner()))+')');
  else if(S.owner.w_tariffwall!=null&&!S.tariffType)bits.push('🧱 the Tariff Wall is unbuilt');
  if(reefBleached())bits.push('🪸 the Reef is <b>BLEACHED</b> — no blockade, no income');
+ if(inflationExtra()>0)bits.push('📈 INFLATION: every seizure costs <b>+$'+inflationExtra()+'</b>');
+ if(S.owner.w_pyramids!=null)bits.push('🔺 PYRAMID payout: <b>$'+pyramidPayout()+'</b> (paid to '+esc(pname(S.owner.w_pyramids))+')');
  if(S.doha&&S.doha.left>0)bits.push('🕰️ DOHA ROUND open ('+S.doha.left+' turn'+(S.doha.left>1?'s':'')+' left for '+esc(pname(S.doha.by))+')');
  if(me!=null&&S.players[me]&&!Net.spect){
   blocStatus(me).forEach(b=>bits.push(b.icon+' <b>'+esc(b.name)+'</b>: '+b.k+' member'+(b.k===1?'':'s')+' · income ×'+b.mult.toFixed(2)+' (+$'+b.bonus+'/turn)'+(b.file?' · 🌐 WTO file '+b.file.s+'/'+ACCC_RULING:(b.k>=3?' · 🌐 file about to open':''))+(b.step?' · +'+b.step+' scrutiny a turn':'')));
@@ -937,6 +952,72 @@ export async function dealFlow(ri){
  if(!ok){dispatch({act:'cancel'});return}
  if(!Number.isInteger(price)||price<0||price>S.players[ri].money){hooks.toast('Name a whole-dollar price from $0 to $'+S.players[ri].money+'.');return}
  dispatch({act:'deal',id:nid,target:ri,n:price});
+}
+/* ===== NODE REWORKS: buttons and the pick-flows that build their intents ===== */
+const rwBtn=(act,label,why,tip,extra)=>'<button class="act" data-act="'+act+'"'+(extra||'')+(why?' disabled':'')+' title="'+esc(why||tip)+'">'+label+'</button>';
+export function reworkButtons(me,p,phase){
+ if(!S||S.over)return [];
+ const out=[],own=id=>S.owner[id]===me&&!(S.rubble&&S.rubble[id]);
+ if(own('westpac'))launderBooks(me).forEach(b=>out.push(rwBtn('launder','🧺 LAUNDER — 1 🛈 → $3 · +1 scrutiny, '+b.name+' ('+b.agency+')',reworkBlocked(me,'launder'),'FREE, once per turn: burn 1 Intel for $3. It adds +1 scrutiny to the '+b.agency+' file on your '+b.name+' book (opening a breach file if none is open); a breach file that rules fines you 15% of your cash.',' data-kind="'+b.id+'"')));
+ if(own('w_swiss')||swissBalance(me)>0){
+  if(swissBalance(me)>0)out.push(rwBtn('swisswithdraw','🔓 SWISS VAULT — withdraw (balance $'+swissBalance(me)+')',reworkBlocked(me,'swisswithdraw'),'FREE, once per turn, from anywhere: take all or part of your numbered account back into your cash. Stashed money does not count toward the win goal.'));
+  if(phase==='action'&&own('w_swiss'))out.push(rwBtn('swissdeposit','🔒 SWISS VAULT — stash cash'+(swissBalance(me)>0?' (balance $'+swissBalance(me)+')':''),reworkBlocked(me,'swissdeposit'),'Your action: stash any amount where raids, fines, events and loans cannot reach it. It does not count toward the goal until withdrawn.'));
+ }
+ if(S.dlcWorld&&own('w_srilanka'))out.push(rwBtn('srilankadefault','🍃 DEFAULT — wipe your debts, tolls free this turn (once per game)',reworkBlocked(me,'srilankadefault'),'FREE, once per game: the IMF loan and the Mrs Watanabe carry trade are written off, and every toll you would owe this turn is waived.'));
+ if(phase!=='action')return out;
+ if(own('golf'))out.push(rwBtn('golfmode','⛳ THE BACK NINE — propose a node swap (free, once per turn)',reworkBlocked(me,'golf'),'FREE, once per turn: offer one of your nodes for one of a rival’s, with cash either way. They accept or decline in private.'));
+ if(own('w_zim'))out.push(rwBtn('printmoney','🧾 PRINT MONEY — +$'+Math.max(1,Math.round(goalAmount()*0.2))+' now, +$1 on every seizure forever (once per game)',reworkBlocked(me,'printmoney'),'Your action, once per game: gain 20% of the game’s target. From then on every seizure on the board costs +$1 (inflation).'));
+ if(own('w_area51'))out.push(rwBtn('abduct','👽 ALIEN ABDUCTION — $4 + 3 🛈, steal a rival’s node (50% rubble, once per game)',reworkBlocked(me,'abduct'),'Your action, once per game: steal any rival node remotely. A coin flip: intact, or it arrives as rubble.'));
+ if(own('w_bell'))out.push(rwBtn('ringbell','🔔 RING THE BELL — $2: the next event NOW + investigate a rival',reworkBlocked(me,'ringbell'),'Your action, once per turn: the next market event is drawn and resolved right now, and an ASIC/ACCC file on a rival you choose opens or gains +1 scrutiny.'));
+ if(own('w_lira'))out.push(rwBtn('lira','💸 ERDOĞANOMICS — every rival loses 20% of cash above $30 (once per game)',reworkBlocked(me,'lira'),'Your action, once per game: each rival loses 20% of the cash they hold above $30.'));
+ if(own('trump')&&S.dlcWorld&&NMAP.w_greenland)out.push(rwBtn('greenbuy','🇬🇱 MAKE AN OFFER — force-buy Greenland at list price (once per game)',reworkBlocked(me,'greenbuy'),'Your action, once per game, with DONALD TRUMP: buy Greenland from its owner at list price. They cannot refuse.'));
+ return out;
+}
+const rivalsWith=pred=>S.players.map((pl,i)=>i).filter(i=>i!==Net.myIdx&&!isVanished(i)&&pred(i));
+export async function golfFlow(){
+ const me=Net.myIdx,theirNodes=i=>NODES.filter(n=>S.owner[n.id]===i&&!(S.rubble&&S.rubble[n.id])&&!hiddenFrom(me,n.id));
+ const rivals=rivalsWith(i=>theirNodes(i).length>0);
+ if(!rivals.length){hooks.toast('No rival holds a node you could ask for.');return}
+ const t=await hooks.modal({title:'THE BACK NINE — WHO?',body:'Swap one of your nodes for one of theirs.',options:rivals.map(i=>({label:pname(i)+' · '+theirNodes(i).length+' node'+(theirNodes(i).length===1?'':'s'),v:i})).concat([{label:'Cancel',v:-1}])});
+ if(!S||t==null||t<0||!myTurn())return;
+ const mine=NODES.filter(n=>S.owner[n.id]===me&&!(S.rubble&&S.rubble[n.id]));
+ const give=await hooks.modal({title:'THE BACK NINE — YOUR NODE',body:'Which of your nodes do you put on the table?',options:mine.map(n=>({label:nodeName(n).join(' ')+' · $'+n.income+'/turn · list $'+n.cost,v:n.id})).concat([{label:'Cancel',v:''}])});
+ if(!S||!give||!myTurn())return;
+ const their=theirNodes(t);
+ const take=await hooks.modal({title:'THE BACK NINE — THEIR NODE',body:'Which of '+pname(t)+'’s nodes do you want?',options:their.map(n=>({label:nodeName(n).join(' ')+' · $'+n.income+'/turn · list $'+n.cost,v:n.id})).concat([{label:'Cancel',v:''}])});
+ if(!S||!take||!myTurn())return;
+ const opts=[{label:'No cash either way',v:0}];
+ [1,2,3,5,10].forEach(x=>{if(S.players[me].money>=x)opts.push({label:'I add $'+x,v:x})});
+ [1,2,3,5,10].forEach(x=>{if(S.players[t].money>=x)opts.push({label:'I ask for $'+x+' from '+pname(t),v:-x})});
+ opts.push({label:'Cancel',v:null});
+ const cash=await hooks.modal({title:'THE BACK NINE — SWEETENER',body:'Add cash to the swap, or ask for some?',options:opts});
+ if(!S||cash===null||cash===undefined||!myTurn())return;
+ dispatch({act:'golftrade',target:t,id:give,kind:take,n:cash});
+}
+export async function abductFlow(){
+ const me=Net.myIdx,tg=abductTargets(me);
+ const rivals=rivalsWith(i=>tg.some(n=>S.owner[n.id]===i));
+ if(!rivals.length){hooks.toast('There is no rival node the aliens can take.');return}
+ const t=await hooks.modal({title:'ALIEN ABDUCTION — WHOSE NODE?',body:'$4 + 3 Intel, once per game. A coin flip: the node arrives intact — or as rubble.',options:rivals.map(i=>({label:pname(i)+' · '+tg.filter(n=>S.owner[n.id]===i).length+' abductable',v:i})).concat([{label:'Cancel',v:-1}])});
+ if(!S||t==null||t<0||!myTurn())return;
+ const id=await hooks.modal({title:'ALIEN ABDUCTION — WHICH NODE?',options:tg.filter(n=>S.owner[n.id]===t).map(n=>({label:nodeName(n).join(' ')+' · $'+n.income+'/turn · list $'+n.cost,v:n.id})).concat([{label:'Cancel',v:''}])});
+ if(!S||!id||!myTurn())return;
+ dispatch({act:'abduct',target:t,id});
+}
+export async function bellFlow(){
+ const rivals=rivalsWith(()=>true);
+ if(!rivals.length)return;
+ const t=await hooks.modal({title:'RING THE BELL — INVESTIGATE WHOM?',body:'$2. The next market event resolves now, and the regulators open (or escalate) a file on your pick.',options:rivals.map(i=>({label:pname(i)+(filesOf(i).length?' · '+filesOf(i).length+' open file'+(filesOf(i).length===1?'':'s'):''),v:i})).concat([{label:'Cancel',v:-1}])});
+ if(!S||t==null||t<0||!myTurn())return;
+ dispatch({act:'ringbell',target:t});
+}
+export async function swissFlow(kind){
+ const me=Net.myIdx,max=kind==='swissdeposit'?S.players[me].money:swissBalance(me);
+ if(max<1)return;
+ const set=[...new Set([max,Math.floor(max/2),5,10,20].filter(x=>x>=1&&x<=max))].sort((a,b)=>b-a);
+ const n=await hooks.modal({title:kind==='swissdeposit'?'NUMBERED ACCOUNT — STASH HOW MUCH?':'NUMBERED ACCOUNT — WITHDRAW HOW MUCH?',body:kind==='swissdeposit'?'Your cash is $'+max+'. Stashed cash is safe from raids, fines, events and loans — and does not count toward the goal.':'The account holds $'+max+'.',options:set.map(x=>({label:(x===max?'All — ':'')+'$'+x,v:x})).concat([{label:'Cancel',v:0}])});
+ if(!S||!n||!myTurn())return;
+ dispatch({act:kind,n});
 }
 export async function tariffFlow(){
  if(!S||S.owner.w_tariffwall!==Net.myIdx)return;
@@ -1190,6 +1271,12 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
   case 'refermode':dispatch({act:'refermode'});break;
   case 'sell':dispatch({act:'sell',n:+b.dataset.n});break;
   case 'cancel':dispatch({act:'cancel'});break;
+  case 'launder':dispatch({act:'launder',kind:b.dataset.kind});break;
+  case 'golfmode':golfFlow();break;
+  case 'abduct':abductFlow();break;
+  case 'ringbell':bellFlow();break;
+  case 'swissdeposit':case 'swisswithdraw':swissFlow(act);break;
+  case 'printmoney':case 'lira':case 'greenbuy':case 'srilankadefault':dispatch({act});break;
   case 'laylowcash':dispatch({act:'laylow',choice:'cash'});break;
   case 'laylowcool':dispatch({act:'laylow',choice:'cool'});break;
  }

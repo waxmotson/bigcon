@@ -92,8 +92,8 @@ test('RC-02 the event deck contains every card once and initGame deals it whole'
   const CARDS = engine.acc.CARDS;
   const ids = new Set(CARDS.map(c => c.id));
   assert.equal(ids.size, CARDS.length, 'card ids are unique');
-  /* The header comment and shipped table both describe 24 cards. */
-  assert.equal(CARDS.length, 24, `the deck deals ${CARDS.length} cards (update when the set changes)`);
+  /* The header comment and shipped table both describe 36 cards. */
+  assert.equal(CARDS.length, 36, `the deck deals ${CARDS.length} cards (update when the set changes)`);
   for (const c of CARDS) {
     assert.ok(c.title && c.icon && typeof c.text === 'string', `${c.id}: labelled for the ticker`);
     assert.equal(typeof c.run, 'function', `${c.id}: run() exists`);

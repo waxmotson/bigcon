@@ -38,7 +38,7 @@ const withSeed = (seed, fn) => { const real = Math.random; Math.random = makeRng
 test('the engine module graph imports and boots with no browser globals at all', () => {
   assert.equal(typeof E.applyIntent, 'function');
   assert.equal(D.NODES.length, 70);
-  assert.equal(E.CARDS.length, 24);
+  assert.equal(E.CARDS.length, 36);
   assert.equal(St.S, null);
   assert.equal(typeof document, 'undefined', 'importing it never conjured a DOM');
 });

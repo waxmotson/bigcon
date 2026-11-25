@@ -13,7 +13,8 @@ import { S, setS, Net, pubState } from './state.js';
 import { clampGoal, esc, shuffle } from './util.js';
 import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld, setEdges, rebuildAdj } from './data.js';
 import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState } from './boards.js';
-import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays, WATER_NODES, TRADE_BLOCS, BLOC_STEP, BLOC_MAX, BLOC_FREE, AUSNZ } from './world.js';
+import { regionOf, REGION_NAMES } from './world.js';
+import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays, WATER_NODES, TAX_HAVENS, TOURISM_NODES, IRON_NODES, SANCTIONED_NODES, COAL_CHAIN, AGRI_NODES, US_NODES, TRADE_BLOCS, BLOC_STEP, BLOC_MAX, BLOC_FREE, AUSNZ } from './world.js';
 export { hooks, setHooks };
 /* The host services the rules call, bound late so a hook swapped in by setHooks
    (or wrapped by a test) is always the one that runs. */
@@ -86,6 +87,8 @@ export function addCortisol(i,n,why,ev,force){
    the books fined, the intel network burned and a wasted turn under caution. */
 export function raid(i){
  const p=S.players[i];
+ if(rocketEscape(i))return;
+ const baht=S.dlcWorld&&S.owner.w_baht!=null&&NMAP[p.pos]?regionOf(NMAP[p.pos]):null; /* 🌐 THE BAHT 1997: the region the raided pawn stands in */
  const owned=NODES.filter(n=>S.owner[n.id]===i).sort((a,b)=>b.income-a.income||b.cost-a.cost);
  const seized=owned.slice(0,2);
  seized.forEach(n=>{delete S.owner[n.id];delete S.bugs[n.id];fx(n.x,n.y-70,'🚨 SEIZED','#ff6b5e')});
@@ -105,6 +108,7 @@ export function raid(i){
   +'<ul><li>'+(seized.length?'Seized: <b>'+seized.map(n=>esc(n.name.join(' '))).join('</b> and <b>')+'</b>':'Nothing worth seizing — the accounts took it instead')+'</li>'
   +'<li>Fine of <b>$'+fine+'</b>, Intel burned down to 1, every planted bug pulled</li>'
   +'<li>Cortisol resets to <b>0</b>; next turn brings no income and a single step</li></ul>');
+ if(baht!=null)bahtContagion(i,baht);
 }
 
 /* ACCC concentration — a public file the table can see coming, not a dice roll.
@@ -170,7 +174,7 @@ export function acccReconcile(){
  const files=acccFileList();
  for(let k=files.length-1;k>=0;k--){
   const f=files[k];
-  if(S.players[f.pi]&&INDBYID[f.ind]&&concentratedIndustries(f.pi).some(x=>x.g.id===f.ind))continue;
+  if(S.players[f.pi]&&INDBYID[f.ind]&&((f.breach&&!acccExempt(f.pi,f.ind))||concentratedIndustries(f.pi).some(x=>x.g.id===f.ind)))continue;
   files.splice(k,1);
   if(S.players[f.pi]&&INDBYID[f.ind]){log(fileIcon(f)+' CASE CLOSED — '+fileName(f)+' is closed: the book is back to '+industryAllowed(INDBYID[f.ind])+' or fewer. Scrutiny discarded.');fxAt(f.pi,'📁 FILE CLOSED','#8fbf7f')}
  }
@@ -205,7 +209,7 @@ export async function acccRule(pi,ind){
  if(!S||!g||!f||!S.players[pi])return;
  const p=S.players[pi],agency=f.agency,isAsic=agency==='ASIC',allowed=industryAllowed(g);
  const held=ownedInIndustry(pi,g),excess=held.length-allowed;
- if(excess<=0){acccReconcile();return}
+ if(excess<=0){if(f.breach&&!acccExempt(pi,ind)){breachRuling(pi,f);return}acccReconcile();return}
  const keepOrder=(a,b)=>b.income-a.income||b.cost-a.cost;
  const chosen=[];
  for(let k=0;k<excess;k++){
@@ -271,7 +275,7 @@ export function initGame(defs){
   Net.myIdx=order.indexOf(hostWas);
  }
  const goal=clampGoal(Net.goal);
- setS({backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false,bot:!!d.bot})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id).concat(world?WORLD_CARDS.map(c=>c.id):[])),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,layoutKind:boardLayout,ringworld:boardLayout==='ringworld',dlcGeo:!!Net.dlcGeo,dlcWorld:world,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,bondmageddonUsed:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null,acccFiles:[],lobbied:false,referred:false});
+ setS({backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false,bot:!!d.bot})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id).concat(world?WORLD_CARDS.map(c=>c.id):[])),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,layoutKind:boardLayout,ringworld:boardLayout==='ringworld',dlcGeo:!!Net.dlcGeo,dlcWorld:world,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,bondmageddonUsed:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null,acccFiles:[],cw:{},suspend:{},tariffWarUntil:0,lobbied:false,referred:false});
  const slot=QUIK_SLOTS[quikSlot];
  {const bots=hooks.bots();if(bots&&bots.resetForGame)bots.resetForGame((hooks.botSeed()|0)||((Math.random()*0x7fffffff)|0))}
  const generated=boardLayout==='worldmap'?generateWorldMapBoard():boardLayout==='megaring'?generateMegaRingBoard():(boardLayout==='ringworld'?generateRingworldBoard():generateRandomBoard(slot));S.boardLayout=generated.positions;S.boardEdges=generated.edges;
@@ -298,7 +302,7 @@ export async function startTurn(){
  if(S)S.backroomAbilityUsed=false;
  if(!S||S.over)return;
  log('—— TURN '+S.turn+' · '+pname(S.cur)+' ——');
- S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;S.lobbied=false;S.referred=false;S.classifiedUsed=false;
+ S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;S.lobbied=false;S.referred=false;S.classifiedUsed=false;S.nTurn={};S.tollFree=null;
  if(S.dlcGeo){S.geoMissiled=false;S.geoBeach=false;S.geoBoeing=false;S.geoCrash=false;S.geoStage5=false;S.geoVenice=false}
  if(S.dlcWorld){
   S.wTurn={};
@@ -391,11 +395,14 @@ export async function startTurn(){
  {const due=acccAdvance(S.cur);if(due.length){const ep=Net.gameEpoch;await acccRuleAll(S.cur,due);if(!S||S.over||Net.gameEpoch!==ep)return}}
  const rail=(S.owner.train===S.cur||S.owner.bullet===S.cur)?1:0;
  S.steps=underCaution?1:3+(S.owner.coal===S.cur?1:0)+rail+(S.owner.asics===S.cur?1:0);
+ if(windowOn('lockdown')){S.steps=Math.min(S.steps,1);log('😷 LOCKDOWN: everyone moves at most 1 step this round.')}
  p.raided=0;
  sysTo(S.cur,'👁️ YOUR TURN, '+p.name.toUpperCase());
  sync(true);
  if(await winCheck())return;
+ if(own('chalmers')&&!p.dc)await treasuryBrief(S.cur);
  if(jtHolder&&!p.dc)await jtBriefing(S.cur);
+ anzTip();
  /* Bot seats are driven locally by the policy module. The away-path below
     would pay the away dollar and end the turn, so the bot branch must come
     first; a bot whose module failed to load falls back to the away path. */
@@ -443,8 +450,8 @@ export function botView(pi){
  out.moodRate=(MOODS[S.mood]||{rate:2}).rate;
  out.geo={qantasGrounded:!!(S.dlcGeo&&qantasGrounded())};
  out.geoUsed={stage5:!!S.geoStage5,crash:!!S.geoCrash,boeing:!!S.geoBoeing};
- out.seizePrice=(seat,nid)=>seizeListPrice(seat,NMAP[nid])+(S.owner[nid]==null?tariffFor(seat,nid):0);
- out.takePrice=(seat,nid,base)=>takeoverCost(seat,nid,base)+tariffFor(seat,nid);
+ out.seizePrice=(seat,nid)=>seizeListPrice(seat,NMAP[nid])+(S.owner[nid]==null?tariffFor(seat,nid)+inflationExtra():0);
+ out.takePrice=(seat,nid,base)=>takeoverCost(seat,nid,base)+tariffFor(seat,nid)+inflationExtra();
  out.blockSources=seat=>blockSources(seat).length;
  out.blockFree=seat=>blockadeFree(seat);
  out.flatSeize=nid=>flatSeize(nid);
@@ -482,10 +489,10 @@ export async function jtBriefing(pi){
  await askPlayer(pi,{title:'JTPORTAL — “QUITE FRANKLY, HERE IS WHAT HAPPENS NEXT”',html:cardFace(c)+'<p class="fine">The event that lands at the end of your turn — for your eyes only.</p>',options:[{label:'Noted',v:1}],def:1,timeout:25000,meta:{kind:'brief',card:c.id}});
 }
 export function income(i){
- const p=S.players[i];const own=id=>S.owner[id]===i;
- const owned=NODES.filter(n=>S.owner[n.id]===i);
+ const p=S.players[i];const own=id=>S.owner[id]===i&&!suspended(id); /* a node a card has switched off pays and powers nothing */
+ const owned=NODES.filter(n=>own(n.id));
  let salary=3;if(own('infl'))salary=4;
- let holdSum=0;owned.forEach(n=>{let v=n.income;if(n.type==='CHART'&&own('ib'))v*=2;if(n.id==='qantas'&&S.dlcGeo&&qantasGrounded())v=0;if(n.id==='w_gbr'&&reefBleached())v=0;holdSum+=v});
+ let holdSum=0;owned.forEach(n=>{let v=n.income;if(n.type==='CHART'&&own('ib'))v*=2;if(n.id==='qantas'&&S.dlcGeo&&qantasGrounded())v=0;if(n.id==='w_gbr'&&reefBleached())v=0;v=cardIncome(n.id,v);holdSum+=v});
  const corp=owned.filter(n=>n.type==='CORPORATE').length,bank=owned.filter(n=>n.type==='BANK').length,chart=owned.filter(n=>n.type==='CHART').length,comm=owned.filter(n=>n.type==='COMMODITY').length,reg=owned.filter(n=>n.type==='REGULATOR').length,med=owned.filter(n=>n.type==='MEDIA').length;
  let syn=0;
  if(own('citi')&&corp)syn+=corp;
@@ -501,6 +508,7 @@ export function income(i){
  if(own('barrels')&&own('forklift'))syn+=1;
  if(own('forklift')&&comm)syn+=comm;
  if(own('market')&&own('quik'))syn+=2;
+ if(own('quik')){const sv=SERVO_PER*S.players.length;syn+=sv;log('⛽ THE SERVO: $'+SERVO_PER+' × '+S.players.length+' players at the table = +$'+sv+'.')}
  if(own('rock'))syn+=new Set(owned.map(n=>n.type)).size;
  if(own('bessent')&&bank)syn+=bank;
  if(own('chalmers')&&reg)syn+=reg;
@@ -528,6 +536,7 @@ export async function applyIntent(pi,m){
  if(Net.lock){sysTo(pi,'⏳ Your previous action is still resolving — please wait a moment.');return} Net.lock=true;armLockWatchdog();
  try{
   const act=m.act,p=S.players[pi];
+  {const cb=cardGate(act);if(cb){sysTo(pi,cb);return}}
   if(act==='move'&&S.phase==='move'&&!S.mode){
    if(S.steps<=0)return;
    if(!(ADJ[p.pos]||[]).includes(m.id)){sysTo(pi,'You can only move along the red threads.');return}
@@ -904,7 +913,7 @@ export function blocStatus(pi){
 }
 /* ---- 🧱 THE TARIFF WALL: the +$2 a rival pays (to the wall's owner) to seize or take over a node of the named type ---- */
 export function tariffOwner(){return S&&S.dlcWorld&&S.tariffType&&S.owner.w_tariffwall!=null&&!(S.rubble&&S.rubble.w_tariffwall)?S.owner.w_tariffwall:null}
-export function tariffFor(pi,nid){const o=tariffOwner();return o!=null&&o!==pi&&NMAP[nid]&&NMAP[nid].type===S.tariffType?TARIFF_EXTRA:0}
+export function tariffFor(pi,nid){const o=tariffOwner();return o!=null&&o!==pi&&NMAP[nid]&&NMAP[nid].type===S.tariffType?TARIFF_EXTRA*(S.tariffWarUntil>S.turn?2:1):0}
 /* 🌐 the world helpers a Cruise Ship voyage and ANZCERTA need */
 export function isWaterNode(id){return WATER_NODES.has(id)&&!!NMAP[id]}
 export function ausNzWaiver(pi,from,to){return !!(S&&S.dlcWorld&&S.owner.w_anzcerta===pi&&AUSNZ.has(from)&&AUSNZ.has(to))}
@@ -929,6 +938,7 @@ export function cutKeepsBoardConnected(a,b){
 /* why a World Expansion active cannot be used right now ('' when it can) */
 export function worldBlocked(pi,kind){
  if(!S||!S.dlcWorld)return 'The Global Edition exhibits are not in play.';
+ if(kind==='launch'||kind==='cruise'){const cb=cardGate('fly');if(cb)return cb}
  const p=S.players[pi],used=S.wTurn||{},game=S.wGame||{};
  const need={chainsaw:'w_milei',brexit:'w_brexit',silkroad:'w_bri',carry:'w_watanabe',advance:'w_nigprince',hold:'w_bangalore',carbon:'w_amazon',vanish:'w_bermuda',launch:'w_baikonur',bailout:'w_imf',tariff:'w_tariffwall',cruise:'w_cruise',doha:'w_doha'}[kind];
  if(!need||!NMAP[need])return 'Unknown ability.';
@@ -1178,6 +1188,364 @@ const CLASSIC_ACTS={
   sync();
  },
 };
+/* ================= NODE REWORKS =================
+   NAB · WESTPAC · COMMONWEALTH BANK · ANZ · QUIKSTOP · THE GOLF CLUB · JIM CHALMERS, and on the Global Edition BAIKONUR · ZIMBABWE · THE SWISS VAULT
+   · AREA 51 · THE WALL STREET BELL · THE TURKISH LIRA · THE BAHT 1997 · SRI LANKA · THE PYRAMIDS · GREENLAND.
+   Once-per-game flags live in S.wGame, once-per-turn flags in S.nTurn (cleared at every turn start); both ride the synced state.
+   The new actives are added to the handler tables below (CLASSIC_ACTS / WORLD_ACTS), never as new `act===` branches. */
+export const NAB_FEE=2,SERVO_PER=2,LAUNDER_CASH=3,BREACH_FINE_PCT=15,BELL_COST=2,ESCAPE_CORTISOL=5,ABDUCT_INTEL=3,ABDUCT_MONEY=4,ABDUCT_RUBBLE=0.5,ZIM_PCT=20,LIRA_PCT=20,LIRA_FLOOR=30;
+const gUsed=k=>!!(S&&S.wGame&&S.wGame[k]),gMark=k=>{(S.wGame||(S.wGame={}))[k]=1};
+const tUsed=k=>!!(S&&S.nTurn&&S.nTurn[k]),tMark=k=>{(S.nTurn||(S.nTurn={}))[k]=1};
+export function inflationExtra(){return S&&S.inflation>0?S.inflation|0:0}
+export function addInflation(n,why){if(!S||!(n>0))return;S.inflation=inflationExtra()+n;log('📈 INFLATION'+(why?' — '+why:'')+': every seizure on the board now costs +$'+S.inflation+'.')}
+export function pyramidPayout(){return Math.max(1,Number(S&&S.pyramid)||1)}
+export function swissBalance(pi){return S&&S.vault&&S.vault[pi]>0?S.vault[pi]:0}
+/* 🏦 NAB — FEE FOR NO SERVICE: a rival who ends movement on any node its owner holds pays that owner $2, on top of tolls */
+export function nabFee(pi){
+ const p=S.players[pi],o=p&&S.owner[p.pos];
+ if(o==null||o===pi||S.owner.nab!==o||isVanished(pi)||p.money<=0)return;
+ payTo(pi,NAB_FEE,o,'NAB: FEE FOR NO SERVICE for ending the move on '+lname(NMAP[p.pos]));
+}
+/* 🏦 WESTPAC — 23 MILLION BREACHES: the two books a breach can be filed on (the Vatican exempts its owner from both) */
+export function launderBooks(pi){return ['bank','monetary'].filter(id=>!acccExempt(pi,id)).map(id=>({id,name:INDBYID[id].name,agency:fileAgency(id)}))}
+function openBreach(pi,ind,s){
+ const f={pi,ind,s:s|0,agency:fileAgency(ind),breach:true};acccFileList().push(f);
+ log(fileIcon(f)+' THE '+f.agency+' OPENS A FILE on '+pname(pi)+'’s '+INDBYID[ind].name+' book — a BREACH investigation. Scrutiny '+f.s+'/'+ACCC_RULING+'; the ruling is a fine of '+BREACH_FINE_PCT+'% of their cash.');
+ fxAt(pi,'📁 '+f.agency+' FILE','#55c1ff');
+ return f;
+}
+/* a breach file with nothing to divest rules as a fine, and closes */
+function breachRuling(pi,f){
+ const p=S.players[pi],fine=Math.min(p.money,Math.max(2,Math.floor(p.money*BREACH_FINE_PCT/100)));
+ if(fine>0)payVoid(pi,fine,f.agency+' breach fine ('+BREACH_FINE_PCT+'%)');
+ const files=acccFileList(),at=files.indexOf(f);if(at>=0)files.splice(at,1);
+ log(fileIcon(f)+' BREACH RULING — the '+f.agency+' closes its investigation of '+pname(pi)+'’s '+INDBYID[f.ind].name+' book with a fine of $'+fine+'. The file is closed.');
+ fxAt(pi,'📁 BREACH FINE','#55c1ff',true);
+ acccReconcile();sync();
+}
+/* the Wall Street Bell's instant investigation: escalate the rival's worst open file, or open a breach file on the book they lean on most */
+function bellInvestigate(pi,t){
+ acccReconcile();
+ const worst=filesOf(t).slice().sort((a,b)=>b.s-a.s)[0];
+ if(worst){worst.s++;log(fileIcon(worst)+' 🔔 The Bell escalates '+fileName(worst)+' — scrutiny '+worst.s+'/'+ACCC_RULING+(worst.s>=ACCC_RULING?'; the ruling lands at their turn start.':'.'));fxAt(t,'📁 +1 SCRUTINY','#55c1ff');return worst}
+ const pick=INDUSTRIES.filter(g=>!acccExempt(t,g.id)).map(g=>({g,n:ownedInIndustry(t,g).length})).sort((a,b)=>b.n-a.n)[0];
+ if(!pick)return null;
+ log('🔔 The Bell opens an instant investigation into '+pname(t)+'.');
+ return openBreach(t,pick.g.id,1);
+}
+/* 🏛️ JIM CHALMERS — TREASURY BRIEF: at your turn start you see the next two events and choose which is drawn next; the other goes back second */
+export async function treasuryBrief(pi){
+ if(!S||S.over)return;
+ if(S.deck.length<2){S.deck=shuffle(S.discard.slice()).concat(S.deck);S.discard=[];log('🎴 The rumor deck is reshuffled.')}
+ const n=S.deck.length;if(n<2)return;
+ const a=S.deck[n-1],b=S.deck[n-2],ca=CARDBYID[a],cb=CARDBYID[b];
+ if(!ca||!cb)return;
+ log('🏛️ The Treasurer briefs '+pname(pi)+': two events are on the way.');
+ sync();
+ const v=await askPlayer(pi,{title:'TREASURY BRIEF — CHOOSE THE NEXT EVENT',html:cardFace(ca)+cardFace(cb)+'<p class="fine">For your eyes only. The first card above is drawn next by default; the other goes back in second place.</p>',options:[{label:'Draw “'+ca.title+'” next, “'+cb.title+'” second',v:a},{label:'Draw “'+cb.title+'” next, “'+ca.title+'” second',v:b}],def:a,timeout:30000,meta:{kind:'treasury',cards:[a,b]}});
+ if(!S||S.over)return;
+ const m=S.deck.length;
+ if(v===b&&S.deck[m-1]===a&&S.deck[m-2]===b){S.deck[m-1]=b;S.deck[m-2]=a;log('🏛️ '+pname(pi)+' re-orders the Treasury’s calendar — the event order has changed.')}
+ else log('🏛️ '+pname(pi)+' leaves the calendar as it stands.');
+ sync();
+}
+/* 🏦 ANZ — THE BOND DESK TIP-OFF: whenever BONDMAGEDDON is the next event, the ANZ owner is warned privately (once for each card drawn) */
+function anzTip(){
+ if(!S||S.over)return;
+ const o=S.owner.anz;
+ if(o==null||!S.players[o]||!S.deck.length||S.deck[S.deck.length-1]!=='bondrevolt')return;
+ if(S.anzTipAt===(S.drawN|0))return;
+ S.anzTipAt=S.drawN|0;
+ const c=CARDBYID.bondrevolt;
+ log('🏦 The Bond Desk tips off '+pname(o)+'.');
+ Promise.resolve(askPlayer(o,{title:'ANZ — THE BOND DESK TIP-OFF',html:cardFace(c)+'<p class="fine">BONDMAGEDDON is the very next market event. For your eyes only.</p>',options:[{label:'Noted',v:1}],def:1,timeout:25000,meta:{kind:'brief',card:c.id}})).catch(()=>{});
+}
+/* 🔺 THE PYRAMIDS: a rival who seizes a node ADJACENT to one of the owner's pays the current payout, which then doubles */
+function pyramidPays(pi,nid){
+ if(!S.dlcWorld)return;
+ const po=S.owner.w_pyramids;
+ if(po==null||po===pi||!S.players[po]||(S.rubble&&S.rubble.w_pyramids)||!(ADJ[nid]||[]).some(q=>S.owner[q]===po))return;
+ const pay=pyramidPayout(),amt=Math.min(S.players[pi].money,pay);
+ if(amt<=0){log('🔺 THE PYRAMIDS: '+pname(pi)+' seizes next to '+pname(po)+'’s holdings but has nothing left to pay.');return}
+ payTo(pi,amt,po,'PYRAMID SCHEME: '+lname(NMAP[nid])+' sits next to '+pname(po)+'’s holdings');
+ S.pyramid=pay*2;
+ log('🔺 The next PYRAMID payout doubles to $'+S.pyramid+'.');
+}
+/* 🚀 BAIKONUR — ESCAPE ON THE ROCKET: once per game a raid is cancelled; the pawn lifts off to the cosmodrome (or a node of the owner's choice) and Cortisol drops to a moderate level */
+function rocketEscape(i){
+ if(!S.dlcWorld||S.owner.w_baikonur!==i||gUsed('rocket')||(S.rubble&&S.rubble.w_baikonur)||!NMAP.w_baikonur)return false;
+ const p=S.players[i],from=p.pos;
+ gMark('rocket');
+ const moved=!blockaded('w_baikonur')&&!isVanished(i);
+ if(moved){p.pos='w_baikonur';if(!p.visited)p.visited={};p.visited.w_baikonur=true;if(from==='sisy'&&S.owner.back!==i)S.sisyPayout=10}
+ p.cortisol=Math.min(p.cortisol,ESCAPE_CORTISOL);
+ fx(NMAP.w_baikonur.x,NMAP.w_baikonur.y-70,'🚀 ESCAPED','#9ad7ff',true);
+ log('🚀 ESCAPE ON THE ROCKET! The regulators arrive to raid '+pname(i)+' — and find an empty chair. The raid is CANCELLED: '+pname(i)+' is on a Soyuz'+(moved?' to the BAIKONUR COSMODROME':' (the cosmodrome is blockaded, so the pawn stays put)')+', and Cortisol drops to '+p.cortisol+'. (Once per game.)');
+ announceAll('🚀 ESCAPE ON THE ROCKET','<div class="eventcard"><div class="eicon">🚀</div><div class="etitle">'+esc(p.name)+' ESCAPES THE RAID</div><div class="etext">Cameras on the driveway, boxes by the door — and the Soyuz already gone. The raid is cancelled.</div></div>');
+ if(moved)rocketDestination(i);
+ return true;
+}
+async function rocketDestination(i){
+ try{
+  const p=S.players[i];
+  const v=await askPlayer(i,{title:'ESCAPE ON THE ROCKET — WHERE TO?',body:'The raid is cancelled and the Soyuz is on the pad. Stay at the Cosmodrome, or land somewhere else?',options:[{label:'Stay at the Cosmodrome',v:'stay'},{label:'Pick another node…',v:'pick'}],def:'stay',timeout:25000,meta:{kind:'rocket'}});
+  if(v!=='pick'||!S||S.over||p.pos!=='w_baikonur')return;
+  const list=NODES.filter(n=>n.id!=='w_baikonur'&&!(S.rubble&&S.rubble[n.id])&&canReach(n.id)&&!blockaded(n.id));
+  const id=await askPlayer(i,{title:'ESCAPE ON THE ROCKET — LAND ON…',options:list.map(n=>({label:lname(n)+(S.owner[n.id]!=null&&!hiddenInfo(n.id)?' · '+pname(S.owner[n.id]):''),v:n.id})),def:'w_baikonur',timeout:30000,meta:{kind:'rocket2'}});
+  if(!S||S.over||p.pos!=='w_baikonur'||!list.some(n=>n.id===id))return;
+  p.pos=id;if(!p.visited)p.visited={};p.visited[id]=true;
+  log('🚀 '+pname(i)+' re-routes the Soyuz and lands on '+lname(NMAP[id])+'.');
+  sync();
+ }catch(e){console.error('[BIGCON] rocket destination',e)}
+}
+/* 📉 THE BAHT 1997 — CONTAGION: when anyone is raided, every rival of the Baht's owner who owns a node in the region the raided pawn stood in takes +1 Cortisol */
+function bahtContagion(i,rgn){
+ const b=S.owner.w_baht;
+ if(b==null||rgn==null||(S.rubble&&S.rubble.w_baht))return;
+ const hit=[];
+ S.players.forEach((pl,j)=>{if(j===b||j===i||isVanished(j))return;if(NODES.some(n=>S.owner[n.id]===j&&regionOf(n)===rgn))hit.push(j)});
+ if(!hit.length)return;
+ log('📉 CONTAGION — the raid on '+pname(i)+' in '+REGION_NAMES[rgn]+' spreads from Bangkok: '+hit.map(pname).join(', ')+' hold nodes there.');
+ hit.forEach(j=>addCortisol(j,1,'THE BAHT 1997: the contagion reaches '+REGION_NAMES[rgn]));
+}
+/* why a node-rework active cannot be used right now ('' when it can). Shared by the handlers and the buttons. */
+export function reworkBlocked(pi,kind){
+ if(!S||S.over)return 'The game is over.';
+ const p=S.players[pi];if(!p)return 'No such seat.';
+ const own=id=>S.owner[id]===pi&&!(S.rubble&&S.rubble[id]),act=!!abilityPhase(pi),either=S.phase==='move'||S.phase==='action';
+ const w=!!S.dlcWorld,need=id=>NMAP[id]?'You do not control '+nodeName(NMAP[id]).join(' ')+'.':'That node is not on this board.';
+ switch(kind){
+  case 'launder':
+   if(!own('westpac'))return need('westpac');if(!either)return 'Not now.';if(tUsed('launder'))return 'You already laundered this turn.';
+   if(p.intel<1)return 'Laundering burns 1 Intel.';
+   if(!launderBooks(pi).length)return 'The Vatican shields both your banking and monetary books — there is no file for the breach to open.';
+   return '';
+  case 'golf':
+   if(!own('golf'))return need('golf');if(S.phase!=='action'||S.mode)return 'The Back Nine is played in your action phase.';if(tUsed('golf'))return 'You already proposed a swap this turn.';
+   if(!NODES.some(n=>S.owner[n.id]===pi&&!(S.rubble&&S.rubble[n.id])))return 'You have no node to offer.';
+   if(!S.players.some((x,j)=>isRival(pi,j)&&NODES.some(n=>S.owner[n.id]===j&&!(S.rubble&&S.rubble[n.id])&&!hiddenFrom(pi,n.id))))return 'No rival holds a node you could ask for.';
+   return '';
+  case 'printmoney':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_zim'))return need('w_zim');if(!act)return 'Printing money is your action.';if(gUsed('zim'))return 'The presses have already run: once per game.';return '';
+  case 'swissdeposit':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_swiss'))return need('w_swiss');if(!act)return 'Depositing is your action.';if(p.money<1)return 'You have no cash to stash.';return '';
+  case 'swisswithdraw':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!either)return 'Not now.';if(swissBalance(pi)<=0)return 'Your numbered account is empty.';if(tUsed('swiss'))return 'You already withdrew this turn.';return '';
+  case 'abduct':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_area51'))return need('w_area51');if(!act)return 'Abduction is your action.';if(gUsed('area51'))return 'The mothership has already visited: once per game.';
+   if(p.intel<ABDUCT_INTEL)return 'An abduction costs '+ABDUCT_INTEL+' Intel and $'+ABDUCT_MONEY+'.';if(p.money<ABDUCT_MONEY)return 'An abduction costs '+ABDUCT_INTEL+' Intel and $'+ABDUCT_MONEY+'.';
+   if(!NODES.some(n=>!abductBlocked(pi,n.id)))return 'There is no rival node the aliens can take.';return '';
+  case 'ringbell':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_bell'))return need('w_bell');if(!act)return 'Ringing the Bell is your action.';if(tUsed('bell'))return 'You already rang the Bell this turn.';
+   if(p.money<BELL_COST)return 'Ringing the Bell costs $'+BELL_COST+'.';if(!S.players.some((x,j)=>isRival(pi,j)))return 'There is no rival to investigate.';return '';
+  case 'lira':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_lira'))return need('w_lira');if(!act)return 'ERDOĞANOMICS is your action.';if(gUsed('lira'))return 'The rate cut has already happened: once per game.';return '';
+  case 'srilankadefault':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_srilanka'))return need('w_srilanka');if(!either)return 'Not now.';if(gUsed('srilanka'))return 'The default has already been declared: once per game.';return '';
+  case 'greenbuy':{
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('trump'))return need('trump');if(!act)return 'Making an offer is your action.';if(gUsed('greenland'))return 'You have already made your offer: once per game.';
+   const g=NMAP.w_greenland,o=S.owner.w_greenland;
+   if(!g)return need('w_greenland');if(S.rubble&&S.rubble.w_greenland)return 'Greenland is rubble.';if(o==null)return 'Nobody owns Greenland — just seize it.';if(o===pi)return 'You already own Greenland.';
+   if(p.money<g.cost)return 'Greenland’s list price is $'+g.cost+'.';
+   return '';}
+ }
+ return 'Unknown ability.';
+}
+/* 👽 AREA 51: why a node cannot be abducted ('' when it can). It honours every existing takeover guard: Antarctica, MADE, the Commonwealth Bank's unused refusal,
+   the Svalbard owner's rubble protection and the ESG Pillars shield, and CLASSIFIED sites you cannot see. */
+export function abductBlocked(pi,nid){
+ const n=NMAP[nid],o=S.owner[nid];
+ if(!n)return 'No such node.';
+ if(o==null||!isRival(pi,o))return 'Pick a node a rival owns.';
+ if(S.rubble&&S.rubble[nid])return 'That node is rubble.';
+ if(hiddenFrom(pi,nid))return 'You cannot target a CLASSIFIED site.';
+ if(noTakeover(nid))return nodeName(n).join(' ')+' is UNTOUCHABLE.';
+ if(nid==='made')return 'MADE has its own rules — the aliens cannot take it.';
+ if(S.owner.commbank===o&&!(S.rubble&&S.rubble.commbank)&&!gUsed('cba'))return pname(o)+' holds the COMMONWEALTH BANK and may still refuse a takeover — the aliens cannot take their nodes yet.';
+ if(rubbleShielded(nid))return 'The SEED VAULT protects that holding from anything that could turn it to rubble.';
+ if(isPillarShieldedNode(nid))return 'ESG SHIELD — that holding is protected while its owner controls the Pillars.';
+ return '';
+}
+export function abductTargets(pi){return NODES.filter(n=>!abductBlocked(pi,n.id))}
+/* two nodes change hands: bugs on them are cleared, the boulder resets, a live overtourism on them lapses */
+function handOver(nid,to){
+ if(to==null)delete S.owner[nid];else S.owner[nid]=to;
+ delete S.bugs[nid];if(nid==='sisy')S.sisyPayout=10;if(S.ov&&S.ov.nid===nid)S.ov=null;
+}
+/* 🏛️ THE GOLF CLUB — THE BACK NINE: swap one of your nodes for a rival's (plus cash either way), if they agree */
+export function golfSwapError(pi,t,mineId,theirId,cash){
+ const p=S.players[pi],rt=S.players[t],mine=NMAP[mineId],theirs=NMAP[theirId];
+ if(!isRival(pi,t))return 'Offer the swap to a rival at the table.';
+ if(!mine||S.owner[mineId]!==pi||(S.rubble&&S.rubble[mineId]))return 'Offer one of your own nodes.';
+ if(!theirs||S.owner[theirId]!==t||(S.rubble&&S.rubble[theirId])||hiddenFrom(pi,theirId))return 'Ask for a node that rival owns.';
+ if(!Number.isInteger(cash)||cash>9999||cash<-9999)return 'Name a whole-dollar sweetener.';
+ if(cash>0&&p.money<cash)return 'You cannot cover the $'+cash+' sweetener.';
+ if(cash<0&&rt.money<-cash)return pname(t)+' cannot cover the $'+(-cash)+' you are asking for.';
+ const after=id=>id===mineId?t:id===theirId?pi:S.owner[id];
+ if(S.dlcGeo&&[pi,t].some(x=>after('geo_missile')===x&&after('geo_shahed')===x))return 'That swap would leave one player owning both MISSILE COMMAND and the SHAHED DRONE.';
+ return '';
+}
+const CLASSIC_REWORKS={
+ /* 🏦 WESTPAC — 23 MILLION BREACHES: a free action, once per turn: 1 Intel becomes $3, and an ASIC/ACCC file on you gains +1 scrutiny (opened if need be) */
+ async launder(pi,m){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'launder');if(why){sysTo(pi,why);return}
+  const p=S.players[pi],books=launderBooks(pi),open=books.find(b=>findFile(pi,b.id));
+  let ind=typeof m.kind==='string'&&books.some(b=>b.id===m.kind)?m.kind:null;
+  if(!ind){
+   if(books.length===1)ind=books[0].id;
+   else{
+    const v=await askPlayer(pi,{title:'23 MILLION BREACHES — WHICH BOOK?',body:'Laundering turns 1 Intel into $'+LAUNDER_CASH+' and adds +1 scrutiny to a regulator file on you. Which book does the breach land on?',options:books.map(b=>({label:b.name+' ('+b.agency+')'+(findFile(pi,b.id)?' — file already open':''),v:b.id})),def:(open||books[0]).id,timeout:20000});
+    ind=books.some(b=>b.id===v)?v:(open||books[0]).id;
+   }
+  }
+  if(!S||S.over||S.cur!==pi||S.mode||reworkBlocked(pi,'launder')){sysTo(pi,'The laundering is no longer available.');return}
+  p.intel-=1;p.money+=LAUNDER_CASH;tMark('launder');
+  fxAt(pi,'🛈−1 · +$'+LAUNDER_CASH,'#7fe08d');
+  log('🧺 23 MILLION BREACHES — '+pname(pi)+' launders 1 Intel into $'+LAUNDER_CASH+'.');
+  acccReconcile();
+  const f=findFile(pi,ind)||openBreach(pi,ind,0);
+  f.s++;log(fileIcon(f)+' '+fileName(f)+' gains +1 scrutiny from the laundering — now '+f.s+'/'+ACCC_RULING+'.');
+  fxAt(pi,'📁 +1 SCRUTINY','#55c1ff');
+  sync();
+ },
+ /* 🏛️ THE GOLF CLUB — THE BACK NINE (free action, once per turn): m.target = rival, m.id = your node, m.kind = their node, m.n = cash you add (negative: you ask for cash) */
+ async golftrade(pi,m){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'golf');if(why){sysTo(pi,why);return}
+  const t=m.target,mineId=typeof m.id==='string'?m.id:null,theirId=typeof m.kind==='string'?m.kind:null,cash=m.n===undefined||m.n===null?0:m.n;
+  const err=golfSwapError(pi,t,mineId,theirId,cash);if(err){sysTo(pi,err);return}
+  const mine=NMAP[mineId],theirs=NMAP[theirId],nm=nodeName(mine).join(' '),tn=nodeName(theirs).join(' ');
+  tMark('golf');
+  const sweet=cash>0?' plus $'+cash+' from '+pname(pi):cash<0?' and $'+(-cash)+' from '+pname(t)+' to '+pname(pi):'';
+  log('⛳ THE BACK NINE — '+pname(pi)+' proposes to '+pname(t)+': '+nm+' for '+tn+sweet+'.');
+  sync();
+  const v=await askPlayer(t,{title:'THE BACK NINE — SWAP OFFER',body:pname(pi)+' offers you '+nm+' ('+mine.type+', $'+mine.income+'/turn, list $'+mine.cost+') for your '+tn+' ('+theirs.type+', $'+theirs.income+'/turn, list $'+theirs.cost+')'+(cash>0?', and adds $'+cash+' to sweeten it':cash<0?', and asks you to add $'+(-cash)+'':'')+'. Bugs on both nodes are cleared. No Cortisol either way.',options:[{label:'Accept the swap',v:1},{label:'Decline',v:0}],def:0,timeout:30000,meta:{kind:'golf',from:pi,give:mineId,take:theirId,cash:-cash}});
+  if(!S||S.over||S.cur!==pi)return;
+  if(v!==1){log('⛳ '+pname(t)+' declines the swap — both nodes stay put.');sync();return}
+  const err2=golfSwapError(pi,t,mineId,theirId,cash);
+  if(err2){log('⛳ The swap falls through — '+err2);sync();return}
+  handOver(mineId,t);handOver(theirId,pi);
+  if(cash>0){S.players[pi].money-=cash;S.players[t].money+=cash;fxAt(pi,'−$'+cash,'#ff6b5e');fxAt(t,'+$'+cash,'#7fe08d')}
+  else if(cash<0){S.players[t].money+=cash;S.players[pi].money-=cash;fxAt(t,'−$'+(-cash),'#ff6b5e');fxAt(pi,'+$'+(-cash),'#7fe08d')}
+  fx(mine.x,mine.y-64,'⛳ SWAPPED',S.players[t].color);fx(theirs.x,theirs.y-64,'⛳ SWAPPED',S.players[pi].color);
+  log('⛳ DEAL DONE — '+pname(t)+' takes '+nm+' and '+pname(pi)+' takes '+tn+sweet+'. Bugs on both are cleared.');
+  acccReconcile();sync();
+  await winCheck();
+ },
+};
+Object.assign(CLASSIC_ACTS,CLASSIC_REWORKS);
+const WORLD_REWORKS={
+ /* 🧾 ZIMBABWE — PRINT MONEY: once per game, 20% of the goal in cash; from then on every seizure on the board costs +$1 more */
+ async printmoney(pi){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'printmoney');if(why){sysTo(pi,why);return}
+  gMark('zim');
+  const amt=Math.max(1,Math.round(goalAmount()*ZIM_PCT/100));
+  fxAt(pi,'🧾 PRINT','#f5c542');
+  gain(pi,amt,'the presses run: '+ZIM_PCT+'% of the $'+goalAmount()+' target');
+  addInflation(1,pname(pi)+' prints money');
+  await finishNodeAbility(pi);
+ },
+ /* 🔒 THE SWISS VAULT — NUMBERED ACCOUNT. Deposit (your action, any amount, m.n); withdraw (free, once per turn, anywhere, all or m.n) */
+ async swissdeposit(pi,m){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'swissdeposit');if(why){sysTo(pi,why);return}
+  const p=S.players[pi],n=Number.isInteger(m.n)?m.n:0;
+  if(n<1||n>p.money){sysTo(pi,'Name a whole-dollar amount from $1 to your cash ($'+p.money+').');return}
+  p.money-=n;(S.vault||(S.vault={}))[pi]=swissBalance(pi)+n;
+  fxAt(pi,'🔒 −$'+n,'#9ad7ff');
+  log('🔒 NUMBERED ACCOUNT — '+pname(pi)+' stashes $'+n+' in the Swiss vault (balance $'+S.vault[pi]+'). Raids, fines, events and loans cannot touch it, and it does not count toward the goal until withdrawn.');
+  await finishNodeAbility(pi);
+ },
+ async swisswithdraw(pi,m){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'swisswithdraw');if(why){sysTo(pi,why);return}
+  const bal=swissBalance(pi),n=Number.isInteger(m.n)&&m.n>=1?Math.min(m.n,bal):bal;
+  S.vault[pi]=bal-n;S.players[pi].money+=n;tMark('swiss');
+  fxAt(pi,'🔓 +$'+n,'#7fe08d');
+  log('🔓 NUMBERED ACCOUNT — '+pname(pi)+' withdraws $'+n+' from the Swiss vault (balance $'+S.vault[pi]+'). A free action.');
+  sync();
+  await winCheck();
+ },
+ /* 👽 AREA 51 — ALIEN ABDUCTION (once per game, $4 + 3 Intel, your action): m.target = rival, m.id = their node. 50%: it arrives intact; 50%: it arrives as rubble */
+ async abduct(pi,m){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'abduct');if(why){sysTo(pi,why);return}
+  const nid=typeof m.id==='string'?m.id:null,bad=nid?abductBlocked(pi,nid):'Pick a node.';
+  if(bad){sysTo(pi,bad);return}
+  if(Number.isInteger(m.target)&&S.owner[nid]!==m.target){sysTo(pi,'That node is not that rival’s.');return}
+  const p=S.players[pi],n=NMAP[nid],prev=S.owner[nid];
+  p.money-=ABDUCT_MONEY;p.intel-=ABDUCT_INTEL;gMark('area51');
+  fxAt(pi,'−$'+ABDUCT_MONEY+' · 🛈−'+ABDUCT_INTEL,'#ff6b5e');
+  const rubble=Math.random()<ABDUCT_RUBBLE;
+  fx(n.x,n.y-70,'👽 ABDUCTED','#9dffb0',true);
+  if(rubble){
+   handOver(nid,null);S.rubble[nid]=1;
+   log('👽 ALIEN ABDUCTION! '+pname(pi)+' beams up '+lname(n)+' from '+pname(prev)+' — and it arrives as RUBBLE. Nobody owns it; it must be rebuilt for $'+n.cost+'. (Once per game.)');
+  }else{
+   handOver(nid,pi);S.seizeCount[nid]=(S.seizeCount[nid]||0)+1;
+   log('👽 ALIEN ABDUCTION! '+pname(pi)+' beams up '+lname(n)+' from '+pname(prev)+' — it arrives INTACT. (Once per game.)');
+   addCortisol(pi,2,'an alien abduction');
+  }
+  acccReconcile();sync();
+  if(await winCheck())return;
+  await finishNodeAbility(pi);
+ },
+ /* 🔔 THE WALL STREET BELL — RING THE BELL ($2, your action, once per turn): the next market event resolves now, and a rival's regulator file opens or escalates */
+ async ringbell(pi,m){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'ringbell');if(why){sysTo(pi,why);return}
+  if(!isRival(pi,m.target)){sysTo(pi,'Pick a rival in THE SYNDICATE list.');return}
+  const p=S.players[pi];
+  p.money-=BELL_COST;tMark('bell');fxAt(pi,'🔔 −$'+BELL_COST,'#f5c542');
+  log('🔔 '+pname(pi)+' RINGS THE BELL — the next market event is drawn right now, and the regulators open the books on '+pname(m.target)+'.');
+  bellInvestigate(pi,m.target);
+  const card=drawCard();
+  await resolveEvent(card);
+  acccReconcile();sync();
+  if(await winCheck())return;
+  await finishNodeAbility(pi);
+ },
+ /* 💸 THE TURKISH LIRA — ERDOĞANOMICS (once per game, your action): every rival loses 20% of their cash above $30 */
+ async lira(pi){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'lira');if(why){sysTo(pi,why);return}
+  gMark('lira');
+  log('💸 ERDOĞANOMICS — '+pname(pi)+' cuts rates to fight inflation. Every rival loses '+LIRA_PCT+'% of their cash above $'+LIRA_FLOOR+'.');
+  S.players.forEach((pl,j)=>{if(!isRival(pi,j))return;const cut=Math.floor(Math.max(0,pl.money-LIRA_FLOOR)*LIRA_PCT/100);if(cut>0)payVoid(j,cut,'the lira falls through the floor');else log('💸 '+pname(j)+' holds $'+pl.money+' — nothing above $'+LIRA_FLOOR+', nothing lost.')});
+  await finishNodeAbility(pi);
+ },
+ /* 🍃 SRI LANKA — DEFAULT (free, once per game): every debt is wiped and this turn's tolls are free */
+ async srilankadefault(pi){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'srilankadefault');if(why){sysTo(pi,why);return}
+  gMark('srilanka');
+  const wiped=[];
+  if(S.imf&&S.imf[pi]){delete S.imf[pi];wiped.push('the IMF loan')}
+  if(S.carry&&S.carry[pi]){delete S.carry[pi];wiped.push('the Mrs Watanabe carry trade')}
+  S.tollFree=pi;
+  fxAt(pi,'🍃 DEFAULT','#9ad7ff');
+  log('🍃 DEFAULT — '+pname(pi)+' stops paying: '+(wiped.length?wiped.join(' and ')+' wiped out':'no debts to wipe')+', and every toll '+pname(pi)+' would owe this turn is free. (Once per game.)');
+  sync();
+ },
+ /* 🇬🇱 GREENLAND — MAKE AN OFFER (once per game, your action, with DONALD TRUMP): buy Greenland from its owner at list price; they cannot refuse */
+ async greenbuy(pi){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'greenbuy');if(why){sysTo(pi,why);return}
+  const p=S.players[pi],n=NMAP.w_greenland,prev=S.owner.w_greenland;
+  gMark('greenland');
+  p.money-=n.cost;S.players[prev].money+=n.cost;
+  fxAt(pi,'−$'+n.cost,'#ff6b5e');fxAt(prev,'+$'+n.cost,'#7fe08d');
+  handOver('w_greenland',pi);S.seizeCount.w_greenland=(S.seizeCount.w_greenland||0)+1;
+  fx(n.x,n.y-64,'🇬🇱 SOLD','#f5c542');
+  log('🇬🇱 MAKE AN OFFER — '+pname(pi)+' (with DONALD TRUMP behind them) buys GREENLAND from '+pname(prev)+' at its $'+n.cost+' list price. “It is not for sale.” It was. The seller cannot refuse. (Once per game.)');
+  acccReconcile();sync();
+  if(await winCheck())return;
+  await finishNodeAbility(pi);
+ },
+};
+Object.assign(WORLD_ACTS,WORLD_REWORKS);
 /* A seat index from the wire: a real seat at this table that is not the actor. */
 export function isRival(pi,t){return Number.isInteger(t)&&t!==pi&&!!(S&&S.players[t])&&!isVanished(t)}
 export function canUseBackroomAbility(pi){return !!(S&&S.phase==='move'&&S.cur===pi&&S.owner.back===pi&&!S.backroomAbilityUsed&&S.steps>=2)}
@@ -1237,9 +1605,9 @@ export function nodeName(n){return (S&&S.rebuilt&&S.rebuilt[n.id]&&n.rebuiltName
 export function blockaded(id){return !!(S&&S.blockades&&S.blockades[id]>S.turn)}
 export function seizeListPrice(pi,n){
  let base=n.cost;
- if(S.owner.golf===pi)base=Math.max(1,base-1);
  if(S.dlcWorld&&S.owner.w_woolies===pi)base=Math.max(1,base-1); /* WOOLWORTHS SELF-CHECKOUT: automation */
- if(n.type==='CHART'){if(S.owner.nab===pi)base=Math.max(1,base-1);if(S.owner.econ===pi)base=Math.max(1,base-1)}
+ if(n.type==='CHART'){if(S.owner.econ===pi)base=Math.max(1,base-1)}
+ if(windowOn('eofy'))base=Math.max(1,base-2); /* EOFY SALE */
  return base;
 }
 /* 🌐 ANTARCTICA cannot be taken from its owner */
@@ -1260,6 +1628,7 @@ export async function doMove(pi,id){
  const owner=S.owner[id];
  if(owner!=null&&owner!==pi){
   if(S.owner.bond007===pi){log('🤵 007 flashes… credentials. No toll.')}
+  else if(S.tollFree===pi){log('🍃 DEFAULT: the toll into '+lname(NMAP[id])+' is waived for '+pname(pi)+' this turn.')}
   else if(ausNzWaiver(pi,prevPos,id)){log('🤝 ANZCERTA: the toll between '+nodeName(NMAP[prevPos]).join(' ')+' and '+nodeName(NMAP[id]).join(' ')+' is waived for '+pname(pi)+'.')}
   else{
    let toll=(S.owner.albo===owner)?2:1;const p=S.players[pi];
@@ -1304,7 +1673,7 @@ export async function doFly(pi,id){
 }
 export async function endMovement(){
  if(!S||S.over||S.phase!=='move')return;
- S.phase='action';sync();
+ S.phase='action';nabFee(S.cur);sync();
  await maybePeek();
  sync();
 }
@@ -1313,6 +1682,7 @@ export async function maybePeek(){
  const anywhere=S.owner.iface===pi;
  const here=(S.owner.term===pi&&p.pos==='term')||(S.owner.timeline===pi&&p.pos==='timeline');
  if(!anywhere&&!here)return;
+ if(windowOn('crowdstrike')){log('🟦 CROWDSTRIKE: the Terminal shows a blue screen — no peek this round.');return}
  if(!S.deck.length){S.deck=shuffle(S.discard.slice());S.discard=[];log('🎴 The rumor deck is reshuffled.')}
  if(!S.deck.length)return;
  const c=CARDBYID[S.deck[S.deck.length-1]];
@@ -1332,7 +1702,7 @@ export async function doSeize(pi){
  if(slip)base=Math.max(1,base-2);
  const isTake=prev!=null;
  const tariff=tariffFor(pi,nid);
- const cost=(isTake?takeoverCost(pi,nid,base):base)+tariff;
+ const cost=(isTake?takeoverCost(pi,nid,base):base)+tariff+inflationExtra();
  if(isTake&&flatSeize(nid))log('📌 '+n.name.join(' ')+' does not get more expensive — list price, always.');
  else if(isTake&&S.dossier)log('📂 The Dossier does its work — list price, not double.');
  const maxPay=p.money+(S.owner.back===pi?Math.min(3,p.intel):0);
@@ -1345,6 +1715,17 @@ export async function doSeize(pi){
   if(S.cur!==pi||S.phase!=='action'||S.over||S.owner[nid]!==prev||p.pos!==nid||S.owner.back!==pi||p.money+Math.min(3,p.intel)<cost){sysTo(pi,'That deal is no longer on the table.');return}
   useInt=Math.max(0,cost-p.money);cash=cost-useInt;
  }
+ /* 🏦 COMMONWEALTH BANK — CAN'T BE BEAT: once per game its owner may refuse a hostile takeover of any of their nodes */
+ if(isTake&&S.owner.commbank===prev&&!(S.rubble&&S.rubble.commbank)&&!gUsed('cba')){
+  const ref=await askPlayer(prev,{title:'CAN’T BE BEAT — REFUSE THE TAKEOVER?',body:pname(pi)+' is trying to take '+lname(n)+' (their bid: $'+cost+'). You hold the COMMONWEALTH BANK: once per game you may refuse a hostile takeover. The takeover fails and they keep their money.',options:[{label:'Refuse — it can’t be beat (once per game)',v:1},{label:'Let it through',v:0}],def:0,timeout:30000,meta:{kind:'cba',node:nid,from:pi,price:cost}});
+  if(!S||S.over||S.cur!==pi||S.phase!=='action'||S.owner[nid]!==prev||p.pos!==nid)return;
+  if(ref===1&&!gUsed('cba')){
+   gMark('cba');
+   fx(n.x,n.y-64,'🏦 REFUSED','#ffd34d');
+   log('🏦 CAN’T BE BEAT! '+pname(prev)+' refuses '+pname(pi)+'’s takeover of '+lname(n)+' — it fails, and '+pname(pi)+' keeps their money. (Once per game.) The attempt still uses '+pname(pi)+'’s action.');
+   sync();await endOfTurn();return;
+  }
+ }
  if(slip){S.slipped='spent';log('🏎️ The slipstream carries '+pname(pi)+' into the deal — $2 off.')}
  p.money-=cash;p.intel-=useInt;
  if(tariff){const to=tariffOwner();if(to!=null){S.players[to].money+=tariff;fxAt(to,'+$'+tariff,'#7fe08d');log('🧱 THE TARIFF WALL: '+pname(pi)+' pays $'+tariff+' extra to '+pname(to)+' for a '+n.type+' node.')}}
@@ -1356,6 +1737,7 @@ export async function doSeize(pi){
  }
  S.owner[nid]=pi;if(nid==='sisy')S.sisyPayout=10;
  S.seizeCount[nid]=(S.seizeCount[nid]||0)+1;
+ pyramidPays(pi,nid);
  const via=useInt>0?' (paid $'+cash+' + '+useInt+' 🛈)':'';
  log('📝 '+pname(pi)+(isTake?' muscles in on ':' seizes ')+lname(n)+via+'.');
  fx(n.x,n.y-64,'📝 SEIZED',S.players[pi].color);
@@ -1394,8 +1776,9 @@ export async function doSpin(pi,kind){
 }
 export function drawCard(){
  if(!S.deck.length){S.deck=shuffle(S.discard.slice());S.discard=[];log('🎴 The rumor deck is reshuffled.')}
- const id=S.deck.pop();S.discard.push(id);
+ const id=S.deck.pop();S.discard.push(id);S.drawN=(S.drawN|0)+1;
  const c=CARDBYID[id];
+ if(id==='sisyroll'&&S.dlcWorld&&S.pyramid>1){log('🔺 THE BOULDER ROLLS BACK DOWN — the pyramid scheme collapses and resets: the payout is back to $1.');S.pyramid=1}
  log('🎴 EVENT — '+c.title);
  return c;
 }
@@ -1408,6 +1791,13 @@ export async function endOfTurn(){
   if(v){S.jtUsed=true;log('🌐 JTPortal: “Quite frankly, that never happened.” The event vanishes.');fx(1200,720,'“NEVER HAPPENED.”','#55c1ff',true);nextTurn();return}
  }
  const card=drawCard();
+ await resolveEvent(card);
+ sync();
+ if(await winCheck())return;
+ nextTurn();
+}
+/* a drawn market event, resolved: the end-of-turn event, and the one THE WALL STREET BELL rings in early */
+export async function resolveEvent(card){
  /* A table of only bots has nobody to interrupt: the event still runs, the log
     keeps the record and the mood strip shows the swing — but no modal. */
  if(!S.players.every(p=>p.bot))announceAll('MARKET EVENT — TURN '+S.turn,cardFace(card));
@@ -1419,9 +1809,6 @@ export async function endOfTurn(){
   const h=S.owner.w_hormuz,cnt=OIL_ALL.filter(id=>NMAP[id]&&S.owner[id]!=null&&S.owner[id]!==h&&!S.rubble[id]).length;
   if(cnt)gain(h,cs(2)*cnt,'the Strait of Hormuz taxes '+cnt+' rival oil position'+(cnt>1?'s':''));
  }
- sync();
- if(await winCheck())return;
- nextTurn();
 }
 export function nextTurn(){if(!S||S.over)return;S.cur=(S.cur+1)%S.players.length;if(S.cur===0)S.turn++;Promise.resolve(startTurn()).catch(e=>console.error(e))}
 export function goalAmount(){return clampGoal(S&&S.goal?S.goal:Net.goal)}
@@ -1465,7 +1852,72 @@ export function addChat(pi,text){
 export function blocRulingFace(sub){return '<div class="eventcard"><div class="eicon">🌐</div><div class="etitle">WTO TRADE-BLOC RULING</div><div class="etext">'+(sub||'')+'</div></div>'}
 export function monopolyAlertFace(sub,asic){const img=asic?'./static/asic.png':'./static/accc.png';const lab=asic?'ASIC':'ACCC';const title=asic?'ASIC MARKET-MANIPULATION ALERT':'MONOPOLY ALERT';return '<div class="eventcard"><div style="display:flex;gap:16px;justify-content:center;align-items:center;margin:10px 0 8px"><img src="./static/the rock.gif" alt="The Rock" style="width:120px;height:120px;object-fit:cover;border:2px solid #168388;background:#000"><img src="'+img+'" alt="'+lab+'" style="width:120px;height:120px;object-fit:contain;border:2px solid #168388;background:#111;padding:8px"></div><div class="etitle">'+title+'</div><div class="etext">'+(sub||'')+'</div></div>';}
 export function cardFace(c){if(c.id==='crackdown')return monopolyAlertFace(cardText(c));return '<div class="eventcard"><div class="eicon">'+c.icon+'</div><div class="etitle">'+c.title+'</div><div class="etext">'+cardText(c)+'</div></div>'}
-/* ================= MARKET EVENT DECK (24 cards) — every card moves the mood ================= */
+/* ================= MARKET EVENT DECK (36 cards) — every card moves the mood ================= */
+/* ================= ROUND WINDOWS & SWITCHED-OFF NODES (shared by the market-event cards) =================
+   A "round" here is one full rotation of income: a window opened at the end of seat k covers the turns of seats k+1 … k+N
+   (N = players), so every player takes exactly one income and one turn inside it. S.cw[key] and S.suspend[nodeId] hold the first
+   tick (turn*N+seat) at which they have lapsed, so they live in the game state and sync with everything else. */
+export function rtick(){return S?S.turn*S.players.length+S.cur:0}
+export function roundWindow(key,rounds){if(!S.cw)S.cw={};S.cw[key]=rtick()+(rounds||1)*S.players.length+1}
+export function windowOn(key){return !!(S&&S.cw&&S.cw[key]>rtick())}
+export function suspendNodes(ids,rounds){if(!S.suspend)S.suspend={};const until=rtick()+(rounds||1)*S.players.length+1;ids.forEach(id=>{if(NMAP[id])S.suspend[id]=Math.max(S.suspend[id]||0,until)})}
+export function suspended(id){return !!(S&&S.suspend&&S.suspend[id]>rtick())}
+/* the owned, standing nodes of a card's list */
+function cardNodes(ids){return ids.filter(id=>NMAP[id]&&S.owner[id]!=null&&!(S.rubble&&S.rubble[id]))}
+const BRICS_SET=new Set(TRADE_BLOCS.w_brics.members),US_SET=new Set(US_NODES);
+/* per-node income tweak while the BRICS SUMMIT is on: BRICS members x2, American nodes halved */
+export function cardIncome(id,v){if(S&&S.dlcWorld&&windowOn('brics')){if(BRICS_SET.has(id))return v*2;if(US_SET.has(id))return Math.floor(v/2)}return v}
+/* why an intent is refused while a card is in force ('' when it is allowed) */
+export function cardGate(act){
+ if(!S||!S.cw)return '';
+ if(windowOn('crowdstrike')&&(act==='flymode'||act==='fly'||act==='bugmode'||act==='bug'||act==='spy'))return '🟦 CROWDSTRIKE BLUE SCREEN — flights, Terminal peeks and bug actions are down for the round.';
+ if(windowOn('lockdown')&&(act==='flymode'||act==='fly'||act==='favor'||act==='slip'))return '😷 COVID LOCKDOWN — flights are grounded and nobody moves further than one step this round.';
+ return '';
+}
+function bleachReef(){S.bleachUntil=S.turn+3;const o=S.owner.w_gbr;fxAt(o==null?S.cur:o,'🪸 BLEACHED','#e19bff',true);if(o==null)log('🪸 The Great Barrier Reef bleaches — nobody owns it; nobody notices.');else{log('🪸 The Great Barrier Reef bleaches for two rounds — its blockade and income are off, and '+pname(o)+' takes +1 Cortisol.');addCortisol(o,1,'the reef goes white','event')}}
+const SANCTION_WHO='Gazprom, Nord Stream, the Kremlin, the Shahed drone and the North Korean cluster';
+const CARDS_B=[
+{id:'bankrun',icon:'🏦',title:'BANK RUN',text:'A rumour, a queue, a very long weekend. Everyone loses 25% of the cash they hold above $40 — unless they own a BANK or a REGULATOR, who simply close the doors.',
+ run(){setMood('PANIC','a bank run — the queue wraps around the block');const floor=cs(40);S.players.forEach((pl,i)=>{if(NODES.some(n=>(n.type==='BANK'||n.type==='REGULATOR')&&S.owner[n.id]===i&&!(S.rubble&&S.rubble[n.id]))){log('🏦 '+pname(i)+' owns a bank or a regulator — the doors are firmly shut.');return}const amt=Math.floor(Math.max(0,pl.money-floor)*0.25);if(amt>0)payVoid(i,amt,'a quarter of everything above $'+floor+' walks out the door');else log('🏦 '+pname(i)+' has no more than $'+floor+' — there is nothing to run with.')});const im=S.dlcWorld?S.owner.w_imf:null;if(im!=null)gain(im,cs(3),'the lender of last resort takes the call')}},
+{id:'royalcomm',icon:'⚖️',title:'THE ROYAL COMMISSION',text:'Nine months, four volumes, one very tall stack of recommendations. Every open regulator file gains +2 scrutiny, and every BANK owner takes +1 Cortisol.',
+ run(){setMood('PANIC','a royal commission — the findings are, regrettably, damning');acccReconcile();const files=acccFileList();if(!files.length)log('⚖️ The Commission finds no open files — only the banks to blame.');else files.forEach(f=>{f.s+=2;log('⚖️ The Commission lands on '+fileName(f)+' — scrutiny '+f.s+'/'+ACCC_RULING+(f.s>=ACCC_RULING?'; the ruling lands at their turn start.':'.'));fxAt(f.pi,'📁 +2 SCRUTINY','#55c1ff')});S.players.forEach((pl,i)=>{if(NODES.some(n=>n.type==='BANK'&&S.owner[n.id]===i))addCortisol(i,1,'called to give evidence','event')})}},
+{id:'robodebt',icon:'🧾',title:'ROBODEBT',text:'A spreadsheet decides you owe money. You do not. The letter arrives anyway: every player pays 10% of their cash to the bank, rounded to the nearest dollar.',
+ run(){setMood('PANIC','robodebt — an algorithm sends the letters');S.players.forEach((pl,i)=>{const amt=Math.round(pl.money*0.1);if(amt>0)payVoid(i,amt,'the algorithm says you owe 10%');else log('🧾 '+pname(i)+' owes less than a dollar — the letter is a rounding error.')})}},
+{id:'gamestop',icon:'🚀',title:'GAMESTOP SQUEEZE',text:'Retail finds the short interest. The poorest player takes 20% of the richest player’s cash — and if the Hedge Fund has an owner, they pay the poorest a further $3, because the shorts get squeezed.',
+ run(){setMood('FRENZY','GameStop — the apes find the short interest');let poor=0,rich=0;S.players.forEach((pl,i)=>{if(pl.money<S.players[poor].money)poor=i;if(pl.money>S.players[rich].money)rich=i});if(poor===rich){log('🚀 Nobody is richer or poorer than anybody else — the squeeze fizzles.');return}const take=Math.floor(S.players[rich].money*0.2);if(take>0)payTo(rich,take,poor,'the squeeze: '+pname(poor)+' takes 20% of the richest');const h=S.owner.hedge;if(h!=null&&h!==poor)payTo(h,cs(3),poor,'the Hedge Fund was short and gets squeezed')}},
+{id:'ftx',icon:'🪙',title:'FTX COLLAPSES',text:'The customer funds were “in the other wallet”. Anyone holding 6 or more Intel loses half of it, rounded down, in the contagion.',
+ run(){setMood('PANIC','FTX — the other wallet was empty');let hit=false;S.players.forEach((pl,i)=>{if(pl.intel>=6){const lose=Math.floor(pl.intel/2);pl.intel-=lose;hit=true;fxAt(i,'🛈−'+lose,'#55c1ff');log('🪙 '+pname(i)+' loses '+lose+' Intel in the contagion.')}});if(!hit)log('🪙 Nobody holds 6 Intel — the contagion has nothing to eat.')}},
+{id:'crowdstrike',icon:'🟦',title:'CROWDSTRIKE BLUE SCREEN',text:'One update, eight million machines, and a very blue afternoon. For one full round there are no flights (Qantas, the Cruise Ship and launches), no Terminal peeks and no bug actions.',
+ run(){setMood('PANIC','a blue screen at every airport');roundWindow('crowdstrike',1);log('🟦 The systems are down for one full round: flights, Terminal peeks and bugs are off.')}},
+{id:'toiletpaper',icon:'🧻',title:'TOILET PAPER PANIC',text:'The shelves are bare and the nerves are bare-er. Everyone takes +1 Cortisol, and the QUIKSTOP owner collects $10 from each other player (or whatever they can find).',
+ run(){setMood('FRENZY','the shelves are bare');S.players.forEach((pl,i)=>addCortisol(i,1,'the shelves are bare','event'));const q=S.owner.quik;if(q==null){log('🧻 The Quikstop is unowned — the last roll goes to nobody.');return}S.players.forEach((pl,i)=>{if(i!==q)payTo(i,cs(10),q,'a four-pack at panic prices → QuikStop')})}},
+{id:'covid',icon:'😷',title:'COVID LOCKDOWN',text:'Stay home, bake bread, watch the briefings. Next round everyone moves at most 1 step (flights grounded too), and every MEDIA node pays its owner $2.',
+ run(){setMood('PANIC','a lockdown — stay home, watch the briefing');roundWindow('lockdown',1);cardNodes(NODES.filter(n=>n.type==='MEDIA').map(n=>n.id)).forEach(id=>gain(S.owner[id],cs(2),NMAP[id].name.join(' ')+' — the briefings rate through the roof'));log('😷 For one full round nobody walks further than one step and no plane leaves the ground.')}},
+{id:'eofy',icon:'🏷️',title:'EOFY SALE',text:'Everything must go before the thirtieth. Every seizure costs $2 less this round (never below $1).',
+ run(){setMood('BOOM','the EOFY sale — everything must go');roundWindow('eofy',1);log('🏷️ EOFY: every seizure is $2 cheaper for one full round (minimum $1).')}},
+{id:'swiftonomics',icon:'🎤',title:'SWIFTONOMICS',text:'Taylor’s tour rolls into town and the whole economy buys a ticket. QANTAS, the Marketplace, the Quikstop and the tourism nodes pay their owners $3 each.',
+ run(){setMood('BOOM','the tour is in town — every hotel is full');const ids=cardNodes(TOURISM_NODES);if(!ids.length)log('🎤 No tourism node has an owner — the tour plays to an empty stadium.');ids.forEach(id=>gain(S.owner[id],cs(3),NMAP[id].name.join(' ')+' sells out'))}},
+{id:'ironcrash',icon:'📉',title:'IRON ORE CRASH',text:'China stops building things. BHP, Vale, COAL Corp, Codelco, the Potosí silver mine and the Indonesian nickel nodes pay nothing for one full round.',
+ run(){setMood('PANIC','iron ore falls off a cliff');suspendNodes(IRON_NODES,1);const ids=cardNodes(IRON_NODES);log('📉 Switched off for one round: '+(ids.length?ids.map(id=>NMAP[id].name.join(' ')).join(', '):'nothing owned — the mines were idle anyway')+'.')}},
+{id:'ratecut',icon:'✂️',title:'RATE CUT',text:'The Governor blinks. Money is cheap again: everyone gains $2 and loses 1 Cortisol.',
+ run(){setMood('BOOM','a rate cut — money is cheap again');S.players.forEach((pl,i)=>{gain(i,cs(2),'cheaper money');addCortisol(i,-1,'the Governor blinks')})}}
+];
+const WORLD_CARDS_B=[
+{id:'houthis',icon:'🚢',title:'HOUTHIS IN THE RED SEA',text:'Drones over the shipping lane, insurers on the phone. All four chokepoints (Panama, Hormuz, Suez, Malacca) are blockaded until the end of next round, and the Tanker Fleet’s owner collects $3 in freight rates.',
+ run(){setMood('PANIC','the Red Sea closes — insurers hang up');WORLD_CHOKEPOINTS.forEach(id=>{if(NMAP[id])S.blockades[id]=S.turn+2});log('🚢 Every chokepoint is blockaded until the end of next round.');const t=S.owner.tanker;if(t!=null)gain(t,cs(3),'freight rates through the roof')}},
+{id:'sanctions',icon:'⛔',title:'SANCTIONS',text:'The communiqué is long and the loopholes are longer. '+SANCTION_WHO+' pay nothing for one full round, and each of their owners takes +1 Cortisol.',
+ run(){setMood('PANIC','sanctions — the communiqué is long, the loopholes longer');suspendNodes(SANCTIONED_NODES,1);const ids=cardNodes(SANCTIONED_NODES);if(!ids.length){log('⛔ None of the sanctioned nodes has an owner — the communiqué lands on an empty desk.');return}log('⛔ Switched off for one round: '+ids.map(id=>NMAP[id].name.join(' ')).join(', ')+'.');new Set(ids.map(id=>S.owner[id])).forEach(o=>addCortisol(o,1,'sanctions bite','event'))}},
+{id:'chinacoal',icon:'🛑',title:'CHINA BANS AUSTRALIAN COAL',text:'Beijing discovers a sudden quality concern. COAL Corp HQ, the Coal Train, the Docks, Watson and BHP pay nothing for two full rounds.',
+ run(){setMood('PANIC','the ships wait off Qingdao — the coal does not move');suspendNodes(COAL_CHAIN,2);const ids=cardNodes(COAL_CHAIN);log('🛑 Switched off for two rounds: '+(ids.length?ids.map(id=>NMAP[id].name.join(' ')).join(', '):'nothing owned — the quay was empty anyway')+'.')}},
+{id:'panamapapers',icon:'📂',title:'THE PANAMA PAPERS',text:'Eleven million documents, one very large leak. Each tax haven you own costs you +2 Cortisol, and APPLE’s owner takes an extra +1.',
+ run(){setMood('FRENZY','the Panama Papers — eleven million documents');const ap=S.owner.w_apple;S.players.forEach((pl,i)=>{const n=cardNodes(TAX_HAVENS).filter(id=>S.owner[id]===i).length;const c=2*n+(ap===i?1:0);if(c>0)addCortisol(i,c,(n?n+' tax haven'+(n>1?'s':'')+' in the documents':'')+(n&&ap===i?', and ':'')+(ap===i?'Apple’s name on page one':''),'event')})}},
+{id:'brics',icon:'🧮',title:'BRICS SUMMIT: DE-DOLLARISATION',text:'The leaders announce a currency, then a committee for the currency. For one full round BRICS member nodes pay double and American nodes pay half.',
+ run(){setMood('FRENZY','de-dollarisation — a currency, then a committee');roundWindow('brics',1);log('🧮 For one full round BRICS members pay ×2 and American nodes pay half.')}},
+{id:'elnino',icon:'🌊',title:'EL NIÑO',text:'The Pacific warms, the rain moves house. Fonterra, ANZCERTA, the Amazon and the Tulip Bulb pay nothing for one full round, and the Great Barrier Reef bleaches.',
+ run(){setMood('CALM','El Niño — the rain has moved house');suspendNodes(AGRI_NODES,1);const ids=cardNodes(AGRI_NODES);log('🌊 Switched off for one round: '+(ids.length?ids.map(id=>NMAP[id].name.join(' ')).join(', '):'nothing owned — the paddocks were dry anyway')+'.');bleachReef()}},
+{id:'tariffwar',icon:'🥊',title:'A TARIFF WAR',text:'Retaliation, retaliation to the retaliation, a press conference. Every TARIFF WALL surcharge doubles until the end of next round, and the WTO’s owner collects $3 in filing fees.',
+ run(){setMood('PANIC','a tariff war — retaliation to the retaliation');S.tariffWarUntil=S.turn+2;log('🥊 The Tariff Wall surcharge is doubled until the end of next round.');const w=S.owner.w_wto;if(w!=null)gain(w,cs(3),'the filing fees roll in')}}
+];
 export const CARDS=[
 {id:'oilspike',icon:'🛢️',title:'OIL SPIKES — WTI +12%',text:'Crude goes vertical. The pit pays out, the tankers get rich, and everyone but the QuikStop owner pays $1 at the pump.',
  run(){setMood('BOOM','WTI +12% — crude goes vertical');[['oil',6,'crude windfall'],['oilgraph',2,'the graph called it'],['tanker',3,'tankers rechartered at panic rates'],['petronas',3,'the national oil company'],['barrels',2,'the barrel yard']].forEach(a=>{const o=S.owner[a[0]];if(o!=null)gain(o,cs(a[1]),a[2])});const q=S.owner.quik;S.players.forEach((pl,i)=>{if(i===q)return;if(q==null)payVoid(i,cs(1),'fuel costs — nobody minds the till');else payTo(i,cs(1),q,'fuel costs → QuikStop')});}},
@@ -1522,12 +1974,12 @@ export const CARDS=[
  run(){setMood('FRENZY','The Big Short screens to a packed house');const bs=S.owner.bigshort;if(bs!=null)gain(bs,cs(3),'packed house');const br=S.owner.brad;if(br!=null)gain(br,cs(2),'he was right there on screen');const h=S.owner.hedge;if(h!=null)gain(h,cs(2),'somebody was short the whole time');}},
 {id:'madeout',icon:'🟣',title:'MADE PAYS OUT… PROBABLY',text:'The purple graphic does… something. Money appears. Explanations do not.',
  run(){setMood(S.mood,'MADE does… something');if(Math.random()<1/3){madePay();log('🟣 MADE has paid out. Nobody knows why. NOBODY.')}else log('🟣 MADE remains unexplained. Again.');}}
-];
+].concat(CARDS_B);
 /* 🌐 Global Edition only: dealt into the deck when the world exhibits are on (the classic 24 are untouched) */
 export const WORLD_CARDS=[
 {id:'coral',icon:'🪸',title:'CORAL BLEACHING',text:'The water runs two degrees too warm. The Great Barrier Reef goes white from the edges in: its blockade and its income are switched off for the next two rounds, and whoever owns it takes +1 Cortisol.',
- run(){setMood('CALM','the reef goes white — the tourist board calls it “seasonal”');S.bleachUntil=S.turn+3;const o=S.owner.w_gbr;fxAt(o==null?S.cur:o,'🪸 BLEACHED','#e19bff',true);if(o==null)log('🪸 The Great Barrier Reef bleaches — nobody owns it; nobody notices.');else{log('🪸 The Great Barrier Reef bleaches for two rounds — its blockade and income are off, and '+pname(o)+' takes +1 Cortisol.');addCortisol(o,1,'the reef goes white','event')}}}
-];
+ run(){setMood('CALM','the reef goes white — the tourist board calls it “seasonal”');bleachReef()}}
+].concat(WORLD_CARDS_B);
 export const CARDBYID={};CARDS.forEach(c=>CARDBYID[c.id]=c);WORLD_CARDS.forEach(c=>CARDBYID[c.id]=c);
 /* the cards actually in the deck: the Global Edition adds its own */
 export function activeCards(){return S&&S.dlcWorld?CARDS.concat(WORLD_CARDS):CARDS}

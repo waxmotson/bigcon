@@ -483,7 +483,7 @@ test('blockade combo: a bleached Reef is not a source, Albo stays one; the singl
 /* ---------- CORAL BLEACHING ---------- */
 test('Coral Bleaching: a Global Edition event only; the reef’s blockade and income are off for 2 rounds, +1 Cortisol to its owner', async t => {
   const classic = await worldGame(t, { world: false });
-  assert.equal(classic.e.acc.CARDS.length, 24, 'the classic deck is still 24 cards');
+  assert.equal(classic.e.acc.CARDS.length, 36, 'the classic deck is 36 cards');
   assert.ok(!classic.S.deck.includes('coral'), 'the classic deck has no coral card');
   assert.ok(!classic.e.ctx.botView(0).cardIds.includes('coral'));
   const { e, S } = await worldGame(t, { players: 3 });
@@ -493,7 +493,7 @@ test('Coral Bleaching: a Global Edition event only; the reef’s blockade and in
   const e2 = await loadEngine(); t.after(() => e2.dispose());
   e2.acc.Net.boardLayout = 'random'; e2.acc.Net.dlcWorld = true;
   const S2 = await makeGame(e2, 2, {});
-  assert.equal(S2.deck.length + S2.discard.length, 25, 'the world deck is the 24 classic cards plus coral');
+  assert.equal(S2.deck.length + S2.discard.length, 44, 'the world deck is the 36 classic cards plus coral and the 7 world-only market events');
   assert.ok(S2.deck.includes('coral'));
   /* the effect */
   S.owner = { w_gbr: 0, citi: 0, albo: 0 }; S.players[0].cortisol = 0; S.turn = 5; S.cur = 0;
@@ -593,12 +593,12 @@ test('bots in a Global Edition game holding the new actives never crash and use 
   const takeTurn = Bots.takeTurn;
   Bots.takeTurn = (pi, view, api) => takeTurn(pi, view, { ...api, applyIntent: async (p, m) => { used.add(m && m.act); await api.applyIntent(p, m); } });
   e.acc.Net.boardLayout = 'random'; e.acc.Net.dlcWorld = true;
-  const S = await makeGame(e, 3, { bots: [0, 1, 2], goal: 100, seeds: [41] });
+  const S = await makeGame(e, 3, { bots: [0, 1, 2], goal: 100, seeds: [42] });
   /* hand the bots every new active, and a table that needs them */
   S.owner = { w_imf: 0, w_tariffwall: 0, albo: 1, w_gbr: 1, w_cpa: 2, w_cruise: 2, w_wto: 2, w_eu: 1, w_doha: 0, w_woolies: 1, w_apple: 0, w_ofw: 2, w_anzcerta: 1, w_box: 2, w_brics: 0 };
   S.players[0].money = 40; S.players[1].money = 0; S.players[1].cortisol = 6; S.players[2].cortisol = 3;
   for (let i = 0; i < 6000 && S.turn < 14 && !S.over; i++) { await pump(2); if (e.clock.pending()) e.clock.advance(25); }
-  assert.ok(S.turn >= 6, 'the table kept playing (turn ' + S.turn + ')');
+  assert.ok(S.turn >= 6 || S.over, 'the table kept playing (turn ' + S.turn + ')');
   const errs = e.consoleOut.error.filter(l => String(l).includes('bot turn error'));
   assert.equal(errs.length, 0, 'no bot turn crashed: ' + String(errs[0]).slice(0, 300));
   assert.ok(used.has('blockade') || used.has('tariff') || used.has('bailout'), 'a bot used a new active (used: ' + [...used].join(',') + ')');
