@@ -516,7 +516,7 @@ export async function applyIntent(pi,m){
   else if(act==='fly'&&S.phase==='move'&&S.mode==='fly'){await doFly(pi,m.id)}
   else if(act==='cancel'){S.mode=null;sync()}
   else if(act==='seize'&&S.phase==='action'&&!S.mode){await doSeize(pi)}
-  else if(act==='bugmode'&&S.phase==='action'&&!S.mode){if(p.intel<(S.owner.insider===pi?0:1)){sysTo(pi,'Planting a bug costs 1 Intel.');return}S.mode='bug';sync()}
+  else if(act==='bugmode'&&S.phase==='action'&&!S.mode){if(p.intel<(S.owner.insider===pi?0:1)){sysTo(pi,'Planting a bug costs 1 Intel.');return}if(!(ADJ[p.pos]||[]).some(q=>S.owner[q]!=null&&S.owner[q]!==pi&&S.bugs[q]==null&&!hiddenFrom(pi,q))){sysTo(pi,'No rival node next to you can take a bug right now.');return}S.mode='bug';sync()}
   else if(act==='bug'&&S.phase==='action'&&S.mode==='bug'){await doBug(pi,m.id)}
   else if(act==='leakmode'&&abilityPhase(pi)&&!S.mode&&p.intel>=2){S.mode='leak';sync()}
   else if((act==='leak'||act==='audit'||act==='tweet'||act==='roast')&&!isRival(pi,m.target)){sysTo(pi,'Pick a rival in THE SYNDICATE list.');return}
@@ -792,7 +792,7 @@ export async function applyIntent(pi,m){
    log(fileIcon(f)+' '+pname(pi)+' lobbies the '+f.agency+' (3 Intel) — '+fileName(f)+' drops to scrutiny '+f.s+'/'+ACCC_RULING+'.');
    sync();
   }
-  else if(act==='refermode'&&S.phase==='action'&&!S.mode&&(S.owner.accc===pi||S.owner.asic===pi)&&p.money>=4&&!S.referred){S.mode='refer';sync()}
+  else if(act==='refermode'&&S.phase==='action'&&!S.mode&&(S.owner.accc===pi||S.owner.asic===pi)&&p.money>=4&&!S.referred&&S.players.some((pl,i)=>i!==pi&&filesOf(i).some(f=>S.owner[f.agency==='ASIC'?'asic':'accc']===pi))){S.mode='refer';sync()}
   else if(act==='refer'&&S.phase==='action'&&(!S.mode||S.mode==='refer')){
    const bail=msg=>{sysTo(pi,msg);if(S.mode==='refer'){S.mode=null;sync()}};
    if(!isRival(pi,m.target)){bail('Pick a rival with an open file — never your own.');return}

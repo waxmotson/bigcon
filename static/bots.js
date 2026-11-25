@@ -785,6 +785,7 @@ export const BigConBots = (function () {
   function seizeCandidate(v, seat, nid) {
     const n = v.nmap[nid];
     if (!n || v.rubble[nid]) return null;
+    if (v.hiddenFromMe && v.hiddenFromMe[nid]) return null; /* a CLASSIFIED site: the seat cannot see it, so it never plans around it */
     const prev = v.owner[nid];
     if (prev === seat) return null;
     if (prev != null && v.noTakeover && v.noTakeover(nid)) return null; /* Antarctica is untouchable */
@@ -834,6 +835,135 @@ export const BigConBots = (function () {
       if (saved >= 3) val += saved * W.money - 3 * INTEL + 4;
     }
     return { kind: 'seize', nid, cost, base, isTake, val };
+  }
+
+  /* ================= GO FOR THE KILL =================
+     The con ends the instant a seat banks the goal while holding every node type.
+     A seat that is one seizure short of that stops being clever: it prices every
+     node of the type it lacks, walks (or flies, slipstreams, burns a favor) to
+     the cheapest one it can pay for AND still bank the goal on, and seizes it the
+     moment it arrives. If it cannot afford that yet but is close, it hoards:
+     nothing but cash-making plays until the money is there. */
+  const KILL_OK = { laylow: 1, sell: 1, push: 1, jog: 1, beach: 1, venicecool: 1 };
+  /* what seizing nid would cost this seat, in the engine's own terms (slipstream
+     comes off the list price BEFORE any takeover doubling; the Dossier drops a
+     takeover back to list). null when it cannot be taken at all. */
+  function killPrice(v, seat, nid, opt) {
+    const n = v.nmap[nid];
+    if (!n || v.rubble[nid]) return null;
+    if (v.hiddenFromMe && v.hiddenFromMe[nid]) return null;
+    const prev = v.owner[nid];
+    if (prev === seat) return null;
+    if (prev != null && v.noTakeover && v.noTakeover(nid)) return null;
+    if (v.geo && ((nid === 'geo_shahed' && v.owner['geo_missile'] === seat) || (nid === 'geo_missile' && v.owner['geo_shahed'] === seat))) return null;
+    if (v.blockades && v.blockades[nid] > v.turn) return null;
+    if (nid === 'qantas' && v.geo && v.geo.qantasGrounded) return null;
+    let base = v.seizePrice(seat, nid);
+    if (opt.slip && v.owner['f1'] === seat) base = Math.max(1, base - 2);
+    const isTake = prev != null;
+    let cost = base;
+    if (isTake) cost = (opt.dossier || v.dossier) ? base : v.takePrice(seat, nid, base);
+    /* a raid on the way to the win would strip the very node, so never walk into one */
+    if (v.players[seat].cortisol + (isTake ? 2 : 1) >= 9) return null;
+    return { nid, cost, base, isTake };
+  }
+  /* one missing type, and the nodes that would complete the set */
+  function killSetup(v, seat) {
+    const memo = v._kill || (v._kill = {});
+    if (memo[seat] !== undefined) return memo[seat];
+    let out = null;
+    const me = v.players[seat];
+    const missing = v.missingTypes(seat);
+    if (missing.length === 1 && !v.over) {
+      const goal = v.goal || 100;
+      const type = missing[0];
+      const targets = v.nodes.filter(n => n.type === type && v.nmap[n.id]).map(n => n.id);
+      let minPrice = Infinity;
+      for (const nid of targets) {
+        /* the cheapest it could ever be: a slipstream and the Dossier both applied */
+        const pr = killPrice(v, seat, nid, { slip: v.owner['f1'] === seat, dossier: me.intel >= 3 });
+        if (pr && pr.cost < minPrice) minPrice = pr.cost;
+      }
+      if (targets.length && minPrice < Infinity) {
+        const inc = Math.max(1, bookIncome(v, seat, bookOf(v, seat)));
+        /* within a few rounds of having the goal PLUS the price in hand: close enough to stop spending */
+        const saving = me.money + inc * W.homeStretch + me.intel * (v.moodRate || 2) >= goal + minPrice;
+        out = { type, goal, targets, minPrice, saving, inc };
+        /* can it win by seizing right where it stands? (with the Dossier first if that is what it takes) */
+        const slip = v.slipped === true && v.owner['f1'] === seat;
+        const here = v.nmap[me.pos] && v.nmap[me.pos].type === type ? killPrice(v, seat, me.pos, { slip, dossier: false }) : null;
+        if (here) {
+          if (me.money - here.cost >= goal) out.here = here;
+          else if (here.isTake && !v.dossier && me.intel >= 3) {
+            const d = killPrice(v, seat, me.pos, { slip, dossier: true });
+            if (d && me.money - d.cost >= goal) out.here = Object.assign({ needDossier: true }, d);
+          }
+        }
+      }
+    }
+    return (memo[seat] = out);
+  }
+  /* The best way to land on a winning seizure THIS turn: any walk (with a favor
+     and/or the slipstream) or a Qantas flight; the cheapest total outlay wins. */
+  function killMove(v, pi, kill) {
+    const me = v.players[pi];
+    const budgets = computeBudgets(v, pi);
+    const variants = [{ budget: budgets.steps, useFavor: false, useSlip: false, intel: 0, money: 0 }];
+    if (budgets.favor && budgets.steps < 9) variants.push({ budget: budgets.steps + 1, useFavor: true, useSlip: false, intel: 1, money: 0 });
+    if (budgets.slip) variants.push({ budget: budgets.steps + 2, useFavor: false, useSlip: true, intel: 0, money: 2 });
+    if (budgets.favor && budgets.slip && budgets.steps < 8) variants.push({ budget: budgets.steps + 3, useFavor: true, useSlip: true, intel: 1, money: 2 });
+    let best = null;
+    const consider = (nid, rec, variant, flyTo, travel) => {
+      for (const dossier of [false, true]) {
+        const pr = killPrice(v, pi, nid, { slip: !!(variant && variant.useSlip), dossier });
+        if (!pr) continue;
+        const intelLeft = me.intel - (variant ? variant.intel : 0);
+        if (dossier && (!pr.isTake || v.dossier || intelLeft < 3)) continue;
+        const spend = travel + pr.cost + (variant ? variant.money : 0);
+        if (me.money - spend < kill.goal) continue;
+        if (me.money - travel < pr.cost) continue; /* the toll road must not strand it short of the price */
+        const score = -spend * 10 - (rec ? rec.hops : 0) - (dossier ? 3 : 0);
+        if (!best || score > best.score) best = { score, nid, rec, variant, flyTo };
+      }
+    };
+    for (const variant of variants) {
+      const reach = planGraph(v, pi, variant.budget);
+      for (const nid of kill.targets) {
+        const rec = reach[nid];
+        if (!rec) continue;
+        consider(nid, rec, variant, null, rec.cost);
+      }
+    }
+    if (budgets.fly && me.money >= 3) {
+      for (const nid of kill.targets) {
+        if (nid === me.pos || !passable(v, nid)) continue;
+        consider(nid, null, null, nid, 3);
+      }
+    }
+    if (!best) return null;
+    return { val: 1e6 + best.score, rec: best.rec, flyTo: best.flyTo, variant: best.variant || { useFavor: false, useSlip: false } };
+  }
+  /* Saving but not there yet: close the distance to the nearest completing node, tolls permitting. */
+  function killApproach(v, pi, kill) {
+    const A = buildAdj(v);
+    const dist = {};
+    let frontier = kill.targets.slice();
+    frontier.forEach(id => { dist[id] = 0; });
+    while (frontier.length) {
+      const next = [];
+      for (const id of frontier) for (const nb of (A[id] || [])) { if (dist[nb] === undefined) { dist[nb] = dist[id] + 1; next.push(nb); } }
+      frontier = next;
+    }
+    const reach = planGraph(v, pi, computeBudgets(v, pi).steps);
+    let best = null;
+    for (const nid in reach) {
+      const d = dist[nid] === undefined ? 99 : dist[nid];
+      const rec = reach[nid];
+      /* tolls are the only thing that can eat the hoard on the way */
+      const score = -d * 100 - rec.cost * 10 - rec.hops * 0.1;
+      if (!best || score > best.score) best = { score, rec };
+    }
+    return best ? { val: 5e5 + best.score, rec: best.rec, flyTo: null, variant: { useFavor: false, useSlip: false } } : null;
   }
 
   /* ================= TURN DRIVER ================= */
@@ -975,6 +1105,12 @@ export const BigConBots = (function () {
   }
 
   function pickMovement(v, pi) {
+    const kill = killSetup(v, pi);
+    if (kill) {
+      const km = killMove(v, pi, kill);
+      if (km) return km;
+      if (kill.saving) { const ap = killApproach(v, pi, kill); if (ap) return ap; }
+    }
     const budgets = computeBudgets(v, pi);
     let best = { val: -Infinity, rec: null, flyTo: null, variant: null };
     const variants = [{ budget: budgets.steps, cost: 0, useFavor: false, useSlip: false }];
@@ -1341,6 +1477,13 @@ export const BigConBots = (function () {
   function pickAction(v, pi, refused) {
     const me = v.players[pi];
     const list = [];
+    const kill = killSetup(v, pi);
+    if (kill && kill.here) {
+      /* one seizure from the win and standing on it: nothing else matters */
+      const h = kill.here;
+      if (h.needDossier) { if (!(refused && refused.dossier)) return { kind: 'dossier', val: 1e9, continuing: true }; }
+      else if (!(refused && refused.seize)) return { kind: 'seize', nid: h.nid, cost: h.cost, base: h.base, isTake: h.isTake, val: 1e9 };
+    }
     /* ---- convergence pressure: the con has to END ----
        A game only finishes when a seat holds cash >= goal AND the full set of
        node types. So a game running long ramps hostility (+2%/round), a rival
@@ -1600,6 +1743,11 @@ export const BigConBots = (function () {
         list.push({ kind: 'dossier', val: (take.cost - take.base) * W.money - 3 * INTEL + 2, continuing: true });
       }
     }
+    /* JAMES BOND — CLASSIFIED: a free play, once per turn */
+    if (v.owner['bond007'] === pi && !v.classifiedUsed && (me.intel >= 1 || me.money >= 3)) {
+      const cl = pickClassified(v, pi);
+      if (cl && cl.val - (me.intel >= 1 ? INTEL : 3 * W.money) > 0) list.push({ kind: 'classified', nid: cl.nid, pay: me.intel >= 1 ? 'intel' : 'money', val: 100 + cl.val, continuing: true });
+    }
     /* apply the character's temperament: hostility through urg, cash plays
        through cashRush (see the convergence block at the top) */
     const ATTACK = { refer: 1, leak: 1, audit: 1, tweet: 1, roast: 1, targetpanic: 1, masspanic: 1, bondmageddon: 1, pressure: 1, stage5: 1, qantasdown: 1, oilcrash: 1, missile: 1, overtour: 1, divestmade: 1, blockade: 1 };
@@ -1609,10 +1757,62 @@ export const BigConBots = (function () {
       else if (c.kind === 'push' || c.kind === 'sell') c.val *= cashRush;
       else if (c.kind === 'laylow' && c.choice === 'cash' && nearGoal) c.val *= cashRush;
     }
+    /* saving for the kill: only cash-making plays, and selling the Intel hoard if that is what closes the gap */
+    if (kill && kill.saving) {
+      const keep = list.filter(c => KILL_OK[c.kind]);
+      if (me.intel > 0 && me.money + me.intel * v.moodRate >= kill.goal + kill.minPrice && me.money < kill.goal + kill.minPrice) {
+        keep.push({ kind: 'sell', n: me.intel, val: 1e6 });
+      }
+      list.length = 0;
+      keep.forEach(c => list.push(c));
+    }
     const open = refused ? list.filter(c => !refused[c.kind]) : list;
     let best = null;
     for (const c of open) if (!best || c.val > best.val) best = c;
     if (best && best.val < 0.55 && !(refused && refused.laylow)) return { kind: 'laylow', choice: me.cortisol >= 3 ? 'cool' : 'cash' };
+    return best;
+  }
+
+  /* CLASSIFIED: hide the node a front-runner needs for the last piece of its set (so it
+     cannot see where to go), or failing that my own best node when a rival with the cash
+     is close enough to take it. */
+  function pickClassified(v, pi) {
+    const hid = nid => (v.hidden && v.hidden[nid] && v.hidden[nid].until > v.turn) || (v.hiddenFromMe && v.hiddenFromMe[nid]);
+    const leader = leaderSeat(v, pi);
+    let best = null;
+    if (leader >= 0 && isHomeStretch(v, leader)) {
+      const miss = v.missingTypes(leader);
+      if (miss.length === 1) {
+        const cands = v.nodes.filter(n => n.type === miss[0] && !v.rubble[n.id] && !hid(n.id) && v.owner[n.id] !== leader);
+        if (cands.length && cands.length <= 4) {
+          let pick = null, pickCost = Infinity;
+          for (const n of cands) {
+            const base = v.seizePrice(leader, n.id);
+            const cost = v.owner[n.id] != null ? v.takePrice(leader, n.id, base) : base;
+            if (cost < pickCost) { pickCost = cost; pick = n; }
+          }
+          if (pick) best = { nid: pick.id, val: (20 + 50 * closeness(v, leader)) / Math.sqrt(cands.length) };
+        }
+      }
+    }
+    if (!best) {
+      const A = buildAdj(v);
+      let top = null;
+      for (const nid of myNodes(v, pi)) {
+        if (hid(nid) || v.rubble[nid]) continue;
+        const base0 = v.nmap[nid] ? v.nmap[nid].cost : 0;
+        const near = nodesWithin(v, nid, 2);
+        const threat = v.players.some((pl, j) => {
+          if (j === pi || !near.includes(pl.pos)) return false;
+          const base = v.seizePrice(j, nid);
+          return pl.money >= v.takePrice(j, nid, base);
+        });
+        if (!threat) continue;
+        const val = Math.min(10, 2 + nodeOwnValue(v, pi, nid) * 0.08) + base0 * 0.01;
+        if (!top || val > top.val) top = { nid, val };
+      }
+      if (top) best = top;
+    }
     return best;
   }
 
@@ -1783,6 +1983,13 @@ export const BigConBots = (function () {
       case 'targetpanic': await tryIntent(api, pi, { act: 'targetpanic' }); return true;
       case 'divestmade': await tryIntent(api, pi, { act: 'divestmade' }); return true;
       case 'pressure': await tryIntent(api, pi, { act: 'pressure' }); return true;
+      case 'classified': {
+        await tryIntent(api, pi, { act: 'classifiedmode', pay: pick.pay });
+        const cv = api.viewOf(pi);
+        if (!cv || cv.mode !== 'classified') return false;
+        await tryIntent(api, pi, { act: 'classified', id: pick.nid });
+        return false; /* a free action: the turn goes on */
+      }
       case 'stage5': await tryIntent(api, pi, { act: 'stage5' }); return true;
       case 'oilcrash': await tryIntent(api, pi, { act: 'oilcrash' }); return true;
       case 'qantasdown': await tryIntent(api, pi, { act: 'qantasdown' }); return true;

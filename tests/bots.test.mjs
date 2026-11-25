@@ -188,7 +188,7 @@ const PLAYER_ACTS = [
   'venicecool', 'overmode', 'overtour', 'blockmode', 'blockade',
   'spy', 'dossier', 'sweep', 'masspanic', 'targetpanic', 'divestmade',
   'bondmageddon', 'sell', 'sellall', 'laylow',
-  'marketsell', 'lobby', 'refermode', 'refer', 'dealmode', 'deal',
+  'marketsell', 'lobby', 'refermode', 'refer', 'dealmode', 'deal', 'classifiedmode', 'classified',
 ];
 const BOT_SKIPS = ['sweep', 'cancel'];
 
