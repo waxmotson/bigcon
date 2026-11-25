@@ -6,7 +6,7 @@ import { $, IS_DISCORD_ACTIVITY, Presence } from './core.js';
 import { hooks } from './hooks.js';
 import { LOG_SHOWN, Net, S } from './state.js';
 import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
-import { ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost } from './engine.js';
+import { ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost } from './engine.js';
 import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
 import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
@@ -204,7 +204,7 @@ export function priceTip(n,o){
  return '&#10;⚔️ Takeover for you: $'+cost+fee+(flat?' — never inflates':dossier?' — the Dossier holds it to list':' ('+(mult)+'× list'+times+'; doubles again after)')+'.';
 }
 export function tokenLayer(){
- const byPos={};S.players.forEach((p,i)=>{(byPos[p.pos]=byPos[p.pos]||[]).push(i)});
+ const byPos={};S.players.forEach((p,i)=>{if(isVanished(i))return;(byPos[p.pos]=byPos[p.pos]||[]).push(i)});
  const SLOTS=[[-62,-58],[62,-58],[-90,-6],[90,-6],[-62,58],[62,58],[0,-70],[0,70]];
  let s='<g pointer-events="none"><defs>';
  S.players.forEach((p,i)=>{s+='<clipPath id="faceclip'+i+'"><circle r="14"/></clipPath>'});
@@ -246,6 +246,17 @@ export function overtourTargetable(n){
  const me=Net.myIdx;
  return S&&S.phase==='action'&&S.mode==='overtour'&&myTurn()&&S.dlcGeo
   &&S.owner[n.id]!=null&&S.owner[n.id]!==me&&!S.rubble[n.id];
+}
+/* the World Expansion's picks: a node then a neighbour (chainsaw, brexit), one of yours then any node (silk road), any node (vanish) */
+export function worldPickable(n){
+ const me=Net.myIdx,k=S&&S.mode;
+ if(!S||S.phase!=='action'||!myTurn()||!S.dlcWorld||!k)return false;
+ if(k==='vanish')return !blockaded(n.id)&&canReach(n.id);
+ if(k!=='chainsaw'&&k!=='brexit'&&k!=='silkroad')return false;
+ const a=S.edgeA;
+ if(a==null)return k==='silkroad'?S.owner[n.id]===me:(ADJ[n.id]||[]).length>0;
+ if(n.id===a)return true;
+ return k==='silkroad'?!hasEdge(a,n.id):hasEdge(a,n.id);
 }
 export function blockadeTargetable(n){
  const me=Net.myIdx;
@@ -395,7 +406,7 @@ function nodeClass(n,curpos){
  if(!S||S.over)return '';
  if(S.mode==='fly')return (myTurn()&&n.id!==curpos&&canReach(n.id)&&!blockaded(n.id))?'click':'';
  if(S.mode!=='missile'&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))return 'click reach';
- if(bugTargetable(n)||missileTargetable(n)||overtourTargetable(n)||blockadeTargetable(n))return 'click target';
+ if(bugTargetable(n)||missileTargetable(n)||overtourTargetable(n)||blockadeTargetable(n)||worldPickable(n))return 'click target';
  return '';
 }
 /* ---------- the optional 3D board (static/landing/board3d.js) ----------
@@ -445,7 +456,7 @@ export function boardScene(){
  });
  const seats=S.players.map((p,i)=>{
   const seen=!S.fogOfWar||i===Net.myIdx||!!(viewer&&viewer.visited&&viewer.visited[p.pos]);
-  return {color:p.color,face:charSrc(p.char)||null,name:p.name,pos:seen&&NMAP[p.pos]?p.pos:null,raided:p.raided||0};
+  return {color:p.color,face:charSrc(p.char)||null,name:p.name,pos:seen&&!isVanished(i)&&NMAP[p.pos]?p.pos:null,raided:p.raided||0};
  });
  const edges=EDGES.filter(edgeVisible).map(e=>[e[0],e[1]]);
  const owner={},rubble={},bugs={};
@@ -658,6 +669,15 @@ export function renderSide(){
    phaseHtml='<div class="phlabel">🤝 OFFER A DEAL — USES YOUR ACTION</div>'+powline+'<p>Click a <b>rival</b> in THE SYNDICATE list, then pick one of your nodes and name a whole-dollar price ($0 up to their cash). They accept or decline in private; a declined offer still ends your turn. No Cortisol either way, and any bugs on the node are cleared.</p><button class="act" data-act="cancel">Cancel</button>';
   } else if(S.mode==='refer'){
    phaseHtml='<div class="phlabel">🧐 REFER A FILE — $4 (+1 SCRUTINY)</div>'+powline+'<p>Click a highlighted <b>rival</b> with an open file you can refer ('+(S.owner.accc===me?'ACCC: every book but monetary policy':'')+(S.owner.accc===me&&S.owner.asic===me?' · ':'')+(S.owner.asic===me?'ASIC: monetary policy':'')+'). Any ruling still waits for their own turn start.</p><button class="act" data-act="cancel">Cancel</button>';
+  } else if(S.mode==='chainsaw'||S.mode==='brexit'||S.mode==='silkroad'){
+   const lab={chainsaw:'🪚 CHAINSAW — $3 · +$4 · ONCE PER GAME',brexit:'🇬🇧 TAKE BACK CONTROL — ONCE PER GAME · +1 🔥',silkroad:'🛤️ NEW SILK ROAD — $4'}[S.mode];
+   const a=S.edgeA!=null&&NMAP[S.edgeA]?nodeName(NMAP[S.edgeA]).join(' '):null;
+   const how=S.mode==='silkroad'?(a?'Now click <b>any other node</b> to link it to <b>'+a+'</b> (click '+a+' again to start over).':'Click <b>one of your own nodes</b> to start the road.'):(a?'Now click one of the <b>neighbours</b> of <b>'+a+'</b> to cut the line between them (click '+a+' again to start over).':'Click the <b>first node</b> of the edge to cut, then one of its neighbours.');
+   phaseHtml='<div class="phlabel">'+lab+'</div>'+powline+'<p>'+how+(S.mode==='silkroad'?'':' A cut that would strand part of the board from Quikstop is refused.')+'</p><button class="act" data-act="cancel">Cancel</button>';
+  } else if(S.mode==='vanish'){
+   phaseHtml='<div class="phlabel">🌀 THE VANISH — ONCE PER GAME</div>'+powline+'<p>Click <b>any node</b>: you disappear until the start of your next turn, then reappear there. Rivals cannot target you meanwhile.</p><button class="act" data-act="cancel">Cancel</button>';
+  } else if(S.mode==='hold'){
+   phaseHtml='<div class="phlabel">🎧 PUT A RIVAL ON HOLD (rival −1 🛈)</div>'+powline+'<p>Click a <b>rival</b> in THE SYNDICATE list below.</p><button class="act" data-act="cancel">Cancel</button>';
   } else if(S.mode==='leak'||S.mode==='audit'||S.mode==='tweet'||S.mode==='roast'){
    const lab={leak:'LEAK DIRT — 2 🛈 (rival +2 🔥)',audit:'AUDIT — $4 (rival +1 🔥)',tweet:'THE TWEET — $2 (rival loses Intel)',roast:(S.spinKind==='fox'?'FOX SPIN — $2 (rival +1 🔥)':'SPIN THE PRESS — $3 (rival +1 🔥)')}[S.mode];
    phaseHtml='<div class="phlabel">'+lab+'</div>'+powline+'<p>Click a <b>rival</b> in THE SYNDICATE list below.</p><button class="act" data-act="cancel">Cancel</button>';
@@ -706,6 +726,17 @@ export function renderSide(){
    if(S.dlcGeo&&S.owner.geo_wonsan===me&&nid==='geo_wonsan')btns.push('<button class="act primary" data-act="beach"'+(!S.geoBeach?'':' disabled')+' title="Free — once per turn">🏖️ Beach day — free −2 🔥</button>');
    if(S.owner.albo===me){const blockadeTargets=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));btns.push('<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&blockadeTargets?'':' disabled')+' title="Free, once per turn: wall off any unblocked, non-rubble node until the end of next round. Blocks walking and Qantas landings; shown by a 🚧 marker on the board.">🚧 Blockade — free (once per turn)</button>');}
    if(S.dlcWorld&&S.owner.w_suez===me)btns.push('<button class="act" data-act="evergiven"'+(!S.evergivenUsed&&!blockaded('w_suez')&&!S.rubble['w_suez']?'':' disabled')+' title="Once per game: block the Suez until the end of next round. Nobody walks in or lands there — you included.">🚢 EVER GIVEN — block the Suez (once per game)</button>');
+   if(S.dlcWorld){
+    [['chainsaw','w_milei','worldmode:chainsaw','🪚 CHAINSAW — cut an edge, $3 (once per game)','Pay $3, cut any one edge of the board for good, and pocket $4.'],
+     ['brexit','w_brexit','worldmode:brexit','🇬🇧 TAKE BACK CONTROL — sever an edge (once per game)','Sever any one edge of the board for good. +1 Cortisol.'],
+     ['silkroad','w_bri','worldmode:silkroad','🛤️ NEW SILK ROAD — link two nodes, $4','Pay $4 to add a permanent edge from one of your nodes to any other node.'],
+     ['advance','w_nigprince','advance','👑 ADVANCE FEE — $2, coin flip for $5','Pay $2: heads you receive $5, tails nothing at all.'],
+     ['carry','w_watanabe','carry','👛 CARRY TRADE — borrow $6, repay $9 next turn','Borrow $6 now; repay $9 at the start of your next turn or take +3 Cortisol.'],
+     ['hold','w_bangalore','worldmode:hold','🎧 PUT A RIVAL ON HOLD — they lose 1 🛈','Pick a rival: they lose 1 Intel. Once per turn.'],
+     ['carbon','w_amazon','carbon','🌳 SELL CARBON CREDITS — $3 per non-commodity node','Once per turn: $3 for every node of yours that is not a COMMODITY.'],
+     ['vanish','w_bermuda','worldmode:vanish','🌀 THE VANISH — reappear anywhere (once per game)','Disappear until your next turn; rivals cannot target you. You reappear at any node you name.']
+    ].forEach(([k,nid,act,label,tip])=>{if(S.owner[nid]!==me)return;const why=worldBlocked(me,k);btns.push('<button class="act" data-act="'+act+'"'+(why?' disabled':'')+' title="'+esc(why||tip)+'">'+label+'</button>')});
+   }
    /* ---- 🧐 THE REGULATORS' FILES & NODE DEALS ---- */
    const myFiles=filesOf(me);
    if(myFiles.length){
@@ -741,7 +772,7 @@ export function renderSide(){
  }
  const prows=S.players.map((pl,i)=>{
   const nodes=NODES.filter(nn=>S.owner[nn.id]===i).length;
-  const targetable=isTurn&&i!==me&&((S.phase==='action'||(S.phase==='move'&&S.owner.back===me&&!S.backroomAbilityUsed))&&(S.mode==='leak'||S.mode==='audit'||S.mode==='tweet'||S.mode==='roast')||(S.phase==='action'&&(S.mode==='deal'||(S.mode==='refer'&&referableFiles(i).length))));
+  const targetable=isTurn&&i!==me&&((S.phase==='action'||(S.phase==='move'&&S.owner.back===me&&!S.backroomAbilityUsed))&&(S.mode==='leak'||S.mode==='audit'||S.mode==='tweet'||S.mode==='roast'||S.mode==='hold')||(S.phase==='action'&&(S.mode==='deal'||(S.mode==='refer'&&referableFiles(i).length))));
   const fl=filesOf(i);
   const face=charSrc(pl.char);
   return '<div class="prow'+(i===me?' me':'')+(targetable?' targetable':'')+(pl.cortisol>=6?' hot':'')+'" data-rival="'+i+'" style="--pc:'+pl.color+'">'
@@ -871,6 +902,8 @@ export function tapNode(id){
   else if(S.mode==='missile')dispatch({act:'missile',id});
   else if(S.mode==='overtour')dispatch({act:'overtour',id});
   else if(S.mode==='blockade')dispatch({act:'blockade',id});
+  else if(S.mode==='vanish')dispatch({act:'vanish',id});
+  else if(S.mode==='chainsaw'||S.mode==='brexit'||S.mode==='silkroad')dispatch({act:'edgepick',id});
  }
 }
 /* initGame / enterGame: leave the setup screen and show the board. */
@@ -973,13 +1006,14 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
  const row=e.target.closest('.prow[data-rival]');
  if(row&&(S.phase==='action'||(S.phase==='move'&&S.owner.back===Net.myIdx&&!S.backroomAbilityUsed))&&S.cur===Net.myIdx){
   const ri=+row.dataset.rival;if(ri===Net.myIdx)return;
-  if(S.mode&&['leak','audit','tweet','roast'].includes(S.mode)){dispatch({act:S.mode,target:ri});return}
+  if(S.mode&&['leak','audit','tweet','roast','hold'].includes(S.mode)){dispatch({act:S.mode,target:ri});return}
   if(S.mode==='deal'&&S.phase==='action'){dealFlow(ri);return}
   if(S.mode==='refer'&&S.phase==='action'){referFlow(ri);return}
  }
  const b=e.target.closest('button[data-act]');
  if(!b||b.disabled)return;
  const act=b.dataset.act;
+ if(act.startsWith('worldmode:')){dispatch({act:'worldmode',kind:act.slice(10)});return}
  if(act==='rules'){showRules();return}
  if(act==='notifications'){toggleTurnAlerts();return}
  if(act==='copyrecord'){
@@ -1026,6 +1060,7 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
    case 'venicecool':dispatch({act:'venicecool'});break;
    case 'blockmode':dispatch({act:'blockmode'});break;
    case 'evergiven':dispatch({act:'evergiven'});break;
+   case 'advance':case 'carry':case 'carbon':dispatch({act:b.dataset.act});break;
    case 'rebuildfree':dispatch({act:'rebuild',free:true});break;
   case 'spin':dispatch({act:'spin',kind:b.dataset.kind});break;
   case 'cook':dispatch({act:'cook'});break;

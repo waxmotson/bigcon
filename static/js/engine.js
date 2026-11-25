@@ -11,7 +11,7 @@
 import { hooks, setHooks } from './hooks.js';
 import { S, setS, Net, pubState } from './state.js';
 import { clampGoal, esc, shuffle } from './util.js';
-import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld } from './data.js';
+import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld, setEdges, rebuildAdj } from './data.js';
 import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState } from './boards.js';
 import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays } from './world.js';
 export { hooks, setHooks };
@@ -290,6 +290,15 @@ export async function startTurn(){
  log('—— TURN '+S.turn+' · '+pname(S.cur)+' ——');
  S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;S.lobbied=false;S.referred=false;
  if(S.dlcGeo){S.geoMissiled=false;S.geoBeach=false;S.geoBoeing=false;S.geoCrash=false;S.geoStage5=false;S.geoVenice=false}
+ if(S.dlcWorld){
+  S.wTurn={};
+  /* 🌐 THE BERMUDA TRIANGLE: the vanished seat reappears where it said it would */
+  const vd=S.vanished&&S.vanished[S.cur];
+  if(vd!=null){
+   delete S.vanished[S.cur];
+   if(NMAP[vd]){const vp=S.players[S.cur];vp.pos=vd;if(vp.visited)vp.visited[vd]=true;fxAt(S.cur,'🌀 REAPPEARS','#9ad7ff');log('🌀 '+pname(S.cur)+' reappears out of the Bermuda Triangle at '+nodeName(NMAP[vd]).join(' ')+'.')}
+  }
+ }
  S.bondmageddonUsed=false;
  if(S.fx.length>30)S.fx=S.fx.slice(-30);
  /* Expired blockades come down the moment the rotation that blocked them is done. */
@@ -327,6 +336,12 @@ export async function startTurn(){
   else if(f.c>0)addCortisol(S.cur,f.c,f.name+' weighs on you');
   if(f.s)giveIntel(S.cur,f.s,f.name);
  });
+ /* 🌐 MRS WATANABE: the carry trade comes due */
+ if(S.dlcWorld&&S.carry&&S.carry[S.cur]){
+  delete S.carry[S.cur];
+  if(p.money>=CARRY_REPAY){p.money-=CARRY_REPAY;fxAt(S.cur,'−$'+CARRY_REPAY,'#ff6b5e');log('👛 The carry trade unwinds: '+pname(S.cur)+' repays $'+CARRY_REPAY+' on the $'+CARRY_LOAN+' borrowed from Tokyo.')}
+  else{log('👛 The carry trade unwinds and '+pname(S.cur)+' cannot repay the $'+CARRY_REPAY+' — Tokyo collects in Cortisol instead.');addCortisol(S.cur,CARRY_CORTISOL,'the carry trade is called in',false,true)}
+ }
  if(S.dlcGeo&&own('geo_pillars')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🧱 ESG SHIELD — the Pillars absorb 1 Cortisol (now '+p.cortisol+').')}
  if(S.dlcGeo&&S.ov){
   const ov=S.ov,turnIndex=S.turn*S.players.length+S.cur;
@@ -823,7 +838,142 @@ export async function applyIntent(pi,m){
  } finally {hooks.clearTimeout(Net.lockTimer);Net.lockTimer=null;Net.lock=false}
 }
 /* 🌐 World Expansion actives. Each handler runs inside applyIntent (the turn lock held, host-side), validates for itself and ends the action through finishNodeAbility. */
+/* 🌐 the edge graph is part of the game state (S.boardEdges), so cuts and new roads survive sync, reconnects and the 3D snapshot */
+const CARRY_LOAN=6,CARRY_REPAY=9,CARRY_CORTISOL=3;
+export function isVanished(i){return !!(S&&S.dlcWorld&&S.vanished&&S.vanished[i]!=null)}
+export function hasEdge(a,b){return EDGES.some(e=>(e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a))}
+function commitEdges(list){S.boardEdges=list.map(e=>e.slice());setEdges(list.map(e=>e.slice()));rebuildAdj()}
+function reachFromQuik(edges){
+ const adj={};edges.forEach(e=>{if(!NMAP[e[0]]||!NMAP[e[1]])return;(adj[e[0]]=adj[e[0]]||[]).push(e[1]);(adj[e[1]]=adj[e[1]]||[]).push(e[0])});
+ const seen=new Set(['quik']),q=['quik'];
+ while(q.length){const c=q.pop();(adj[c]||[]).forEach(x=>{if(!seen.has(x)){seen.add(x);q.push(x)}})}
+ return seen;
+}
+/* RULE: no cut may strand a node from Quikstop that could reach it before (the board stays one connected piece) */
+export function cutKeepsBoardConnected(a,b){
+ const rest=EDGES.filter(e=>!((e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a)));
+ return reachFromQuik(rest).size>=reachFromQuik(EDGES).size;
+}
+/* why a World Expansion active cannot be used right now ('' when it can) */
+export function worldBlocked(pi,kind){
+ if(!S||!S.dlcWorld)return 'The World Expansion is not in play.';
+ const p=S.players[pi],used=S.wTurn||{},game=S.wGame||{};
+ const need={chainsaw:'w_milei',brexit:'w_brexit',silkroad:'w_bri',carry:'w_watanabe',advance:'w_nigprince',hold:'w_bangalore',carbon:'w_amazon',vanish:'w_bermuda'}[kind];
+ if(!need||!NMAP[need])return 'Unknown ability.';
+ if(S.owner[need]!==pi)return 'You do not control '+nodeName(NMAP[need]).join(' ')+'.';
+ if(S.rubble&&S.rubble[need])return 'That node is rubble.';
+ switch(kind){
+  case 'chainsaw':if(game.milei)return 'The chainsaw has already been used this game.';if(p.money<3)return 'The chainsaw costs $3.';break;
+  case 'brexit':if(game.brexit)return 'Brexit has already happened.';break;
+  case 'silkroad':if(used.silkroad)return 'You already built a road this turn.';if(p.money<4)return 'A new road costs $4.';break;
+  case 'carry':if(S.carry&&S.carry[pi])return 'You still owe Tokyo from the last carry trade.';break;
+  case 'advance':if(used.advance)return 'The prince only writes once a turn.';if(p.money<2)return 'The advance fee is $2.';break;
+  case 'hold':if(used.hold)return 'You already put someone on hold this turn.';if(!S.players.some((x,i)=>i!==pi&&!isVanished(i)&&x.intel>=1))return 'No rival has any Intel to lose.';break;
+  case 'carbon':if(used.carbon)return 'You already sold credits this turn.';break;
+  case 'vanish':if(game.bermuda)return 'You have already vanished once this game.';break;
+ }
+ return '';
+}
 const WORLD_ACTS={
+ /* enter a targeting mode: chainsaw / brexit / silkroad (pick an edge), vanish (pick a node), hold (pick a rival) */
+ async worldmode(pi,m){
+  if(!abilityPhase(pi)||S.mode||!['chainsaw','brexit','silkroad','vanish','hold'].includes(m.kind))return;
+  const why=worldBlocked(pi,m.kind);
+  if(why){sysTo(pi,why);return}
+  S.edgeA=null;S.mode=m.kind;sync();
+ },
+ /* the two clicks that name an edge: a node, then one of its neighbours (for the Silk Road, any other node) */
+ async edgepick(pi,m){
+  const k=S.mode;
+  if(!abilityPhase(pi)||!['chainsaw','brexit','silkroad'].includes(k)||!NMAP[m.id])return;
+  const bail=msg=>{sysTo(pi,msg);S.mode=null;S.edgeA=null;sync()};
+  const why=worldBlocked(pi,k);
+  if(why){bail(why);return}
+  const id=m.id,a=S.edgeA;
+  if(a==null||!NMAP[a]){
+   if(k==='silkroad'&&S.owner[id]!==pi){sysTo(pi,'Start the new road from one of YOUR nodes.');return}
+   S.edgeA=id;sync();return;
+  }
+  if(id===a){S.edgeA=null;sync();return}
+  const n1=NMAP[a],n2=NMAP[id],pn=q=>nodeName(q).join(' '),p=S.players[pi];
+  if(k==='silkroad'){
+   if(hasEdge(a,id)){sysTo(pi,pn(n1)+' and '+pn(n2)+' are already linked.');return}
+   p.money-=4;fxAt(pi,'−$4','#ff6b5e');
+   commitEdges(EDGES.concat([[a,id]]));
+   (S.wTurn||(S.wTurn={})).silkroad=1;S.mode=null;S.edgeA=null;
+   fx((n1.x+n2.x)/2,(n1.y+n2.y)/2,'🛤️ NEW ROAD','#f5c542');
+   log('🛤️ '+pname(pi)+' pays $4 and opens the NEW SILK ROAD: '+pn(n1)+' ⇄ '+pn(n2)+' — a permanent link, for everyone.');
+   await finishNodeAbility(pi);return;
+  }
+  if(!hasEdge(a,id)){S.edgeA=id;sync();return} /* not a neighbour: start again from here */
+  if(!cutKeepsBoardConnected(a,id)){sysTo(pi,'That cut would strand part of the board from Quikstop — pick another edge.');return}
+  const chain=k==='chainsaw';
+  commitEdges(EDGES.filter(e=>!((e[0]===a&&e[1]===id)||(e[0]===id&&e[1]===a))));
+  S.wGame=S.wGame||{};S.wGame[chain?'milei':'brexit']=1;S.mode=null;S.edgeA=null;
+  fx((n1.x+n2.x)/2,(n1.y+n2.y)/2,chain?'🪚 CUT':'🇬🇧 SEVERED','#ff6b5e');
+  if(chain){
+   p.money-=3;fxAt(pi,'−$3','#ff6b5e');
+   log('🪚 AFUERA! '+pname(pi)+' pays $3 and takes the chainsaw to the line between '+pn(n1)+' and '+pn(n2)+' — severed for good.');
+   gain(pi,4,'the savings from the cut');
+  }else{
+   log('🇬🇧 TAKE BACK CONTROL! '+pname(pi)+' severs the link between '+pn(n1)+' and '+pn(n2)+' for the rest of the con.');
+   addCortisol(pi,1,'the fallout of Brexit',false,true);
+  }
+  await finishNodeAbility(pi);
+ },
+ /* THE NIGERIAN PRINCE: pay $2, flip a coin (decided here, host-side) */
+ async advance(pi){
+  if(!abilityPhase(pi)||S.mode)return;
+  const why=worldBlocked(pi,'advance');if(why){sysTo(pi,why);return}
+  S.players[pi].money-=2;fxAt(pi,'−$2','#ff6b5e');(S.wTurn||(S.wTurn={})).advance=1;
+  if(Math.random()<0.5){log('👑 '+pname(pi)+' wires the $2 advance fee — and the prince delivers! Heads: +$5.');gain(pi,5,'the prince came through')}
+  else log('👑 '+pname(pi)+' wires the $2 advance fee. Tails: the prince has gone silent. The inbox is empty.');
+  await finishNodeAbility(pi);
+ },
+ /* MRS WATANABE: borrow now, repay (or be punished) at the start of your next turn */
+ async carry(pi){
+  if(!abilityPhase(pi)||S.mode)return;
+  const why=worldBlocked(pi,'carry');if(why){sysTo(pi,why);return}
+  S.players[pi].money+=CARRY_LOAN;(S.carry||(S.carry={}))[pi]=1;
+  fxAt(pi,'+$'+CARRY_LOAN,'#7fe08d');
+  log('👛 '+pname(pi)+' borrows $'+CARRY_LOAN+' against Tokyo’s zero rates — $'+CARRY_REPAY+' is due at the start of their next turn, or '+CARRY_CORTISOL+' Cortisol.');
+  await finishNodeAbility(pi);
+ },
+ /* THE BANGALORE CALL CENTRE: put a rival on hold */
+ async hold(pi,m){
+  if(!abilityPhase(pi)||S.mode!=='hold')return;
+  const why=worldBlocked(pi,'hold');
+  if(why){sysTo(pi,why);S.mode=null;sync();return}
+  if(!isRival(pi,m.target)){sysTo(pi,'Pick a rival in THE SYNDICATE list.');return}
+  const t=S.players[m.target];
+  if(t.intel<1){sysTo(pi,pname(m.target)+' has no Intel left to lose.');return}
+  t.intel-=1;(S.wTurn||(S.wTurn={})).hold=1;S.mode=null;
+  fxAt(m.target,'🎧 ON HOLD 🛈−1','#55c1ff');
+  log('🎧 '+pname(pi)+' puts '+pname(m.target)+' on hold — your call is important to us. '+pname(m.target)+' loses 1 Intel.');
+  await finishNodeAbility(pi);
+ },
+ /* THE AMAZON: sell carbon credits */
+ async carbon(pi){
+  if(!abilityPhase(pi)||S.mode)return;
+  const why=worldBlocked(pi,'carbon');if(why){sysTo(pi,why);return}
+  const cnt=NODES.filter(n=>S.owner[n.id]===pi&&n.type!=='COMMODITY').length;
+  (S.wTurn||(S.wTurn={})).carbon=1;
+  log('🌳 '+pname(pi)+' sells carbon credits on the canopy: '+cnt+' non-commodity node'+(cnt===1?'':'s')+' × $3.');
+  gain(pi,3*cnt,'carbon credits');
+  await finishNodeAbility(pi);
+ },
+ /* THE BERMUDA TRIANGLE: name where you will reappear, then vanish until the start of your next turn */
+ async vanish(pi,m){
+  if(!abilityPhase(pi)||S.mode!=='vanish')return;
+  const why=worldBlocked(pi,'vanish');
+  if(why){sysTo(pi,why);S.mode=null;sync();return}
+  const n=NMAP[m.id];
+  if(!n||blockaded(n.id)||!canReach(n.id)){sysTo(pi,'You cannot reappear there.');return}
+  (S.vanished||(S.vanished={}))[pi]=n.id;(S.wGame||(S.wGame={})).bermuda=1;S.mode=null;
+  fxAt(pi,'🌀 VANISHED','#9ad7ff');
+  log('🌀 '+pname(pi)+' vanishes into the Bermuda Triangle — untouchable until the start of their next turn, when they reappear at '+nodeName(n).join(' ')+'.');
+  await finishNodeAbility(pi);
+ },
  /* SUEZ: the Ever Given, once per game, in your action phase */
  async evergiven(pi){
   if(S.phase!=='action'||S.mode||S.owner.w_suez!==pi||S.evergivenUsed)return;
@@ -836,7 +986,7 @@ const WORLD_ACTS={
  }
 };
 /* A seat index from the wire: a real seat at this table that is not the actor. */
-export function isRival(pi,t){return Number.isInteger(t)&&t!==pi&&!!(S&&S.players[t])}
+export function isRival(pi,t){return Number.isInteger(t)&&t!==pi&&!!(S&&S.players[t])&&!isVanished(t)}
 export function canUseBackroomAbility(pi){return !!(S&&S.phase==='move'&&S.cur===pi&&S.owner.back===pi&&!S.backroomAbilityUsed&&S.steps>=2)}
 export function abilityPhase(pi){return !!(S&&(S.phase==='action'||canUseBackroomAbility(pi)))}
 export async function finishNodeAbility(pi){

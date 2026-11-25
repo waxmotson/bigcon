@@ -52,7 +52,7 @@ test('every world node has the required fields, a valid type, a geo and balanced
     for (const r of refs) assert.ok(all.has(r), n.id + ' references unknown ' + r);
     for (const cid of Object.keys(f.e || {})) assert.ok(engine.acc.CARDBYID[cid], n.id + ' references unknown card ' + cid);
   }
-  assert.ok(WORLD_NODES.filter(n => n.todo).length >= 5, "complex actives are flagged todo");
+  assert.equal(WORLD_NODES.filter(n => n.todo).length, 0, "every active is wired up now, so none is flagged todo");
 });
 
 test('worldmap layout places every node (base + geo + world) at its real place, connected from an Australian Quikstop', { timeout: 60000 }, async t => {

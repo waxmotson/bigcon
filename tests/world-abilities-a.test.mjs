@@ -23,7 +23,7 @@ async function worldGame(t, { geo = true, players = 2 } = {}) {
 }
 const armAction = (S, cur = 0) => { S.cur = cur; S.phase = 'action'; S.mode = null; };
 
-test('the abilities in this batch are no longer flagged todo, and the rest still are', async () => {
+test('the abilities in this batch are no longer flagged todo', async () => {
   const W = await import('../static/js/world.js');
   const done = ['w_powell', 'w_svb', 'w_cs', 'w_nordstream', 'w_evergrande', 'w_panama', 'w_hormuz', 'w_suez', 'w_lloyds', 'w_vatican', 'w_antarctica', 'w_svalbard'];
   for (const id of done) {
@@ -32,7 +32,7 @@ test('the abilities in this batch are no longer flagged todo, and the rest still
     assert.ok(!n.todo, id + ' is live');
     assert.ok(!/Phase 2/.test(n.sp), id + ' sp has no leftover phase-2 marker');
   }
-  assert.ok(W.WORLD_NODES.filter(n => n.todo).length >= 5, 'the actives are still waiting');
+  assert.equal(W.WORLD_NODES.filter(n => n.todo).length, 0, 'batch B finished the rest');
 });
 
 /* ---------- POWELL ---------- */
