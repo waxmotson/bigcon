@@ -478,10 +478,18 @@ test('Antarctica is a long chain of territories with four gateways and no contin
     assert.ok(n.geo[0] < -60 && !n.image && n.sp && n.sub, id + ' is a polar text card');
   }
   for (const geo of [false, true]) for (const seed of [71, 72, 73]) {
-    const { NMAP, ADJ, gen } = await seeded(t, seed, geo);
+    const { e, NMAP, ADJ, gen } = await seeded(t, seed, geo);
+    const e0w = () => e.f.worldMapMetrics().w;
     const reg = id => W.regionOf(NMAP[id]);
     const off = gen.edges.filter(([a, b]) => (reg(a) === 'ANT') !== (reg(b) === 'ANT')).map(([a, b]) => (reg(a) === 'ANT' ? [a, b] : [b, a]).join('>')).sort();
     assert.deepEqual(off, ['w_aq_aate>mpc', 'w_aq_gbr>w_milei', 'w_aq_qml>w_debeers', 'w_aq_ross>w_anzcerta'].sort(), 'the four gateways only');
+    /* the chain is closed into a ring by the date-line wrap: every node has exactly two Antarctic neighbours */
+    assert.ok(W.WORLD_WRAPS.some(([a, b]) => [a, b].sort().join() === ['w_aq_mbl', 'w_aq_ross'].sort().join()), 'the Ross Dependency wraps to Marie Byrd Land');
+    assert.ok(ADJ.w_aq_ross.includes('w_aq_mbl') && ADJ.w_aq_mbl.includes('w_aq_ross'), 'the wrap is a walkable edge');
+    assert.ok(Math.abs(NMAP.w_aq_ross.x - NMAP.w_aq_mbl.x) > e0w(NMAP) * 0.6, 'and it spans the canvas');
+    for (const id of ring) assert.equal(ADJ[id].filter(o => reg(o) === 'ANT').length, 2, id + ' has exactly 2 Antarctic neighbours');
+    /* circling the continent: eastward from Marie Byrd visits all ten */
+    { const seenR = bfs(Object.fromEntries(ring.map(id => [id, ADJ[id].filter(o => reg(o) === 'ANT')])), 'w_aq_mbl'); assert.equal(seenR.size, 10); assert.equal(seenR.get('w_antarctica'), 4, 'Treaty is 4 hops from Marie Byrd either way round'); }
     for (const id of ring) {
       const outside = new Set(ADJ[id].filter(o => reg(o) !== 'ANT').map(reg));
       assert.ok(outside.size <= 1, id + ' touches at most one outside region: ' + [...outside]);

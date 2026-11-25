@@ -348,7 +348,7 @@ const geoById=id=>{const n=WORLD_NODES.find(x=>x.id===id);return n?n.geo:(GEO_AN
 const inAusNz=g=>!!g&&((g[0]<=-9&&g[0]>=-48&&g[1]>=112&&g[1]<=154)||(g[0]<=-34&&g[0]>=-48&&g[1]>=165&&g[1]<=180));
 export const AUSNZ=new Set(Object.keys(GEO_ANCHORS).concat(WORLD_NODE_IDS).filter(id=>!WORLD_FLOATING.includes(id)&&inAusNz(geoById(id))));
 /* edges that cross the date line: drawn as a pair of arrows off the right edge and back in at the left */
-export const WORLD_WRAPS=[['rock','w_fiji']];
+export const WORLD_WRAPS=[['rock','w_fiji'],['w_aq_ross','w_aq_mbl']];
 /* The ONLY links between regions (everything else is a local web, see generateWorldMapBoard). Walking across the world is meant to be
    slow: the chokepoints are the gateways (Panama, Suez, Hormuz, Malacca, Antarctica), the North Atlantic corridor is the single way from
    Europe to North America (via Iceland and Greenland), and a handful of overland and island hops join neighbouring regions. There are
@@ -363,8 +363,8 @@ export const WORLD_ROUTES=[
  /* Malacca: South Asia and South-East Asia */ ['w_malacca','w_srilanka'],['w_malacca','petronas'],['w_malacca','w_temasek'],
  /* the overland road across Eurasia: Moscow, the steppe, the Chinese north */ ['w_kremlin','w_kazatom'],['w_kazatom','w_baotou'],
  /* South-East Asia: the Pacific rim to the north, the Indonesian islands to the south */ ['geo_scs','w_hsbc'],['w_nickel','forklift'],
- /* Antarctica: ten territories chained west to east along the ice; ONLY FOUR links leave it: the Peninsula to South America, Queen Maud Land to South Africa, the Australian Antarctic Territory to Hobart and the Ross Dependency to Christchurch */
- ['w_aq_mbl','w_aq_chl'],['w_aq_chl','w_aq_gbr'],['w_aq_gbr','w_aq_arg'],['w_aq_arg','w_antarctica'],['w_antarctica','w_aq_qml'],['w_aq_qml','w_aq_aatw'],['w_aq_aatw','w_aq_adelie'],['w_aq_adelie','w_aq_aate'],['w_aq_aate','w_aq_ross'],
+ /* Antarctica: ten territories chained west to east along the ice and closed into a RING by a date-line wrap (Ross Dependency to Marie Byrd Land); ONLY FOUR links leave it: the Peninsula to South America, Queen Maud Land to South Africa, the Australian Antarctic Territory to Hobart and the Ross Dependency to Christchurch */
+ ['w_aq_ross','w_aq_mbl'],['w_aq_mbl','w_aq_chl'],['w_aq_chl','w_aq_gbr'],['w_aq_gbr','w_aq_arg'],['w_aq_arg','w_antarctica'],['w_antarctica','w_aq_qml'],['w_aq_qml','w_aq_aatw'],['w_aq_aatw','w_aq_adelie'],['w_aq_adelie','w_aq_aate'],['w_aq_aate','w_aq_ross'],
  ['w_aq_gbr','w_milei'],['w_aq_qml','w_debeers'],['w_aq_aate','mpc'],['w_aq_ross','w_anzcerta'],
  /* the Pacific islands */ ['w_fiji','geo_tuvalu'],['w_nauru','geo_tuvalu'],['w_png','w_nauru']
 ];
