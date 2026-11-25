@@ -6,7 +6,7 @@ import { $, IS_DISCORD_ACTIVITY, Presence } from './core.js';
 import { hooks } from './hooks.js';
 import { LOG_SHOWN, Net, S } from './state.js';
 import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
-import { ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost } from './engine.js';
+import { ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost } from './engine.js';
 import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
 import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
@@ -114,7 +114,7 @@ export function moodBoost(n){
    path and the picture takes over — nothing else has to change. */
 export function placeholderCardSVG(n,w,h){
  const esc=t=>String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
- const col=TYPE_COLORS[n.type]||'#168388',lines=(n.name||[n.id]).slice(0,3),longest=Math.max(...lines.map(l=>String(l).length),4);
+ const col=TYPE_COLORS[n.type]||'#168388',lines=(nodeName(n)||[n.id]).slice(0,3),longest=Math.max(...lines.map(l=>String(l).length),4);
  const fs=Math.max(9,Math.min(17,(w-52)/(0.64*longest))),ty=-(lines.length-1)*fs*0.55+fs*0.3;
  return '<g class="node-card"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="#17201f" stroke="'+col+'" stroke-width="3"/>'
   +'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="14" fill="'+col+'"/>'
@@ -137,7 +137,7 @@ export function nodeSVG(n,cls){
  const ownr=o!=null;
  const oc=ownr?S.players[o].color:'#8a7a5f';
  const bug=S&&S.bugs[n.id]!=null;
- const rb=S&&S.dlcGeo&&S.rubble[n.id];
+ const rb=S&&S.rubble&&S.rubble[n.id];
  const ot=S&&S.dlcGeo&&S.ov&&S.ov.nid===n.id;
  const gq=S&&S.dlcGeo&&n.id==='qantas'&&qantasGrounded();
  const md=MOODS[S?S.mood:'CALM'];
@@ -170,10 +170,10 @@ export function nodeSVG(n,cls){
 /* A node's hover text, as plain lines: the SVG board's <title> and the 3D board's tooltip. */
 export function nodeTip(n){
  const o=S?S.owner[n.id]:null;
- const rb=S&&S.dlcGeo&&S.rubble[n.id];
+ const rb=S&&S.rubble&&S.rubble[n.id];
  const ot=S&&S.dlcGeo&&S.ov&&S.ov.nid===n.id;
  const bl=S&&blockaded(n.id);
- let t=n.name.join(' ')+' — '+n.type+' · $'+n.income+'/turn · seize $'+n.cost+'\n'+(n.sub||'')+'\n'+(n.sp||'');
+ let t=nodeName(n).join(' ')+' — '+n.type+' · $'+n.income+'/turn · seize $'+n.cost+'\n'+(n.sub||'')+'\n'+(n.sp||'');
  if(n.todo)t+='\n⚙ Ability still being wired up — income, price and seizing already work.';
  if(bl)t+='\n🚧 BLOCKADED — entry and Qantas landing are prohibited until the blockade expires.';
  if(rb)t+='\n💥 RUBBLE — arrive and pay $'+n.cost+' in your action phase to rebuild. No income, nothing to seize until rebuilt.';
@@ -441,7 +441,7 @@ export function boardScene(){
  const nodes=NODES.map(n=>{
   const cls=nodeClass(n,curpos),k=known(n.id);
   /* ring layouts turn cards along the ring; standing up, every card faces the camera instead */
-  return {id:n.id,x:n.x,y:n.y,rot:Math.abs(n.rot||0)<=20?n.rot||0:0,type:n.type,name:n.name.join(' '),known:k,click:cls.indexOf('click')>=0,reach:cls.indexOf('reach')>=0,target:cls.indexOf('target')>=0,tip:k?nodeTip(n):''};
+  return {id:n.id,x:n.x,y:n.y,rot:Math.abs(n.rot||0)<=20?n.rot||0:0,type:n.type,name:nodeName(n).join(' '),known:k,click:cls.indexOf('click')>=0,reach:cls.indexOf('reach')>=0,target:cls.indexOf('target')>=0,tip:k?nodeTip(n):''};
  });
  const seats=S.players.map((p,i)=>{
   const seen=!S.fogOfWar||i===Net.myIdx||!!(viewer&&viewer.visited&&viewer.visited[p.pos]);
@@ -452,7 +452,7 @@ export function boardScene(){
  NODES.forEach(n=>{
   if(!known(n.id))return;
   if(S.owner[n.id]!=null)owner[n.id]=S.owner[n.id];
-  if(S.dlcGeo&&S.rubble&&S.rubble[n.id])rubble[n.id]=1;
+  if(S.rubble&&S.rubble[n.id])rubble[n.id]=1;
   if(S.bugs&&S.bugs[n.id]!=null)bugs[n.id]=S.bugs[n.id];
  });
  const moving=!S.over&&S.phase==='move'&&S.mode!=='fly'&&S.steps>0;
@@ -671,9 +671,12 @@ export function renderSide(){
     btns.push('<div class="ownnote">You already control <b>'+n.name.join(' ')+'</b>.</div>');
     if(nid==='sisy')btns.push('<button class="act primary" data-act="push">Push the boulder — +$'+(S.sisyPayout||10)+' (next push doubles)</button>');
     if(nid==='asics')btns.push('<button class="act primary" data-act="jog">Jog a lap — free −1 🔥</button>');
-   }else if(S.dlcGeo&&S.rubble&&S.rubble[nid]){
-    btns.push('<button class="act primary" data-act="rebuild"'+(p.money>=n.cost?'':' disabled')+'>♻️ Rebuild '+n.name.join(' ')+' — $'+n.cost+' (returns unowned — first bids from next turn)</button>');
+   }else if(S.rubble&&S.rubble[nid]){
+    btns.push('<button class="act primary" data-act="rebuild"'+(p.money>=n.cost?'':' disabled')+'>♻️ Rebuild '+nodeName(n).join(' ')+' — $'+n.cost+' (returns unowned — first bids from next turn)</button>');
+    if(svalbardFreeRebuild(me))btns.push('<button class="act primary" data-act="rebuildfree" title="Once per game: the Seed Vault pays for the rebuild">🌱 Rebuild FREE — Seed Vault (once per game)</button>');
     btns.push('<div class="ownnote">Rubble since a missile strike — no income, nothing to seize, until it is rebuilt.</div>');
+   }else if(isTake&&noTakeover(nid)){
+    btns.push('<div class="ownnote">🐧 <b>'+n.name.join(' ')+'</b> is UNTOUCHABLE — no hostile takeover of it is ever possible.</div>');
    }else{
     const afford=maxPay>=cost;
     const lbl=isTake?('Hostile takeover — $'+cost+(flatSeize(nid)?' (never inflates)':S.dossier?' (DOSSIER: list price)':' (takeover '+(S.seizeCount[nid]||0)+'×)')):('Seize '+n.name.join(' ')+' — $'+cost);
@@ -702,6 +705,7 @@ export function renderSide(){
    }
    if(S.dlcGeo&&S.owner.geo_wonsan===me&&nid==='geo_wonsan')btns.push('<button class="act primary" data-act="beach"'+(!S.geoBeach?'':' disabled')+' title="Free — once per turn">🏖️ Beach day — free −2 🔥</button>');
    if(S.owner.albo===me){const blockadeTargets=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));btns.push('<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&blockadeTargets?'':' disabled')+' title="Free, once per turn: wall off any unblocked, non-rubble node until the end of next round. Blocks walking and Qantas landings; shown by a 🚧 marker on the board.">🚧 Blockade — free (once per turn)</button>');}
+   if(S.dlcWorld&&S.owner.w_suez===me)btns.push('<button class="act" data-act="evergiven"'+(!S.evergivenUsed&&!blockaded('w_suez')&&!S.rubble['w_suez']?'':' disabled')+' title="Once per game: block the Suez until the end of next round. Nobody walks in or lands there — you included.">🚢 EVER GIVEN — block the Suez (once per game)</button>');
    /* ---- 🧐 THE REGULATORS' FILES & NODE DEALS ---- */
    const myFiles=filesOf(me);
    if(myFiles.length){
@@ -1021,6 +1025,8 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
    case 'overmode':dispatch({act:'overmode'});break;
    case 'venicecool':dispatch({act:'venicecool'});break;
    case 'blockmode':dispatch({act:'blockmode'});break;
+   case 'evergiven':dispatch({act:'evergiven'});break;
+   case 'rebuildfree':dispatch({act:'rebuild',free:true});break;
   case 'spin':dispatch({act:'spin',kind:b.dataset.kind});break;
   case 'cook':dispatch({act:'cook'});break;
   case 'budget':dispatch({act:'budget'});break;

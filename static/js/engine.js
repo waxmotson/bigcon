@@ -13,7 +13,7 @@ import { S, setS, Net, pubState } from './state.js';
 import { clampGoal, esc, shuffle } from './util.js';
 import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld } from './data.js';
 import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState } from './boards.js';
-import { WORLD_NODE_IDS, worldSynergy, worldStartFx, worldEventPays } from './world.js';
+import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays } from './world.js';
 export { hooks, setHooks };
 /* The host services the rules call, bound late so a hook swapped in by setHooks
    (or wrapped by a test) is always the one that runs. */
@@ -71,6 +71,11 @@ export function addCortisol(i,n,why,ev,force){
  if(!n)return;
  if(n>0&&!force&&NODES.filter(node=>S.owner[node.id]===i).length<=1)return;
  if(ev&&n>0&&(S.owner.bess===i||S.owner.jim===i)){n-=1;if(n<=0){log('📺 Big Bessent / The Jim buries the story — '+pname(i)+' takes no Cortisol at all.');return}log('📺 Breaking news softens the story — '+pname(i)+' takes only +'+n+' Cortisol.')}
+ /* 🌐 JEROME POWELL — TRANSITORY: the first Cortisol each round is cancelled outright */
+ if(n>0&&S.dlcWorld&&S.owner.w_powell===i){
+  const used=S.powell||(S.powell={});
+  if(used[i]!==S.turn){used[i]=S.turn;log('🎙️ TRANSITORY — Powell says it will pass, and it does: '+pname(i)+'’s +'+n+' Cortisol'+(why?' ('+why+')':'')+' is cancelled outright.');fxAt(i,'🎙️ TRANSITORY','#8fbf7f');return}
+ }
  if(ev&&n>0){const h=S.owner.herald;if(h!=null&&h!==i)giveIntel(h,1,'THE JIM REAPER files the cortisol')}
  const p=S.players[i];p.cortisol=Math.max(0,Math.min(9,p.cortisol+n));
  log('🔥 '+pname(i)+(n>0?' +'+n:' '+n)+' Cortisol (now '+p.cortisol+')'+(why?' — '+why:'')+'.');
@@ -134,8 +139,14 @@ export function industryTrigger(g){return g.ids?3:Math.max(3,Math.ceil(industryN
 export function industryAllowed(g){return industryTrigger(g)-1}
 export function ownedInIndustry(pi,g){return industryNodes(g).filter(n=>S.owner[n.id]===pi)}
 /* Mark Watson exempts the holder's COAL book only. */
+/* The Vatican exempts its holder's BANKING (ACCC) and MONETARY POLICY (ASIC) books. */
+export function acccExempt(pi,ind){
+ if(!S)return false;
+ if(ind==='coal'&&S.owner.watson===pi)return true;
+ return !!(S.dlcWorld&&S.owner.w_vatican===pi&&(ind==='bank'||ind==='monetary'));
+}
 export function concentratedIndustries(pi){
- return INDUSTRIES.map(g=>{const owned=ownedInIndustry(pi,g);return {g,owned,n:owned.length,trigger:industryTrigger(g)}}).filter(x=>x.n>=x.trigger&&!(x.g.id==='coal'&&S.owner.watson===pi));
+ return INDUSTRIES.map(g=>{const owned=ownedInIndustry(pi,g);return {g,owned,n:owned.length,trigger:industryTrigger(g)}}).filter(x=>x.n>=x.trigger&&!acccExempt(pi,x.g.id));
 }
 /* MONETARY POLICY books are market manipulation — ASIC's file, not the ACCC's. */
 export function fileAgency(ind){return ind==='monetary'?'ASIC':'ACCC'}
@@ -255,6 +266,8 @@ export function initGame(defs){
  {const bots=hooks.bots();if(bots&&bots.resetForGame)bots.resetForGame((hooks.botSeed()|0)||((Math.random()*0x7fffffff)|0))}
  const generated=boardLayout==='worldmap'?generateWorldMapBoard():boardLayout==='megaring'?generateMegaRingBoard():(boardLayout==='ringworld'?generateRingworldBoard():generateRandomBoard(slot));S.boardLayout=generated.positions;S.boardEdges=generated.edges;
  applyLayoutFromState();
+ /* 🌐 the World Expansion's casualties open the game as rubble: rebuild one to bring it back */
+ if(S.dlcWorld)WORLD_START_RUBBLE.forEach(id=>{if(NMAP[id])S.rubble[id]=1});
  Net.started=true;
  log('🌅 A new board is dealt — '+NODES.length+' exhibits, '+EDGES.length+' freshly rebuilt connections, '+S.players.length+' at the table.');
  if(boardLayout==='ringworld')log('⭕ RINGWORLD — every exhibit is arranged around central Quikstop in three concentric rings.');
@@ -262,6 +275,7 @@ export function initGame(defs){
  else if(boardLayout==='worldmap')log('🌍 WORLD MAP — every exhibit is pinned where it lives; Quikstop opens in Australia.');
  else log('🧭 High-value targets are seeded further from Quikstop; the board and routes are reshuffled every game.');
  if(S.dlcWorld)log('🌐 WORLD EXPANSION — '+WORLD_COUNT+' global exhibits join the board: central banks, chokepoints, mines, wealth funds and one Nigerian prince.');
+ if(S.dlcWorld)log('💥 '+WORLD_START_RUBBLE.map(id=>nodeName(NMAP[id]).join(' ')).join(', ')+' open the game as RUBBLE — arrive and pay the list price to rebuild them.');
  if(S.dlcGeo)log('🌍 GEOGRAPHY DLC — 12 extra exhibits are on the board: missiles, resorts, disputed waters, ESG pillars, the hermit kingdom and one free country.');
  log('🎲 Seating was shuffled. First to move: '+S.players[0].name+'.');
  log('⛽ Quikstop opened '+slot.label+' this game. Everyone starts there with $15 and 2 Intel.');
@@ -386,6 +400,10 @@ export function botView(pi){
  out.seizePrice=(seat,nid)=>seizeListPrice(seat,NMAP[nid]);
  out.takePrice=(seat,nid,base)=>takeoverCost(seat,nid,base);
  out.flatSeize=nid=>flatSeize(nid);
+ out.noTakeover=nid=>noTakeover(nid);
+ out.chokeToll=nid=>chokeToll(nid);
+ out.acccExempt=(seat,ind)=>acccExempt(seat,ind);
+ out.svalbardFree=seat=>svalbardFreeRebuild(seat);
  out.missingTypes=seat=>missingTypes(seat);
  return out;
 }
@@ -537,9 +555,14 @@ export async function applyIntent(pi,m){
     const launcherName=NMAP[launcherId].name.join(' ');
     projFx('missile',launcherId,'geo_tuvalu');
     log('🚀 '+pname(pi)+' launches a missile at TUVALU — the island REFUSES it. The warhead comes back down on '+pname(pi)+'’s own holdings.');
-    delete S.owner[launcherId];delete S.bugs[launcherId];S.rubble[launcherId]=1;
-    fx(NMAP[launcherId].x,NMAP[launcherId].y-70,'💥 BACKFIRE','#ff6b5e');
-    log('💥 '+pname(pi)+'’s '+launcherName+' is destroyed in the backblast — rubble, no payout, no refund.');
+    if(rubbleShielded(launcherId))log('🌱 The SEED VAULT saves '+pname(pi)+'’s '+launcherName+' from the backblast — it survives.');
+    else{
+     const lo=S.owner.w_lloyds;
+     delete S.owner[launcherId];delete S.bugs[launcherId];S.rubble[launcherId]=1;
+     fx(NMAP[launcherId].x,NMAP[launcherId].y-70,'💥 BACKFIRE','#ff6b5e');
+     log('💥 '+pname(pi)+'’s '+launcherName+' is destroyed in the backblast — rubble, no payout, no refund.');
+     lloydsPays(launcherId,pi,lo);
+    }
     sync();
     await projPause(); /* the warhead flies to the island before anything lands */
     /* The ESG shield absorbs a reflected strike before it can reach the owner's other holdings. */
@@ -560,12 +583,19 @@ export async function applyIntent(pi,m){
     else await endOfTurn();
    }
   }
-  else if(act==='rebuild'&&S.phase==='action'&&S.dlcGeo&&!S.mode&&S.rubble[p.pos]){
-   const n=NMAP[p.pos],cost=n.cost;
-   if(p.money<cost){sysTo(pi,'Rebuilding '+n.name.join(' ')+' costs $'+cost+' — you cannot afford it.');return}
-   p.money-=cost;fxAt(pi,'−$'+cost,'#ff6b5e');delete S.rubble[p.pos];
+  else if(act==='rebuild'&&S.phase==='action'&&S.rubble&&!S.mode&&S.rubble[p.pos]){
+   const n=NMAP[p.pos];
+   /* 🌐 SVALBARD SEED VAULT — once per game its owner rebuilds one rubble node for free */
+   const free=m.free===true;
+   if(free&&!svalbardFreeRebuild(pi)){sysTo(pi,'The Seed Vault’s free rebuild is not available to you.');return}
+   const cost=free?0:n.cost;
+   if(p.money<cost){sysTo(pi,'Rebuilding '+nodeName(n).join(' ')+' costs $'+cost+' — you cannot afford it.');return}
+   if(free){S.svalbardUsed=true;log('🌱 '+pname(pi)+' opens the Seed Vault — the rebuild is FREE (once per game).')}
+   if(cost>0){p.money-=cost;fxAt(pi,'−$'+cost,'#ff6b5e')}
+   delete S.rubble[p.pos];
+   if(n.rebuiltName){(S.rebuilt||(S.rebuilt={}))[n.id]=1;log('🏔️ '+n.name.join(' ')+' rises again as '+n.rebuiltName.join(' ')+'.')}
    fx(n.x,n.y-64,'♻️ REBUILT','#7fe08d');
-   log('♻️ '+pname(pi)+' pays $'+cost+' to rebuild '+n.name.join(' ')+'. It returns unowned — first bids from next turn.');
+   log('♻️ '+pname(pi)+' '+(free?'rebuilds ':'pays $'+cost+' to rebuild ')+nodeName(n).join(' ')+'. It returns unowned — first bids from next turn.');
    const hb=S.owner.geo_pyothotel;if(hb!=null)gain(hb,2,'construction kickbacks on every rebuild');
    await endOfTurn();
   }
@@ -627,6 +657,8 @@ export async function applyIntent(pi,m){
    log('🚧 '+pname(pi)+' walls off '+n.name.join(' ')+' — BLOCKADED until the end of next round: nobody walks in, nobody lands, not even '+pname(pi)+'.');
    await finishNodeAbility(pi);
   }
+  /* ---- 🌐 WORLD EXPANSION actives: a table of handlers (see WORLD_ACTS) ---- */
+  else if(S.dlcWorld&&Object.prototype.hasOwnProperty.call(WORLD_ACTS,act)){await WORLD_ACTS[act](pi,m)}
   /* ---- INTEL OPS ---- */
   else if(act==='spy'&&S.phase==='action'&&!S.mode&&p.intel>=2){
    p.intel-=2;fxAt(pi,'🛈−2','#55c1ff');log('🛈 '+pname(pi)+' buys a look at tomorrow.');
@@ -790,6 +822,19 @@ export async function applyIntent(pi,m){
    await endOfTurn()}
  } finally {hooks.clearTimeout(Net.lockTimer);Net.lockTimer=null;Net.lock=false}
 }
+/* 🌐 World Expansion actives. Each handler runs inside applyIntent (the turn lock held, host-side), validates for itself and ends the action through finishNodeAbility. */
+const WORLD_ACTS={
+ /* SUEZ: the Ever Given, once per game, in your action phase */
+ async evergiven(pi){
+  if(S.phase!=='action'||S.mode||S.owner.w_suez!==pi||S.evergivenUsed)return;
+  const n=NMAP.w_suez;
+  if(S.rubble[n.id]||blockaded(n.id)){sysTo(pi,'The canal is already closed.');return}
+  S.evergivenUsed=true;S.blockades[n.id]=S.turn+2;
+  fx(n.x,n.y-64,'🚢 EVER GIVEN','#f5c542');
+  log('🚢 '+pname(pi)+' runs the EVER GIVEN aground in the Suez — BLOCKED until the end of next round: nobody walks in, nobody lands, not even '+pname(pi)+'. (Once per game.)');
+  await finishNodeAbility(pi);
+ }
+};
 /* A seat index from the wire: a real seat at this table that is not the actor. */
 export function isRival(pi,t){return Number.isInteger(t)&&t!==pi&&!!(S&&S.players[t])}
 export function canUseBackroomAbility(pi){return !!(S&&S.phase==='move'&&S.cur===pi&&S.owner.back===pi&&!S.backroomAbilityUsed&&S.steps>=2)}
@@ -800,15 +845,31 @@ export async function finishNodeAbility(pi){
 }
 export function qantasGrounded(){return !!(S&&S.dlcGeo&&S.qantasGroundUntil>S.turn)}
 export function qantasGroundedReason(){if(!S)return '';return qantasGrounded()?'THE CORPORATE BOEING is parked on the runway':'QANTAS is not grounded'}
+/* 🌐 SVALBARD: a node its owner holds cannot be turned to rubble. */
+export function rubbleShielded(nid){return !!(S&&S.dlcWorld&&S.owner[nid]!=null&&S.owner.w_svalbard===S.owner[nid])}
+export function svalbardFreeRebuild(pi){return !!(S&&S.dlcWorld&&S.owner.w_svalbard===pi&&!S.svalbardUsed&&S.rubble&&S.rubble[S.players[pi].pos])}
+/* 🌐 LLOYD'S OF LONDON: the underwriters pay $3 on any missile kill, or the full list price if it was their own node. */
+function lloydsPays(nid,prev,lo){
+ if(!S.dlcWorld||lo==null||!S.players[lo])return;
+ const n=NMAP[nid];
+ if(prev===lo)gain(lo,n.cost,'LLOYD’S pays out in full on '+nodeName(n).join(' '));
+ else gain(lo,3,'LLOYD’S underwrites the loss of '+nodeName(n).join(' '));
+}
 export function strikeNode(pi,nid,opts){
  const silent=opts&&opts.silent;
- const n=NMAP[nid],prev=S.owner[nid];
+ const n=NMAP[nid],prev=S.owner[nid],lo=S.owner.w_lloyds;
+ if(rubbleShielded(nid)){
+  log('🚀 '+pname(pi)+' launches a missile at '+nodeName(n).join(' ')+' — the SEED VAULT shrugs it off. '+pname(prev)+' keeps it; nothing becomes rubble.');
+  fx(n.x,n.y-70,'🌱 SURVIVES','#7fe08d');
+  sync();return;
+ }
  if(prev!=null)delete S.owner[nid];
  delete S.bugs[nid];
  S.rubble[nid]=1;
  if(S.ov&&S.ov.nid===nid)S.ov=null;
  fx(n.x,n.y-70,'💥 MISSILE','#ff6b5e');
  log('🚀 '+pname(pi)+' launches a missile at '+n.name.join(' ')+(prev!=null?' — '+pname(prev)+' is expropriated with NO payout.':' — an unowned exhibit goes up in smoke.')+' What is left is rubble: no income, nothing to seize, until someone arrives and pays $'+n.cost+' to rebuild it.');
+ lloydsPays(nid,prev,lo);
  /* 🌍 REGULATOR PROBE — a warhead on a regulator is a career-ending event: an
     investigation opens and lands on the striker's NEXT turn (50/50 indictment). */
  if(!silent&&n.type==='REGULATOR'){
@@ -827,6 +888,9 @@ export function canMissileNode(me,nid){
 export function ownsMissileLauncher(pi){return !!(S&&S.dlcGeo&&(S.owner.geo_missile===pi||S.owner.geo_shahed===pi))}
 export function canFireMissileFrom(pi){if(!S||!S.players[pi]||!ownsMissileLauncher(pi))return false;const pos=S.players[pi].pos;return (pos==='geo_missile'&&S.owner.geo_missile===pi)||(pos==='geo_shahed'&&S.owner.geo_shahed===pi)||S.owner.geo_kim===pi}
 export function canReach(id){return !(id==='qantas'&&qantasGrounded())}
+/* 🌐 the three chokepoints charge rivals a $2 transit toll */
+export function chokeToll(id){return !!(S&&S.dlcWorld&&WORLD_CHOKEPOINTS.includes(id))}
+export function nodeName(n){return (S&&S.rebuilt&&S.rebuilt[n.id]&&n.rebuiltName)||n.name}
 export function blockaded(id){return !!(S&&S.blockades&&S.blockades[id]>S.turn)}
 export function seizeListPrice(pi,n){
  let base=n.cost;
@@ -834,6 +898,8 @@ export function seizeListPrice(pi,n){
  if(n.type==='CHART'){if(S.owner.nab===pi)base=Math.max(1,base-1);if(S.owner.econ===pi)base=Math.max(1,base-1)}
  return base;
 }
+/* 🌐 ANTARCTICA cannot be taken from its owner */
+export function noTakeover(nid){return !!(S&&S.dlcWorld&&nid==='w_antarctica')}
 export function flatSeize(nid){return nid==='made'||nid==='qantas'||nid==='rba'||nid==='geo_pillars'}
 export function takeoverCost(pi,nid,base){
  if(flatSeize(nid))return base;
@@ -851,7 +917,8 @@ export async function doMove(pi,id){
  if(owner!=null&&owner!==pi){
   if(S.owner.bond007===pi){log('🤵 007 flashes… credentials. No toll.')}
   else{
-   const toll=(S.owner.albo===owner)?2:1;const p=S.players[pi];
+   let toll=(S.owner.albo===owner)?2:1;const p=S.players[pi];
+   if(chokeToll(id))toll=Math.max(toll,2); /* 🌐 CHOKEPOINT: Panama, Hormuz and Suez charge $2 */
    if(p.money<toll){sysTo(pi,'Toll: you cannot afford the $'+toll+' to enter '+NMAP[id].name.join(' ')+'.');return}
    p.money-=toll;S.players[owner].money+=toll;
    fxAt(pi,'−$'+toll,'#ff6b5e');fxAt(owner,'+$'+toll,'#7fe08d');
@@ -909,8 +976,9 @@ export async function maybePeek(){
 }
 export async function doSeize(pi){
  const p=S.players[pi];const nid=p.pos;const n=NMAP[nid];const prev=S.owner[nid];
- if(S.dlcGeo&&S.rubble[nid]){sysTo(pi,'That node is rubble — it must be rebuilt before it can be owned.');return}
+ if(S.rubble&&S.rubble[nid]){sysTo(pi,'That node is rubble — it must be rebuilt before it can be owned.');return}
  if(prev===pi)return;
+ if(prev!=null&&noTakeover(nid)){sysTo(pi,nodeName(n).join(' ')+' is UNTOUCHABLE — no hostile takeover of it is ever possible.');return}
  if(S.dlcGeo&&((nid==='geo_shahed'&&S.owner.geo_missile===pi)||(nid==='geo_missile'&&S.owner.geo_shahed===pi))){sysTo(pi,'You can own either MISSILE COMMAND or the SHAHED DRONE, not both.');return}
  let base=seizeListPrice(pi,n);
  /* the slipstream discount is only spent once the deal actually goes through */
@@ -994,6 +1062,11 @@ export async function endOfTurn(){
  const tk=S.owner.toktimer;if(tk!=null)giveIntel(tk,1,'Toktimer clocked the event');
  await card.run();
  if(S.dlcWorld)worldEventPays(card.id,id=>S.owner[id]).forEach(w=>{if(w.amt)gain(w.owner,cs(w.amt),w.name);if(w.intel)giveIntel(w.owner,w.intel,w.name)});
+ /* 🌐 STRAIT OF HORMUZ: $2 per oil node a rival holds when OIL SPIKES */
+ if(S.dlcWorld&&card.id==='oilspike'&&S.owner.w_hormuz!=null){
+  const h=S.owner.w_hormuz,cnt=OIL_ALL.filter(id=>NMAP[id]&&S.owner[id]!=null&&S.owner[id]!==h&&!S.rubble[id]).length;
+  if(cnt)gain(h,cs(2)*cnt,'the Strait of Hormuz taxes '+cnt+' rival oil position'+(cnt>1?'s':''));
+ }
  sync();
  if(await winCheck())return;
  nextTurn();

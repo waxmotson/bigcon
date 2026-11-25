@@ -597,10 +597,12 @@ export const BigConBots = (function () {
     const o = v.owner[nid];
     if (o == null || o === seat) return 0;
     if (v.owner['bond007'] === seat) return 0; /* 007 is on the payroll */
-    return v.owner['albo'] === o ? 2 : 1;
+    const base = v.owner['albo'] === o ? 2 : 1;
+    return v.chokeToll && v.chokeToll(nid) ? Math.max(base, 2) : base; /* Panama / Hormuz / Suez charge $2 */
   }
   function passable(v, nid) {
-    if (v.rubble && v.rubble[nid]) return false;               /* rebuild first */
+    /* rebuild first -- except on the World Expansion board, where four nodes open as rubble and the engine lets a walker cross them */
+    if (v.rubble && v.rubble[nid] && !v.dlcWorld) return false;
     if (v.blockades && v.blockades[nid] > v.turn) return false; /* walled off */
     if (nid === 'qantas' && v.geo && v.geo.qantasGrounded) return false;
     return true;
@@ -676,6 +678,7 @@ export const BigConBots = (function () {
     let loss = 0;
     for (const g of v.industryIds) {
       if (g.id === 'coal' && book.has('watson')) continue;
+      if ((g.id === 'bank' || g.id === 'monetary') && v.dlcWorld && book.has('w_vatican')) continue; /* the Vatican's exemption */
       const drop = excessOf(v, g, book);
       if (!drop.length) continue;
       const f = fileOf(v, seat, g.id);
@@ -784,6 +787,7 @@ export const BigConBots = (function () {
     if (!n || v.rubble[nid]) return null;
     const prev = v.owner[nid];
     if (prev === seat) return null;
+    if (prev != null && v.noTakeover && v.noTakeover(nid)) return null; /* Antarctica is untouchable */
     if (v.geo && ((nid === 'geo_shahed' && v.owner['geo_missile'] === seat) || (nid === 'geo_missile' && v.owner['geo_shahed'] === seat))) return null;
     const base = v.seizePrice(seat, nid);
     const isTake = prev != null;
@@ -1531,11 +1535,14 @@ export const BigConBots = (function () {
       /* REBUILD — favour reopening routes and completing missing sets */
       if (v.rubble[me.pos]) {
         const n = v.nmap[me.pos];
-        if (n && me.money >= n.cost) {
+        const freeVault = !!(v.svalbardFree && v.svalbardFree(pi));
+        if (n && (me.money >= n.cost || freeVault)) {
           /* Prefer rebuild when it opens the graph or fills a set; value the unowned return */
           const openVal = nodeOwnValue(v, pi, me.pos) * 0.6;
           const setBonus = (v.nmap[me.pos] && !mineWhere(v, pi, nn => nn.type === n.type).length) ? W.setBonus * 0.4 : 0;
-          list.push({ kind: 'rebuild', val: openVal + setBonus - n.cost * W.money * 0.8 });
+          /* the Seed Vault's one free rebuild: spend it on anything dear enough to matter */
+          const free = freeVault && n.cost >= 3;
+          list.push({ kind: 'rebuild', free, val: openVal + setBonus - (free ? 0 : n.cost * W.money * 0.8) });
         }
       }
     }
@@ -1779,7 +1786,7 @@ export const BigConBots = (function () {
       case 'stage5': await tryIntent(api, pi, { act: 'stage5' }); return true;
       case 'oilcrash': await tryIntent(api, pi, { act: 'oilcrash' }); return true;
       case 'qantasdown': await tryIntent(api, pi, { act: 'qantasdown' }); return true;
-      case 'rebuild': await tryIntent(api, pi, { act: 'rebuild' }); return true;
+      case 'rebuild': await tryIntent(api, pi, pick.free ? { act: 'rebuild', free: true } : { act: 'rebuild' }); return true;
       case 'bug': {
         await tryIntent(api, pi, { act: 'bugmode' });
         const bv = api.viewOf(pi);

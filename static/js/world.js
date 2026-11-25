@@ -16,6 +16,9 @@
    s:n                  Intel at the start of your turn;  wi:[[id,n]]  +n Intel at the start of your turn while you also own id
    e:{cardId:$|[$,intel]} windfall when that market event is drawn;  x2:id doubles the cash if you also own id */
 export const OIL_ALL=['oil','oilgraph','barrels','tanker','petronas','geo_scs','w_aramco','w_cushing','w_permian','w_tar','w_pemex','w_petrobras','w_pdvsa','w_dangote','w_gazprom'];
+/* nodes that begin the game as rubble (the World Expansion's casualties) and the ones that rename when rebuilt */
+export const WORLD_START_RUBBLE=['w_svb','w_cs','w_nordstream','w_evergrande'];
+export const WORLD_CHOKEPOINTS=['w_panama','w_hormuz','w_suez'];
 export const BATTERY=['w_lithium','w_cobalt','w_nickel','w_baotou'];
 const mk=(id,name,icon,type,income,cost,lat,lon,sub,sp,fx,todo)=>{
  const n={id:'w_'+id,name:[].concat(name),icon,type,shape:'card',income,cost,geo:[lat,lon],x:0,y:0,rot:0,sub,sp};
@@ -26,12 +29,12 @@ export const WORLD_NODES=[
 mk('bell','WALL STREET BELL','🔔','MEDIA',2,5,40.707,-74.011,'rung by whoever paid the most this year','+$2 on BONDMAGEDDON, A QUIET QUARTER or THE BIG SHORT SCREENING (the bell rings either way).',{e:{bondrevolt:2,quiet:2,bigscreen:2}}),
 mk('fed','THE FEDERAL RESERVE','🏛️','REGULATOR',2,9,38.893,-77.045,'dual mandate · triple vibes','−1 Cortisol at the start of each of your turns. +$2 on the RBA CASH-RATE DECISION and BIG BESSENT SPEAKS (the world is listening).',{c:-1,e:{rates:2,besspeak:2}}),
 mk('powell','JEROME POWELL','🎙️','WILD',1,7,38.886,-77.03,'“transitory” · still being said',
- 'TRANSITORY: the first Cortisol you would take each round is cancelled outright. (He said it would pass. It passed.)',null,true),
+ 'TRANSITORY: the first Cortisol you would take each round is cancelled outright. (He said it would pass. It passed.)',null),
 mk('sec','THE SEC','📋','REGULATOR',1,6,38.896,-77.014,'the paperwork arrives eventually','+$3 on MONOPOLY ALERT. +1 Intel at the start of your turn while you also own THE WHISTLEBLOWER (they file everything).',{e:{crackdown:3},wi:[['whistle',1]]}),
 mk('goldman','GOLDMAN SACHS','🐙','BANK',3,10,40.7145,-74.0147,'a great vampire squid · allegedly','+$2 income per BANK your rivals own (the squid has many arms).',{r:[['BANK',2]]}),
 mk('jpm','JPMORGAN','🏦','BANK',3,8,40.7556,-73.9733,'too big to jail','Hostile takeovers of any node YOU own cost the buyer +$2 (the house always has a lawyer).',null),
 mk('svb','SILICON VALLEY BANK','📉','BANK',2,5,37.3541,-121.9552,'the duration was a surprise to everyone',
- 'STARTS AS RUBBLE: it falls on turn one and must be rebuilt before anyone can own it. Rebuilt, it pays +$1 per CHART you own (the duration mismatch is a feature).',null,true),
+ 'STARTS AS RUBBLE: it falls on turn one and must be rebuilt (arrive and pay its list price in your action phase) before anyone can own it. Once rebuilt and owned, it pays +$1 per CHART you own (the duration mismatch is a feature).',{t:[['CHART',1]]}),
 mk('cushing','CUSHING, OKLAHOMA','🛢️','COMMODITY',2,6,35.9851,-96.7676,'pipeline crossroads · the WTI delivery point','+$5 when OIL SPIKES, DOUBLED to $10 if you also own the CRUDE OIL PIT (the barrel has to land somewhere).',{e:{oilspike:5},x2:'oil'}),
 mk('permian','THE PERMIAN BASIN','⛽','COMMODITY',3,7,31.9,-102.1,'fracked flat · the pump jacks nod','+$3 when OIL SPIKES; +$1 income per other oil node you own.',{e:{oilspike:3},i:[[OIL_ALL,1]]}),
 mk('knox','FORT KNOX','🥇','COMMODITY',2,6,37.89,-85.96,'audit pending since 1974','+$5 on GOLD RUSH. +$2 income while you also own the GOLD-COLOURED COINS (the gold is, allegedly, there).',{e:{goldrush:5},w:[['gold',2]]}),
@@ -39,7 +42,7 @@ mk('cme','CME TRADING FLOOR','📟','CHART',2,5,41.8819,-87.6278,'open outcry, n
 mk('malago','MAR-A-LAGO','⛳','WILD',2,7,26.6773,-80.0368,'the gold-plated clubhouse','+$3 income while you also own DONALD TRUMP (the member lives here).',{w:[['trump',3]]}),
 mk('area51','AREA 51','👽','WILD',1,5,37.2431,-115.793,'nothing to see here · see here','+1 Intel at the start of each of your turns (they have a file on everyone).',{s:1}),
 mk('panama','THE PANAMA CANAL','🚢','COMMODITY',3,8,9.08,-79.68,'one lock, ten thousand invoices',
- 'CHOKEPOINT: every rival who walks into or through this node pays you a $2 transit toll, and on the WORLD MAP it is the only land link between the northern and southern continents.',null,true),
+ 'CHOKEPOINT: every rival who walks into this node pays you a $2 transit toll (instead of the usual $1), and on the WORLD MAP it is the only land link between the northern and southern continents.',null),
 mk('bay','BAY STREET','🍁','BANK',2,6,43.6532,-79.3832,'polite · well-capitalised · sorry','+$2 income while you also own the ALBERTA TAR SANDS (the TSX is all mines and oil).',{w:[['w_tar',2]]}),
 mk('tar','ALBERTA TAR SANDS','⚫','COMMODITY',3,7,56.7267,-111.3803,'it flows if you wait','+$4 when OIL SPIKES.',{e:{oilspike:4}}),
 mk('pemex','PEMEX','🛢️','COMMODITY',2,5,19.4326,-99.1332,'the state oil company · the books are a mood','+$3 when OIL SPIKES; +$1 when TRUMP TWEETS TARIFFS (a neighbour has opinions).',{e:{oilspike:3,tariffs:1}}),
@@ -61,7 +64,7 @@ mk('easter',['EASTER','ISLAND'],'🗿','WILD',1,4,-27.1127,-109.3497,'the heads 
 mk('boe',['BANK OF','ENGLAND'],'🏛️','REGULATOR',2,8,51.5142,-0.0885,'the Old Lady of Threadneedle Street','+$1 income per BANK you own; +$2 on BONDMAGEDDON (the gilts were here first).',{t:[['BANK',1]],e:{bondrevolt:2}}),
 mk('city',['THE CITY','OF LONDON'],'🏙️','BANK',3,8,51.5133,-0.0899,'LIBOR was a vibe, not a number','+$2 income while you also own the BANK OF ENGLAND; +$3 on the RBA CASH-RATE DECISION (the rate fix pays regardless).',{w:[['w_boe',2]],e:{rates:3}}),
 mk('lloyds',['LLOYD’S','OF LONDON'],'☂️','BANK',2,6,51.5128,-0.0821,'insured · except for that',
- 'MISSILE INSURANCE: whenever ANY node is destroyed by a missile, you are paid $3 by the bank (the underwriters had read the small print), and a node of yours that is hit pays out in full.',null,true),
+ 'MISSILE INSURANCE: whenever ANY node is destroyed by a missile, you are paid $3 by the bank (the underwriters had read the small print), and if the node destroyed is one of YOURS, the bank pays out its full list price instead.',null),
 mk('brexit','BREXIT','🇬🇧','WILD',1,6,51.1279,1.3134,'the cliffs of Dover · the border of vibes',
  'TAKE BACK CONTROL: once per game, on your action, sever any one edge of the board for the rest of the con (Dover, the Channel, the whole lot) — and take +1 Cortisol. (Phase 2.)',null,true),
 mk('ecb',['THE ECB'],'💶','REGULATOR',2,8,50.1109,8.6821,'whatever it takes · for nineteen governments','+$2 on the RBA CASH-RATE DECISION and BONDMAGEDDON; +$2 income while you also own GERMAN BUNDS.',{e:{rates:2,bondrevolt:2},w:[['w_bunds',2]]}),
@@ -70,7 +73,7 @@ mk('bunds',['GERMAN','BUNDS'],'🇩🇪','CHART',1,3,52.52,13.405,'boring is the
 mk('btp',['ITALIAN','BTP SPREAD'],'🍝','CHART',1,3,41.9028,12.4964,'the spread widens, the espresso stays hot','+$3 on BONDMAGEDDON (the spread explodes first).',{e:{bondrevolt:3}}),
 mk('greek',['THE GREEK','DEBT'],'🏺','CHART',3,2,37.9838,23.7275,'cursed · a gift that keeps giving','CURSED: pays $3 a turn at a fire-sale price, but holding it costs +1 Cortisol at the start of every turn. (The bailouts were also “temporary”.)',{c:1}),
 mk('cs',['CREDIT SUISSE'],'🏔️','BANK',2,3,47.3769,8.5417,'160 years · gone in a weekend',
- 'STARTS AS RUBBLE. When rebuilt it comes back as UBS: a BANK that pays +$2 per BANK you own. (Phase 2.)',null,true),
+ 'STARTS AS RUBBLE. When rebuilt it comes back as UBS: a BANK that pays +$2 per BANK you own (itself included).',{t:[['BANK',2]]}),
 mk('bis',['THE BIS','BASEL'],'🌀','REGULATOR',1,6,47.5596,7.5886,'the central bank of central banks','+$1 income per OTHER REGULATOR you own (the committee of committees).',{t:[['REGULATOR',1,1]]}),
 mk('swiss',['THE SWISS','VAULT'],'🔒','WILD',2,7,46.948,7.4474,'discretion is the product','+1 Intel on THE TAPES GO MISSING and on ANONYMOUS TIP (the vault keeps copies).',{e:{tapes:[0,1],tip:[0,1]}}),
 mk('lux',['LUXEMBOURG','LETTERBOX'],'📮','CORPORATE',2,6,49.6117,6.1319,'two hundred thousand companies · one door','+$1 income per BANK you own; +$3 on A QUIET QUARTER.',{t:[['BANK',1]],e:{quiet:3}}),
@@ -79,18 +82,18 @@ mk('tulip',['THE TULIP','BULB'],'🌷','COMMODITY',1,3,52.3676,4.9041,'1637 · t
 mk('norway',['NORWAY’S','WEALTH FUND'],'🛢️','BANK',3,9,59.9139,10.7522,'a trillion · mostly oil · politely','+$1 income per oil node you own; +$4 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:4}}),
 mk('gazprom','GAZPROM','🔥','COMMODITY',3,7,59.9876,30.1858,'the pipeline is the diplomacy','+$3 when OIL SPIKES; +$3 income while you also own NORD STREAM; +$2 while you own THE KREMLIN.',{e:{oilspike:3},w:[['w_nordstream',3],['w_kremlin',2]]}),
 mk('nordstream',['NORD STREAM'],'💥','COMMODITY',2,4,54.9,15.5,'built · inspected · allegedly very quiet',
- 'STARTS AS RUBBLE (the pipeline is already in pieces) and must be rebuilt before it pays; rebuilt, it pays +$3 on OIL SPIKES. (Phase 2.)',null,true),
+ 'STARTS AS RUBBLE (the pipeline is already in pieces) and must be rebuilt before it pays; rebuilt and owned, it pays +$3 on OIL SPIKES.',{e:{oilspike:3}}),
 mk('kremlin',['THE KREMLIN'],'🏰','REGULATOR',2,8,55.752,37.6175,'a very long table · nobody sits','+1 Intel at the start of your turn; +$2 income while you also own GAZPROM.',{s:1,w:[['w_gazprom',2]]}),
 mk('lira',['THE TURKISH','LIRA'],'💸','CHART',1,2,39.9334,32.8597,'the line goes the other way','+$3 on BONDMAGEDDON (it was already in free fall).',{e:{bondrevolt:3}}),
 mk('monaco',['MONACO','CASINO'],'🎰','WILD',2,6,43.7384,7.4246,'the house always wins · the house is a principality','+$3 on A QUIET QUARTER and on MADE PAYS OUT… PROBABLY (the house collects on everything).',{e:{quiet:3,madeout:3}}),
-mk('vatican',['THE VATICAN','BANK'],'⛪','BANK',2,7,41.9022,12.4539,'works in mysterious ways · accounts in more','−1 Cortisol at the start of each of your turns (confession is free). ACCC-EXEMPT: no ACCC or ASIC file can ever open on you for banking. (Phase 2.)',{c:-1},true),
+mk('vatican',['THE VATICAN','BANK'],'⛪','BANK',2,7,41.9022,12.4539,'works in mysterious ways · accounts in more','−1 Cortisol at the start of each of your turns (confession is free). REGULATOR-EXEMPT: no ACCC file can ever open on your BANKING book and no ASIC file on your MONETARY POLICY book.',{c:-1}),
 /* ── Middle East & Africa ── */
 mk('aramco',['SAUDI','ARAMCO'],'🛢️','COMMODITY',5,11,26.3,50.15,'the biggest oil on the board','+$8 when OIL SPIKES. Pays $5 a turn — the largest oil position on the board.',{e:{oilspike:8}}),
 mk('opec',['OPEC','VIENNA'],'🛢️','REGULATOR',2,8,48.2082,16.3738,'the cartel meets · the cartel decides','+$1 income per oil node you own; +$4 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:4}}),
 mk('hormuz',['STRAIT OF','HORMUZ'],'⚓','COMMODITY',3,8,26.57,56.25,'a fifth of the world’s oil · two miles wide',
- 'CHOKEPOINT: every rival who enters this node pays you a $2 toll, and on OIL SPIKES you collect $2 per oil node a rival owns. (Phase 2.)',null,true),
+ 'CHOKEPOINT: every rival who enters this node pays you a $2 toll (instead of the usual $1), and on OIL SPIKES you collect $2 per oil node a rival owns.',null),
 mk('suez',['THE SUEZ','CANAL'],'🛳️','COMMODITY',3,8,30.4574,32.3499,'the Ever Given · six days · one very big boat',
- 'CHOKEPOINT: every rival who enters this node pays you a $2 toll; once per game, on your action, you may BLOCK it (EVER GIVEN) for a full round: no one, you included, passes through. (Phase 2.)',null,true),
+ 'CHOKEPOINT: every rival who enters this node pays you a $2 toll (instead of the usual $1); once per game, in your action phase, you may BLOCK it (EVER GIVEN) until the end of next round: nobody walks in or lands there, you included.',null),
 mk('burj',['BURJ KHALIFA'],'🏙️','CORPORATE',3,8,25.1972,55.2744,'828 metres of confidence','+$2 income while you also own the ABU DHABI WEALTH FUND (the floors are rented to the sovereign).',{w:[['w_adia',2]]}),
 mk('neom',['NEOM','THE LINE'],'📏','CORPORATE',1,7,28.1,35.1,'170 km long · zero metres built','+$3 income while you also own SAUDI ARAMCO (the funding round is crude).',{w:[['w_aramco',3]]}),
 mk('adia',['ABU DHABI','WEALTH FUND'],'🏦','BANK',3,9,24.4539,54.3773,'sovereign · patient · a lot of it','+$1 income per oil node you own; +$3 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:3}}),
@@ -110,7 +113,7 @@ mk('watanabe',['MRS','WATANABE'],'👛','WILD',1,5,35.7,139.7,'the carry trade h
 mk('toyota',['TOYOTA'],'🚗','CORPORATE',3,8,35.0825,137.1561,'just in time · always on time','+$2 income while you also own THE BULLET TRAIN (the lines run to the minute); +$2 on A QUIET QUARTER.',{w:[['bullet',2]],e:{quiet:2}}),
 mk('pboc',['THE PBOC'],'🏦','REGULATOR',2,8,39.9042,116.4074,'the reserve requirement is a mood','+$2 income while you also own the HKMA PEG; +$2 on the RBA CASH-RATE DECISION and on TRUMP TWEETS TARIFFS (it responds).',{w:[['w_hkma',2]],e:{rates:2,tariffs:2}}),
 mk('evergrande',['EVERGRANDE'],'🏗️','CORPORATE',3,3,22.5429,114.0596,'the towers are very tall · and empty',
- 'STARTS AS RUBBLE (the towers are, allegedly, standing but not finished). Rebuilt, it pays +$2 per CORPORATE you own. (Phase 2.)',null,true),
+ 'STARTS AS RUBBLE (the towers are, allegedly, standing but not finished). Once rebuilt and owned, it pays +$2 per CORPORATE you own (itself included).',{t:[['CORPORATE',2]]}),
 mk('shenzhen',['SHENZHEN','FACTORY'],'🏭','CORPORATE',2,6,22.6,114.1,'the world’s workshop · three shifts','+$1 income per CORPORATE node you own (itself included).',{t:[['CORPORATE',1]]}),
 mk('baotou',['BAOTOU','RARE EARTHS'],'🧲','COMMODITY',3,7,40.65,109.84,'the magnet in everything','+$3 when TRUMP TWEETS TARIFFS (the trade war is a magnet); +$2 income while you also own the SHENZHEN FACTORY.',{e:{tariffs:3},w:[['w_shenzhen',2]]}),
 mk('bri',['THE BELT','AND ROAD'],'🛤️','WILD',2,8,34.3416,108.9398,'every road leads to a loan',
@@ -139,15 +142,16 @@ mk('nauru',['NAURU'],'🏝️','WILD',1,2,-0.5477,166.9209,'phosphate · a natio
 mk('fiji',['FIJI','WATER'],'💧','CORPORATE',2,5,-17.7134,178.065,'bottled somewhere very far from here','+$2 income while you also own QUIKSTOP (the bottled water sells best at the servo).',{w:[['quik',2]]}),
 mk('png',['PNG','GOLD'],'🪙','COMMODITY',2,5,-6.31,155.1,'a big pit · a small island','+$4 on GOLD RUSH; +$1 income per OTHER COMMODITY you own.',{e:{goldrush:4},t:[['COMMODITY',1,1]]}),
 mk('antarctica',['ANTARCTICA'],'🐧','WILD',2,9,-77.85,166.67,'nobody owns it · nobody pays rent',
- 'UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible; it also never inflates. Its income is a flat $2. (Phase 2.)',null,true),
+ 'UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible (regulators and raids still reach it). Its income is a flat $2.',null),
 mk('greenland',['GREENLAND'],'❄️','WILD',2,6,64.1835,-51.7216,'it is not for sale · apparently it is','+$3 income while you also own DONALD TRUMP (he is, allegedly, interested).',{w:[['trump',3]]}),
 mk('svalbard',['SVALBARD','SEED VAULT'],'🌱','WILD',1,6,78.2386,15.5086,'every seed on earth · in a very cold cupboard',
- 'ANTI-RUBBLE: any node of yours that would be turned to rubble survives; once per game, you may rebuild a rubble node for free. (Phase 2.)',null,true),
+ 'ANTI-RUBBLE: any node of yours that a missile would turn to rubble survives; once per game, you may rebuild a rubble node for free (stand on it in your action phase).',null),
 mk('cayman',['THE CAYMAN','ISLANDS'],'🏝️','CORPORATE',2,6,19.3133,-81.2546,'everyone is a director here','+$2 income while you also own THE HEDGE FUND (somebody is shorting from the beach); +$1 income per BANK you own.',{w:[['hedge',2]],t:[['BANK',1]]}),
 mk('bermuda',['THE BERMUDA','TRIANGLE'],'🌀','WILD',1,5,25.0,-71.0,'ships · planes · positions · all vanish',
  'THE VANISH: once per game, on your action, you disappear from the board for the rest of the round: you cannot be targeted, tolled or bugged, and you reappear at any node of your choice at the start of your next turn. (Phase 2.)',null,true),
 mk('bvi',['THE BRITISH','VIRGIN ISLANDS'],'🏝️','CORPORATE',2,5,18.4286,-64.6185,'a million companies · a very small island','+$2 income while you also own THE CAYMAN ISLANDS; +$3 on A QUIET QUARTER.',{w:[['w_cayman',2]],e:{quiet:3}})
 ];
+WORLD_NODES.find(n=>n.id==='w_cs').rebuiltName=['UBS'];
 export const WORLD_NODE_IDS=WORLD_NODES.map(n=>n.id);
 /* the WORLD EXPANSION is wide: a random board with it on is dealt on a canvas this much larger */
 export const WORLD_RANDOM_SCALE=1.6;
