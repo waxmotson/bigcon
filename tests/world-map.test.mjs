@@ -203,10 +203,10 @@ test('expansion abilities: synergies, start-of-turn passives and event windfalls
   S.cur = 0; S.owner = { w_cushing: 0, w_greek: 0 }; S.players[0].money = 0; S.deck = ['oilspike']; S.phase = 'action';
   await engine.f.endOfTurn();
   assert.equal(S.players[0].money, 5, 'OIL SPIKES pays the Cushing owner');
-  /* start of turn: Area 51 +1 Intel, Easter Island -1 Cortisol, the Greek Debt +1 Cortisol */
+  /* start of turn: Area 51 (no passive now), Easter Island -1 Cortisol, the Greek Debt +1 Cortisol */
   S.cur = 0; S.owner = { w_area51: 0, w_easter: 0, w_greek: 0 }; S.players[0].cortisol = 3; S.players[0].intel = 0; S.players[0].raided = 0;
   await engine.f.startTurn();
-  assert.equal(S.players[0].intel, 1, 'Area 51 briefs you');
+  assert.equal(S.players[0].intel, 0, 'Area 51 no longer pays Intel: it abducts instead (tests/node-reworks.test.mjs)');
   assert.equal(S.players[0].cortisol, 3, 'Easter Island soothes, the Greek debt stings');
   /* JPMorgan: takeovers of its owner's nodes cost +$2 */
   S.owner = { w_jpm: 0, citi: 0 }; S.seizeCount = { citi: 1 };

@@ -232,7 +232,7 @@ test('CR-09 the turn after a raid pays no income and one step; the turn after th
   engine.f.startTurn();
   await new Promise(r => setImmediate(r));
   assert.equal(S.caution, false);
-  assert.equal(p.money, 3 + 10, 'salary $3 + holdings $10');
+  assert.equal(p.money, 3 + 10 + 2, 'salary $3 + holdings $10 + the Servo ($2 x 1 player)');
   assert.equal(S.steps, 3, 'three base steps with no movement synergies');
 });
 

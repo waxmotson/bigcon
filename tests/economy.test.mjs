@@ -128,12 +128,12 @@ test('EC-04b the IB Diploma doubles chart income; the master chart adds $3 per e
 test('EC-04c headline synergies each apply exactly once', async t => {
   const engine = await ctx_engine(t);
   const cases = [
-    { owner: { citi: 0, coal: 0, quik: 0, market: 0 }, keep: 'citi $1/sp CORPORATE + anchor stores pair', expect: 3 + (3 + 3 + 2 + 2) + 3 + 2 },
+    { owner: { citi: 0, coal: 0, quik: 0, market: 0 }, keep: 'citi $1/sp CORPORATE + anchor stores pair', expect: 3 + (3 + 3 + 2 + 2) + 3 + 2 + 2 /* + THE SERVO: $2 x 1 player */ },
     { owner: { commbank: 0, anz: 0 }, keep: 'the big four stick together', expect: 3 + (2 + 2) + 2 },
     { owner: { westpac: 0, rba: 0 }, keep: 'westpac $1/s REGULATOR', expect: 3 + (2 + 2) + 1 },
     { owner: { anz: 0, tenyear: 0, infl: 0 }, keep: 'anz reads charts + master bonus + salaried infl', expect: 4 + (2 + 1 + 1) + 2 + 3 },
     { owner: { barrels: 0, forklift: 0, oil: 0 }, keep: 'forklift $1/s COMMODITY + pair', expect: 3 + (2 + 1 + 8) + 3 + 1 },
-    { owner: { market: 0, quik: 0 }, keep: 'anchor tenant pair +$2', expect: 3 + (2 + 2) + 2 },
+    { owner: { market: 0, quik: 0 }, keep: 'anchor tenant pair +$2', expect: 3 + (2 + 2) + 2 + 2 /* + THE SERVO */ },
     { owner: { rock: 0, oil: 0, citi: 0 }, keep: 'rock: $1 per DIFFERENT type', expect: 3 + (1 + 8 + 3) + 3 },
     { owner: { bessent: 0, citi: 0 }, keep: 'bessent $1/s BANK', expect: 3 + (1 + 3) + 1 },
     { owner: { watson: 0, coal: 0 }, keep: 'watson+coal pair +$2', expect: 3 + (0 + 3) + 2 },

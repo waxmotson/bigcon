@@ -271,7 +271,7 @@ for (const [name, L] of Object.entries(LOADS)) {
         S.players[0].money = L.money; S.players[0].intel = L.intel; S.players[0].pos = e.acc.NMAP[pos] ? pos : 'quik';
         L.own.forEach(id => { if (e.acc.NMAP[id]) S.owner[id] = 0; });
         S.owner.anz = 1; S.owner.cash = 1; S.owner.rba = 2; S.bugs.cash = 1;
-        S.acccFiles = []; S.hidden = {}; S.blockades = {}; S.ov = null; S.dossier = false;
+        S.acccFiles = []; S.hidden = {}; S.blockades = {}; S.ov = null; S.dossier = false; S.nTurn = {}; S.tollFree = null;
         e.f.acccReconcile();
         return S;
       };

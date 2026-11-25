@@ -233,6 +233,7 @@ test('JB-10 a bot Bond owner hides the node a front-runner needs for the last ty
   ['citi', 'us', 'oil', 'coal', 'press', 'back'].forEach(id => { S.owner[id] = hi; });
   S.players[hi].money = 110;
   S.players[bi].intel = 4; S.players[bi].money = 12;
+  S.players[bi].pos = 'bond007'; /* stand on a node the bot already holds: the Servo made seizing Quikstop the better buy, which is not what this test is about */
   const Bots = e.ctx.window.BigConBots;
   let done = false;
   const p = Bots.takeTurn(bi, e.ctx.botView(bi), e.ctx.botAPI(e.acc.Net.gameEpoch)).finally(() => { done = true; });

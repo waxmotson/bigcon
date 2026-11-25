@@ -88,7 +88,7 @@ export function addCortisol(i,n,why,ev,force){
 export function raid(i){
  const p=S.players[i];
  if(rocketEscape(i))return;
- const baht=S.dlcWorld&&S.owner.w_baht!=null&&NMAP[p.pos]?regionOf(NMAP[p.pos]):null; /* 🌐 THE BAHT 1997: the region the raided pawn stands in */
+ const bahtOwner=S.owner.w_baht,baht=S.dlcWorld&&bahtOwner!=null&&NMAP[p.pos]?regionOf(NMAP[p.pos]):null; /* 🌐 THE BAHT 1997: the region the raided pawn stands in */
  const owned=NODES.filter(n=>S.owner[n.id]===i).sort((a,b)=>b.income-a.income||b.cost-a.cost);
  const seized=owned.slice(0,2);
  seized.forEach(n=>{delete S.owner[n.id];delete S.bugs[n.id];fx(n.x,n.y-70,'🚨 SEIZED','#ff6b5e')});
@@ -108,7 +108,7 @@ export function raid(i){
   +'<ul><li>'+(seized.length?'Seized: <b>'+seized.map(n=>esc(n.name.join(' '))).join('</b> and <b>')+'</b>':'Nothing worth seizing — the accounts took it instead')+'</li>'
   +'<li>Fine of <b>$'+fine+'</b>, Intel burned down to 1, every planted bug pulled</li>'
   +'<li>Cortisol resets to <b>0</b>; next turn brings no income and a single step</li></ul>');
- if(baht!=null)bahtContagion(i,baht);
+ if(baht!=null)bahtContagion(i,baht,bahtOwner);
 }
 
 /* ACCC concentration — a public file the table can see coming, not a dice roll.
@@ -1299,8 +1299,7 @@ async function rocketDestination(i){
  }catch(e){console.error('[BIGCON] rocket destination',e)}
 }
 /* 📉 THE BAHT 1997 — CONTAGION: when anyone is raided, every rival of the Baht's owner who owns a node in the region the raided pawn stood in takes +1 Cortisol */
-function bahtContagion(i,rgn){
- const b=S.owner.w_baht;
+function bahtContagion(i,rgn,b){
  if(b==null||rgn==null||(S.rubble&&S.rubble.w_baht))return;
  const hit=[];
  S.players.forEach((pl,j)=>{if(j===b||j===i||isVanished(j))return;if(NODES.some(n=>S.owner[n.id]===j&&regionOf(n)===rgn))hit.push(j)});

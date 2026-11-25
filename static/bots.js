@@ -453,6 +453,7 @@ export const BigConBots = (function () {
     if (own('barrels') && own('forklift')) syn += 1;
     if (own('forklift') && comm) syn += comm;
     if (own('market') && own('quik')) syn += 2;
+    if (own('quik')) syn += 2 * v.players.length; /* THE SERVO */
     if (own('rock')) syn += new Set(me.filter(id => v.nmap[id]).map(id => v.nmap[id].type)).size;
     if (own('bessent') && bank) syn += bank;
     if (own('chalmers') && reg) syn += reg;
@@ -2116,6 +2117,30 @@ export const BigConBots = (function () {
         if (ev.money <= -5 || ev.fire >= 2) return 1;
       }
       return 0;
+    }
+    /* COMMONWEALTH BANK — CAN'T BE BEAT: refuse the takeover when the node is a valuable one */
+    if (opt.meta && opt.meta.kind === 'cba' && view) {
+      const n = view.nmap[opt.meta.node];
+      return n && (n.income >= 3 || n.cost >= 7) ? 1 : 0;
+    }
+    /* THE BACK NINE: accept a swap only when what I receive (plus cash) is worth clearly more than what I give up */
+    if (opt.meta && opt.meta.kind === 'golf' && view) {
+      const m = opt.meta, me = view.players[pi];
+      if (!me || !view.nmap[m.give] || !view.nmap[m.take]) return 0;
+      if (m.cash < 0 && me.money < -m.cash) return 0;
+      const worth = nodeOwnValue(view, pi, m.give) - keepValue(view, pi, m.take) + m.cash * W.money;
+      return worth > 2 ? 1 : 0;
+    }
+    /* JIM CHALMERS — TREASURY BRIEF: draw the kinder of the two events next */
+    if (opt.meta && opt.meta.kind === 'treasury' && view && Array.isArray(opt.meta.cards)) {
+      let best = opt.meta.cards[0], bestScore = -Infinity;
+      for (const id of opt.meta.cards) {
+        const ev = cardEV(id, view, pi);
+        const score = (ev.money || 0) - 3 * (ev.fire || 0) + (ev.intel || 0);
+        if (score > bestScore) { bestScore = score; best = id; }
+      }
+      B.known[pi] = { card: best, at: view.turn };
+      return best;
     }
     if (byTitle('BACKROOM DEALS')) {
       /* a seizure is mid-flight: cover the shortfall if Backroom is mine */

@@ -341,6 +341,7 @@ test('BT-06e the 30-Intel Cortisol Overload targets the strongest rival', async 
     S.players[1].intel = 30;
     S.players[0].cortisol = 4; /* +6 from the overload lands any chosen rival on 9 */
     S.players[2].cortisol = 4;
+    S.owner.sat = 1; S.players[1].pos = 'sat'; /* stand on a node it holds: the Servo made seizing Quikstop the better move than the overload */
     /* a raid is priced by what it takes, so the targets need real holdings */
     const book = engine.acc.NODES.filter(n => n.id.indexOf('geo_') !== 0 && n.income >= 2);
     S.owner[book[0].id] = 0; S.owner[book[1].id] = 0;
