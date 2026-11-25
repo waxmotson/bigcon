@@ -51,7 +51,7 @@ const GAME_SOURCE_DIRS = ['static/js'];
 const GAME_SOURCE_FILES = ['static/bots.js'];
 /* landing.html's reel: bundled the same way (it imports the game's data.js), with
  * three.js left to the page's import map. Its other modules are folded in. */
-const LANDING_ENTRIES = ['static/landing/reel.js', 'static/landing/film.js', 'static/landing/board3d.js'];   // landing.html, film.html, the game's 3D board
+const LANDING_ENTRIES = ['static/landing/reel.js', 'static/landing/film.js', 'static/landing/board3d.js', 'static/exhibits/exhibits.js'];   // landing.html, film.html, the game's 3D board, exhibits.html
 /* the game loads its optional 3D board at runtime (ui.js: import('../landing/board3d.js')); the game
  * bundle keeps that import as-is and step 5 points it at the hashed file */
 const BOARD3D_IMPORT = '../landing/board3d.js';
@@ -165,7 +165,7 @@ export async function build({ root = repoRoot, out, commit } = {}) {
     if (built.outputFiles.length !== 1) throw new Error('expected one bundle for ' + entry + ', got ' + built.outputFiles.length);
     landings.push([entry, built.outputFiles[0].text]);
   }
-  for (const rel of walk(out, LANDING_DIR)) if (rel.endsWith('.js')) fs.rmSync(path.join(out, rel));
+  for (const d of [LANDING_DIR, 'static/exhibits']) for (const rel of walk(out, d)) if (rel.endsWith('.js')) fs.rmSync(path.join(out, rel));
   for (const [entry, text] of landings) fs.writeFileSync(path.join(out, entry), text);
   for (const d of GAME_SOURCE_DIRS) fs.rmSync(path.join(out, d), { recursive: true, force: true });
   for (const f of GAME_SOURCE_FILES) fs.rmSync(path.join(out, f), { force: true });
