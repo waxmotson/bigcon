@@ -204,8 +204,12 @@ function worldHome(geo){
  });
  WORLD_SLOT_CACHE={key,map};return map;
 }
+/* ALBANESE's text is rewritten while the Global Edition is on (the blockade can then be a free action; see the Reef and Critical Path nodes) */
+const ALBO_SP=(BASE_NODES.find(n=>n.id==='albo')||{}).sp;
+const ALBO_WORLD_SP=ALBO_SP?ALBO_SP.replace('BLOCKADE (free, once per turn)','BLOCKADE (once per turn, uses your action)')+' GLOBAL EDITION: if you also own THE GREAT BARRIER REEF or CRITICAL PATH ANALYSIS (any two of the three), BLOCKADE becomes a FREE action: it uses neither your action nor your movement.':'';
 export function rebuildWorld(geo,world){
  WORLD_GEO=!!geo;WORLD_EXP=!!world;
+ {const albo=BASE_NODES.find(n=>n.id==='albo');if(albo&&ALBO_SP)albo.sp=world?ALBO_WORLD_SP:ALBO_SP}
  NODES=BASE_NODES.concat(geo?GEO_NODES:[],world?WORLD_NODES:[]);
  Object.keys(NMAP).forEach(k=>delete NMAP[k]);
  NODES.forEach(n=>NMAP[n.id]=n);

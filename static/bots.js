@@ -1630,9 +1630,30 @@ export const BigConBots = (function () {
     if (v.owner['back'] === pi && !v.pressured && v.players.some((pl, i) => i !== pi && isHomeStretch(v, i) && vulnerable(v, i))) {
       list.push({ kind: 'pressure', val: 8 + 4 * homeStretch });
     }
-    if (v.owner['albo'] === pi && !v.blockadeUsed) {
+    /* BLOCKADE: ALBANESE, and on the Global Edition the Reef and Critical Path Analysis (two sources make it a free action) */
+    if ((v.owner['albo'] === pi || (v.blockSources && v.blockSources(pi) > 0)) && !v.blockadeUsed) {
       const bd = pickBlockadeTarget(v, pi);
-      if (bd) list.push({ kind: 'blockade', nid: bd.nid, val: bd.val });
+      if (bd) list.push({ kind: 'blockade', nid: bd.nid, val: bd.val * (v.blockFree && v.blockFree(pi) ? 1.5 : 1), free: !!(v.blockFree && v.blockFree(pi)), continuing: true });
+    }
+    /* THE IMF: lend $6 to a rival who plainly cannot repay $8 (the austerity Cortisol is the prize, the write-off the risk) */
+    if (v.dlcWorld && v.owner['w_imf'] === pi && me.money >= 12 && !(v.wTurn && v.wTurn.bailout)) {
+      let bj = null;
+      for (let j = 0; j < v.players.length; j++) {
+        if (j === pi || (v.vanished && v.vanished[j] != null) || (v.imf && v.imf[j])) continue;
+        const pl = v.players[j];
+        if (pl.money > 3 || pl.cortisol < 4) continue;
+        const val = 0.5 * (fireOf(v, j, Math.min(9, pl.cortisol + 2)) - fireOf(v, j, pl.cortisol)) * (pl.bot ? 1 : 1.35) - 2 * W.money;
+        if (val > 0.8 && (!bj || val > bj.val)) bj = { kind: 'bailout', target: j, val };
+      }
+      if (bj) list.push(bj);
+    }
+    /* THE TARIFF WALL: free; put it on a type the front-runner still needs for a full set */
+    if (v.dlcWorld && v.owner['w_tariffwall'] === pi && !(v.wTurn && v.wTurn.tariff)) {
+      const lead = leaderSeat(v, pi);
+      if (lead >= 0 && lead !== pi) {
+        const miss = v.missingTypes(lead);
+        if (miss.length && miss.indexOf(v.tariffType) < 0) list.push({ kind: 'tariff', type: miss[0], val: 40 + 20 * closeness(v, lead), continuing: true });
+      }
     }
     if (v.geo) {
       /* STAGE 5 DECLINE: the richest rival skips a whole income turn */
@@ -1750,7 +1771,7 @@ export const BigConBots = (function () {
     }
     /* apply the character's temperament: hostility through urg, cash plays
        through cashRush (see the convergence block at the top) */
-    const ATTACK = { refer: 1, leak: 1, audit: 1, tweet: 1, roast: 1, targetpanic: 1, masspanic: 1, bondmageddon: 1, pressure: 1, stage5: 1, qantasdown: 1, oilcrash: 1, missile: 1, overtour: 1, divestmade: 1, blockade: 1 };
+    const ATTACK = { refer: 1, leak: 1, audit: 1, tweet: 1, roast: 1, targetpanic: 1, masspanic: 1, bondmageddon: 1, pressure: 1, stage5: 1, qantasdown: 1, oilcrash: 1, missile: 1, overtour: 1, divestmade: 1, blockade: 1, bailout: 1 };
     for (const c of list) {
       if (ATTACK[c.kind]) c.val *= urg;
       else if (c.kind === 'bug') c.val *= 1 + (urg - 1) * 0.5;
@@ -2018,7 +2039,15 @@ export const BigConBots = (function () {
       case 'blockade':
         await tryIntent(api, pi, { act: 'blockmode' });
         await tryIntent(api, pi, { act: 'blockade', id: pick.nid });
+        return !pick.free; /* two blockade sources make it a free action: the turn goes on */
+      case 'tariff': await tryIntent(api, pi, { act: 'tariff', kind: pick.type }); return false;
+      case 'bailout': {
+        await tryIntent(api, pi, { act: 'worldmode', kind: 'bailout' });
+        const bv = api.viewOf(pi);
+        if (!bv || bv.mode !== 'bailout') return false;
+        await tryIntent(api, pi, { act: 'bailout', target: pick.target });
         return true;
+      }
       case 'bondmageddon':
         await tryIntent(api, pi, { act: 'bondmageddon', target: pick.target });
         return true;

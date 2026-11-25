@@ -6,7 +6,8 @@ import { $, IS_DISCORD_ACTIVITY, Presence } from './core.js';
 import { hooks } from './hooks.js';
 import { LOG_SHOWN, Net, S } from './state.js';
 import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
-import { CLASSIFIED_INTEL, CLASSIFIED_MONEY, classifiedBlocked, hiddenFrom, hiddenInfo, ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost } from './engine.js';
+import { CLASSIFIED_INTEL, CLASSIFIED_MONEY, classifiedBlocked, hiddenFrom, hiddenInfo, ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost, blocStatus, tariffFor, tariffOwner, blockSources, blockadeFree, reefBleached, fileAuthority, isWaterNode } from './engine.js';
+import { TRADE_BLOCS, blocOfMember } from './world.js';
 import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
 import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
@@ -74,6 +75,14 @@ export function showRules(){
  +'<h4>ACCC concentration — the regulators keep a file</h4><p>Twelve industries are tracked. Five are type-based — banking, regulators, corporates, commodities and media (charts and WILD nodes don’t count toward them) — and seven are themed books listed by name: coal, oil, education, JTPortal, Jim Chalmers, Big Bessent and monetary policy (MONETARY POLICY also counts the CASH-RATE and INFLATION charts). A themed book is <b>concentrated at 3</b> holdings. A type-based industry is concentrated at <b>a third of its size on the live board, rounded up, never fewer than 3</b>: three banks, regulators or corporates, but <b>four</b> media or four commodities (there are 11 media and 10 commodities, 12 and 11 with the Geography DLC). Hold that many and the regulator <b>opens a public file</b> on the book — every player’s open files are listed in THE SYNDICATE. <b>ASIC</b> runs monetary-policy books as <b>market manipulation</b>; the <b>ACCC</b> takes every other industry. There are no dice: at the start of each of <b>your</b> turns every open file on you gains <b>+1 scrutiny</b>, and at <b>3</b> the ruling lands. You choose which nodes to keep, down to one fewer than the trigger; only the excess is divested, back to the market <b>unowned</b> (never to a rival, and any bugs on it are pulled), and you pay <b>10% of your cash and 10% of your Intel per divested node</b>, capped at 30% each. A file closes the moment the book drops back under the trigger, however that happens — a sale, a deal, a takeover, a raid, a missile — and its scrutiny is discarded. While a file is open you can <b>sell a node from that book to the market</b> for its list price (your action), or <b>lobby</b> (3 🛈, free, once per turn) for −1 scrutiny on one of your files (never below 0). The owner of the <b>ACCC</b> can <b>REFER</b> a rival’s file ($4, your action, once per turn) for +1 scrutiny; the owner of <b>ASIC</b> refers monetary-policy files the same way. You can’t refer your own file, and a referral never rules on the spot — rulings only land at the start of the offender’s own turn. The <b>MONOPOLY ALERT</b> event adds +1 scrutiny to every open file on the table. Owning <b>Mark Watson</b> exempts your holdings in the COAL industry from ACCC monopoly investigations.</p>'
  +'<h4>MADE (???)</h4><p>Nobody knows what the purple graphic is, but it moves money: at the <b>start of every player\'s turn</b> there is a chance MADE pays out (<b>33% at 2 seats, 22% at 3, 17% at 4, 13% at 5, 11% at 6, 10% at 7, 8% at 8</b>) — <b>+$10 and +1 Intel</b> to its owner. Every other player with <b>more than two nodes and at least $50</b> pays 15% of their cash to the void. Seizing MADE always costs list price — it never inflates after a takeover. You may also force MADE to divest from any rival for <b>5 Intel + $7</b> (the $7 goes to the former owner as compensation, and you take +1 Cortisol).</p>'
  +'<h4>🌐 THE BIG CON: GLOBAL EDITION</h4><p>Two host-chosen options in the lobby. <b>GLOBAL EDITION EXHIBITS</b> add <b>100+ global exhibits</b> — central banks, chokepoints, mines, wealth funds, a Nigerian prince — to <i>any</i> board layout (Random, Ringworld, Mega Ring) and combines freely with the Geography DLC. The <b>THE BIG CON: GLOBAL EDITION</b> map pins every exhibit to the place it really lives on a world map (and switches the exhibits on): <b>Quikstop opens in Sydney</b>, Wall Street is in New York, Hormuz is in the Gulf. Threads follow geography — neighbours link up inside their region and the regions meet at gateways: Panama joins the Americas, Suez joins Europe, the Middle East and Africa, Hormuz joins the Gulf to South Asia, Malacca joins South Asia to the Pacific side, and Antarctica is the southern route. Europe and North America touch <i>only</i> through Iceland and Greenland, and The Rock lets you sail off the right edge of the map and back in from the left. Exhibits that are not places (screens, charts, the boulder) float to a random open spot each game. The new exhibits ship as <b>text cards</b> (name and icon) until their pictures arrive. Most pay through simple synergies — per node type, a partner node, start-of-turn Cortisol or Intel, and windfalls on events like OIL SPIKES or GOLD RUSH; nodes marked ⚙ have income, price and seizing working while their special ability is still being wired up.</p>'
+ +'<h4>🌐 Global Edition — trade blocs, the WTO, the water and the reef</h4>'
+ +'<ul><li><b>TRADE BLOCS</b> — <b>THE EU SINGLE MARKET</b> and <b>BRICS</b>. Own the bloc node and your income from its <b>member nodes</b> (EU: the ECB, Deutsche Bank, Bunds, BTP, Greek Debt, Luxembourg, ASML, Tulip, OPEC Vienna, Rotterdam, the Paris master chart, the Brussels Pillars, Venice; BRICS: nodes in Brazil, Russia, India, China and South Africa) is multiplied by <b>1 + 0.25 per member you hold, capped at ×2.5</b>. It is added at income time and logged; hover the bloc node to see your members, multiplier and file. The catch: with <b>3 or more members</b> a <b>WTO file</b> opens on you, each member held <b>beyond 2</b> adds that much scrutiny at each of your turn starts (3 members: +1, 4: +2, 5: +3), and at 3 the ruling lands — you keep 2 members, the rest return to the market, and you pay the usual 10% fine per node. Lobby, sell to the market or drop below 3 members to close it. The owner of <b>THE WTO</b> can <b>REFER</b> a rival’s bloc file ($4, your action, once per turn) for +1 scrutiny.</li>'
+ +'<li><b>BLOCKADE</b> — ALBANESE, <b>THE GREAT BARRIER REEF</b> and <b>CRITICAL PATH ANALYSIS</b> each grant it. With one source it is a once-per-turn <b>action</b> (it ends your turn, as ever). Hold <b>any two</b> of the three and it becomes a <b>FREE action</b> — once per turn, in your move or action phase, using neither your action nor your movement. Only one blockade per turn, however many sources you hold. The Reef stops counting while it is bleached.</li>'
+ +'<li><b>CORAL BLEACHING</b> — an extra market event that only exists on the Global Edition. The Reef’s blockade and income are off for the next 2 rounds and its owner takes +1 Cortisol.</li>'
+ +'<li><b>THE CRUISE SHIP</b> — standing on a <b>WATER node</b> (the four chokepoints, the South China Sea, Venice, Wonsan, Tuvalu, Fiji, Nauru, Papua New Guinea, Sri Lanka, Easter Island, the Caymans, the BVI, Bermuda, Svalbard, Iceland, Greenland, the Reef, Hawaii (The Rock), Marina Bay, Dover, Nord Stream, Barcelona, the Docks, the Tanker Fleet and the Rotterdam barrel yard), pay $2 in your move phase to sail to any other WATER node; the voyage ends your move. Its owner takes +1 Cortisol each turn unless they also own a REGULATOR.</li>'
+ +'<li><b>THE IMF</b> — BAILOUT (your action, once per turn): lend a rival $6 of your own money; $8 is due to you at the start of their next-but-one turn, or they take +2 Cortisol and the loan is written off. One IMF loan per rival at a time.</li>'
+ +'<li><b>THE TARIFF WALL</b> — free, once per turn: name a node type. Rivals pay $2 extra (to the wall’s owner) whenever they seize or take over a node of that type. The current wall is shown above THE TURN.</li>'
+ +'<li><b>WOOLWORTHS</b> — your seizures cost $1 less, and every seizure you make gives each rival +1 Cortisol. <b>ANZCERTA</b> replaces the NZ sheep: +$1 per Australian or NZ node and no tolls between them. <b>APPLE</b> pays $2 per tax haven; <b>THE 20-FOOT BOX</b> $1 per chokepoint; <b>OVERSEAS FILIPINO WORKERS</b> −1 Cortisol a turn and $1 per region you hold a node in; <b>THE DOHA ROUND</b> (once per game) pays $2 per commodity for 3 turns, then stalls.</li></ul>'
  +'<h4>🌍 The Geography DLC — the board expands over the water</h4><p>Host-toggled in the lobby (look for <b>ENABLE THE GEOGRAPHY DLC</b>). <b>On: the board deals 82 exhibits.</b> Off: the same 70 exhibits as always.</p>'
  +'<ul><li><b>MISSILE COMMAND ($8) / IRANIAN SHAHED DRONE ($8)</b> — you can own <b>MISSILE COMMAND or the SHAHED DRONE</b>, but not both. Either owned launch site can LAUNCH A MISSILE ($4 + 1 🛈, once per turn): stand on the launcher you own to fire, or own KIM JONG UN to fire from anywhere — during your move (the launch ends it) or as your action. You can’t hit your own nodes, or any other node held by the Pillars owner. An <b>owned node is expropriated with NO payout</b> to its former owner; either way it becomes <b>RUBBLE</b> until rebuilt at list price. The <b>ESG Pillars themselves can be missile-struck</b>, and the shield falls with them. Strike a <b>REGULATOR</b> and an investigation opens — <b>ASIC or the ACCC</b> comes for you on your next turn: a 50/50 indictment, and <b>+1 Cortisol</b> whether it lands or not.</li>'
  +'<li><b>PYONGYANG CITY ($6)</b> — +$1 income per Geography node you own. The capital collects tribute.</li>'
@@ -171,6 +180,28 @@ export function nodeSVG(n,cls){
   +ownerTag+bugTag+badges
   +'<title>'+esc(nodeTip(n)).replace(/\n/g,'&#10;')+'</title></g>';
 }
+/* the Global Edition's extra tooltip lines for a node: trade-bloc multiplier and scrutiny, the tariff wall, the bleached reef, WATER nodes */
+export function worldTip(n){
+ if(!S||!S.dlcWorld)return '';
+ let t='';
+ const me=Net.myIdx,seated=me!=null&&me>=0&&me<S.players.length;
+ const bid=TRADE_BLOCS[n.id]?n.id:blocOfMember(n.id);
+ if(bid){
+  const b=TRADE_BLOCS[bid],bn=NMAP[bid]?nodeName(NMAP[bid]).join(' '):b.short;
+  if(n.id===bid){
+   t+='\n'+b.icon+' MEMBER NODES ('+b.members.filter(id=>NMAP[id]).length+'): '+b.members.filter(id=>NMAP[id]).map(id=>NMAP[id].name.join(' ')).join(', ')+'.';
+   const st=seated?blocStatus(me).find(x=>x.id===bid):null;
+   if(st)t+='\n'+b.icon+' YOURS: '+st.k+' member node'+(st.k===1?'':'s')+' · income ×'+st.mult.toFixed(2)+' · +$'+st.bonus+'/turn'+(st.file?' · WTO file '+st.file.s+'/'+ACCC_RULING:st.k>=3?' · a WTO file is about to open':'')+(st.step?' · scrutiny +'+st.step+' per turn':'')+'.';
+   else if(S.owner[bid]!=null)t+='\n'+b.icon+' Owned by '+pname(S.owner[bid])+'.';
+  }else t+='\n'+b.icon+' A MEMBER of '+bn+'. The bloc owner multiplies its income ×(1 + 0.25 per member held, max 2.5), and 3 or more members open a WTO file.';
+ }
+ if(n.id==='w_tariffwall')t+='\n🧱 The wall stands on: '+(S.tariffType||'nothing yet')+'.';
+ else if(S.tariffType===n.type&&tariffOwner()!=null)t+='\n🧱 TARIFF WALL: rivals of '+pname(tariffOwner())+' pay $2 extra to seize a '+n.type+' node.';
+ if(n.id==='w_gbr'&&reefBleached())t+='\n🪸 BLEACHED: its blockade and income are off until the end of round '+(S.bleachUntil-1)+'.';
+ if(isWaterNode(n.id))t+='\n🌊 A WATER node: the Cruise Ship calls here.';
+ if(S.imf&&n.id==='w_imf'){const l=Object.keys(S.imf).map(k=>pname(+k)+' (due in '+S.imf[k].left+' of their turns)');if(l.length)t+='\n🆘 Open loans: '+l.join(', ')+'.'}
+ return t;
+}
 /* A node's hover text, as plain lines: the SVG board's <title> and the 3D board's tooltip. */
 export function nodeTip(n){
  const o=S?S.owner[n.id]:null;
@@ -180,6 +211,7 @@ export function nodeTip(n){
  let t=nodeName(n).join(' ')+' — '+n.type+' · $'+n.income+'/turn · seize $'+n.cost+'\n'+(n.sub||'')+'\n'+(n.sp||'');
  if(n.todo)t+='\n⚙ Ability still being wired up — income, price and seizing already work.';
  if(bl)t+='\n🚧 BLOCKADED — entry and Qantas landing are prohibited until the blockade expires.';
+ t+=worldTip(n);
  if(rb)t+='\n💥 RUBBLE — arrive and pay $'+n.cost+' in your action phase to rebuild. No income, nothing to seize until rebuilt.';
  if(ot)t+='\n🛳️ OVERTOURISM — its owner takes +1 Cortisol on their next turn (one rotation, or until Venice changes hands).';
  if(S&&!rb)t+=priceTip(n,o).replace(/&#10;/g,'\n');
@@ -197,7 +229,8 @@ export function priceTip(n,o){
  if(o==null){
   if(!seated)return '&#10;💰 Seize: $'+n.cost+(flat?' — never inflates':'');
   let base=seizeListPrice(me,n);if(S.slipped===true&&S.cur===me&&S.owner.f1===me)base=Math.max(1,base-2);
-  return '&#10;💰 Seize for you: $'+base+(flat?' — never inflates':' · once owned, a takeover costs $'+n.cost*Math.pow(2,Math.max(1,taken+1))+times);
+  const tf0=tariffFor(me,n.id);
+  return '&#10;💰 Seize for you: $'+(base+tf0)+(tf0?' (incl. $'+tf0+' TARIFF WALL)':'')+(flat?' — never inflates':' · once owned, a takeover costs $'+n.cost*Math.pow(2,Math.max(1,taken+1))+times);
  }
  if(seated&&o===me)return '&#10;⚔️ A rival’s takeover costs $'+n.cost*mult+' (list $'+n.cost+(flat?', never inflates':'')+times+') — you pocket the $'+n.cost+' buyout'+(S.owner.accc===me?' + $2 ACCC fee':'')+'.';
  const fee=S.owner.accc===o?' + $2 ACCC fee':'';
@@ -205,7 +238,8 @@ export function priceTip(n,o){
  let base=seizeListPrice(me,n);if(S.slipped===true&&S.cur===me&&S.owner.f1===me)base=Math.max(1,base-2);
  const dossier=!flat&&S.dossier&&S.cur===me;
  const cost=flat||dossier?base:base*mult;
- return '&#10;⚔️ Takeover for you: $'+cost+fee+(flat?' — never inflates':dossier?' — the Dossier holds it to list':' ('+(mult)+'× list'+times+'; doubles again after)')+'.';
+ const tf=seated?tariffFor(me,n.id):0;
+ return '&#10;⚔️ Takeover for you: $'+(cost+tf)+fee+(tf?' (incl. $'+tf+' TARIFF WALL)':'')+(flat?' — never inflates':dossier?' — the Dossier holds it to list':' ('+(mult)+'× list'+times+'; doubles again after)')+'.';
 }
 export function tokenLayer(){
  const byPos={};S.players.forEach((p,i)=>{if(isVanished(i))return;(byPos[p.pos]=byPos[p.pos]||[]).push(i)});
@@ -257,6 +291,15 @@ export function overtourTargetable(n){
   &&S.owner[n.id]!=null&&S.owner[n.id]!==me&&!S.rubble[n.id]&&!hiddenFromMe(n.id);
 }
 /* the World Expansion's picks: a node then a neighbour (chainsaw, brexit), one of yours then any node (silk road), any node (vanish) */
+/* the Global Edition buttons that live in the MOVE phase: the Cruise Ship, the free blockade combo and the Tariff Wall */
+export function worldMoveButtons(me,p){
+ if(!S||!S.dlcWorld)return '';
+ let h='';
+ if(S.owner.w_cruise===me){const why=worldBlocked(me,'cruise');h+='<button class="act" data-act="worldmode:cruise"'+(why?' disabled':'')+' title="'+esc(why||'Pay $2 and sail to any other WATER node; the voyage ends your movement.')+'">🛳️ CRUISE SHIP — $2, sail to any WATER node</button>'}
+ if(blockadeFree(me)){const open=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));h+='<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&open?'':' disabled')+' title="FREE, once per turn: you hold two blockade sources, so walling off a node uses neither your action nor your movement.">🚧 BLOCKADE — FREE (once per turn)</button>'}
+ if(S.owner.w_tariffwall===me){const why=worldBlocked(me,'tariff');h+='<button class="act" data-act="tariffmode"'+(why?' disabled':'')+' title="'+esc(why||'Free, once per turn: name the node type that costs rivals $2 extra to seize.')+'">🧱 TARIFF WALL — name a type'+(S.tariffType?' (now '+S.tariffType+')':'')+'</button>'}
+ return h;
+}
 export function worldPickable(n){
  const me=Net.myIdx,k=S&&S.mode;
  if(!S||S.phase!=='action'||!myTurn()||!S.dlcWorld||!k)return false;
@@ -269,7 +312,7 @@ export function worldPickable(n){
 }
 export function blockadeTargetable(n){
  const me=Net.myIdx;
- return S&&S.phase==='action'&&S.mode==='blockade'&&myTurn()&&S.owner.albo===me
+ return S&&(S.phase==='action'||(S.phase==='move'&&blockadeFree(me)))&&S.mode==='blockade'&&myTurn()&&blockSources(me).length>0
   &&!S.rubble[n.id]&&!blockaded(n.id)&&!hiddenFromMe(n.id);
 }
 /* Edge geometry shared by the board and the hover/path overlay. Under fog of war an edge only shows once both
@@ -418,7 +461,8 @@ function nodeClass(n,curpos){
  if(!S||S.over)return '';
  if(classifiedTargetable(n))return 'click target';
  if(S.mode==='fly'||S.mode==='launch')return (myTurn()&&n.id!==curpos&&canReach(n.id)&&!blockaded(n.id))?'click':'';
- if(S.mode!=='missile'&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))return 'click reach';
+ if(S.mode==='cruise')return (myTurn()&&n.id!==curpos&&isWaterNode(n.id)&&canReach(n.id)&&!blockaded(n.id))?'click':'';
+ if(S.mode!=='missile'&&S.mode!=='blockade'&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))return 'click reach';
  if(classifiedTargetable(n)||bugTargetable(n)||missileTargetable(n)||overtourTargetable(n)||blockadeTargetable(n)||worldPickable(n))return 'click target';
  return '';
 }
@@ -644,6 +688,8 @@ export function renderSide(){
   const maxSteps=S.caution?1:3+(S.owner.coal===me?1:0)+((S.owner.train===me||S.owner.bullet===me)?1:0)+(S.owner.asics===me?1:0)+(S.extraStep?1:0)+(S.slipped?2:0);
   const dots='●'.repeat(Math.max(0,S.steps))+'○'.repeat(Math.max(0,maxSteps-S.steps));
   if(S.mode==='classified'){phaseHtml='<div class="phlabel">🗂️ CLASSIFIED — '+(S.classPay==='money'?'$'+CLASSIFIED_MONEY:CLASSIFIED_INTEL+' 🛈')+' · FREE ACTION · ONCE PER TURN</div><p>Click <b>any node</b> on the board. Until the end of next round it is drawn as an unknown to everyone but you and its holder'+(S.fogOfWar?', and every rival who had been there forgets the way (permanently)':'')+'. Rivals can still walk onto it and seize it blind — they just can’t see it or pick it as a target.</p><button class="act" data-act="cancel">Cancel</button>'}
+  else if(S.mode==='cruise'){phaseHtml='<div class="phlabel">🛳️ THE CRUISE SHIP — $2</div><p><b>SAILING:</b> click any <b>WATER node</b> (a strait, island, port or sea) to sail there. Your move ends on arrival.</p><button class="act" data-act="cancel">Cancel the voyage</button>'}
+  else if(S.mode==='blockade'){phaseHtml='<div class="phlabel">🚧 BLOCKADE — FREE ACTION · ONCE PER TURN</div><p>Your blockade sources make this a <b>free action</b>: click any <b>highlighted node</b> to wall it off until the end of next round. Your movement and your action are untouched.</p><button class="act" data-act="cancel">Cancel</button>'}
   else if(S.mode==='launch'){phaseHtml='<div class="phlabel">🚀 BAIKONUR LAUNCH — $3, ONCE PER GAME</div><p><b>LAUNCHING:</b> click <b>any node</b> on the board to land there. Your move ends on arrival.</p><button class="act" data-act="cancel">Scrub the launch</button>'}
   else if(S.mode==='fly'){phaseHtml='<div class="phlabel">PHASE 1 · MOVE — FLYING</div><p><b>FLYING:</b> click <b>any node</b> on the board to land there ($3).</p><button class="act" data-act="cancel">Cancel flight</button>'}
   else if(S.mode==='missile'){phaseHtml='<div class="phlabel">🚀 MISSILE AWAY — $4 + 1 🛈</div><p><b>LAUNCHING:</b> click <b>any node</b> on the board to strike it. The launch <b>ends your move</b>, and your action phase still follows.</p><button class="act" data-act="cancel">Abort the launch</button>'}
@@ -657,6 +703,7 @@ export function renderSide(){
     +((S.owner.qantas===me)?'<button class="act" data-act="flymode"'+(p.money>=3?'':' disabled')+'>✈️ Fly the Qantas jet — $3 (anywhere)</button>':'')
     +((S.owner.f1===me&&!S.slipped)?'<button class="act" data-act="slip"'+(p.money>=2?'':' disabled')+'>🏎️ Slipstream — $2 (+2 steps, $2 off next seizure)</button>':'')
     +classifiedButtons(me,p)
+    +worldMoveButtons(me,p)
     +((S.dlcGeo&&ownsMissileLauncher(me)&&canFireMissileFrom(me))?'<button class="act" data-act="missilemode"'+((p.money>=4&&p.intel>=1&&!S.geoMissiled)?'':' disabled')+' title="From either launcher (anywhere with Kim Jong Un): strike any node that still stands — the launch ends your move; your action still follows ($4 + 1 Intel, once per turn)">🚀 Launch a missile — $4 + 1🛈 (ends the move)</button>':'')
     +'</div>';
     if(S.owner.back===me&&!S.backroomAbilityUsed){
@@ -688,8 +735,10 @@ export function renderSide(){
    phaseHtml='<div class="phlabel">PLANT A BUG</div>'+powline+'<p>Click a <b>highlighted rival node next to you</b> on the board. You will skim <b>$1/turn</b> off it ($2 with the WEF).</p><button class="act" data-act="cancel">Cancel</button>';
   } else if(S.mode==='missile'){
    phaseHtml='<div class="phlabel">🚀 LAUNCH A MISSILE — $4 + 1 🛈 (once per turn)</div>'+powline+'<p>Click <b>any node</b> on the board. An owned node is expropriated with <b>no payout</b>; either way it becomes <b>rubble</b> — no income, nothing to seize, until someone stands there and pays its list price to rebuild (a rebuild is an action of its own).</p><button class="act" data-act="cancel">Abort the launch</button>';
+  } else if(S.mode==='bailout'){
+   phaseHtml='<div class="phlabel">🆘 IMF BAILOUT — LEND $6</div>'+powline+'<p>Click a <b>rival</b> in THE SYNDICATE list below (one with no IMF loan). You lend $6 of your own money; $8 is due back at the start of their next-but-one turn, or they take +2 Cortisol.</p><button class="act" data-act="cancel">Cancel</button>';
   } else if(S.mode==='blockade'){
-   phaseHtml='<div class="phlabel">🚧 ALBANESE BLOCKADE — FREE · ONCE PER TURN</div>'+powline+'<p>Click any <b>highlighted node</b> to block entry until the end of next round. Blocked nodes display a 🚧 marker. Nobody can walk or fly into one, including you; income and missiles are unaffected. Rubble and already-blocked nodes cannot be selected.</p><button class="act" data-act="cancel">Cancel</button>';
+   phaseHtml='<div class="phlabel">🚧 BLOCKADE — '+(blockadeFree(me)?'FREE':'USES YOUR ACTION')+' · ONCE PER TURN</div>'+powline+'<p>Click any <b>highlighted node</b> to block entry until the end of next round. Blocked nodes display a 🚧 marker. Nobody can walk or fly into one, including you; income and missiles are unaffected. Rubble and already-blocked nodes cannot be selected.</p><button class="act" data-act="cancel">Cancel</button>';
   } else if(S.mode==='overtour'){
    phaseHtml='<div class="phlabel">🛳️ OVERTOURISM — $2</div>'+powline+'<p>Click a <b>rival-owned node</b>. Its owner takes <b>+1 Cortisol</b> at the start of their turn for one full table rotation, or until Venice changes hands.</p><button class="act" data-act="cancel">Cancel</button>';
   } else if(S.mode==='deal'){
@@ -713,7 +762,7 @@ export function renderSide(){
    /* the slipstream's $2 off applies to this seizure (the engine takes it in doSeize) */
    if(S.slipped===true&&S.owner.f1===me)base=Math.max(1,base-2);
    const isTake=prev!=null&&prev!==me;
-   const cost=isTake?takeoverCost(me,nid,base):base;
+   const cost=(isTake?takeoverCost(me,nid,base):base)+tariffFor(me,nid);
    const maxPay=p.money+(S.owner.back===me?Math.min(3,p.intel):0);
    const btns=[];
    if(prev===me){
@@ -754,7 +803,7 @@ export function renderSide(){
     btns.push('<button class="act" data-act="overmode"'+((p.money>=2&&!S.geoVenice&&ot>0)?'':' disabled')+' title="Pick any rival-owned node, including ESG holdings. It remains active for one full table rotation and applies +1 Cortisol when the target takes their turn ($2, once per turn, either/or)">🛳️ Overtourism — $2 (one full turn cycle)</button>');
    }
    if(S.dlcGeo&&S.owner.geo_wonsan===me&&nid==='geo_wonsan')btns.push('<button class="act primary" data-act="beach"'+(!S.geoBeach?'':' disabled')+' title="Free — once per turn">🏖️ Beach day — free −2 🔥</button>');
-   if(S.owner.albo===me){const blockadeTargets=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));btns.push('<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&blockadeTargets?'':' disabled')+' title="Free, once per turn: wall off any unblocked, non-rubble node until the end of next round. Blocks walking and Qantas landings; shown by a 🚧 marker on the board.">🚧 Blockade — free (once per turn)</button>');}
+   if(blockSources(me).length){const blockadeTargets=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));const bfree=blockadeFree(me);btns.push('<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&blockadeTargets?'':' disabled')+' title="Once per turn: wall off any unblocked, non-rubble node until the end of next round. Blocks walking and Qantas landings; shown by a 🚧 marker on the board.'+(bfree?' You hold two blockade sources, so this is a FREE action.':' It uses your action (hold two of ALBANESE, THE GREAT BARRIER REEF and CRITICAL PATH ANALYSIS to make it free).')+'">🚧 Blockade — '+(bfree?'free (once per turn)':'uses your action (once per turn)')+'</button>');}
    if(S.dlcWorld&&S.owner.w_suez===me)btns.push('<button class="act" data-act="evergiven"'+(!S.evergivenUsed&&!blockaded('w_suez')&&!S.rubble['w_suez']?'':' disabled')+' title="Once per game: block the Suez until the end of next round. Nobody walks in or lands there — you included.">🚢 EVER GIVEN — block the Suez (once per game)</button>');
    if(S.dlcWorld){
     [['chainsaw','w_milei','worldmode:chainsaw','🪚 CHAINSAW — cut an edge, $3 (once per game)','Pay $3, cut any one edge of the board for good, and pocket $4.'],
@@ -764,7 +813,10 @@ export function renderSide(){
      ['carry','w_watanabe','carry','👛 CARRY TRADE — borrow $6, repay $9 next turn','Borrow $6 now; repay $9 at the start of your next turn or take +3 Cortisol.'],
      ['hold','w_bangalore','worldmode:hold','🎧 PUT A RIVAL ON HOLD — they lose 1 🛈','Pick a rival: they lose 1 Intel. Once per turn.'],
      ['carbon','w_amazon','carbon','🌳 SELL CARBON CREDITS — $3 per non-commodity node','Once per turn: $3 for every node of yours that is not a COMMODITY.'],
-     ['vanish','w_bermuda','worldmode:vanish','🌀 THE VANISH — reappear anywhere (once per game)','Disappear until your next turn; rivals cannot target you. You reappear at any node you name.']
+     ['vanish','w_bermuda','worldmode:vanish','🌀 THE VANISH — reappear anywhere (once per game)','Disappear until your next turn; rivals cannot target you. You reappear at any node you name.'],
+     ['bailout','w_imf','worldmode:bailout','🆘 IMF BAILOUT — lend a rival $6 (repay $8)','Lend a chosen rival $6 of your own money; $8 is due back at the start of their next-but-one turn, or they take +2 Cortisol.'],
+     ['tariff','w_tariffwall','tariffmode','🧱 TARIFF WALL — name a node type'+(S.tariffType?' (now '+S.tariffType+')':''),'Free, once per turn: rivals pay $2 extra (to you) to seize a node of the type you name.'],
+     ['doha','w_doha','doha','🕰️ START THE DOHA ROUND — +$2 per commodity for 3 turns (once per game)','Open a trade round: $2 per COMMODITY node you own at the start of each of your next 3 turns, then the talks stall.']
     ].forEach(([k,nid,act,label,tip])=>{if(S.owner[nid]!==me)return;const why=worldBlocked(me,k);btns.push('<button class="act" data-act="'+act+'"'+(why?' disabled':'')+' title="'+esc(why||tip)+'">'+label+'</button>')});
    }
    /* ---- 🧐 THE REGULATORS' FILES & NODE DEALS ---- */
@@ -779,7 +831,7 @@ export function renderSide(){
     });
    }
    btns.push('<button class="act" data-act="dealmode"'+((S.players.length>1&&NODES.some(nn=>S.owner[nn.id]===me))?'':' disabled')+' title="Your action: offer one of your nodes to one rival for a price you name ($0 up to their cash). They accept or decline in private; a declined offer still uses your action. No Cortisol; bugs on the node are cleared.">🤝 Offer a deal — sell a node to a rival</button>');
-   if(S.owner.accc===me||S.owner.asic===me)btns.push('<button class="act" data-act="refermode"'+((p.money>=4&&!S.referred&&S.players.some((_,i)=>referableFiles(i).length))?'':' disabled')+' title="Your action, once per turn: $4 for +1 scrutiny on a rival’s open file. The ACCC refers every book but monetary policy; ASIC refers monetary-policy books. You cannot refer your own file, and rulings still wait for the offender’s turn start.">🧐 Refer a rival file — $4 (+1 scrutiny)</button>');
+   if(S.owner.accc===me||S.owner.asic===me||(S.dlcWorld&&S.owner.w_wto===me))btns.push('<button class="act" data-act="refermode"'+((p.money>=4&&!S.referred&&S.players.some((_,i)=>referableFiles(i).length))?'':' disabled')+' title="Your action, once per turn: $4 for +1 scrutiny on a rival’s open file. The ACCC refers every book but monetary policy; ASIC refers monetary-policy books; the WTO refers trade-bloc books. You cannot refer your own file, and rulings still wait for the offender’s turn start.">🧐 Refer a rival file — $4 (+1 scrutiny)</button>');
    if(S.owner.bond007===me)btns.push(classifiedButtons(me,p));
    /* ---- INTEL OPS ---- */
    btns.push('<div class="sublabel">INTEL OPS · you hold 🛈 '+p.intel+' · market rate $'+md.rate+'/🛈</div>');
@@ -803,7 +855,7 @@ export function renderSide(){
  }
  const prows=S.players.map((pl,i)=>{
   const nodes=NODES.filter(nn=>S.owner[nn.id]===i).length;
-  const targetable=isTurn&&i!==me&&((S.phase==='action'||(S.phase==='move'&&S.owner.back===me&&!S.backroomAbilityUsed))&&(S.mode==='leak'||S.mode==='audit'||S.mode==='tweet'||S.mode==='roast'||S.mode==='hold')||(S.phase==='action'&&(S.mode==='deal'||(S.mode==='refer'&&referableFiles(i).length))));
+  const targetable=isTurn&&i!==me&&((S.phase==='action'||(S.phase==='move'&&S.owner.back===me&&!S.backroomAbilityUsed))&&(S.mode==='leak'||S.mode==='audit'||S.mode==='tweet'||S.mode==='roast'||S.mode==='hold'||S.mode==='bailout')||(S.phase==='action'&&(S.mode==='deal'||(S.mode==='refer'&&referableFiles(i).length))));
   const fl=filesOf(i);
   const face=charSrc(pl.char);
   return '<div class="prow'+(i===me?' me':'')+(targetable?' targetable':'')+(pl.cortisol>=6?' hot':'')+'" data-rival="'+i+'" style="--pc:'+pl.color+'">'
@@ -811,7 +863,7 @@ export function renderSide(){
    +'<span class="pname">'+esc(pl.name)+(i===me?' <i style="color:#9ad">(you)</i>':'')+(pl.dc?' 💤':'')+'</span>'
    +'<span class="pstats">$'+pl.money+' · 🛈'+pl.intel+' · 🔥'+pl.cortisol+'</span>'
    +'<span class="pnodes">'+nodes+' node'+(nodes!==1?'s':'')+' · set '+(WIN_TYPES.length-missingTypes(i).length)+'/'+WIN_TYPES.length+'</span>'
-   +(fl.length?'<span class="pfiles" title="Open regulator files: +1 scrutiny at each of this player’s turn starts, ruling at '+ACCC_RULING+'">'+fl.map(f=>(f.agency==='ASIC'?'⚖️ ASIC':'🧐 ACCC')+' file · '+INDBYID[f.ind].name+' '+f.s+'/'+ACCC_RULING).join(' · ')+'</span>':'')+'</div>';
+   +(fl.length?'<span class="pfiles" title="Open regulator files: +1 scrutiny at each of this player’s turn starts (a trade-bloc file adds 1 per member beyond 2), ruling at '+ACCC_RULING+'">'+fl.map(f=>agencyTag(f)+' file · '+INDBYID[f.ind].name+' '+f.s+'/'+ACCC_RULING).join(' · ')+'</span>':'')+'</div>';
  }).join('');
  const myMissing=Net.spect?[]:missingTypes(me);
  const setHtml=Net.spect?'<span style="color:#9ad">not playing — just watching</span>':WIN_TYPES.map(t=>{const has=hasType(me,t);return '<span style="color:'+(has?'#7fe08d':'#ff6b5e')+'">'+(has?'✔':'✘')+' '+t+'</span>'}).join('');
@@ -819,6 +871,7 @@ export function renderSide(){
  const chatVal=chatDraft;
  side.innerHTML='<div class="netstrip">ROOM <b>'+(Net.roomLabel||Net.roomCode||'·····')+'</b> · '+(Net.role==='host'?'HOST':(Net.spect?'👁 SPECTATOR':'SEAT '+(Net.myIdx+1)))+' · 🎯 TARGET $'+goalAmount()+' · '+(S.players.filter(pl=>!pl.dc).length+'/'+S.players.length+' connected')+(S.deckCount!=null?' · 🎴 '+S.deckCount+' events left':'')+' · ⛽ '+(QUIK_SLOTS[S.quikSlot|0]||QUIK_SLOTS[0]).label+'</div>'
   +'<div class="moodstrip" style="border-color:'+md.color+'"><span class="mdot" style="background:'+md.color+'"></span><b style="color:'+md.color+'">'+md.label+'</b><span>'+md.desc+'</span><span class="mwire">“'+esc(S.wire||'all quiet on the wire')+'”</span></div>'
+  +worldStrip()
   +'<div class="brand"><div class="t1">THE BIG CON</div><div class="t2">v1.13 · '+(S.dlcGeo?'82':'70')+' exhibits · three board layouts · online, 2–8</div></div>'
   +'<div class="turncard" style="border-color:'+p.color+'"><div class="turnlab">TURN '+S.turn+'</div><div class="turnname" style="color:'+p.color+'">'+esc(p.name)+(isTurn?' — that’s you':'')+'</div>'
   +'<div class="resline">$ '+p.money+' &nbsp;·&nbsp; 🛈 '+p.intel+' &nbsp;·&nbsp; 🔥 '+p.cortisol+(p.cortisol>=6?' <span class="danger">RAID AT 9</span>':'')+'</div>'
@@ -838,6 +891,20 @@ export function renderSide(){
   ci.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
  }
 }
+/* a one-line status of the Global Edition's shared state: the tariff wall, the bleached reef, my trade blocs and IMF loans */
+export function worldStrip(){
+ if(!S||!S.dlcWorld)return '';
+ const bits=[],me=Net.myIdx;
+ if(tariffOwner()!=null)bits.push('🧱 TARIFF WALL on <b>'+S.tariffType+'</b> ($2 extra, paid to '+esc(pname(tariffOwner()))+')');
+ else if(S.owner.w_tariffwall!=null&&!S.tariffType)bits.push('🧱 the Tariff Wall is unbuilt');
+ if(reefBleached())bits.push('🪸 the Reef is <b>BLEACHED</b> — no blockade, no income');
+ if(S.doha&&S.doha.left>0)bits.push('🕰️ DOHA ROUND open ('+S.doha.left+' turn'+(S.doha.left>1?'s':'')+' left for '+esc(pname(S.doha.by))+')');
+ if(me!=null&&S.players[me]&&!Net.spect){
+  blocStatus(me).forEach(b=>bits.push(b.icon+' <b>'+esc(b.name)+'</b>: '+b.k+' member'+(b.k===1?'':'s')+' · income ×'+b.mult.toFixed(2)+' (+$'+b.bonus+'/turn)'+(b.file?' · 🌐 WTO file '+b.file.s+'/'+ACCC_RULING:(b.k>=3?' · 🌐 file about to open':''))+(b.step?' · +'+b.step+' scrutiny a turn':'')));
+  if(S.imf&&S.imf[me])bits.push('🆘 you owe the IMF ($8 to '+esc(pname(S.imf[me].by))+', due in '+S.imf[me].left+' of your turns)');
+ }
+ return bits.length?'<div class="moodstrip" style="border-color:#7fa7b3;flex-wrap:wrap;gap:4px 14px">'+bits.map(b=>'<span>'+b+'</span>').join('')+'</div>':'';
+}
 export function sendChat(t){
  if(Net.role==='host'){addChat(Net.myIdx,t)}
  else if(Net.conn&&Net.conn.open){Net.conn.send({t:'chat',text:t})}
@@ -850,7 +917,8 @@ export function myTurn(){
  return !!me&&!me.bot&&!Net.spect;
 }
 /* the rival files this screen's seat may REFER: never its own, and only the agency it owns */
-export function referableFiles(i){const me=Net.myIdx;if(!S||i===me)return [];return filesOf(i).filter(f=>S.owner[f.agency==='ASIC'?'asic':'accc']===me)}
+export function agencyTag(f){return f.agency==='ASIC'?'⚖️ ASIC':f.agency==='WTO'?'🌐 WTO':'🧐 ACCC'}
+export function referableFiles(i){const me=Net.myIdx;if(!S||i===me)return [];return filesOf(i).filter(f=>S.owner[fileAuthority(f)]===me)}
 /* DEAL: the rival is picked on the syndicate list; the node and the price are asked
    locally, then one 'deal' intent goes to the host (who re-validates all of it). */
 export async function dealFlow(ri){
@@ -869,6 +937,12 @@ export async function dealFlow(ri){
  if(!ok){dispatch({act:'cancel'});return}
  if(!Number.isInteger(price)||price<0||price>S.players[ri].money){hooks.toast('Name a whole-dollar price from $0 to $'+S.players[ri].money+'.');return}
  dispatch({act:'deal',id:nid,target:ri,n:price});
+}
+export async function tariffFlow(){
+ if(!S||S.owner.w_tariffwall!==Net.myIdx)return;
+ const kind=await hooks.modal({title:'THE TARIFF WALL — WHICH NODE TYPE?',options:WIN_TYPES.map(t=>({label:t+(S.tariffType===t?' (current wall)':''),v:t})).concat([{label:'Cancel',v:''}])});
+ if(!kind||!S)return;
+ dispatch({act:'tariff',kind});
 }
 export async function referFlow(ri){
  const fl=referableFiles(ri);
@@ -925,6 +999,8 @@ export function tapNode(id){
  if(S.phase==='move'){
   if(S.mode==='fly'){dispatch({act:'fly',id});return}
   if(S.mode==='launch'){dispatch({act:'launch',id});return}
+  if(S.mode==='cruise'){dispatch({act:'cruise',id});return}
+  if(S.mode==='blockade'){dispatch({act:'blockade',id});return}
   if(S.mode==='missile'){dispatch({act:'missile',id});return}
   if(S.steps<=0)return;
   if(!canReach(id)){hooks.toast(qantasGroundedReason()+'.');return}
@@ -1020,7 +1096,7 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
   h+='<div style="margin-top:6px;letter-spacing:.12em;color:#7fa7b3">'+(missing.length?'STILL NEEDS':'FULL SET HELD')+'</div>';
   h+=missing.length?missing.map(t=>'<span style="color:#ff6b5e;margin-right:10px">✘ '+t+'</span>').join(''):'<span style="color:#7fe08d">✔ every type — now it is just the cash</span>';
   const fl=filesOf(i);
-  if(fl.length)h+='<div style="margin-top:6px;letter-spacing:.12em;color:#7fa7b3">REGULATOR FILES</div>'+fl.map(f=>'<div style="color:#ffb35c">'+(f.agency==='ASIC'?'⚖️ ASIC':'🧐 ACCC')+' · '+INDBYID[f.ind].name+' — scrutiny '+f.s+'/'+ACCC_RULING+'</div>').join('');
+  if(fl.length)h+='<div style="margin-top:6px;letter-spacing:.12em;color:#7fa7b3">REGULATOR FILES</div>'+fl.map(f=>'<div style="color:#ffb35c">'+agencyTag(f)+' · '+INDBYID[f.ind].name+' — scrutiny '+f.s+'/'+ACCC_RULING+'</div>').join('');
   card.innerHTML=h;card.style.display='block';
   move(e);
  }
@@ -1039,7 +1115,7 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
  const row=e.target.closest('.prow[data-rival]');
  if(row&&(S.phase==='action'||(S.phase==='move'&&S.owner.back===Net.myIdx&&!S.backroomAbilityUsed))&&S.cur===Net.myIdx){
   const ri=+row.dataset.rival;if(ri===Net.myIdx)return;
-  if(S.mode&&['leak','audit','tweet','roast','hold'].includes(S.mode)){dispatch({act:S.mode,target:ri});return}
+  if(S.mode&&['leak','audit','tweet','roast','hold','bailout'].includes(S.mode)){dispatch({act:S.mode,target:ri});return}
   if(S.mode==='deal'&&S.phase==='action'){dealFlow(ri);return}
   if(S.mode==='refer'&&S.phase==='action'){referFlow(ri);return}
  }
@@ -1047,6 +1123,8 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
  if(!b||b.disabled)return;
  const act=b.dataset.act;
  if(act.startsWith('worldmode:')){dispatch({act:'worldmode',kind:act.slice(10)});return}
+ if(act==='tariffmode'){tariffFlow();return}
+ if(act==='doha'){dispatch({act:'doha'});return}
  if(act==='rules'){showRules();return}
  if(act==='notifications'){toggleTurnAlerts();return}
  if(act==='copyrecord'){

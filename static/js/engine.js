@@ -13,7 +13,7 @@ import { S, setS, Net, pubState } from './state.js';
 import { clampGoal, esc, shuffle } from './util.js';
 import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld, setEdges, rebuildAdj } from './data.js';
 import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState } from './boards.js';
-import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays } from './world.js';
+import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays, WATER_NODES, TRADE_BLOCS, BLOC_STEP, BLOC_MAX, BLOC_FREE, AUSNZ } from './world.js';
 export { hooks, setHooks };
 /* The host services the rules call, bound late so a hook swapped in by setHooks
    (or wrapped by a test) is always the one that runs. */
@@ -131,6 +131,11 @@ export const INDUSTRIES=[
  {id:'monetary',name:'MONETARY POLICY',ids:['mpc','rba','cash','bullock','infl']}
 ];
 export const INDBYID={};INDUSTRIES.forEach(g=>INDBYID[g.id]=g);
+/* 🌐 TRADE BLOCS: a WTO "book" per bloc node (THE EU SINGLE MARKET, BRICS). Not in INDUSTRIES (the twelve classic books are unchanged): the bloc books are
+   only tracked while the Global Edition is on, and only for the seat that OWNS the bloc node. They reuse the whole file machinery: scrutiny, lobby,
+   market sale, referral (by the WTO owner) and the proportional ruling. */
+export const BLOC_BOOKS=Object.keys(TRADE_BLOCS).map(bid=>({id:'bloc_'+TRADE_BLOCS[bid].short.toLowerCase(),name:TRADE_BLOCS[bid].book,bloc:bid,ids:TRADE_BLOCS[bid].members}));
+BLOC_BOOKS.forEach(g=>{INDBYID[g.id]=g});
 export function industryNodes(g){
  if(g.ids)return g.ids.map(id=>NMAP[id]).filter(Boolean);
  return NODES.filter(g.pick);
@@ -146,16 +151,19 @@ export function acccExempt(pi,ind){
  return !!(S.dlcWorld&&S.owner.w_vatican===pi&&(ind==='bank'||ind==='monetary'));
 }
 export function concentratedIndustries(pi){
- return INDUSTRIES.map(g=>{const owned=ownedInIndustry(pi,g);return {g,owned,n:owned.length,trigger:industryTrigger(g)}}).filter(x=>x.n>=x.trigger&&!acccExempt(pi,x.g.id));
+ const books=INDUSTRIES.concat(S&&S.dlcWorld?BLOC_BOOKS.filter(g=>S.owner[g.bloc]===pi):[]);
+ return books.map(g=>{const owned=ownedInIndustry(pi,g);return {g,owned,n:owned.length,trigger:industryTrigger(g)}}).filter(x=>x.n>=x.trigger&&!acccExempt(pi,x.g.id));
 }
 /* MONETARY POLICY books are market manipulation — ASIC's file, not the ACCC's. */
-export function fileAgency(ind){return ind==='monetary'?'ASIC':'ACCC'}
+export function fileAgency(ind){return ind==='monetary'?'ASIC':(INDBYID[ind]&&INDBYID[ind].bloc?'WTO':'ACCC')}
+/* the node whose owner may REFER a file: the ASIC, the WTO or the ACCC */
+export function fileAuthority(f){return f.agency==='ASIC'?'asic':f.agency==='WTO'?'w_wto':'accc'}
 export function acccFileList(){if(!S)return [];if(!Array.isArray(S.acccFiles))S.acccFiles=[];return S.acccFiles}
 export function findFile(pi,ind){return acccFileList().find(f=>f.pi===pi&&f.ind===ind)||null}
 export function filesOf(pi){return acccFileList().filter(f=>f.pi===pi)}
 /* the open file (if any) whose book contains this node */
 export function fileForNode(pi,nid){return filesOf(pi).find(f=>INDBYID[f.ind]&&industryNodes(INDBYID[f.ind]).some(n=>n.id===nid))||null}
-const fileIcon=f=>f.agency==='ASIC'?'⚖️':'🧐';
+const fileIcon=f=>f.agency==='ASIC'?'⚖️':f.agency==='WTO'?'🌐':'🧐';
 const fileName=f=>'the '+f.agency+' file on '+pname(f.pi)+'’s '+INDBYID[f.ind].name+' book';
 export function acccReconcile(){
  if(!S||!Array.isArray(S.players)||!S.owner||S.over)return;
@@ -175,11 +183,13 @@ export function acccReconcile(){
 }
 /* Turn start: every open file of the offender gains +1 scrutiny; returns the
    industries whose file has reached the ruling. */
+/* scrutiny added to a file at its offender's turn start: +1, but a TRADE-BLOC file gains +1 per member held beyond BLOC_FREE */
+export function fileStep(f){const g=INDBYID[f.ind];return g&&g.bloc?Math.max(1,ownedInIndustry(f.pi,g).length-BLOC_FREE):1}
 export function acccAdvance(pi){
  if(!S||S.over)return [];
  acccReconcile();
  const due=[];
- filesOf(pi).forEach(f=>{f.s++;log(fileIcon(f)+' '+fileName(f)+' advances — scrutiny '+f.s+'/'+ACCC_RULING+(f.s>=ACCC_RULING?'. The ruling is in.':'.'));if(f.s>=ACCC_RULING)due.push(f.ind)});
+ filesOf(pi).forEach(f=>{const st=fileStep(f);f.s+=st;log(fileIcon(f)+' '+fileName(f)+' advances'+(st>1?' by '+st+' (each member beyond '+BLOC_FREE+' adds one)':'')+' — scrutiny '+f.s+'/'+ACCC_RULING+(f.s>=ACCC_RULING?'. The ruling is in.':'.'));if(f.s>=ACCC_RULING)due.push(f.ind)});
  return due;
 }
 export async function acccRuleAll(pi,due){
@@ -210,15 +220,15 @@ export async function acccRule(pi,ind){
  if(divested.some(n=>n.id==='sisy'))S.sisyPayout=10;
  const pct=Math.min(30,10*divested.length);
  const moneyFine=Math.floor(p.money*pct/100),intelFine=Math.floor(p.intel*pct/100);
- if(moneyFine>0)payVoid(pi,moneyFine,isAsic?'ASIC market-manipulation fine ('+pct+'%)':'ACCC monopoly fine ('+pct+'%)');
+ if(moneyFine>0)payVoid(pi,moneyFine,isAsic?'ASIC market-manipulation fine ('+pct+'%)':agency==='WTO'?'WTO trade-bloc fine ('+pct+'%)':'ACCC monopoly fine ('+pct+'%)');
  if(intelFine>0){p.intel-=intelFine;fxAt(pi,'🛈−'+intelFine,'#55c1ff');log('🛈 '+pname(pi)+' pays an '+agency+' fine of '+intelFine+' Intel ('+pct+'%).')}
  const files=acccFileList(),at=files.indexOf(f);if(at>=0)files.splice(at,1);
  const names=divested.map(n=>n.name.join(' '));
  const kept=ownedInIndustry(pi,g).map(n=>n.name.join(' '));
- log((isAsic?'⚖️ MARKET MANIPULATION! ':'🧐 MONOPOLY ALERT! ')+pname(pi)+'’s '+g.name+' book is ruled on: '+names.join(', ')+' divested and returned to the market'+(kept.length?'; kept: '+kept.join(', '):'')+'. Fine: $'+moneyFine+' and '+intelFine+' Intel ('+pct+'%). The file is closed.');
- fxAt(pi,isAsic?'MARKET MANIPULATION':'MONOPOLY ALERT','#55c1ff',true);
- announceAll(isAsic?'ASIC MARKET MANIPULATION':'MONOPOLY ALERT',
-  monopolyAlertFace(esc(p.name)+' held '+held.length+' '+esc(g.name)+' properties — the limit is '+allowed+'.',isAsic)
+ log((isAsic?'⚖️ MARKET MANIPULATION! ':agency==='WTO'?'🌐 TRADE-BLOC RULING! ':'🧐 MONOPOLY ALERT! ')+pname(pi)+'’s '+g.name+' book is ruled on: '+names.join(', ')+' divested and returned to the market'+(kept.length?'; kept: '+kept.join(', '):'')+'. Fine: $'+moneyFine+' and '+intelFine+' Intel ('+pct+'%). The file is closed.');
+ fxAt(pi,isAsic?'MARKET MANIPULATION':agency==='WTO'?'TRADE-BLOC RULING':'MONOPOLY ALERT','#55c1ff',true);
+ announceAll(isAsic?'ASIC MARKET MANIPULATION':agency==='WTO'?'WTO TRADE-BLOC RULING':'MONOPOLY ALERT',
+  (agency==='WTO'?blocRulingFace(esc(p.name)+' held '+held.length+' '+esc(g.name)+' member nodes — the limit is '+allowed+'.'):monopolyAlertFace(esc(p.name)+' held '+held.length+' '+esc(g.name)+' properties — the limit is '+allowed+'.',isAsic))
   +'<p>The '+agency+' file reached '+ACCC_RULING+' scrutiny. Divested back to the market, unowned: <b>'+names.map(esc).join('</b>, <b>')+'</b>.'+(kept.length?' Kept: '+kept.map(esc).join(', ')+'.':'')+'</p>'
   +'<p>Fine: <b>$'+moneyFine+'</b> and <b>'+intelFine+' Intel</b> ('+pct+'% of current balances — 10% per divested node, capped at 30%).</p>');
  acccReconcile();
@@ -261,7 +271,7 @@ export function initGame(defs){
   Net.myIdx=order.indexOf(hostWas);
  }
  const goal=clampGoal(Net.goal);
- setS({backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false,bot:!!d.bot})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,layoutKind:boardLayout,ringworld:boardLayout==='ringworld',dlcGeo:!!Net.dlcGeo,dlcWorld:world,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,bondmageddonUsed:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null,acccFiles:[],lobbied:false,referred:false});
+ setS({backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false,bot:!!d.bot})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id).concat(world?WORLD_CARDS.map(c=>c.id):[])),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,layoutKind:boardLayout,ringworld:boardLayout==='ringworld',dlcGeo:!!Net.dlcGeo,dlcWorld:world,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,bondmageddonUsed:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null,acccFiles:[],lobbied:false,referred:false});
  const slot=QUIK_SLOTS[quikSlot];
  {const bots=hooks.bots();if(bots&&bots.resetForGame)bots.resetForGame((hooks.botSeed()|0)||((Math.random()*0x7fffffff)|0))}
  const generated=boardLayout==='worldmap'?generateWorldMapBoard():boardLayout==='megaring'?generateMegaRingBoard():(boardLayout==='ringworld'?generateRingworldBoard():generateRandomBoard(slot));S.boardLayout=generated.positions;S.boardEdges=generated.edges;
@@ -336,6 +346,24 @@ export async function startTurn(){
   else if(f.c>0)addCortisol(S.cur,f.c,f.name+' weighs on you');
   if(f.s)giveIntel(S.cur,f.s,f.name);
  });
+ /* 🌐 CRUISE EMISSIONS: +1 Cortisol each turn unless the owner also holds a REGULATOR */
+ if(S.dlcWorld&&own('w_cruise')&&!S.rubble.w_cruise&&!NODES.some(n=>n.type==='REGULATOR'&&S.owner[n.id]===S.cur))addCortisol(S.cur,1,'the cruise ship’s emissions');
+ /* 🌐 THE IMF: a bailout comes due at the start of the borrower's next-but-one turn */
+ if(S.dlcWorld&&S.imf&&S.imf[S.cur]){
+  const ln=S.imf[S.cur];
+  if(--ln.left<=0){
+   delete S.imf[S.cur];
+   if(p.money>=IMF_REPAY){p.money-=IMF_REPAY;if(S.players[ln.by])S.players[ln.by].money+=IMF_REPAY;fxAt(S.cur,'−$'+IMF_REPAY,'#ff6b5e');if(S.players[ln.by])fxAt(ln.by,'+$'+IMF_REPAY,'#7fe08d');log('🆘 The IMF bailout comes due: '+pname(S.cur)+' repays $'+IMF_REPAY+' to '+pname(ln.by)+' on the $'+IMF_LOAN+' lent.')}
+   else{log('🆘 The IMF bailout comes due and '+pname(S.cur)+' cannot repay the $'+IMF_REPAY+' — austerity it is. The loan is written off.');addCortisol(S.cur,IMF_CORTISOL,'IMF austerity',false,true)}
+  }
+ }
+ /* 🌐 THE DOHA ROUND: while it runs, its starter collects $2 per COMMODITY node at each turn start, for three turns */
+ if(S.dlcWorld&&S.doha&&S.doha.by===S.cur&&S.doha.left>0){
+  const d=S.doha;d.left--;
+  if(own('w_doha')){const c=NODES.filter(n=>n.type==='COMMODITY'&&S.owner[n.id]===S.cur).length;if(c)gain(S.cur,DOHA_PER*c,'the Doha round delivers ('+c+' commodity node'+(c>1?'s':'')+')');else log('🕰️ The Doha round meets — and you own no commodities. Nothing is agreed.')}
+  else log('🕰️ The Doha round meets without its host. Nothing is agreed.');
+  if(d.left<=0){log('🕰️ The Doha round STALLS. As ever. The communiqué says “progress”.');fxAt(S.cur,'🕰️ STALLED','#9ad7ff')}
+ }
  /* 🌐 MRS WATANABE: the carry trade comes due */
  if(S.dlcWorld&&S.carry&&S.carry[S.cur]){
   delete S.carry[S.cur];
@@ -403,7 +431,7 @@ export function botView(pi){
  if(S.hidden)Object.keys(S.hidden).forEach(nid=>{if(hiddenFrom(pi,nid)){out.hiddenFromMe[nid]=true;delete out.owner[nid];delete out.bugs[nid]}});
  out.pi=pi;
  out.curSeat=S.cur;
- out.cardIds=CARDS.map(x=>x.id);
+ out.cardIds=activeCards().map(x=>x.id);
  out.discardIds=S.discard.slice();
  out.country=COUNTRY.slice();
  out.oilIds=OIL_IDS.slice();
@@ -415,8 +443,10 @@ export function botView(pi){
  out.moodRate=(MOODS[S.mood]||{rate:2}).rate;
  out.geo={qantasGrounded:!!(S.dlcGeo&&qantasGrounded())};
  out.geoUsed={stage5:!!S.geoStage5,crash:!!S.geoCrash,boeing:!!S.geoBoeing};
- out.seizePrice=(seat,nid)=>seizeListPrice(seat,NMAP[nid]);
- out.takePrice=(seat,nid,base)=>takeoverCost(seat,nid,base);
+ out.seizePrice=(seat,nid)=>seizeListPrice(seat,NMAP[nid])+(S.owner[nid]==null?tariffFor(seat,nid):0);
+ out.takePrice=(seat,nid,base)=>takeoverCost(seat,nid,base)+tariffFor(seat,nid);
+ out.blockSources=seat=>blockSources(seat).length;
+ out.blockFree=seat=>blockadeFree(seat);
  out.flatSeize=nid=>flatSeize(nid);
  out.noTakeover=nid=>noTakeover(nid);
  out.chokeToll=nid=>chokeToll(nid);
@@ -455,7 +485,7 @@ export function income(i){
  const p=S.players[i];const own=id=>S.owner[id]===i;
  const owned=NODES.filter(n=>S.owner[n.id]===i);
  let salary=3;if(own('infl'))salary=4;
- let holdSum=0;owned.forEach(n=>{let v=n.income;if(n.type==='CHART'&&own('ib'))v*=2;if(n.id==='qantas'&&S.dlcGeo&&qantasGrounded())v=0;holdSum+=v});
+ let holdSum=0;owned.forEach(n=>{let v=n.income;if(n.type==='CHART'&&own('ib'))v*=2;if(n.id==='qantas'&&S.dlcGeo&&qantasGrounded())v=0;if(n.id==='w_gbr'&&reefBleached())v=0;holdSum+=v});
  const corp=owned.filter(n=>n.type==='CORPORATE').length,bank=owned.filter(n=>n.type==='BANK').length,chart=owned.filter(n=>n.type==='CHART').length,comm=owned.filter(n=>n.type==='COMMODITY').length,reg=owned.filter(n=>n.type==='REGULATOR').length,med=owned.filter(n=>n.type==='MEDIA').length;
  let syn=0;
  if(own('citi')&&corp)syn+=corp;
@@ -478,6 +508,8 @@ export function income(i){
  if(own('mpc')&&chart)syn+=chart;
  if(S.dlcGeo&&own('geo_pyoncity')){let gc=0;GEO_NODE_IDS.forEach(gid=>{if(S.owner[gid]===i)gc++});if(gc)syn+=gc}
  if(S.dlcWorld){const rc=t=>NODES.filter(n=>n.type===t&&S.owner[n.id]!=null&&S.owner[n.id]!==i).length;const w=worldSynergy(owned,own,rc);if(w){syn+=w;log('🌐 World expansion synergies: +$'+w+'.')}}
+ /* 🌐 TRADE BLOCS: the bloc node multiplies the income of its member nodes */
+ if(S.dlcWorld)blocStatus(i).forEach(b=>{if(b.bonus){syn+=b.bonus;log('🌐 '+b.name+': '+b.k+' member node'+(b.k>1?'s':'')+' (base $'+b.base+') ×'+b.mult.toFixed(2)+' → +$'+b.bonus+'.')}});
  /* the market mood pays — or takes */
  if(S.mood==='BOOM'&&comm>0){syn+=comm;log('📈 BOOM: commodities pay +$1 each (+'+comm+').')}
  if(S.mood==='FRENZY'&&med>0){syn+=med;log('🗣️ FRENZY: media pays +$1 each (+'+med+').')}
@@ -669,13 +701,15 @@ export async function applyIntent(pi,m){
    log('🛳️ '+pname(pi)+' sends the cruise ships to '+n.name.join(' ')+' — OVERTOURISM: '+pname(o)+' takes +1 Cortisol on their next turn.');
    await finishNodeAbility(pi);
   }
-  else if(act==='blockmode'&&S.phase==='action'&&!S.mode&&S.owner.albo===pi&&!S.blockadeUsed){S.mode='blockade';sync()}
-  else if(act==='blockade'&&S.phase==='action'&&S.mode==='blockade'){
+  else if(act==='blockmode'&&(S.phase==='action'||(S.phase==='move'&&blockadeFree(pi)))&&!S.mode&&blockSources(pi).length&&!S.blockadeUsed){S.mode='blockade';sync()}
+  else if(act==='blockade'&&(S.phase==='action'||(S.phase==='move'&&blockadeFree(pi)))&&S.mode==='blockade'){
    const n=NMAP[m.id];
    if(!n||S.rubble[m.id]||blockaded(m.id)||hiddenFrom(pi,m.id)){sysTo(pi,'That node is rubble, already walled off or CLASSIFIED.');S.mode=null;sync();return}
+   const free=blockadeFree(pi);
    S.blockades[m.id]=S.turn+2;S.blockadeUsed=true;S.mode=null;
    fx(n.x,n.y-64,'🚧 BLOCKADED','#f5c542');
-   log('🚧 '+pname(pi)+' walls off '+n.name.join(' ')+' — BLOCKADED until the end of next round: nobody walks in, nobody lands, not even '+pname(pi)+'.');
+   log('🚧 '+pname(pi)+' walls off '+n.name.join(' ')+' — BLOCKADED until the end of next round: nobody walks in, nobody lands, not even '+pname(pi)+'.'+(free?' (A free action: the combo of two blockade sources keeps your '+(S.phase==='move'?'movement':'action')+'.)':''));
+   if(free){sync();return}
    await finishNodeAbility(pi);
   }
   /* ---- 🌐 WORLD EXPANSION actives: a table of handlers (see WORLD_ACTS) ---- */
@@ -792,14 +826,14 @@ export async function applyIntent(pi,m){
    log(fileIcon(f)+' '+pname(pi)+' lobbies the '+f.agency+' (3 Intel) — '+fileName(f)+' drops to scrutiny '+f.s+'/'+ACCC_RULING+'.');
    sync();
   }
-  else if(act==='refermode'&&S.phase==='action'&&!S.mode&&(S.owner.accc===pi||S.owner.asic===pi)&&p.money>=4&&!S.referred&&S.players.some((pl,i)=>i!==pi&&filesOf(i).some(f=>S.owner[f.agency==='ASIC'?'asic':'accc']===pi))){S.mode='refer';sync()}
+  else if(act==='refermode'&&S.phase==='action'&&!S.mode&&(S.owner.accc===pi||S.owner.asic===pi||(S.dlcWorld&&S.owner.w_wto===pi))&&p.money>=4&&!S.referred&&S.players.some((pl,i)=>i!==pi&&filesOf(i).some(f=>S.owner[fileAuthority(f)]===pi))){S.mode='refer';sync()}
   else if(act==='refer'&&S.phase==='action'&&(!S.mode||S.mode==='refer')){
    const bail=msg=>{sysTo(pi,msg);if(S.mode==='refer'){S.mode=null;sync()}};
    if(!isRival(pi,m.target)){bail('Pick a rival with an open file — never your own.');return}
    const f=typeof m.kind==='string'?findFile(m.target,m.kind):null;
    if(!f){bail('That rival has no open file in that industry.');return}
-   const need=f.agency==='ASIC'?'asic':'accc';
-   if(S.owner[need]!==pi){bail(need==='asic'?'Only the ASIC owner can refer a monetary-policy file.':'Only the ACCC owner can refer this file.');return}
+   const need=fileAuthority(f);
+   if(S.owner[need]!==pi){bail(need==='asic'?'Only the ASIC owner can refer a monetary-policy file.':need==='w_wto'?'Only the WTO owner can refer a trade-bloc file.':'Only the ACCC owner can refer this file.');return}
    if(S.referred){bail('You have already made a referral this turn.');return}
    if(p.money<4){bail('A referral costs $4.');return}
    p.money-=4;S.referred=true;S.mode=null;f.s++;
@@ -846,9 +880,38 @@ export async function applyIntent(pi,m){
    await endOfTurn()}
  } finally {hooks.clearTimeout(Net.lockTimer);Net.lockTimer=null;Net.lock=false}
 }
+/* ---- 🚧 BLOCKADE sources: ALBANESE, and on the Global Edition THE GREAT BARRIER REEF (unless bleached) and CRITICAL PATH ANALYSIS.
+   One source: BLOCKADE uses your action (once per turn). Two or more: it is a FREE action (move or action phase, once per turn), which keeps
+   your action and your movement. One blockade per turn in total (S.blockadeUsed), however many sources you hold. ---- */
+export function reefBleached(){return !!(S&&S.dlcWorld&&S.bleachUntil>S.turn)}
+export function blockSources(pi){
+ if(!S||!S.owner)return [];
+ const ids=['albo'];if(S.dlcWorld){if(!reefBleached())ids.push('w_gbr');ids.push('w_cpa')}
+ return ids.filter(id=>S.owner[id]===pi&&NMAP[id]&&!(S.rubble&&S.rubble[id]));
+}
+export function blockadeFree(pi){return blockSources(pi).length>=2}
+/* ---- 🌐 TRADE BLOCS: member count, multiplier and bonus for each bloc node a seat owns ---- */
+export function blocStatus(pi){
+ const out=[];if(!S||!S.dlcWorld||!S.owner)return out;
+ Object.keys(TRADE_BLOCS).forEach(bid=>{
+  if(S.owner[bid]!==pi||!NMAP[bid]||S.rubble[bid])return;
+  const b=TRADE_BLOCS[bid],mem=b.members.filter(id=>NMAP[id]&&S.owner[id]===pi);
+  const base=mem.reduce((a,id)=>a+NMAP[id].income,0),mult=Math.min(BLOC_MAX,1+BLOC_STEP*mem.length);
+  const g=INDBYID['bloc_'+b.short.toLowerCase()],f=findFile(pi,g.id);
+  out.push({id:bid,name:NMAP[bid].name.join(' '),icon:b.icon,k:mem.length,members:mem,base,mult,bonus:Math.round(base*(mult-1)),file:f,step:mem.length>BLOC_FREE?mem.length-BLOC_FREE:0});
+ });
+ return out;
+}
+/* ---- 🧱 THE TARIFF WALL: the +$2 a rival pays (to the wall's owner) to seize or take over a node of the named type ---- */
+export function tariffOwner(){return S&&S.dlcWorld&&S.tariffType&&S.owner.w_tariffwall!=null&&!(S.rubble&&S.rubble.w_tariffwall)?S.owner.w_tariffwall:null}
+export function tariffFor(pi,nid){const o=tariffOwner();return o!=null&&o!==pi&&NMAP[nid]&&NMAP[nid].type===S.tariffType?TARIFF_EXTRA:0}
+/* 🌐 the world helpers a Cruise Ship voyage and ANZCERTA need */
+export function isWaterNode(id){return WATER_NODES.has(id)&&!!NMAP[id]}
+export function ausNzWaiver(pi,from,to){return !!(S&&S.dlcWorld&&S.owner.w_anzcerta===pi&&AUSNZ.has(from)&&AUSNZ.has(to))}
 /* 🌐 World Expansion actives. Each handler runs inside applyIntent (the turn lock held, host-side), validates for itself and ends the action through finishNodeAbility. */
 /* 🌐 the edge graph is part of the game state (S.boardEdges), so cuts and new roads survive sync, reconnects and the 3D snapshot */
 const CARRY_LOAN=6,CARRY_REPAY=9,CARRY_CORTISOL=3;
+const IMF_LOAN=6,IMF_REPAY=8,IMF_CORTISOL=2,DOHA_PER=2,CRUISE_FARE=2,TARIFF_EXTRA=2;
 export function isVanished(i){return !!(S&&S.dlcWorld&&S.vanished&&S.vanished[i]!=null)}
 export function hasEdge(a,b){return EDGES.some(e=>(e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a))}
 function commitEdges(list){S.boardEdges=list.map(e=>e.slice());setEdges(list.map(e=>e.slice()));rebuildAdj()}
@@ -867,7 +930,7 @@ export function cutKeepsBoardConnected(a,b){
 export function worldBlocked(pi,kind){
  if(!S||!S.dlcWorld)return 'The Global Edition exhibits are not in play.';
  const p=S.players[pi],used=S.wTurn||{},game=S.wGame||{};
- const need={chainsaw:'w_milei',brexit:'w_brexit',silkroad:'w_bri',carry:'w_watanabe',advance:'w_nigprince',hold:'w_bangalore',carbon:'w_amazon',vanish:'w_bermuda',launch:'w_baikonur'}[kind];
+ const need={chainsaw:'w_milei',brexit:'w_brexit',silkroad:'w_bri',carry:'w_watanabe',advance:'w_nigprince',hold:'w_bangalore',carbon:'w_amazon',vanish:'w_bermuda',launch:'w_baikonur',bailout:'w_imf',tariff:'w_tariffwall',cruise:'w_cruise',doha:'w_doha'}[kind];
  if(!need||!NMAP[need])return 'Unknown ability.';
  if(S.owner[need]!==pi)return 'You do not control '+nodeName(NMAP[need]).join(' ')+'.';
  if(S.rubble&&S.rubble[need])return 'That node is rubble.';
@@ -880,6 +943,10 @@ export function worldBlocked(pi,kind){
   case 'hold':if(used.hold)return 'You already put someone on hold this turn.';if(!S.players.some((x,i)=>i!==pi&&!isVanished(i)&&x.intel>=1))return 'No rival has any Intel to lose.';break;
   case 'carbon':if(used.carbon)return 'You already sold credits this turn.';break;
   case 'vanish':if(game.bermuda)return 'You have already vanished once this game.';break;
+  case 'bailout':if(used.bailout)return 'You already made a bailout this turn.';if(p.money<IMF_LOAN)return 'A bailout lends $'+IMF_LOAN+' out of your own pocket.';if(!S.players.some((x,i)=>i!==pi&&!isVanished(i)&&!(S.imf&&S.imf[i])))return 'Every rival already carries an IMF loan.';break;
+  case 'tariff':if(used.tariff)return 'You already moved the wall this turn.';if(S.phase!=='move'&&S.phase!=='action')return 'Not now.';break;
+  case 'cruise':if(S.phase!=='move'||S.cur!==pi)return 'The cruise ship sails in your MOVE phase.';if(!isWaterNode(p.pos))return 'The ship only sails from a WATER node (a strait, island, port or sea).';if(p.money<CRUISE_FARE)return 'The fare is $'+CRUISE_FARE+'.';break;
+  case 'doha':if(game.doha)return 'The Doha round has already been launched (and has stalled).';break;
   case 'launch':if(game.baikonur)return 'The launch window has closed: Baikonur flies once per game.';if(S.phase!=='move'||S.cur!==pi)return 'Baikonur launches in your MOVE phase.';if(p.money<3)return 'A launch costs $3.';break;
  }
  return '';
@@ -887,7 +954,7 @@ export function worldBlocked(pi,kind){
 const WORLD_ACTS={
  /* enter a targeting mode: chainsaw / brexit / silkroad (pick an edge), vanish (pick a node), hold (pick a rival) */
  async worldmode(pi,m){
-  if(!['chainsaw','brexit','silkroad','vanish','hold','launch'].includes(m.kind)||S.mode||!(m.kind==='launch'?(S.phase==='move'&&S.cur===pi):abilityPhase(pi)))return;
+  if(!['chainsaw','brexit','silkroad','vanish','hold','launch','bailout','cruise'].includes(m.kind)||S.mode||!((m.kind==='launch'||m.kind==='cruise')?(S.phase==='move'&&S.cur===pi):abilityPhase(pi)))return;
   const why=worldBlocked(pi,m.kind);
   if(why){sysTo(pi,why);return}
   S.edgeA=null;S.mode=m.kind;sync();
@@ -1001,6 +1068,58 @@ const WORLD_ACTS={
   log('🚀 '+pname(pi)+' pays $3 and rides a Soyuz from the BAIKONUR COSMODROME straight to '+nodeName(n).join(' ')+' — once per game.');
   if(flew){sync();await projPause()}
   await endMovement();
+ },
+ /* THE IMF: pick a rival, lend $6 of your own money, collect $8 at the start of their next-but-one turn (or +2 Cortisol and a write-off) */
+ async bailout(pi,m){
+  if(!abilityPhase(pi)||S.mode!=='bailout')return;
+  const why=worldBlocked(pi,'bailout');
+  if(why){sysTo(pi,why);S.mode=null;sync();return}
+  if(!isRival(pi,m.target)){sysTo(pi,'Pick a rival in THE SYNDICATE list.');return}
+  if(S.imf&&S.imf[m.target]){sysTo(pi,pname(m.target)+' already carries an IMF loan.');return}
+  const t=S.players[m.target];
+  S.players[pi].money-=IMF_LOAN;t.money+=IMF_LOAN;(S.imf||(S.imf={}))[m.target]={by:pi,left:2};(S.wTurn||(S.wTurn={})).bailout=1;S.mode=null;
+  fxAt(pi,'−$'+IMF_LOAN,'#ff6b5e');fxAt(m.target,'+$'+IMF_LOAN,'#7fe08d');
+  log('🆘 The IMF bails out '+pname(m.target)+': '+pname(pi)+' lends $'+IMF_LOAN+'. $'+IMF_REPAY+' is due to '+pname(pi)+' at the start of '+pname(m.target)+'’s next-but-one turn, or '+IMF_CORTISOL+' Cortisol (austerity) if they cannot pay.');
+  await finishNodeAbility(pi);
+ },
+ /* THE TARIFF WALL: name the node type that costs rivals $2 extra to seize. A free action: it changes the wall and the phase carries on. */
+ async tariff(pi,m){
+  const why=worldBlocked(pi,'tariff');
+  if(why){sysTo(pi,why);return}
+  if(S.mode)return;
+  const type=typeof m.kind==='string'?m.kind:null;
+  if(!WIN_TYPES.includes(type)){sysTo(pi,'Name one node type: '+WIN_TYPES.join(', ')+'.');return}
+  if(S.tariffType===type){sysTo(pi,'The wall already stands on '+type+'.');return}
+  S.tariffType=type;(S.wTurn||(S.wTurn={})).tariff=1;
+  fxAt(pi,'🧱 '+type,'#f5c542');
+  log('🧱 '+pname(pi)+' raises THE TARIFF WALL on '+type+' nodes — every rival who seizes one pays $'+TARIFF_EXTRA+' extra, to '+pname(pi)+'.');
+  sync();
+ },
+ /* THE CRUISE SHIP: from a WATER node, pay $2 and sail to any other WATER node (ends your movement) */
+ async cruise(pi,m){
+  if(S.phase!=='move'||S.cur!==pi||S.mode!=='cruise')return;
+  const p=S.players[pi],why=worldBlocked(pi,'cruise');
+  if(why){sysTo(pi,why);S.mode=null;sync();return}
+  const n=NMAP[m.id];
+  if(!n||n.id===p.pos||!isWaterNode(n.id)){sysTo(pi,'The ship only calls at WATER nodes: pick another strait, island, port or sea.');return}
+  if(!canReach(n.id)){sysTo(pi,qantasGroundedReason()+' — you cannot land there yet.');return}
+  if(blockaded(n.id)){sysTo(pi,nodeName(n).join(' ')+' is BLOCKADED — the ship cannot dock.');return}
+  const from=p.pos;
+  p.money-=CRUISE_FARE;fxAt(pi,'−$'+CRUISE_FARE,'#ff6b5e');S.mode=null;p.pos=n.id;S.steps=0;
+  if(!p.visited)p.visited={};p.visited[n.id]=true;
+  if(from==='sisy'&&n.id!=='sisy'&&S.owner.back!==pi)S.sisyPayout=10;
+  log('🛳️ '+pname(pi)+' pays $'+CRUISE_FARE+' and sails the 3,000-berth enclave from '+nodeName(NMAP[from]).join(' ')+' to '+nodeName(n).join(' ')+'.');
+  sync();
+  await endMovement();
+ },
+ /* THE DOHA ROUND: start the never-ending round (once per game) */
+ async doha(pi){
+  if(!abilityPhase(pi)||S.mode)return;
+  const why=worldBlocked(pi,'doha');if(why){sysTo(pi,why);return}
+  (S.wGame||(S.wGame={})).doha=1;S.doha={by:pi,left:3};
+  fxAt(pi,'🕰️ ROUND OPEN','#9ad7ff');
+  log('🕰️ '+pname(pi)+' opens a new DOHA ROUND — for the next 3 of their turns they collect $'+DOHA_PER+' per COMMODITY node, then the talks stall.');
+  await finishNodeAbility(pi);
  },
  /* SUEZ: the Ever Given, once per game, in your action phase */
  async evergiven(pi){
@@ -1119,6 +1238,7 @@ export function blockaded(id){return !!(S&&S.blockades&&S.blockades[id]>S.turn)}
 export function seizeListPrice(pi,n){
  let base=n.cost;
  if(S.owner.golf===pi)base=Math.max(1,base-1);
+ if(S.dlcWorld&&S.owner.w_woolies===pi)base=Math.max(1,base-1); /* WOOLWORTHS SELF-CHECKOUT: automation */
  if(n.type==='CHART'){if(S.owner.nab===pi)base=Math.max(1,base-1);if(S.owner.econ===pi)base=Math.max(1,base-1)}
  return base;
 }
@@ -1140,6 +1260,7 @@ export async function doMove(pi,id){
  const owner=S.owner[id];
  if(owner!=null&&owner!==pi){
   if(S.owner.bond007===pi){log('🤵 007 flashes… credentials. No toll.')}
+  else if(ausNzWaiver(pi,prevPos,id)){log('🤝 ANZCERTA: the toll between '+nodeName(NMAP[prevPos]).join(' ')+' and '+nodeName(NMAP[id]).join(' ')+' is waived for '+pname(pi)+'.')}
   else{
    let toll=(S.owner.albo===owner)?2:1;const p=S.players[pi];
    if(chokeToll(id))toll=Math.max(toll,2); /* 🌐 CHOKEPOINT: Panama, Hormuz and Suez charge $2 */
@@ -1210,7 +1331,8 @@ export async function doSeize(pi){
  const slip=S.slipped===true&&S.owner.f1===pi;
  if(slip)base=Math.max(1,base-2);
  const isTake=prev!=null;
- const cost=isTake?takeoverCost(pi,nid,base):base;
+ const tariff=tariffFor(pi,nid);
+ const cost=(isTake?takeoverCost(pi,nid,base):base)+tariff;
  if(isTake&&flatSeize(nid))log('📌 '+n.name.join(' ')+' does not get more expensive — list price, always.');
  else if(isTake&&S.dossier)log('📂 The Dossier does its work — list price, not double.');
  const maxPay=p.money+(S.owner.back===pi?Math.min(3,p.intel):0);
@@ -1225,6 +1347,7 @@ export async function doSeize(pi){
  }
  if(slip){S.slipped='spent';log('🏎️ The slipstream carries '+pname(pi)+' into the deal — $2 off.')}
  p.money-=cash;p.intel-=useInt;
+ if(tariff){const to=tariffOwner();if(to!=null){S.players[to].money+=tariff;fxAt(to,'+$'+tariff,'#7fe08d');log('🧱 THE TARIFF WALL: '+pname(pi)+' pays $'+tariff+' extra to '+pname(to)+' for a '+n.type+' node.')}}
  if(useInt>0)fxAt(pi,'🛈−'+useInt,'#55c1ff');
  if(cash>0)fxAt(pi,'−$'+cash,'#ff6b5e');
  if(isTake){
@@ -1240,6 +1363,8 @@ export async function doSeize(pi){
  if(nid==='leak')giveIntel(pi,1,'the leak pays');
  S.players.forEach((pl,j)=>{if(j!==pi&&S.owner.photo===j)giveIntel(j,1,'the Photo Wall catches it')});
  addCortisol(pi,isTake?2:1,isTake?'hostile takeover':'hands are getting dirty');
+ /* 🌐 WOOLWORTHS: unexpected item in the bagging area — every rival takes +1 Cortisol (a seizure ends the turn, so once per turn) */
+ if(S.dlcWorld&&S.owner.w_woolies===pi&&!S.rubble.w_woolies){log('🛒 UNEXPECTED ITEM in the bagging area — '+pname(pi)+'’s seizure rattles the whole table.');S.players.forEach((pl,j)=>{if(j!==pi)addCortisol(j,1,'unexpected item in the bagging area')})}
  sync();
  if(await winCheck())return;
  await endOfTurn();
@@ -1337,6 +1462,7 @@ export function addChat(pi,text){
  sync();
 }
 /* ================= EVENT FACES (pure HTML strings) ================= */
+export function blocRulingFace(sub){return '<div class="eventcard"><div class="eicon">🌐</div><div class="etitle">WTO TRADE-BLOC RULING</div><div class="etext">'+(sub||'')+'</div></div>'}
 export function monopolyAlertFace(sub,asic){const img=asic?'./static/asic.png':'./static/accc.png';const lab=asic?'ASIC':'ACCC';const title=asic?'ASIC MARKET-MANIPULATION ALERT':'MONOPOLY ALERT';return '<div class="eventcard"><div style="display:flex;gap:16px;justify-content:center;align-items:center;margin:10px 0 8px"><img src="./static/the rock.gif" alt="The Rock" style="width:120px;height:120px;object-fit:cover;border:2px solid #168388;background:#000"><img src="'+img+'" alt="'+lab+'" style="width:120px;height:120px;object-fit:contain;border:2px solid #168388;background:#111;padding:8px"></div><div class="etitle">'+title+'</div><div class="etext">'+(sub||'')+'</div></div>';}
 export function cardFace(c){if(c.id==='crackdown')return monopolyAlertFace(cardText(c));return '<div class="eventcard"><div class="eicon">'+c.icon+'</div><div class="etitle">'+c.title+'</div><div class="etext">'+cardText(c)+'</div></div>'}
 /* ================= MARKET EVENT DECK (24 cards) — every card moves the mood ================= */
@@ -1397,4 +1523,11 @@ export const CARDS=[
 {id:'madeout',icon:'🟣',title:'MADE PAYS OUT… PROBABLY',text:'The purple graphic does… something. Money appears. Explanations do not.',
  run(){setMood(S.mood,'MADE does… something');if(Math.random()<1/3){madePay();log('🟣 MADE has paid out. Nobody knows why. NOBODY.')}else log('🟣 MADE remains unexplained. Again.');}}
 ];
-export const CARDBYID={};CARDS.forEach(c=>CARDBYID[c.id]=c);
+/* 🌐 Global Edition only: dealt into the deck when the world exhibits are on (the classic 24 are untouched) */
+export const WORLD_CARDS=[
+{id:'coral',icon:'🪸',title:'CORAL BLEACHING',text:'The water runs two degrees too warm. The Great Barrier Reef goes white from the edges in: its blockade and its income are switched off for the next two rounds, and whoever owns it takes +1 Cortisol.',
+ run(){setMood('CALM','the reef goes white — the tourist board calls it “seasonal”');S.bleachUntil=S.turn+3;const o=S.owner.w_gbr;fxAt(o==null?S.cur:o,'🪸 BLEACHED','#e19bff',true);if(o==null)log('🪸 The Great Barrier Reef bleaches — nobody owns it; nobody notices.');else{log('🪸 The Great Barrier Reef bleaches for two rounds — its blockade and income are off, and '+pname(o)+' takes +1 Cortisol.');addCortisol(o,1,'the reef goes white','event')}}}
+];
+export const CARDBYID={};CARDS.forEach(c=>CARDBYID[c.id]=c);WORLD_CARDS.forEach(c=>CARDBYID[c.id]=c);
+/* the cards actually in the deck: the Global Edition adds its own */
+export function activeCards(){return S&&S.dlcWorld?CARDS.concat(WORLD_CARDS):CARDS}

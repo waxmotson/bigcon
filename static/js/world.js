@@ -14,12 +14,15 @@
    n:[$,per]            +$ per `per` nodes owned (rounded down)
    c:±n                 Cortisol at the start of your turn (negative soothes, positive is a curse)
    s:n                  Intel at the start of your turn;  wi:[[id,n]]  +n Intel at the start of your turn while you also own id
-   e:{cardId:$|[$,intel]} windfall when that market event is drawn;  x2:id doubles the cash if you also own id */
+   e:{cardId:$|[$,intel]} windfall when that market event is drawn;  x2:id doubles the cash if you also own id
+   rg:[$,cap]  +$ per REGION (regionOf) in which you own at least one node, capped;  an:[$,cap]  +$ per Australian or New Zealand node you own, capped */
 export const OIL_ALL=['oil','oilgraph','barrels','tanker','petronas','geo_scs','w_aramco','w_cushing','w_permian','w_tar','w_pemex','w_petrobras','w_pdvsa','w_dangote','w_gazprom'];
 /* nodes that begin the game as rubble (the World Expansion's casualties) and the ones that rename when rebuilt */
 export const WORLD_START_RUBBLE=['w_svb','w_cs','w_nordstream','w_evergrande'];
 export const WORLD_CHOKEPOINTS=['w_panama','w_hormuz','w_suez','w_malacca'];
 export const BATTERY=['w_lithium','w_cobalt','w_nickel','w_baotou'];
+/* the offshore nodes: APPLE pays $2 for each one you own */
+export const TAX_HAVENS=['w_cayman','w_bvi','w_lux','w_vatican','w_bermuda','w_swiss','w_monaco'];
 const mk=(id,name,icon,type,income,cost,lat,lon,sub,sp,fx,todo)=>{
  const n={id:'w_'+id,name:[].concat(name),icon,type,shape:'card',income,cost,geo:[lat,lon],x:0,y:0,rot:0,sub,sp};
  if(fx)n.fx=fx;if(todo)n.todo=true;return n;
@@ -140,8 +143,7 @@ mk('baikonur',['THE BAIKONUR','COSMODROME'],'🚀','REGULATOR',2,8,45.965,63.305
 mk('srilanka',['SRI LANKA'],'🍃','WILD',1,2,6.9271,79.8612,'in default · the tea is still excellent','Pays $1 a turn and costs almost nothing: +$3 on BONDMAGEDDON (the default was early).',{e:{bondrevolt:3}}),
 /* ── Oceania, polar & offshore ── */
 mk('rbnz',['THE RBNZ'],'🥝','REGULATOR',1,5,-41.2866,174.7756,'a cash rate · and a kiwi','+$2 income while you also own the RBA; +$2 on the RBA CASH-RATE DECISION (the Reserve Bank of the other island).',{w:[['rba',2]],e:{rates:2}}),
-mk('fonterra',['FONTERRA'],'🥛','COMMODITY',2,5,-36.8485,174.7633,'milk · a lot of it · powdered','+$3 on A QUIET QUARTER; +$2 income while you also own THE NZ SHEEP.',{e:{quiet:3},w:[['w_sheep',2]]}),
-mk('sheep',['THE NZ','SHEEP'],'🐑','COMMODITY',1,3,-43.5321,172.6362,'six per person · all of them listening','+$2 on A QUIET QUARTER and +$1 income while you also own FONTERRA.',{e:{quiet:2},w:[['w_fonterra',1]]}),
+mk('fonterra',['FONTERRA'],'🥛','COMMODITY',2,5,-36.8485,174.7633,'milk · a lot of it · powdered','+$3 on A QUIET QUARTER; +$2 income while you also own ANZCERTA (the dairy rides the treaty).',{e:{quiet:3},w:[['w_anzcerta',2]]}),
 mk('nauru',['NAURU'],'🏝️','WILD',1,2,-0.5477,166.9209,'phosphate · a nation · a parking lot','+$3 on GOLD RUSH (everything shiny gets looked at) and +$1 income while you also own TUVALU.',{e:{goldrush:3},w:[['geo_tuvalu',1]]}),
 mk('fiji',['FIJI','WATER'],'💧','CORPORATE',2,5,-17.7134,178.065,'bottled somewhere very far from here','+$2 income while you also own QUIKSTOP (the bottled water sells best at the servo).',{w:[['quik',2]]}),
 mk('png',['PNG','GOLD'],'🪙','COMMODITY',2,5,-6.31,155.1,'a big pit · a small island','+$4 on GOLD RUSH; +$1 income per OTHER COMMODITY you own.',{e:{goldrush:4},t:[['COMMODITY',1,1]]}),
@@ -153,7 +155,36 @@ mk('svalbard',['SVALBARD','SEED VAULT'],'🌱','WILD',1,6,78.2386,15.5086,'every
 mk('cayman',['THE CAYMAN','ISLANDS'],'🏝️','CORPORATE',2,6,19.3133,-81.2546,'everyone is a director here','+$2 income while you also own THE HEDGE FUND (somebody is shorting from the beach); +$1 income per BANK you own.',{w:[['hedge',2]],t:[['BANK',1]]}),
 mk('bermuda',['THE BERMUDA','TRIANGLE'],'🌀','WILD',1,5,25.0,-71.0,'ships · planes · positions · all vanish',
  'THE VANISH: once per game, on your action, you name any node and disappear from the board for the rest of the round: rivals cannot target you with any ability, and you reappear at the node you named at the start of your next turn.',null),
-mk('bvi',['THE BRITISH','VIRGIN ISLANDS'],'🏝️','CORPORATE',2,5,18.4286,-64.6185,'a million companies · a very small island','+$2 income while you also own THE CAYMAN ISLANDS; +$3 on A QUIET QUARTER.',{w:[['w_cayman',2]],e:{quiet:3}})
+mk('bvi',['THE BRITISH','VIRGIN ISLANDS'],'🏝️','CORPORATE',2,5,18.4286,-64.6185,'a million companies · a very small island','+$2 income while you also own THE CAYMAN ISLANDS; +$3 on A QUIET QUARTER.',{w:[['w_cayman',2]],e:{quiet:3}}),
+/* ── batch C: regulators, trade blocs, the water and the reef ── */
+mk('wto',['THE WTO'],'🌐','REGULATOR',2,8,46.2292,6.1503,'the appellate body has not met since 2019 · the rulebook is a suggestion',
+ 'TRADE WATCHDOG: it runs its own investigation files (WTO files) into anyone who owns a trade-bloc node (THE EU SINGLE MARKET or BRICS) and holds 3 or more of its member nodes. REFER: the owner may refer a rival’s bloc file ($4, your action, once per turn) for +1 scrutiny. +$2 on TRUMP TWEETS TARIFFS (the docket is enormous).',{e:{tariffs:2}}),
+mk('imf',['THE IMF'],'🆘','REGULATOR',2,8,38.8991,-77.0425,'a rescue package · with conditions · and further conditions',
+ 'BAILOUT: once per turn, on your action, lend a chosen rival $6 out of your own pocket. At the start of their next-but-one turn they repay you $8, or take +2 Cortisol (austerity) if they cannot, and the loan is written off. A rival can carry only one IMF loan at a time.',null),
+mk('tariffwall',['THE TARIFF','WALL'],'🧱','REGULATOR',1,7,38.0,-97.0,'big · beautiful · somebody else pays for it',
+ 'THE WALL: name one node TYPE (a free action, once per turn, in your move or action phase). Every rival who seizes or takes over a node of that type pays $2 extra, and the $2 is paid to you. The current wall is shown on the board header and in tooltips. Floats to a random open spot each game.',null),
+mk('eu',['THE EU','SINGLE MARKET'],'🇪🇺','REGULATOR',2,9,50.8467,4.3525,'one market · twenty-seven opinions · a form for everything',
+ 'TRADE BLOC: your income from member nodes (nodes in EU countries: the ECB, Deutsche Bank, German Bunds, the Italian BTP, the Greek Debt, the Luxembourg Letterbox, ASML, the Tulip Bulb, OPEC Vienna, the Rotterdam barrel yard, the Paris master chart, the Brussels Pillars, Venice) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. Not members: the UK, Norway, Switzerland, Russia, Turkey, Iceland, the Vatican, Monaco. SCRUTINY: with 3 or more members a WTO file opens on you; each member beyond 2 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 2 members.',null),
+mk('brics',['BRICS'],'🧮','WILD',2,8,-26.1952,28.034,'five letters · one summit · a currency that does not exist yet',
+ 'TRADE BLOC: your income from member nodes (nodes in Brazil, Russia, India, China and South Africa: Vale, Petrobras, Gazprom, the Kremlin, the Whistleblower, the RBI, Dalal Street, Adani, Bangalore, the PBOC, Evergrande, Shenzhen, Baotou, the Belt and Road, HSBC, the HKMA, Witwatersrand, De Beers) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. SCRUTINY: with 3 or more members a WTO file opens on you; each member beyond 2 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 2 members. Floats to a random open spot each game.',null),
+mk('apple',['APPLE'],'🍎','CORPORATE',2,9,37.3349,-122.009,'a trillion dollars · an infinite loop · one very low tax rate',
+ 'IRISH SANDWICH: +$2 income for every tax haven you own (THE CAYMAN ISLANDS, THE BRITISH VIRGIN ISLANDS, THE LUXEMBOURG LETTERBOX, THE VATICAN BANK, THE BERMUDA TRIANGLE, THE SWISS VAULT, MONACO CASINO).',{i:[[TAX_HAVENS,2]]}),
+mk('cruise',['THE CRUISE SHIP','“THE 3,000-BERTH','ENCLAVE”'],'🛳️','CORPORATE',2,8,41.3851,2.1734,'a floating city-state · no laws · the buffet is endless',
+ 'SET SAIL: during your move phase, while standing on a WATER node (a strait, island, port or sea; see the rules), pay $2 to sail to any other WATER node. The voyage ends your movement. CRUISE EMISSIONS: you take +1 Cortisol at the start of each of your turns unless you also own a REGULATOR.',null),
+mk('gbr',['THE GREAT','BARRIER REEF'],'🪸','WILD',1,6,-17.9,148.2,'visible from space · bleaching quietly · tourists dispatched hourly',
+ 'BLOCKADE: wall off any one node until the end of next round (as the PM does). It uses your action, once per turn, unless you also own two of ALBANESE, THE GREAT BARRIER REEF and CRITICAL PATH ANALYSIS: then BLOCKADE is a FREE action that does not use your action or end your move. CORAL BLEACHING (a market event, Global Edition only) switches off the reef’s blockade and its income for the next 2 rounds, and its owner takes +1 Cortisol.',null),
+mk('cpa',['CRITICAL PATH','ANALYSIS'],'📐','CHART',1,6,-35.3,149.1,'every project is on time · in the plan',
+ 'DELAY A PROJECT: BLOCKADE wall off any one node until the end of next round. It uses your action, once per turn, unless you also own two of ALBANESE, THE GREAT BARRIER REEF and CRITICAL PATH ANALYSIS: then BLOCKADE is a FREE action that does not use your action or end your move. Floats to a random open spot each game.',null),
+mk('box',['THE 20-FOOT','BOX'],'📦','COMMODITY',2,6,51.9244,4.4777,'the box that ate the docks · the manifest says “various”',
+ 'CONTAINERISATION: +$1 income for every chokepoint you own (PANAMA, HORMUZ, SUEZ, MALACCA). Floats to a random open spot each game.',{i:[[WORLD_CHOKEPOINTS,1]]}),
+mk('woolies',['WOOLWORTHS','SELF-CHECKOUT'],'🛒','CORPORATE',2,9,-33.7366,150.9534,'unexpected item in the bagging area · a staff member has been called',
+ 'AUTOMATION: every seizure you make costs $1 less (never below $1). UNEXPECTED ITEM: whenever you seize ANY node, every rival takes +1 Cortisol (a seizure ends your turn, so it fires once per turn).',null),
+mk('ofw',['OVERSEAS','FILIPINO WORKERS'],'✈️','WILD',1,6,14.5995,120.9842,'the nation’s biggest export · it sends the money home · and it comes back',
+ 'REMITTANCES: −1 Cortisol at the start of each of your turns, and +$1 income per world REGION in which you own at least one node (capped at +$6).',{c:-1,rg:[1,6]}),
+mk('anzcerta',['ANZCERTA'],'🤝','WILD',1,7,-43.5321,172.6362,'closer economic relations · the Tasman is not that wide',
+ 'CLOSER ECONOMIC RELATIONS: +$1 income per Australian or New Zealand node you own (this one included, capped at +$5), and the tolls you pay moving between Australian and New Zealand nodes are waived.',{an:[1,5]}),
+mk('doha',['THE DOHA','ROUND'],'🕰️','WILD',1,6,25.2854,51.531,'launched 2001 · concluded: not yet',
+ 'START THE ROUND: once per game, on your action, open a new trade round: for your next 3 turns you collect +$2 per COMMODITY node you own, then the talks stall (they always do). The round only pays while you still hold the Doha node.',null)
 ];
 WORLD_NODES.find(n=>n.id==='w_cs').rebuiltName=['UBS'];
 export const WORLD_NODE_IDS=WORLD_NODES.map(n=>n.id);
@@ -171,6 +202,8 @@ export function worldSynergy(owned,own,rivalCount){
   if(f.w)f.w.forEach(([id,amt])=>{if(own(id))syn+=amt});
   if(f.i)f.i.forEach(([ids,amt])=>{syn+=amt*ids.filter(id=>id!==n.id&&own(id)).length});
   if(f.n)syn+=f.n[0]*Math.floor(owned.length/f.n[1]);
+  if(f.rg)syn+=Math.min(f.rg[1],f.rg[0]*new Set(owned.map(regionOf)).size);
+  if(f.an)syn+=Math.min(f.an[1],f.an[0]*owned.filter(o=>AUSNZ.has(o.id)).length);
  }
  return syn;
 }
@@ -247,7 +280,7 @@ export function regionOf(n){
 /* Exhibits that are not places (screens, graphs, a boulder): they do not live in a crowded city. Each game the host drops
    every one at a random spot in an open zone below, joins it to its two nearest neighbours there, and shares the
    result through the board layout (S.boardLayout / S.boardEdges), so every client sees the same map. */
-export const WORLD_FLOATING=['term','geo_stage5','stock','infl','tenyear','cash','oilgraph','iface','back','toktimer','made','sisy','photo','insider','news'];
+export const WORLD_FLOATING=['term','geo_stage5','stock','infl','tenyear','cash','oilgraph','iface','back','toktimer','made','sisy','photo','insider','news','w_tariffwall','w_brics','w_cpa','w_box'];
 /* open ocean and sparse land: [lat, lon, radius in degrees] */
 export const FLOAT_ZONES=[
  [62,100,12],[66,140,9],[46,103,6],[48,68,5],[33,88,6],    /* Siberia, Mongolia, the steppe, Tibet */
@@ -257,8 +290,33 @@ export const FLOAT_ZONES=[
  [55,85,6],[70,115,6],[14,0,6],[12,32,5],[-12,18,4],       /* more steppe and tundra, the Sahel, Sudan, Angola */
  [42,-100,5],[68,-110,6],[52,-72,5],[-14,-50,6],[-34,-64,4], /* the Great Plains, the Arctic, Quebec, the Cerrado, the Pampas */
  [24,44,4],[32,57,3],                                      /* the Arabian interior, the Iranian plateau */
+ [66,75,8],[58,60,6],[-6,-70,5],[20,-6,5],[4,20,5],[50,-85,5],   /* more tundra, the Urals, the western Amazon, Mauritania, Central Africa, Ontario */
+ [-26,-60,4],[8,-68,3],[40,62,4],[60,-70,4],                /* the Chaco, the Llanos, the Kazakh steppe, Labrador */
  [-78,40,10],[-78,-100,10]                                 /* the Antarctic ice */
 ];
+/* ───── batch C: water, trade blocs, the Australia/New Zealand area ───── */
+/* WATER nodes: straits, islands, ports and seas. The Cruise Ship sails between them. (Ids of nodes that are not on the board — the
+   Geography DLC's — are simply ignored when that DLC is off.) */
+export const WATER_NODES=new Set([
+ 'w_panama','w_hormuz','w_suez','w_malacca',                                       /* the chokepoints */
+ 'geo_scs','geo_tuvalu','geo_venice','geo_wonsan',                                 /* the South China Sea, Tuvalu, Venice, Wonsan harbour */
+ 'w_fiji','w_nauru','w_png','w_srilanka','w_easter','w_cayman','w_bvi','w_bermuda', /* islands */
+ 'w_svalbard','w_hdi','w_greenland','w_gbr','rock','w_mbs','w_brexit','w_nordstream','w_cruise', /* the Arctic, Iceland, Greenland, the Reef, Hawaii, Marina Bay, Dover, the Baltic, Barcelona */
+ 'port','tanker','barrels'                                                          /* the Docks, the Tanker Fleet, the Rotterdam barrel yard */
+]);
+/* TRADE BLOCS. The bloc node multiplies its owner's income from member nodes by 1 + BLOC_STEP per member held (capped at BLOC_MAX); holding
+   more than BLOC_FREE members opens a WTO file on the owner: +1 scrutiny at each turn start per member beyond BLOC_FREE, ruling at the usual 3. */
+export const BLOC_STEP=0.25,BLOC_MAX=2.5,BLOC_FREE=2;
+export const TRADE_BLOCS={
+ w_eu:{short:'EU',book:'EU SINGLE MARKET',icon:'🇪🇺',members:['w_ecb','w_db','w_bunds','w_btp','w_greek','w_lux','w_asml','w_tulip','w_opec','barrels','tenyear','geo_pillars','geo_venice']},
+ w_brics:{short:'BRICS',book:'BRICS',icon:'🧮',members:['w_vale','w_petrobras','w_gazprom','w_kremlin','whistle','w_rbi','w_dalal','w_adani','w_bangalore','w_pboc','w_evergrande','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma','w_witz','w_debeers']}
+};
+/* the bloc a node is a member of (or null) */
+export function blocOfMember(id){for(const b of Object.keys(TRADE_BLOCS))if(TRADE_BLOCS[b].members.includes(id))return b;return null}
+/* Australian or New Zealand nodes (by geography; the floating exhibits are not places and never count) */
+const geoById=id=>{const n=WORLD_NODES.find(x=>x.id===id);return n?n.geo:(GEO_ANCHORS[id]||null)};
+const inAusNz=g=>!!g&&((g[0]<=-9&&g[0]>=-48&&g[1]>=112&&g[1]<=154)||(g[0]<=-34&&g[0]>=-48&&g[1]>=165&&g[1]<=180));
+export const AUSNZ=new Set(Object.keys(GEO_ANCHORS).concat(WORLD_NODE_IDS).filter(id=>!WORLD_FLOATING.includes(id)&&inAusNz(geoById(id))));
 /* edges that cross the date line: drawn as a pair of arrows off the right edge and back in at the left */
 export const WORLD_WRAPS=[['rock','w_fiji']];
 /* Long-haul routes (shipping lanes and flight paths) that proximity alone would not create. Every route that joins two
@@ -276,7 +334,7 @@ export const WORLD_ROUTES=[
  /* Panama: the Americas */ ['w_panama','w_vale'],['w_panama','oil'],['w_panama','w_hollywood'],['w_panama','w_pdvsa'],['w_pemex','w_panama'],['w_cayman','w_panama'],['w_milei','w_petrobras'],['w_easter','w_milei'],
  /* the Caribbean */ ['w_cayman','w_bvi'],['w_cayman','w_bermuda'],['w_bermuda','citi'],
  /* the far north */ ['w_svalbard','w_norway'],
- /* Antarctica: the southern route between South America, Africa and Australasia */ ['w_antarctica','w_milei'],['w_antarctica','w_debeers'],['w_antarctica','w_sheep'],['w_antarctica','w_rbnz'],
+ /* Antarctica: the southern route between South America, Africa and Australasia */ ['w_antarctica','w_milei'],['w_antarctica','w_debeers'],['w_antarctica','w_anzcerta'],['w_antarctica','w_rbnz'],
  /* the Pacific islands */ ['w_nauru','geo_tuvalu'],['w_png','w_nauru'],['w_fiji','geo_tuvalu'],['w_fiji','w_fonterra'],['w_png','qantas']
 ];
 

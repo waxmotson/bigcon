@@ -389,7 +389,7 @@ test('THE BAIKONUR COSMODROME: launch to anywhere once per game, and it pays alo
 
 test('New Zealand sits across the Tasman Sea: east of every Australian node, with a gap of open water', { timeout: 60000 }, async t => {
   const { e, NODES, NMAP } = await seeded(t, 24);
-  const nz = ['w_fonterra', 'w_rbnz', 'w_sheep'];
+  const nz = ['w_fonterra', 'w_rbnz', 'w_anzcerta'];
   const aus = NODES.filter(n => !W.WORLD_FLOATING.includes(n.id)).filter(n => { const g = e.f.geoOf(n); return g && g[0] < -9 && g[0] > -44 && g[1] > 112 && g[1] < 154; });
   assert.ok(aus.length >= 25, 'plenty of Australian nodes: ' + aus.length);
   const eastEdge = Math.max(...aus.map(n => n.x + 88));
