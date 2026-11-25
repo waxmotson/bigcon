@@ -247,8 +247,9 @@ export function boardViewBounds(){
    Hong Kong, Tokyo and Mumbai are stretched so the crowded cities have room, and the very same warp is applied to the
    continent outlines, so the backdrop and the pins always agree. */
 const WM_K=26,WM_TOP=84,WM_MARGIN=360;
+const NZ_SHIFT=20,TASMAN_FROM=157,TASMAN_SPAN=9;
 const WM_WARPS=[
- {lat:-26,lon:134,A:1.35,R:24},{lat:-33.5,lon:148.5,A:3.6,R:9.5},   /* Australia: the home turf and the busiest corner of the board */
+ {lat:-26,lon:134,A:1.8,R:24},{lat:-33.5,lon:148.5,A:3.4,R:9},{lat:-40.5,lon:174+NZ_SHIFT,A:2.8,R:5},   /* Australia: the home turf and the busiest corner of the board */
  {lat:49,lon:7,A:2.3,R:13},      /* Europe */
  {lat:40,lon:-77,A:2.3,R:9},     /* New York · Washington */
  {lat:1.5,lon:104,A:2,R:5.5},    /* Singapore · Kuala Lumpur */
@@ -257,6 +258,8 @@ const WM_WARPS=[
  {lat:19,lon:74,A:1.9,R:5}       /* Mumbai · Ahmedabad */
 ];
 function warpGeo(lat,lon){
+ /* the Tasman Sea is widened first (rigidly shifting New Zealand east) so the magnified east coast of Australia never reaches it */
+ {const sm=x=>{x=Math.min(1,Math.max(0,x));return x*x*(3-2*x)};lon+=NZ_SHIFT*sm((lon-TASMAN_FROM)/TASMAN_SPAN)*sm((-lat-27)/6)}
  for(const w of WM_WARPS){
   const dx=lon-w.lon,dy=lat-w.lat,r=Math.hypot(dx,dy);
   const m=1+(w.A-1)*Math.exp(-(r/w.R)*(r/w.R));

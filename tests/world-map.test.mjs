@@ -289,8 +289,9 @@ test('the Bond Desk is anchored in Sydney', { timeout: 60000 }, async t => {
 test('Australia is spread across the continent', { timeout: 60000 }, async t => {
   const { NMAP } = await seeded(t, 23);
   const at = (id, lat, lon, tol = 3) => { const g = W.GEO_ANCHORS[id]; assert.ok(Math.abs(g[0] - lat) < tol && Math.abs(g[1] - lon) < tol, id + ' is where it should be'); };
-  at('westpac', -31.9, 115.9); at('gold', -30.7, 121.5); at('bhp', -20.3, 118.6); at('anz', -27.5, 153); at('aus', -34.9, 138.6);
-  at('port', -32.9, 151.8); at('coal', -23.8, 151.3); at('train', -22, 148.2); at('sat', -23.7, 133.9); at('forklift', -12.5, 130.8);
+  at('westpac', -31.9, 115.9); at('gold', -30.7, 121.5); at('bhp', -20.3, 118.6); at('anz', -37.8, 145); at('aus', -34.9, 138.6);
+  at('port', -21.3, 149.3); at('jt', -16.9, 145.8); at('press', -19.3, 146.8); at('mpc', -42.9, 147.3); at('nab', -32, 115.9); at('jim', -27.5, 153); at('watson', -32.9, 151.8); at('asic', -34.9, 138.6);
+  at('coal', -23.8, 151.3); at('train', -22, 148.2); at('sat', -23.7, 133.9); at('forklift', -12.5, 130.8);
   assert.ok(NMAP.westpac.x < NMAP.quik.x - 700 && NMAP.bhp.x < NMAP.quik.x - 700, 'the west of Australia is far from Sydney');
 });
 
@@ -380,4 +381,16 @@ test('THE BAIKONUR COSMODROME: launch to anywhere once per game, and it pays alo
   assert.match(e.ctx.worldBlocked(0, 'launch'), /do not control/);
   S.owner = { w_baikonur: 0 }; S.players[0].money = 2;
   assert.match(e.ctx.worldBlocked(0, 'launch'), /\$3/);
+});
+
+test('New Zealand sits across the Tasman Sea: east of every Australian node, with a gap of open water', { timeout: 60000 }, async t => {
+  const { e, NODES, NMAP } = await seeded(t, 24);
+  const nz = ['w_fonterra', 'w_rbnz', 'w_sheep'];
+  const aus = NODES.filter(n => !W.WORLD_FLOATING.includes(n.id)).filter(n => { const g = e.f.geoOf(n); return g && g[0] < -9 && g[0] > -44 && g[1] > 112 && g[1] < 154; });
+  assert.ok(aus.length >= 25, 'plenty of Australian nodes: ' + aus.length);
+  const eastEdge = Math.max(...aus.map(n => n.x + 88));
+  for (const id of nz) assert.ok(NMAP[id].x - 88 > eastEdge + 40, id + ' is clear of every Australian card (gap ' + (NMAP[id].x - 88 - eastEdge) + 'px)');
+  /* and their pins land on the New Zealand outline, not on the mainland one */
+  const akl = e.f.projectGeo(-36.8, 174.8), syd = e.f.projectGeo(-33.9, 151.2);
+  assert.ok(akl.x - syd.x > 500, 'Auckland is far east of Sydney on the board');
 });
