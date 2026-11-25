@@ -1,5 +1,5 @@
 'use strict';
-/* world: the WORLD EXPANSION — ~100 global exhibits pinned to real places — plus the geography the WORLD MAP layout needs.
+/* world: the GLOBAL EDITION exhibits (the World Expansion) — ~100 global exhibits pinned to real places — plus the geography the THE BIG CON: GLOBAL EDITION map layout needs.
    Pure data and pure helpers: no DOM, no state, no engine imports (data.js and boards.js import THIS).
    A node WITHOUT an `image` renders as a styled text card (name + icon on its type colour) in the SVG board and the 3D board;
    drop a file path into `image` later and the picture takes over. Nothing else needs to change.
@@ -18,7 +18,7 @@
 export const OIL_ALL=['oil','oilgraph','barrels','tanker','petronas','geo_scs','w_aramco','w_cushing','w_permian','w_tar','w_pemex','w_petrobras','w_pdvsa','w_dangote','w_gazprom'];
 /* nodes that begin the game as rubble (the World Expansion's casualties) and the ones that rename when rebuilt */
 export const WORLD_START_RUBBLE=['w_svb','w_cs','w_nordstream','w_evergrande'];
-export const WORLD_CHOKEPOINTS=['w_panama','w_hormuz','w_suez'];
+export const WORLD_CHOKEPOINTS=['w_panama','w_hormuz','w_suez','w_malacca'];
 export const BATTERY=['w_lithium','w_cobalt','w_nickel','w_baotou'];
 const mk=(id,name,icon,type,income,cost,lat,lon,sub,sp,fx,todo)=>{
  const n={id:'w_'+id,name:[].concat(name),icon,type,shape:'card',income,cost,geo:[lat,lon],x:0,y:0,rot:0,sub,sp};
@@ -42,12 +42,12 @@ mk('cme','CME TRADING FLOOR','📟','CHART',2,5,41.8819,-87.6278,'open outcry, n
 mk('malago','MAR-A-LAGO','⛳','WILD',2,7,26.6773,-80.0368,'the gold-plated clubhouse','+$3 income while you also own DONALD TRUMP (the member lives here).',{w:[['trump',3]]}),
 mk('area51','AREA 51','👽','WILD',1,5,37.2431,-115.793,'nothing to see here · see here','+1 Intel at the start of each of your turns (they have a file on everyone).',{s:1}),
 mk('panama','THE PANAMA CANAL','🚢','COMMODITY',3,8,9.08,-79.68,'one lock, ten thousand invoices',
- 'CHOKEPOINT: every rival who walks into this node pays you a $2 transit toll (instead of the usual $1), and on the WORLD MAP it is the only land link between the northern and southern continents.',null),
+ 'CHOKEPOINT: every rival who walks into this node pays you a $2 transit toll (instead of the usual $1), and on the GLOBAL EDITION map it is the gateway between North and South America.',null),
 mk('bay','BAY STREET','🍁','BANK',2,6,43.6532,-79.3832,'polite · well-capitalised · sorry','+$2 income while you also own the ALBERTA TAR SANDS (the TSX is all mines and oil).',{w:[['w_tar',2]]}),
 mk('tar','ALBERTA TAR SANDS','⚫','COMMODITY',3,7,56.7267,-111.3803,'it flows if you wait','+$4 when OIL SPIKES.',{e:{oilspike:4}}),
 mk('pemex','PEMEX','🛢️','COMMODITY',2,5,19.4326,-99.1332,'the state oil company · the books are a mood','+$3 when OIL SPIKES; +$1 when TRUMP TWEETS TARIFFS (a neighbour has opinions).',{e:{oilspike:3,tariffs:1}}),
 mk('hollywood','HOLLYWOOD','🎬','MEDIA',2,6,34.1016,-118.3267,'the sign still says it','+$2 income while you own THE BIG SHORT cinema and +$2 while you own BRAD PITT; +$3 on THE BIG SHORT SCREENING.',{w:[['bigshort',2],['brad',2]],e:{bigscreen:3}}),
-mk('satoshi',['SATOSHI’S','WALLET'],'🔑','WILD',0,6,64.1466,-21.9426,'last moved in 2010 · might be a committee','+$2 income per OTHER WILD node you own (the keys are scattered everywhere).',{t:[['WILD',2,1]]}),
+mk('hdi',['THE HUMAN','DEVELOPMENT INDEX'],'📈','CHART',1,6,64.1466,-21.9426,'Iceland tops it · again · the rest of us are being polite','−1 Cortisol at the start of each of your turns (the happiest chart on the board), and +$2 on A QUIET QUARTER.',{c:-1,e:{quiet:2}}),
 /* ── South America ── */
 mk('milei','JAVIER MILEI','🪚','WILD',2,7,-34.6037,-58.3816,'the chainsaw · the wig · the inflation graph',
  'CHAINSAW: once per game, on your action, pay $3 and cut any one edge of the board for good (pick a node, then one of its neighbours); the savings pay you $4. A cut that would strand part of the board from Quikstop is refused.',null),
@@ -90,6 +90,8 @@ mk('vatican',['THE VATICAN','BANK'],'⛪','BANK',2,7,41.9022,12.4539,'works in m
 /* ── Middle East & Africa ── */
 mk('aramco',['SAUDI','ARAMCO'],'🛢️','COMMODITY',5,11,26.3,50.15,'the biggest oil on the board','+$8 when OIL SPIKES. Pays $5 a turn — the largest oil position on the board.',{e:{oilspike:8}}),
 mk('opec',['OPEC','VIENNA'],'🛢️','REGULATOR',2,8,48.2082,16.3738,'the cartel meets · the cartel decides','+$1 income per oil node you own; +$4 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:4}}),
+mk('malacca',['STRAIT OF','MALACCA'],'⚓','COMMODITY',3,8,2.5,101.2,'a quarter of world trade · squeezed through a drinking straw',
+ 'CHOKEPOINT: every rival who enters this node pays you a $2 toll (instead of the usual $1). It is the gateway between the Indian Ocean (South Asia) and the Pacific side: Singapore, South-East and East Asia.',null),
 mk('hormuz',['STRAIT OF','HORMUZ'],'⚓','COMMODITY',3,8,26.57,56.25,'a fifth of the world’s oil · two miles wide',
  'CHOKEPOINT: every rival who enters this node pays you a $2 toll (instead of the usual $1), and on OIL SPIKES you collect $2 per oil node a rival owns.',null),
 mk('suez',['THE SUEZ','CANAL'],'🛳️','COMMODITY',3,8,30.4574,32.3499,'the Ever Given · six days · one very big boat',
@@ -133,6 +135,8 @@ mk('mdb',['1MDB'],'🦘','WILD',2,6,3.1479,101.6953,'the yacht · the paintings 
 mk('nickel',['INDONESIAN','NICKEL'],'🪨','COMMODITY',3,6,-2.0,121.4,'the island that powers the EV','+$2 income per OTHER battery metal you own; +$3 on COAL RUSH (the smelters run on coal).',{i:[[BATTERY,2]],e:{coalrush:3}}),
 mk('kazatom',['KAZATOMPROM','URANIUM'],'☢️','COMMODITY',2,5,51.1694,71.4491,'two-fifths of the planet’s uranium','+$3 on COAL RUSH (the competition panics) and +$2 when OIL SPIKES.',{e:{coalrush:3,oilspike:2}}),
 mk('baht',['THE BAHT','1997'],'📉','CHART',1,3,13.7563,100.5018,'the contagion started in Bangkok','+$3 on BONDMAGEDDON (the flu begins here).',{e:{bondrevolt:3}}),
+mk('baikonur',['THE BAIKONUR','COSMODROME'],'🚀','REGULATOR',2,8,45.965,63.305,'the first rocket · the first satellite · the lease is in roubles',
+ 'LIFTOFF: +$2 income while you own MISSILE COMMAND or the IRANIAN SHAHED DRONE (the Geography DLC supplies the payload). LAUNCH WINDOW: once per game, in your MOVE phase, pay $3 to be launched to ANY node on the board (the Qantas jet, only once, and it burns more).',{w:[['geo_missile',2],['geo_shahed',2]]}),
 mk('srilanka',['SRI LANKA'],'🍃','WILD',1,2,6.9271,79.8612,'in default · the tea is still excellent','Pays $1 a turn and costs almost nothing: +$3 on BONDMAGEDDON (the default was early).',{e:{bondrevolt:3}}),
 /* ── Oceania, polar & offshore ── */
 mk('rbnz',['THE RBNZ'],'🥝','REGULATOR',1,5,-41.2866,174.7756,'a cash rate · and a kiwi','+$2 income while you also own the RBA; +$2 on the RBA CASH-RATE DECISION (the Reserve Bank of the other island).',{w:[['rba',2]],e:{rates:2}}),
@@ -193,36 +197,84 @@ export function worldEventPays(cardId,ownerOf){
  return out;
 }
 
-/* ───── WORLD MAP geography ───── */
+/* ───── GLOBAL EDITION map geography ───── */
 /* lat/lon of the classic and Geography DLC exhibits (the world expansion carries its own `geo`). */
 export const GEO_ANCHORS={
- citi:[40.7061,-74.0088],commbank:[-33.8688,151.2093],nab:[-37.8136,144.9631],anz:[-37.8220,144.9500],westpac:[-33.8650,151.2100],
- bond:[40.7128,-74.0060],hedge:[41.0262,-73.6282],rba:[-33.8680,151.2112],asic:[-37.8100,144.9700],accc:[-35.2809,149.1300],gov:[-35.3081,149.1245],
- us:[38.8977,-77.0365],japan:[35.6762,139.6503],uk:[51.5074,-0.1278],aus:[-33.9000,151.2300],tenyear:[48.8566,2.3522],infl:[-34.6,-58.45],
+ citi:[40.7061,-74.0088],commbank:[-33.8688,151.2093],nab:[-37.8136,144.9631],anz:[-27.4698,153.0251],westpac:[-31.9505,115.8605],
+ bond:[-33.8700,151.2050],hedge:[41.0262,-73.6282],rba:[-33.8680,151.2112],asic:[-37.8100,144.9700],accc:[-35.2809,149.1300],gov:[-35.3081,149.1245],
+ us:[38.8977,-77.0365],japan:[35.6762,139.6503],uk:[51.5074,-0.1278],aus:[-34.9285,138.6007],tenyear:[48.8566,2.3522],infl:[-34.6,-58.45],
  cash:[-33.8700,151.2000],stock:[31.2304,121.4737],oil:[29.7604,-95.3698],oilgraph:[31.9973,-102.0779],barrels:[51.9244,4.4777],tanker:[1.2,104.5],
- petronas:[3.1579,101.7116],gold:[-31.9505,115.8605],train:[-32.3,150.9],port:[-32.9283,151.7817],bhp:[-20.3100,118.5800],forklift:[-33.9700,151.2100],
- coal:[-33.8800,151.1500],quik:[-33.8830,151.1600],market:[-33.8860,151.1570],f1:[-37.8497,144.9680],qantas:[-33.9399,151.1753],bullet:[34.6937,135.5023],
- press:[-33.8600,151.2050],fox:[40.7580,-73.9855],leak:[38.9072,-77.0369],jim:[-35.3000,149.1400],herald:[-37.8200,144.9800],bess:[38.9000,-77.0300],
+ petronas:[3.1579,101.7116],gold:[-30.7489,121.4660],train:[-22.0,148.2],port:[-32.9283,151.7817],bhp:[-20.3100,118.5800],forklift:[-12.4634,130.8456],
+ coal:[-23.8400,151.2600],quik:[-33.8830,151.1600],market:[-33.8860,151.1570],f1:[-37.8497,144.9680],qantas:[-33.9399,151.1753],bullet:[34.6937,135.5023],
+ press:[-35.3050,149.1250],fox:[40.7580,-73.9855],leak:[38.9072,-77.0369],jim:[-35.3000,149.1400],herald:[-37.8200,144.9800],bess:[38.9000,-77.0300],
  insider:[41.8781,-87.6298],photo:[-35.2900,149.1100],bigshort:[34.0522,-118.2437],news:[-27.4698,153.0251],wef:[46.8,9.8366],
  back:[36.1699,-115.1398],term:[40.7614,-73.9776],golf:[33.4735,-81.9748],whistle:[55.7558,37.6173],iface:[47.6062,-122.3321],
- school:[-33.8710,151.2070],ib:[46.2044,6.1432],mpc:[-33.8750,151.2150],sisy:[37.9060,22.8800],group:[-25.3444,131.0369],sat:[-23.7000,133.8800],
- watson:[-32.9200,151.7600],bessent:[38.8950,-77.0400],chalmers:[-27.6500,153.1000],albo:[-33.9100,151.1500],trump:[40.7624,-73.9733],bullock:[-33.8700,151.2150],
+ school:[-33.8710,151.2070],ib:[46.2044,6.1432],mpc:[-27.5000,153.0000],sisy:[37.9060,22.8800],group:[-25.3444,131.0369],sat:[-23.7000,133.8800],
+ watson:[-32.9200,151.7600],bessent:[38.8950,-77.0400],chalmers:[-27.6500,153.1000],albo:[-35.3076,149.1244],trump:[40.7624,-73.9733],bullock:[-33.8700,151.2150],
  bond007:[51.4975,-0.1357],rock:[21.3069,-157.8583],brad:[37.2090,-93.2923],jt:[-28.0167,153.4000],made:[-48.8767,-123.3933],asics:[34.6900,135.1956],toktimer:[-42.8821,147.3272],
  geo_missile:[40.0333,128.1833],geo_shahed:[35.6892,51.3890],geo_wonsan:[39.1500,127.4400],geo_pyoncity:[39.0392,125.7625],geo_pyothotel:[39.0310,125.7340],
  geo_boeing:[47.9790,-122.2020],geo_scs:[14.5,114.0],geo_stage5:[39.7900,125.7500],geo_pillars:[50.8503,4.3517],geo_venice:[45.4408,12.3155],geo_tuvalu:[-8.5211,179.1983],geo_kim:[39.0100,125.7300]
 };
 export function geoOf(n){return n&&(n.geo||GEO_ANCHORS[n.id])||null}
-/* Long-haul routes (shipping lanes and flight paths) that proximity alone would not create. */
+/* ───── REGIONS: the graph of the GLOBAL EDITION map is built region by region ─────
+   Neighbours only link up INSIDE a region; the regions are joined by the curated routes below, and the chokepoints are the
+   gateways: Panama (the two Americas), Suez (Europe, the Middle East and Africa), Hormuz (the Gulf and South Asia),
+   Malacca (South Asia and South-East Asia), Antarctica (South America, Africa and Australasia). Europe and North America
+   touch ONLY through Iceland and Greenland. */
+export const REGION_NAMES={NAM:'North America',SAM:'South America',EUR:'Europe',ME:'Middle East',AFR:'Africa',CAS:'Central Asia',SAS:'South Asia',SEA:'South-East Asia',EAS:'East Asia',OCE:'Australasia & Pacific',
+ PAN:'Panama',SUZ:'Suez',HRM:'Hormuz',MAL:'Malacca',ANT:'Antarctica',ISL:'Iceland',GRL:'Greenland'};
+const REGION_FIX={w_panama:'PAN',w_suez:'SUZ',w_hormuz:'HRM',w_malacca:'MAL',w_antarctica:'ANT',w_hdi:'ISL',w_greenland:'GRL'};
+/* the regions that are single gateways: nothing floats off them and nothing else joins them by proximity */
+export const GATEWAY_REGIONS=['PAN','SUZ','HRM','MAL','ANT','ISL','GRL'];
+export function regionOf(n){
+ if(!n)return 'OCE';
+ if(REGION_FIX[n.id])return REGION_FIX[n.id];
+ const g=geoOf(n);if(!g)return 'OCE';
+ const la=g[0],lo=g[1];
+ if(lo>-170&&lo<-30){
+  const south=lo>-130&&lo<-34&&(la<8.5||(la<12.4&&lo>-75));
+  return south?'SAM':'NAM';
+ }
+ if(la>=34&&lo>=-30&&lo<=60)return 'EUR';
+ if(la>=12&&la<=38&&lo>=34&&lo<=64)return 'ME';
+ if(lo>=-20&&lo<=52&&la<38)return 'AFR';
+ if(lo>60&&lo<=95&&la<35)return 'SAS';
+ if(lo>50&&lo<=95&&la>=35)return 'CAS';
+ if(lo>=95&&lo<=135&&la<20&&la>-12)return 'SEA';
+ if(lo>=95&&lo<=150&&la>=20)return 'EAS';
+ return 'OCE';
+}
+/* Exhibits that are not places (screens, graphs, a boulder): they do not live in a crowded city. Each game the host drops
+   every one at a random spot in an open zone below, joins it to its two nearest neighbours there, and shares the
+   result through the board layout (S.boardLayout / S.boardEdges), so every client sees the same map. */
+export const WORLD_FLOATING=['term','geo_stage5','stock','infl','tenyear','cash','oilgraph','iface','back','toktimer','made','sisy','photo','insider','news'];
+/* open ocean and sparse land: [lat, lon, radius in degrees] */
+export const FLOAT_ZONES=[
+ [42,-165,10],[8,-135,10],[-24,-140,13],[-46,-118,9],   /* the Pacific */
+ [-28,-12,10],[-58,-30,8],                              /* the South Atlantic */
+ [-28,80,12],[-56,60,8],[-57,115,8],                    /* the Indian and Southern Oceans */
+ [62,100,12],[66,140,9],[47,100,8],                     /* Siberia and Mongolia */
+ [23,8,8],[60,-100,10],[21,158,9]                       /* the Sahara, Canada, the western Pacific */
+];
+/* edges that cross the date line: drawn as a pair of arrows off the right edge and back in at the left */
+export const WORLD_WRAPS=[['rock','w_fiji']];
+/* Long-haul routes (shipping lanes and flight paths) that proximity alone would not create. Every route that joins two
+   regions is a deliberate gateway; there is no direct Europe to North America link, and none that skips a chokepoint. */
 export const WORLD_ROUTES=[
- /* the Atlantic bridge */ ['citi','uk'],['w_goldman','w_city'],['w_bell','w_boe'],['oil','barrels'],['w_petrobras','w_dangote'],['w_milei','w_ecb'],
- /* the kangaroo route */ ['qantas','w_temasek'],['qantas','w_hollywood'],['qantas','japan'],['qantas','w_fonterra'],['gold','w_witz'],['w_antarctica','toktimer'],
- /* the Asian ring */ ['w_temasek','w_hsbc'],['japan','w_hsbc'],['w_temasek','w_burj'],['w_hsbc','w_pboc'],['w_burj','w_rbi'],['w_rbi','w_temasek'],['japan','w_pboc'],['w_samsung','japan'],
- /* oil lanes */ ['w_hormuz','tanker'],['w_hormuz','w_rbi'],['w_suez','w_hormuz'],['w_suez','barrels'],['w_aramco','w_hormuz'],['port','japan'],['bhp','stock'],['bhp','w_temasek'],
- /* the Middle corridor */ ['w_burj','w_suez'],['w_burj','w_witz'],['w_burj','w_city'],['w_suez','w_dangote'],['w_kremlin','w_pboc'],['w_kremlin','w_bunds'],['w_kremlin','w_aramco'],
- /* the Americas */ ['w_panama','w_vale'],['w_panama','oil'],['w_panama','w_hollywood'],['w_panama','w_pdvsa'],['citi','w_hollywood'],['w_pemex','w_panama'],['w_milei','w_petrobras'],['rock','w_hollywood'],['w_easter','w_milei'],['made','w_easter'],
- /* the Caribbean */ ['w_cayman','w_bvi'],['w_cayman','w_bermuda'],['w_bermuda','citi'],['w_cayman','w_panama'],
- /* the North */ ['w_greenland','w_satoshi'],['w_satoshi','uk'],['w_svalbard','w_norway'],['w_greenland','w_bay'],
- /* the Pacific islands */ ['w_nauru','geo_tuvalu'],['w_png','w_nauru'],['w_fiji','geo_tuvalu'],['w_fiji','w_fonterra'],['w_png','qantas'],['w_nickel','w_png']
+ /* the North Atlantic: Europe, Iceland, Greenland, Canada: the only way across */ ['uk','w_hdi'],['w_norway','w_hdi'],['w_hdi','w_greenland'],['w_greenland','w_bay'],
+ /* the South Atlantic */ ['w_petrobras','w_dangote'],
+ /* the date line: The Rock wraps around the world to Fiji */ ['rock','w_fiji'],['rock','w_hollywood'],['citi','w_hollywood'],
+ /* the kangaroo route */ ['qantas','w_temasek'],['qantas','w_hollywood'],['qantas','japan'],['qantas','w_fonterra'],['gold','w_witz'],
+ /* the Asian ring */ ['w_temasek','w_hsbc'],['geo_scs','w_hsbc'],['geo_scs','w_tsmc'],['japan','w_hsbc'],['japan','w_pboc'],['w_samsung','japan'],['w_hsbc','w_pboc'],['port','japan'],['bhp','w_temasek'],['w_nickel','w_png'],
+ /* Malacca: the Indian Ocean and the Pacific side */ ['w_malacca','w_srilanka'],['w_malacca','w_bangalore'],['w_malacca','petronas'],['w_malacca','w_temasek'],['w_malacca','tanker'],
+ /* Hormuz: the Gulf and South Asia */ ['w_hormuz','w_aramco'],['w_hormuz','w_adia'],['w_hormuz','w_burj'],['w_hormuz','geo_shahed'],['w_hormuz','w_rbi'],['w_hormuz','w_adani'],['w_mpesa','w_rbi'],
+ /* Suez: Europe, the Middle East and Africa */ ['w_suez','w_greek'],['w_suez','w_btp'],['w_suez','w_lira'],['w_suez','barrels'],['w_suez','w_neom'],['w_suez','w_burj'],['w_suez','w_pyramids'],['w_suez','w_hormuz'],
+ /* the overland road across Eurasia */ ['w_kremlin','w_pboc'],['w_kremlin','w_bunds'],['w_kremlin','w_kazatom'],['w_kazatom','w_baikonur'],['w_kazatom','w_baotou'],
+ /* Panama: the Americas */ ['w_panama','w_vale'],['w_panama','oil'],['w_panama','w_hollywood'],['w_panama','w_pdvsa'],['w_pemex','w_panama'],['w_cayman','w_panama'],['w_milei','w_petrobras'],['w_easter','w_milei'],
+ /* the Caribbean */ ['w_cayman','w_bvi'],['w_cayman','w_bermuda'],['w_bermuda','citi'],
+ /* the far north */ ['w_svalbard','w_norway'],
+ /* Antarctica: the southern route between South America, Africa and Australasia */ ['w_antarctica','w_milei'],['w_antarctica','w_debeers'],['w_antarctica','w_sheep'],['w_antarctica','w_rbnz'],
+ /* the Pacific islands */ ['w_nauru','geo_tuvalu'],['w_png','w_nauru'],['w_fiji','geo_tuvalu'],['w_fiji','w_fonterra'],['w_png','qantas']
 ];
 
 /* low-detail continent outlines: [lon,lat] rings. Hand-simplified; the look is "evidence board", not an atlas. */

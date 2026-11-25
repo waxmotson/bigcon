@@ -6,7 +6,7 @@ import { $, IS_DISCORD_ACTIVITY, Presence } from './core.js';
 import { hooks } from './hooks.js';
 import { LOG_SHOWN, Net, S } from './state.js';
 import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
-import { ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost } from './engine.js';
+import { CLASSIFIED_INTEL, CLASSIFIED_MONEY, classifiedBlocked, hiddenFrom, hiddenInfo, ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost } from './engine.js';
 import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
 import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
@@ -69,10 +69,11 @@ export function showRules(){
  +'<h4>Your turn</h4><p><b>1 · Income</b> — $3 salary (+$1 CPI-indexed with Inflation Compensation) + holdings &amp; powers &amp; mood. <b>2 · Move</b> — 3 steps (+1 with COAL CORP HQ, +1 with the Coal Train <i>or</i> the Bullet Train, +1 with the ASICS shoe, +1 by burning a favor). Tolls: $1 entering a rival’s node — $2 if they hold Albanese, free if you hold James Bond. <b>3 · One action</b> (plus free intel ops — Spy and the Dossier; most other ops are your action). <b>4 · Market event</b> — one card from the 24-card deck hits the whole table, and the mood moves. Card dollars are written for a $100 table and <b>scale with the host’s target</b> (a $300 table pays and charges three times as much; never less than $1). A raided player skips income and gets one step.</p>'
  +'<h4>Actions</h4><ul><li><b>Seize</b> the node you stand on (+1 🔥). Hostile takeover: double cost, doubling again every time the node is taken (list price with the Dossier; MADE, Qantas, the RBA and ESG Pillars never inflate), old owner pockets list price, +2 🔥, +$2 ACCC fee if they own the ACCC. Short on cash? Backroom Deals covers up to $3 with Intel.</li><li><b>Plant a bug</b> (1 🛈; free with INSIDER TRADING) on a rival node next to you — skim $1/turn ($2 with the WEF).</li><li><b>Offer a deal</b> (your action) — offer one of your nodes to one rival for a whole-dollar price you name, from $0 up to their cash. They accept or decline in private, and a declined offer still uses your action. On a yes the cash and the node change hands and any bugs on it are cleared; nobody takes Cortisol, and the node’s takeover price is unchanged.</li><li><b>Sell to the market</b> (your action, only for a node in a book with an open ACCC/ASIC file) — list price, and the node is unowned again · <b>Refer</b> ($4, the ACCC or ASIC owner, once per turn) — a rival’s open file +1 scrutiny.</li><li><b>Leak dirt</b> (2 🛈) — rival +2 Cortisol · <b>Audit</b> ($4, ASIC) — rival +1 Cortisol · <b>The Tweet</b> ($2, Trump) — rival loses the greater of 3 Intel or 50% of their Intel.</li><li><b>Spin</b> ($3 Press Room) / <b>Fox Spin</b> ($2 Fox Business) · <b>Cook the books</b> ($3, The Rock) · <b>Budget night</b> ($3, the Government: every rival pays you $1, +1 🛈) · <b>Lean on the table</b> (Backroom Deals: every rival +1 🔥; using a Backroom ability during movement costs 2 steps).</li><li><b>Push the boulder</b> — earns $10 the first time, then doubles every push ($10, $20, $40, $80…), resetting to $10 if you walk off (Backroom Deals keeps it) or the node changes hands. No Cortisol cost. · <b>Fly the Qantas jet</b> ($3, during movement, teleport anywhere — ends your move) · <b>Slipstream</b> ($2, Formula 1: +2 steps and $2 off the next seizure) · <b>Lay low</b> (choose $1 cash or −2 Cortisol). · <b>Blockade</b> (free, Albanese, once per turn) — wall off literally any node until the end of next round: nobody walks in, nobody lands, not even you.</li></ul>'
  +'<p><b>BONDMAGEDDON</b> (own both the Bond Desk and “Bond Markets Revolt” — The Leak; $16 + 4 🛈, once per turn): pick any rival with intact holdings and launch four missiles at random holdings — each becomes rubble (no DLC needed). If they own the ESG Pillars, three missiles hit ESG and the fourth hits another random holding.</p>'
+ +'<p><b>JAMES BOND — CLASSIFIED</b> (own the “JAMES BOND, CITIBANK · 007” polaroid; 1 🛈 or $3, free, once per turn, in your move or action phase): file <b>any node</b> away until the end of next round. Everyone but you and the node’s holder sees only a <b>?</b> — no name, owner, ability or bugs. It is information only: rivals can still walk or fly onto it and seize it blind, but cannot pick it as a bug, missile, Overtourism or blockade target. Under <b>Fog of War</b> every rival who had been there also forgets it for good (they must visit again). It lapses if Bond changes hands. He still pays no tolls.</p>'
  +'<h4>Cortisol &amp; raids</h4><p>Cortisol is capped at 9, and a player holding only one node (or none) cannot gain Cortisol at all (only the 30-Intel Overload bypasses this). At 🔥9 the regulators raid you, and a raid hurts: your <b>two</b> highest-income nodes are seized, every bug you planted is pulled, you pay a fine of $5 or 30% of your cash (whichever is larger), your Intel is burned down to 1, Cortisol resets to 0 and your <b>next turn brings no income and a single step</b>. <b>The whole table sees the raid</b> — it pops up on every screen. The Hedge Fund pays $3 on every raid; the Group Photograph pays 1 🛈 Intel.</p>'
  +'<h4>ACCC concentration — the regulators keep a file</h4><p>Twelve industries are tracked. Five are type-based — banking, regulators, corporates, commodities and media (charts and WILD nodes don’t count toward them) — and seven are themed books listed by name: coal, oil, education, JTPortal, Jim Chalmers, Big Bessent and monetary policy (MONETARY POLICY also counts the CASH-RATE and INFLATION charts). A themed book is <b>concentrated at 3</b> holdings. A type-based industry is concentrated at <b>a third of its size on the live board, rounded up, never fewer than 3</b>: three banks, regulators or corporates, but <b>four</b> media or four commodities (there are 11 media and 10 commodities, 12 and 11 with the Geography DLC). Hold that many and the regulator <b>opens a public file</b> on the book — every player’s open files are listed in THE SYNDICATE. <b>ASIC</b> runs monetary-policy books as <b>market manipulation</b>; the <b>ACCC</b> takes every other industry. There are no dice: at the start of each of <b>your</b> turns every open file on you gains <b>+1 scrutiny</b>, and at <b>3</b> the ruling lands. You choose which nodes to keep, down to one fewer than the trigger; only the excess is divested, back to the market <b>unowned</b> (never to a rival, and any bugs on it are pulled), and you pay <b>10% of your cash and 10% of your Intel per divested node</b>, capped at 30% each. A file closes the moment the book drops back under the trigger, however that happens — a sale, a deal, a takeover, a raid, a missile — and its scrutiny is discarded. While a file is open you can <b>sell a node from that book to the market</b> for its list price (your action), or <b>lobby</b> (3 🛈, free, once per turn) for −1 scrutiny on one of your files (never below 0). The owner of the <b>ACCC</b> can <b>REFER</b> a rival’s file ($4, your action, once per turn) for +1 scrutiny; the owner of <b>ASIC</b> refers monetary-policy files the same way. You can’t refer your own file, and a referral never rules on the spot — rulings only land at the start of the offender’s own turn. The <b>MONOPOLY ALERT</b> event adds +1 scrutiny to every open file on the table. Owning <b>Mark Watson</b> exempts your holdings in the COAL industry from ACCC monopoly investigations.</p>'
  +'<h4>MADE (???)</h4><p>Nobody knows what the purple graphic is, but it moves money: at the <b>start of every player\'s turn</b> there is a chance MADE pays out (<b>33% at 2 seats, 22% at 3, 17% at 4, 13% at 5, 11% at 6, 10% at 7, 8% at 8</b>) — <b>+$10 and +1 Intel</b> to its owner. Every other player with <b>more than two nodes and at least $50</b> pays 15% of their cash to the void. Seizing MADE always costs list price — it never inflates after a takeover. You may also force MADE to divest from any rival for <b>5 Intel + $7</b> (the $7 goes to the former owner as compensation, and you take +1 Cortisol).</p>'
- +'<h4>🌐 WORLD MAP &amp; the World Expansion</h4><p>Two host-chosen options in the lobby. <b>THE WORLD EXPANSION</b> adds <b>100 global exhibits</b> — central banks, chokepoints, mines, wealth funds, a Nigerian prince — to <i>any</i> board layout (Random, Ringworld, Mega Ring) and combines freely with the Geography DLC. The <b>WORLD MAP</b> layout pins every exhibit to the place it really lives on a world map (and switches the Expansion on): <b>Quikstop opens in Sydney</b>, Wall Street is in New York, Hormuz is in the Gulf. Threads follow geography — neighbours link up, shipping lanes and flight paths cross the oceans, and North and South America touch only at Panama. The new exhibits ship as <b>text cards</b> (name and icon) until their pictures arrive. Most pay through simple synergies — per node type, a partner node, start-of-turn Cortisol or Intel, and windfalls on events like OIL SPIKES or GOLD RUSH; nodes marked ⚙ have income, price and seizing working while their special ability is still being wired up.</p>'
+ +'<h4>🌐 THE BIG CON: GLOBAL EDITION</h4><p>Two host-chosen options in the lobby. <b>GLOBAL EDITION EXHIBITS</b> add <b>100+ global exhibits</b> — central banks, chokepoints, mines, wealth funds, a Nigerian prince — to <i>any</i> board layout (Random, Ringworld, Mega Ring) and combines freely with the Geography DLC. The <b>THE BIG CON: GLOBAL EDITION</b> map pins every exhibit to the place it really lives on a world map (and switches the exhibits on): <b>Quikstop opens in Sydney</b>, Wall Street is in New York, Hormuz is in the Gulf. Threads follow geography — neighbours link up inside their region and the regions meet at gateways: Panama joins the Americas, Suez joins Europe, the Middle East and Africa, Hormuz joins the Gulf to South Asia, Malacca joins South Asia to the Pacific side, and Antarctica is the southern route. Europe and North America touch <i>only</i> through Iceland and Greenland, and The Rock lets you sail off the right edge of the map and back in from the left. Exhibits that are not places (screens, charts, the boulder) float to a random open spot each game. The new exhibits ship as <b>text cards</b> (name and icon) until their pictures arrive. Most pay through simple synergies — per node type, a partner node, start-of-turn Cortisol or Intel, and windfalls on events like OIL SPIKES or GOLD RUSH; nodes marked ⚙ have income, price and seizing working while their special ability is still being wired up.</p>'
  +'<h4>🌍 The Geography DLC — the board expands over the water</h4><p>Host-toggled in the lobby (look for <b>ENABLE THE GEOGRAPHY DLC</b>). <b>On: the board deals 82 exhibits.</b> Off: the same 70 exhibits as always.</p>'
  +'<ul><li><b>MISSILE COMMAND ($8) / IRANIAN SHAHED DRONE ($8)</b> — you can own <b>MISSILE COMMAND or the SHAHED DRONE</b>, but not both. Either owned launch site can LAUNCH A MISSILE ($4 + 1 🛈, once per turn): stand on the launcher you own to fire, or own KIM JONG UN to fire from anywhere — during your move (the launch ends it) or as your action. You can’t hit your own nodes, or any other node held by the Pillars owner. An <b>owned node is expropriated with NO payout</b> to its former owner; either way it becomes <b>RUBBLE</b> until rebuilt at list price. The <b>ESG Pillars themselves can be missile-struck</b>, and the shield falls with them. Strike a <b>REGULATOR</b> and an investigation opens — <b>ASIC or the ACCC</b> comes for you on your next turn: a 50/50 indictment, and <b>+1 Cortisol</b> whether it lands or not.</li>'
  +'<li><b>PYONGYANG CITY ($6)</b> — +$1 income per Geography node you own. The capital collects tribute.</li>'
@@ -125,13 +126,15 @@ export function placeholderCardSVG(n,w,h){
 }
 export function nodeSVG(n,cls){
  const me=S&&S.players[Net.myIdx];
- const discovered=!S||!S.fogOfWar||(me&&me.visited&&me.visited[n.id]);
+ const classified=hiddenFromMe(n.id);
+ const discovered=!S||((!S.fogOfWar||(me&&me.visited&&me.visited[n.id]))&&!classified);
  if(!discovered){
   /* Unknown destinations are hinted only when they are directly reachable.
-     Other unseen locations leave no marker, so the hidden map cannot be read. */
-  if(cls.indexOf('reach')<0)return '';
+     Other unseen locations leave no marker, so the hidden map cannot be read.
+     A CLASSIFIED site on a plain (no-fog) board stays drawn, as an unknown card. */
+  if(cls.indexOf('reach')<0&&!(classified&&!S.fogOfWar))return '';
   const box=nodeBox(n),w=box[0],h=box[1];
-  return '<g class="node fog-node click reach" transform="translate('+n.x+','+n.y+')" data-id="'+n.id+'" opacity=".94"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="#101716" stroke="#7ff6fb" stroke-width="3" stroke-dasharray="7 6"/><text text-anchor="middle" y="5" font-size="18" font-weight="900" fill="#7ff6fb">?</text></g>';
+  return '<g class="node fog-node click'+(cls.indexOf('reach')>=0?' reach':'')+'" transform="translate('+n.x+','+n.y+')" data-id="'+n.id+'" opacity=".94"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="#101716" stroke="#7ff6fb" stroke-width="3" stroke-dasharray="7 6"/><text text-anchor="middle" y="5" font-size="18" font-weight="900" fill="#7ff6fb">?</text></g>';
  }
  const o=S?S.owner[n.id]:null;
  const ownr=o!=null;
@@ -158,7 +161,8 @@ export function nodeSVG(n,cls){
  const ownerTag=ownr?'<circle cx="'+(w/2-10)+'" cy="'+(-h/2+10)+'" r="8" fill="'+oc+'" stroke="#000" stroke-width="1.5"/><text x="'+(w/2-10)+'" y="'+(-h/2+13.5)+'" text-anchor="middle" font-size="8" font-weight="900" fill="#fff">'+String(o+1)+'</text>':'';
  const bugTag=bug?'<text x="'+(w/2-24)+'" y="'+(-h/2+18)+'" font-size="12">🐛</text>':'';
  const bl=S&&blockaded(n.id);
- const badges=(ot?'<text x="'+(w/2-36)+'" y="'+(-h/2+18)+'" font-size="12">🛳️</text>':'')+(gq?'<text x="'+(-w/2+6)+'" y="'+(-h/2+18)+'" font-size="12">⛔</text>':'')+(bl?'<text x="'+(-w/2+7)+'" y="'+(-h/2+18)+'" font-size="15" font-weight="900">🚧</text>':'');
+ const filed=hiddenInfo(n.id)&&!hiddenFromMe(n.id);
+ const badges=(filed?'<text x="'+(w/2-48)+'" y="'+(-h/2+18)+'" font-size="12">🗂️</text>':'')+(ot?'<text x="'+(w/2-36)+'" y="'+(-h/2+18)+'" font-size="12">🛳️</text>':'')+(gq?'<text x="'+(-w/2+6)+'" y="'+(-h/2+18)+'" font-size="12">⛔</text>':'')+(bl?'<text x="'+(-w/2+7)+'" y="'+(-h/2+18)+'" font-size="15" font-weight="900">🚧</text>':'');
  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
  return '<g class="node '+cls+'" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+') rotate('+n.rot+')">'
   +ownerGlow+moodGlow+halo
@@ -234,18 +238,23 @@ export function bugTargetable(n){
  const me=Net.myIdx;
  return S&&S.phase==='action'&&S.mode==='bug'&&myTurn()
   &&S.owner[n.id]!=null&&S.owner[n.id]!==me
-  &&S.bugs[n.id]==null
+  &&S.bugs[n.id]==null&&!hiddenFromMe(n.id)
   &&(ADJ[S.players[me].pos]||[]).includes(n.id);
 }
 export function missileTargetable(n){
  const me=Net.myIdx;
  return S&&(S.phase==='action'||S.phase==='move')&&S.mode==='missile'&&myTurn()&&S.dlcGeo
-  &&canMissileNode(me,n.id);
+  &&canMissileNode(me,n.id)&&!hiddenFromMe(n.id);
 }
+/* James Bond's CLASSIFIED: any node may be filed away */
+export function classifiedTargetable(n){
+ return !!(S&&(S.phase==='action'||S.phase==='move')&&S.mode==='classified'&&myTurn()&&S.owner.bond007===Net.myIdx);
+}
+export function hiddenFromMe(id){return !!(S&&hiddenFrom(Net.myIdx,id))}
 export function overtourTargetable(n){
  const me=Net.myIdx;
  return S&&S.phase==='action'&&S.mode==='overtour'&&myTurn()&&S.dlcGeo
-  &&S.owner[n.id]!=null&&S.owner[n.id]!==me&&!S.rubble[n.id];
+  &&S.owner[n.id]!=null&&S.owner[n.id]!==me&&!S.rubble[n.id]&&!hiddenFromMe(n.id);
 }
 /* the World Expansion's picks: a node then a neighbour (chainsaw, brexit), one of yours then any node (silk road), any node (vanish) */
 export function worldPickable(n){
@@ -261,7 +270,7 @@ export function worldPickable(n){
 export function blockadeTargetable(n){
  const me=Net.myIdx;
  return S&&S.phase==='action'&&S.mode==='blockade'&&myTurn()&&S.owner.albo===me
-  &&!S.rubble[n.id]&&!blockaded(n.id);
+  &&!S.rubble[n.id]&&!blockaded(n.id)&&!hiddenFromMe(n.id);
 }
 /* Edge geometry shared by the board and the hover/path overlay. Under fog of war an edge only shows once both
    ends are known (or it leads out of the node you stand on), so the overlay can never reveal the hidden map. */
@@ -274,6 +283,8 @@ function edgeVisible(e){
 function edgeCurve(e,i){
  const A=NMAP[e[0]],B=NMAP[e[1]];
  if(!A||!B)return null;
+ /* the date-line wrap (The Rock to Fiji): drawn as a pair of stubs, off the right edge of the map and back in at the left */
+ if(S&&S.layoutKind==='worldmap'){const W=boardViewBounds().w;if(Math.abs(B.x-A.x)>W*0.6){const L=A.x<B.x?A:B,R=A.x<B.x?B:A,t=(W-R.x)/((L.x+W)-R.x),y0=Math.round(R.y+(L.y-R.y)*t);return {d:'M'+R.x+','+R.y+' L'+(W-8)+','+y0+' M8,'+y0+' L'+L.x+','+L.y,len:W,mx:(L.x+R.x)/2,my:y0,wrap:true,W,y0,L,R}}}
  const dx=B.x-A.x,dy=B.y-A.y,len=Math.hypot(dx,dy)||1;
  const nx=-dy/len,ny=dx/len;
  const bow=(i%2===0?1:-1)*(18+Math.min(46,len*0.08));
@@ -294,6 +305,7 @@ function indexEdges(){
 function ensureEdgeIndex(){if(indexedEdges!==EDGES||indexedCount!==EDGES.length)indexEdges()}
 function discoveredNode(id){
  if(!NMAP[id])return false;
+ if(hiddenFromMe(id))return false;
  if(!(S&&S.fogOfWar))return true;
  const me=S.players[Net.myIdx];
  return !!(me&&me.visited&&me.visited[id]);
@@ -331,7 +343,7 @@ function overlayEdge(a,b,color,w,glowW){
  const c=edgeCurve(EDGES[i],i);
  if(!c)return '';
  const A=NMAP[a],B=NMAP[b];
- const d='M'+A.x+','+A.y+' Q'+c.mx+','+c.my+' '+B.x+','+B.y;
+ const d=c.wrap?c.d:'M'+A.x+','+A.y+' Q'+c.mx+','+c.my+' '+B.x+','+B.y;
  return '<path d="'+d+'" fill="none" stroke="#000" stroke-width="'+glowW+'" opacity=".55" stroke-linecap="round"/><path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="'+w+'" stroke-linecap="round"/>';
 }
 function nodeRing(id,color,w,pad,dash){
@@ -404,9 +416,10 @@ function pinPathTo(id){
 /* how a node answers a click right now: '' · 'click' (a Qantas landing) · 'click reach' (a step) · 'click target' */
 function nodeClass(n,curpos){
  if(!S||S.over)return '';
- if(S.mode==='fly')return (myTurn()&&n.id!==curpos&&canReach(n.id)&&!blockaded(n.id))?'click':'';
+ if(classifiedTargetable(n))return 'click target';
+ if(S.mode==='fly'||S.mode==='launch')return (myTurn()&&n.id!==curpos&&canReach(n.id)&&!blockaded(n.id))?'click':'';
  if(S.mode!=='missile'&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))return 'click reach';
- if(bugTargetable(n)||missileTargetable(n)||overtourTargetable(n)||blockadeTargetable(n)||worldPickable(n))return 'click target';
+ if(classifiedTargetable(n)||bugTargetable(n)||missileTargetable(n)||overtourTargetable(n)||blockadeTargetable(n)||worldPickable(n))return 'click target';
  return '';
 }
 /* ---------- the optional 3D board (static/landing/board3d.js) ----------
@@ -519,9 +532,10 @@ export function renderBoard(){
   const long=len>520;
   s+='<path d="'+d+'" fill="none" stroke="#08383a" stroke-width="'+(hot?6:long?3.5:5)+'" opacity="'+(hot?'.7':'.35')+'"/>';
   s+='<path d="'+d+'" fill="none" stroke="'+(hot?'#7ff6fb':'#168388')+'" stroke-width="'+(hot?3:long?1.6:2)+'" stroke-dasharray="'+(long?'11 8':'')+'" opacity="'+(hot?'1':'.9')+'"/>';
+  if(c.wrap){const nm=q=>nodeName(q).join(' '),tx='font-size="34" font-weight="900" fill="#f5c542" stroke="#000" stroke-width="6" paint-order="stroke" font-family="Tomkins Display, sans-serif"';s+='<text x="'+(c.W-30)+'" y="'+(c.y0-18)+'" text-anchor="end" '+tx+'>⟶ WRAPS TO '+esc(nm(c.L))+'</text><text x="30" y="'+(c.y0-18)+'" '+tx+'>⟶ FROM '+esc(nm(c.R))+'</text>'}
  });
  if(wm){
-  s+='<g transform="translate('+metrics.cx+',150) scale(2.6)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON v1.13 · WORLD MAP</text></g>';
+  s+='<g transform="translate('+metrics.cx+',150) scale(2.6)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON: GLOBAL EDITION v1.13</text></g>';
   s+='<g transform="translate('+metrics.cx+',330) scale(2.4)"><rect x="-1050" y="-15" width="2100" height="30" fill="#000" stroke="'+md.color+'" stroke-width="2" opacity=".96"/><circle class="tkdot" cx="-1028" cy="0" r="6" fill="'+md.color+'"/><text x="-1008" y="4" font-size="13" font-weight="900" letter-spacing="1.5" fill="aqua">'+md.label+'</text><text x="0" y="4" text-anchor="middle" font-size="12" font-style="italic" fill="#ddd">'+esc((S.wire||'all quiet on the wire').slice(0,100))+'</text><text x="1028" y="4" text-anchor="end" font-size="12" font-weight="800" fill="#9ad">1🛈=$'+md.rate+'</text></g>';
  }else if(mega){
   s+='<circle cx="'+metrics.cx+'" cy="'+metrics.cy+'" r="'+metrics.radius+'" fill="none" stroke="#168388" stroke-width="3" stroke-dasharray="18 20" opacity=".22"/>';
@@ -604,6 +618,12 @@ export function renderBoard(){
   setTimeout(()=>{try{outer.remove()}catch(e){}},f.b?3600:2900);
  });
 }
+/* 🤵 JAMES BOND's CLASSIFIED: two ways to pay, once per turn, in the move or the action phase */
+function classifiedButtons(me,p){
+ if(S.owner.bond007!==me)return '';
+ const tip='Free action, once per turn: file any node under CLASSIFIED until the end of next round. Rivals see only a ? — no name, owner, ability or bugs'+(S.fogOfWar?'; under Fog of War they also forget they were ever there':'')+'. They can still walk onto it and seize it.';
+ return ['intel','money'].map(k=>'<button class="act" data-act="classifiedmode" data-pay="'+k+'"'+(classifiedBlocked(me,k)?' disabled':'')+' title="'+esc(tip)+'">🗂️ CLASSIFIED — hide a node · '+(k==='money'?'$'+CLASSIFIED_MONEY:CLASSIFIED_INTEL+' 🛈')+'</button>').join('');
+}
 export function renderSide(){
  const side=$('side');
  const me=Net.myIdx;const p=S.players[S.cur];const isTurn=myTurn();
@@ -623,7 +643,9 @@ export function renderSide(){
  } else if(S.phase==='move'){
   const maxSteps=S.caution?1:3+(S.owner.coal===me?1:0)+((S.owner.train===me||S.owner.bullet===me)?1:0)+(S.owner.asics===me?1:0)+(S.extraStep?1:0)+(S.slipped?2:0);
   const dots='●'.repeat(Math.max(0,S.steps))+'○'.repeat(Math.max(0,maxSteps-S.steps));
-  if(S.mode==='fly'){phaseHtml='<div class="phlabel">PHASE 1 · MOVE — FLYING</div><p><b>FLYING:</b> click <b>any node</b> on the board to land there ($3).</p><button class="act" data-act="cancel">Cancel flight</button>'}
+  if(S.mode==='classified'){phaseHtml='<div class="phlabel">🗂️ CLASSIFIED — '+(S.classPay==='money'?'$'+CLASSIFIED_MONEY:CLASSIFIED_INTEL+' 🛈')+' · FREE ACTION · ONCE PER TURN</div><p>Click <b>any node</b> on the board. Until the end of next round it is drawn as an unknown to everyone but you and its holder'+(S.fogOfWar?', and every rival who had been there forgets the way (permanently)':'')+'. Rivals can still walk onto it and seize it blind — they just can’t see it or pick it as a target.</p><button class="act" data-act="cancel">Cancel</button>'}
+  else if(S.mode==='launch'){phaseHtml='<div class="phlabel">🚀 BAIKONUR LAUNCH — $3, ONCE PER GAME</div><p><b>LAUNCHING:</b> click <b>any node</b> on the board to land there. Your move ends on arrival.</p><button class="act" data-act="cancel">Scrub the launch</button>'}
+  else if(S.mode==='fly'){phaseHtml='<div class="phlabel">PHASE 1 · MOVE — FLYING</div><p><b>FLYING:</b> click <b>any node</b> on the board to land there ($3).</p><button class="act" data-act="cancel">Cancel flight</button>'}
   else if(S.mode==='missile'){phaseHtml='<div class="phlabel">🚀 MISSILE AWAY — $4 + 1 🛈</div><p><b>LAUNCHING:</b> click <b>any node</b> on the board to strike it. The launch <b>ends your move</b>, and your action phase still follows.</p><button class="act" data-act="cancel">Abort the launch</button>'}
   else{
    phaseHtml='<div class="phlabel">PHASE 1 · MOVE</div>'
@@ -631,8 +653,10 @@ export function renderSide(){
     +'<div class="dots">'+dots+' <span>'+S.steps+' step'+(S.steps!==1?'s':'')+' left</span></div>'
     +'<div class="btns"><button class="act" data-act="endmove">Stay put — end movement</button>'
     +((!S.extraStep&&p.intel>=1)?'<button class="act" data-act="favor">🛈 Burn a favor — 1 🛈 (+1 step this turn)</button>':'')
+    +((S.dlcWorld&&S.owner.w_baikonur===me)?'<button class="act" data-act="worldmode:launch"'+(worldBlocked(me,'launch')?' disabled':'')+' title="Once per game: pay $3 and land on any node (like the Qantas jet).">🚀 BAIKONUR LAUNCH — $3, anywhere (once per game)</button>':'')
     +((S.owner.qantas===me)?'<button class="act" data-act="flymode"'+(p.money>=3?'':' disabled')+'>✈️ Fly the Qantas jet — $3 (anywhere)</button>':'')
     +((S.owner.f1===me&&!S.slipped)?'<button class="act" data-act="slip"'+(p.money>=2?'':' disabled')+'>🏎️ Slipstream — $2 (+2 steps, $2 off next seizure)</button>':'')
+    +classifiedButtons(me,p)
     +((S.dlcGeo&&ownsMissileLauncher(me)&&canFireMissileFrom(me))?'<button class="act" data-act="missilemode"'+((p.money>=4&&p.intel>=1&&!S.geoMissiled)?'':' disabled')+' title="From either launcher (anywhere with Kim Jong Un): strike any node that still stands — the launch ends your move; your action still follows ($4 + 1 Intel, once per turn)">🚀 Launch a missile — $4 + 1🛈 (ends the move)</button>':'')
     +'</div>';
     if(S.owner.back===me&&!S.backroomAbilityUsed){
@@ -644,7 +668,7 @@ export function renderSide(){
      if(S.owner.rock===me)phaseHtml+='<button class="act" data-act="cook"'+((p.money>=3?'':' disabled')+backroomStepLock)+'>💪 Cook the books — $3 · 2 steps</button>';
      if(S.owner.asic===me)phaseHtml+='<button class="act" data-act="auditmode"'+((p.money>=4&&!S.audited?'':' disabled')+backroomStepLock)+'>⚖️ Audit — $4 · 2 steps</button>';
      if(S.owner.press===me)phaseHtml+='<button class="act" data-act="spin" data-kind="press"'+((p.money>=3&&!S.spun?'':' disabled')+backroomStepLock)+'>🗞️ Spin the press — $3 · 2 steps</button>';
-     if(S.owner.fox===me)phaseHtml+='<button class="act" data-act="spin" data-kind="fox"'+((p.money>=2?'':' disabled')+backroomStepLock)+'>🦊 Fox spin — $2 · 2 steps</button>';
+     if(S.owner.fox===me)phaseHtml+='<button class="act" data-act="spin" data-kind="fox"'+((p.money>=2&&!S.spun?'':' disabled')+backroomStepLock)+'>🦊 Fox spin — $2 · 2 steps</button>';
      if(S.owner.sisy===me&&p.pos==='sisy')phaseHtml+='<button class="act" data-act="push"'+backroomStepLock+'>🪨 Push the boulder — +$'+(S.sisyPayout||10)+' · 2 steps</button>';
      if(S.owner.asics===me&&p.pos==='asics')phaseHtml+='<button class="act" data-act="jog"'+backroomStepLock+'>👟 Jog a lap — −1 🔥 · 2 steps</button>';
      if(S.dlcGeo&&S.owner.geo_boeing===me)phaseHtml+='<button class="act" data-act="qantasdown"'+((p.money>=4&&!S.geoBoeing&&S.owner.qantas!==me?'':' disabled')+backroomStepLock)+' title="Ground a rival or unowned Qantas until the end of next round; unavailable if you own Qantas">🛩️ Ground Qantas — $4 · 2 steps</button>';
@@ -656,8 +680,11 @@ export function renderSide(){
   }
  } else if(S.phase==='action'){
   const nid=p.pos,n=curN,prev=S.owner[nid];
-  const powline='<div class="pow"><b>'+n.name.join(' ')+'</b> — '+n.sp+'</div>';
-  if(S.mode==='bug'){
+  const hidHere=hiddenFromMe(nid),nodeNm=hidHere?'a CLASSIFIED site':n.name.join(' ');
+  const powline=hidHere?'<div class="pow"><b>CLASSIFIED</b> — you cannot read this file. You can still seize it blind.</div>':'<div class="pow"><b>'+n.name.join(' ')+'</b> — '+n.sp+'</div>';
+  if(S.mode==='classified'){
+   phaseHtml='<div class="phlabel">🗂️ CLASSIFIED — '+(S.classPay==='money'?'$'+CLASSIFIED_MONEY:CLASSIFIED_INTEL+' 🛈')+' · FREE ACTION · ONCE PER TURN</div><p>Click <b>any node</b> on the board. Until the end of next round it is drawn as an unknown to everyone but you and its holder'+(S.fogOfWar?', and every rival who had been there forgets the way (permanently)':'')+'. Rivals can still walk onto it and seize it blind — they just can’t see it or pick it as a target.</p><button class="act" data-act="cancel">Cancel</button>'
+  } else if(S.mode==='bug'){
    phaseHtml='<div class="phlabel">PLANT A BUG</div>'+powline+'<p>Click a <b>highlighted rival node next to you</b> on the board. You will skim <b>$1/turn</b> off it ($2 with the WEF).</p><button class="act" data-act="cancel">Cancel</button>';
   } else if(S.mode==='missile'){
    phaseHtml='<div class="phlabel">🚀 LAUNCH A MISSILE — $4 + 1 🛈 (once per turn)</div>'+powline+'<p>Click <b>any node</b> on the board. An owned node is expropriated with <b>no payout</b>; either way it becomes <b>rubble</b> — no income, nothing to seize, until someone stands there and pays its list price to rebuild (a rebuild is an action of its own).</p><button class="act" data-act="cancel">Abort the launch</button>';
@@ -683,6 +710,8 @@ export function renderSide(){
    phaseHtml='<div class="phlabel">'+lab+'</div>'+powline+'<p>Click a <b>rival</b> in THE SYNDICATE list below.</p><button class="act" data-act="cancel">Cancel</button>';
   } else {
    let base=seizeListPrice(me,n);
+   /* the slipstream's $2 off applies to this seizure (the engine takes it in doSeize) */
+   if(S.slipped===true&&S.owner.f1===me)base=Math.max(1,base-2);
    const isTake=prev!=null&&prev!==me;
    const cost=isTake?takeoverCost(me,nid,base):base;
    const maxPay=p.money+(S.owner.back===me?Math.min(3,p.intel):0);
@@ -699,8 +728,9 @@ export function renderSide(){
     btns.push('<div class="ownnote">🐧 <b>'+n.name.join(' ')+'</b> is UNTOUCHABLE — no hostile takeover of it is ever possible.</div>');
    }else{
     const afford=maxPay>=cost;
-    const lbl=isTake?('Hostile takeover — $'+cost+(flatSeize(nid)?' (never inflates)':S.dossier?' (DOSSIER: list price)':' (takeover '+(S.seizeCount[nid]||0)+'×)')):('Seize '+n.name.join(' ')+' — $'+cost);
-    btns.push('<button class="act primary" data-act="seize"'+(afford?'':' disabled')+'>'+lbl+(afford?'':' — can’t afford')+'</button>');
+    const twinLauncher=S.dlcGeo&&((nid==='geo_shahed'&&S.owner.geo_missile===me)||(nid==='geo_missile'&&S.owner.geo_shahed===me));
+    const lbl=hidHere?'Seize '+nodeNm+' blind — $'+cost:isTake?('Hostile takeover — $'+cost+(flatSeize(nid)?' (never inflates)':S.dossier?' (DOSSIER: list price)':' (takeover '+(S.seizeCount[nid]||0)+'×)')):('Seize '+n.name.join(' ')+' — $'+cost);
+    btns.push('<button class="act primary" data-act="seize"'+(afford&&!twinLauncher?'':' disabled')+'>'+lbl+(twinLauncher?' — you can own either launcher, not both':afford?'':' — can’t afford')+'</button>');
    }
    const bugCost=(S.owner.insider===me)?0:1;
    const bugTargets=(ADJ[nid]||[]).filter(m=>S.owner[m]!=null&&S.owner[m]!==me&&S.bugs[m]==null).length>0;
@@ -750,6 +780,7 @@ export function renderSide(){
    }
    btns.push('<button class="act" data-act="dealmode"'+((S.players.length>1&&NODES.some(nn=>S.owner[nn.id]===me))?'':' disabled')+' title="Your action: offer one of your nodes to one rival for a price you name ($0 up to their cash). They accept or decline in private; a declined offer still uses your action. No Cortisol; bugs on the node are cleared.">🤝 Offer a deal — sell a node to a rival</button>');
    if(S.owner.accc===me||S.owner.asic===me)btns.push('<button class="act" data-act="refermode"'+((p.money>=4&&!S.referred&&S.players.some((_,i)=>referableFiles(i).length))?'':' disabled')+' title="Your action, once per turn: $4 for +1 scrutiny on a rival’s open file. The ACCC refers every book but monetary policy; ASIC refers monetary-policy books. You cannot refer your own file, and rulings still wait for the offender’s turn start.">🧐 Refer a rival file — $4 (+1 scrutiny)</button>');
+   if(S.owner.bond007===me)btns.push(classifiedButtons(me,p));
    /* ---- INTEL OPS ---- */
    btns.push('<div class="sublabel">INTEL OPS · you hold 🛈 '+p.intel+' · market rate $'+md.rate+'/🛈</div>');
    btns.push('<button class="act" data-act="spy"'+(p.intel>=2?'':' disabled')+' title="Free action — see the next event card, anywhere">🛈 Spy on the deck — 2 🛈 (see next event)</button>');
@@ -757,7 +788,7 @@ export function renderSide(){
    btns.push('<button class="act" data-act="divestmade"'+((p.intel>=5&&p.money>=7&&S.owner.made!=null&&S.owner.made!==me)?'':' disabled')+' title="Pay 5 Intel and $7 compensation to remove MADE from any rival; you take +1 Cortisol">🟣 Divest MADE — 5 🛈 + $7 compensation</button>');
    btns.push('<button class="act" data-act="sweep"'+(p.intel>=2?'':' disabled')+' title="Your action — remove all bugs on your nodes">🧹 Sweep for bugs — 2 🛈 (cleanse your nodes)</button>');
     btns.push('<button class="act" data-act="masspanic"'+(p.intel>=5?'':' disabled')+' title="Your action — every player gains 2 Cortisol">🔥 Mass panic — 5 🛈 (+2 Cortisol to everyone)</button>');
-   btns.push('<button class="act" data-act="targetpanic"'+(p.intel>=30&&S.players.length>1?'':' disabled')+' title="Choose one rival to receive +6 Cortisol; costs 30 Intel">🔥 Overload a rival — 30 🛈 (+6 Cortisol)</button>');
+   btns.push('<button class="act" data-act="targetpanic"'+(p.intel>=30&&S.players.some((_,i)=>i!==me&&!isVanished(i))?'':' disabled')+' title="Choose one rival to receive +6 Cortisol; costs 30 Intel">🔥 Overload a rival — 30 🛈 (+6 Cortisol)</button>');
    if(S.owner.bond===me&&S.owner.leak===me){btns.push('<button class="act" data-act="bondmageddon"'+(p.money>=16&&p.intel>=4&&!S.bondmageddonUsed&&S.players.length>1?'':' disabled')+' title="Choose a rival with intact holdings: four missiles hit random holdings and turn them to rubble. If they own ESG, three hit ESG and the fourth hits another holding. Costs $16 + 4 Intel; once per turn.">💥 BONDMAGEDDON — 4 missiles ($16 + 4 🛈)</button>');}
    for(let k=1;k<=3;k++){
     btns.push('<button class="act" data-act="sell" data-n="'+k+'"'+(p.intel>=k?'':' disabled')+' title="Your action — sell Intel at the current market rate">💰 Sell '+k+' 🛈 → $'+(k*md.rate)+'</button>');
@@ -890,8 +921,10 @@ export function handleNodeTap(t){
 export function tapNode(id){
  if(!id||!S||S.over)return;
  if(!myTurn())return;
+ if(S.mode==='classified'){dispatch({act:'classified',id});return}
  if(S.phase==='move'){
   if(S.mode==='fly'){dispatch({act:'fly',id});return}
+  if(S.mode==='launch'){dispatch({act:'launch',id});return}
   if(S.mode==='missile'){dispatch({act:'missile',id});return}
   if(S.steps<=0)return;
   if(!canReach(id)){hooks.toast(qantasGroundedReason()+'.');return}
@@ -1038,6 +1071,7 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
  }
  if(!myTurn()||S.over)return;
  switch(act){
+  case 'classifiedmode':dispatch({act:'classifiedmode',pay:b.dataset.pay==='money'?'money':'intel'});break;
   case 'endmove':dispatch({act:'endmove'});break;
   case 'flymode':dispatch({act:'flymode'});break;
   case 'slip':dispatch({act:'slip'});break;
@@ -1125,7 +1159,7 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
 (function(){
  const gt=$('geoToggle');
  const wt=$('worldToggle');
- if(wt)wt.onchange=()=>{if(Net.role!=='host'||Net.boardLayout==='worldmap'){wt.checked=!!Net.dlcWorld||Net.boardLayout==='worldmap';hooks.toast(Net.role!=='host'?'The host decides whether the World Expansion is played.':'The World Map layout always includes the World Expansion.');return}setWorldUI(wt.checked);broadcastLobby()};
+ if(wt)wt.onchange=()=>{if(Net.role!=='host'||Net.boardLayout==='worldmap'){wt.checked=!!Net.dlcWorld||Net.boardLayout==='worldmap';hooks.toast(Net.role!=='host'?'The host decides whether the Global Edition exhibits are played.':'THE BIG CON: GLOBAL EDITION always includes its exhibits.');return}setWorldUI(wt.checked);broadcastLobby()};
  if(gt)gt.onchange=()=>{if(Net.role!=='host'){gt.checked=Net.dlcGeo;hooks.toast('The host decides whether the Geography DLC is played.');return}setGeoUI(gt.checked);broadcastLobby()};
  const ft=$('fogToggle');
  if(ft)ft.onchange=()=>{if(Net.role!=='host'){ft.checked=Net.fogOfWar;hooks.toast('The host decides whether Fog of War is enabled.');return}setFogUI(ft.checked);broadcastLobby()};

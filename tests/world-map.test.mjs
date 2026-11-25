@@ -7,6 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadEngine, makeGame, withSeed, bfs } from './helpers/harness.mjs';
+import * as W from '../static/js/world.js';
 
 const REQUIRED = ['id', 'name', 'icon', 'type', 'income', 'cost', 'sub', 'sp', 'geo'];
 const TYPES = ['BANK', 'REGULATOR', 'CHART', 'COMMODITY', 'CORPORATE', 'MEDIA', 'WILD'];
@@ -149,7 +150,7 @@ test('initGame: the worldmap layout forces the expansion on, logs its line and s
   const S = await makeGame(engine, 2);
   assert.equal(S.dlcWorld, true);
   assert.equal(S.layoutKind, 'worldmap');
-  assert.ok(S.log.some(l => l.includes('WORLD MAP') && l.includes('Quikstop opens in Australia')));
+  assert.ok(S.log.some(l => l.includes('GLOBAL EDITION') && l.includes('Quikstop opens in Australia')));
   assert.ok(engine.acc.NODES.length >= 170);
   assert.equal(engine.acc.pubState === undefined, true);
   const b = engine.f.boardViewBounds();
@@ -234,4 +235,149 @@ test('placeholder nodes render as text cards without an image; an image path tak
   n.image = './static/example.png';
   assert.ok(engine.f.nodeSVG(n, 'node').includes('href="./static/example.png"'));
   delete n.image;
+});
+
+/* ---------- the region-structured graph ---------- */
+const seeded = async (t, seed, geo = true) => {
+  const e = await loadEngine();
+  t.after(() => e.dispose());
+  e.f.rebuildWorld(geo, true);
+  let gen; withSeed(seed, () => { gen = e.f.generateWorldMapBoard(); });
+  return { e, gen, NODES: e.acc.NODES, NMAP: e.acc.NMAP, ADJ: e.acc.ADJ };
+};
+const reach = (ADJ, from, ban) => { const seen = new Set([from]), q = [from]; while (q.length) { const v = q.pop(); for (const w of ADJ[v] || []) if (!seen.has(w) && !ban.has(w)) { seen.add(w); q.push(w); } } return seen; };
+
+test('Europe and North America meet only through Iceland and Greenland', { timeout: 60000 }, async t => {
+  for (const seed of [11, 12, 13]) {
+    const { gen, NODES, NMAP, ADJ } = await seeded(t, seed);
+    const reg = id => W.regionOf(NMAP[id]);
+    const FLOAT = new Set(W.WORLD_FLOATING); /* a floating exhibit has no region of its own: it joins one region's nodes only */
+    for (const [a, b] of gen.edges.filter(([a, b]) => !FLOAT.has(a) && !FLOAT.has(b))) assert.ok(!((reg(a) === 'EUR' && reg(b) === 'NAM') || (reg(a) === 'NAM' && reg(b) === 'EUR')), 'direct transatlantic edge ' + a + ' ' + b);
+    assert.ok(!ADJ.citi.includes('uk') && !ADJ.uk.includes('citi'), 'no London to New York');
+    /* the North Atlantic corridor: Europe, Iceland, Greenland and North America only (a southern route via Africa and South America is allowed) */
+    const north = new Set(NODES.filter(n => !FLOAT.has(n.id) && ['EUR', 'NAM', 'ISL', 'GRL'].includes(reg(n.id))).map(n => n.id));
+    const outside = new Set(NODES.filter(n => !north.has(n.id)).map(n => n.id));
+    const eur = NODES.find(n => reg(n.id) === 'EUR').id, nam = NODES.find(n => reg(n.id) === 'NAM').id;
+    assert.ok(reach(ADJ, eur, outside).has(nam), 'the corridor links them');
+    for (const gate of ['w_hdi', 'w_greenland']) {
+      const ban = new Set([...outside, gate]);
+      const seen = reach(ADJ, eur, ban);
+      assert.ok(NODES.filter(n => reg(n.id) === 'NAM').every(n => !seen.has(n.id)), 'without ' + gate + ' Europe cannot reach North America across the Atlantic');
+    }
+    assert.ok(ADJ.w_hdi.includes('uk') && ADJ.w_hdi.includes('w_greenland') && ADJ.w_greenland.includes('w_bay'));
+  }
+});
+
+test('the Rock wraps the world: an edge across the date line to Fiji, a normal edge for pathing', { timeout: 60000 }, async t => {
+  const { e, gen, NMAP, ADJ } = await seeded(t, 21);
+  assert.ok(W.WORLD_WRAPS.some(w => w.includes('rock')), 'a wrap is declared');
+  assert.ok(gen.edges.some(([a, b]) => (a === 'rock' && b === 'w_fiji') || (a === 'w_fiji' && b === 'rock')));
+  assert.ok(ADJ.rock.includes('w_fiji'));
+  const m = e.f.worldMapMetrics();
+  assert.ok(Math.abs(NMAP.rock.x - NMAP.w_fiji.x) > m.w * 0.6, 'it really spans the whole canvas');
+  assert.equal(bfs(ADJ, 'rock').get('w_fiji'), 1);
+});
+
+test('the Bond Desk is anchored in Sydney', { timeout: 60000 }, async t => {
+  const { e, NMAP } = await seeded(t, 22);
+  assert.ok(W.GEO_ANCHORS.bond[0] < -33 && W.GEO_ANCHORS.bond[0] > -34.5 && W.GEO_ANCHORS.bond[1] > 151 && W.GEO_ANCHORS.bond[1] < 151.5);
+  const p = e.f.projectGeo(-33.87, 151.2);
+  assert.ok(Math.hypot(NMAP.bond.x - p.x, NMAP.bond.y - p.y) < 700, 'bond sits in the Sydney inset');
+  assert.ok(Math.hypot(NMAP.bond.x - NMAP.quik.x, NMAP.bond.y - NMAP.quik.y) < 900);
+});
+
+test('Australia is spread across the continent', { timeout: 60000 }, async t => {
+  const { NMAP } = await seeded(t, 23);
+  const at = (id, lat, lon, tol = 3) => { const g = W.GEO_ANCHORS[id]; assert.ok(Math.abs(g[0] - lat) < tol && Math.abs(g[1] - lon) < tol, id + ' is where it should be'); };
+  at('westpac', -31.9, 115.9); at('gold', -30.7, 121.5); at('bhp', -20.3, 118.6); at('anz', -27.5, 153); at('aus', -34.9, 138.6);
+  at('port', -32.9, 151.8); at('coal', -23.8, 151.3); at('train', -22, 148.2); at('sat', -23.7, 133.9); at('forklift', -12.5, 130.8);
+  assert.ok(NMAP.westpac.x < NMAP.quik.x - 700 && NMAP.bhp.x < NMAP.quik.x - 700, 'the west of Australia is far from Sydney');
+});
+
+test('the non-place exhibits float to open ground, never in a crowd, and not to the same place every game', { timeout: 120000 }, async t => {
+  const FL = W.WORLD_FLOATING;
+  assert.ok(FL.length >= 12);
+  const spots = [];
+  for (const seed of [31, 32, 33, 34]) {
+    const { NODES, NMAP, ADJ } = await seeded(t, seed, seed % 2 === 0);
+    const floats = FL.filter(id => NMAP[id]);
+    assert.ok(floats.length >= 12);
+    spots.push(Object.fromEntries(floats.map(id => [id, [NMAP[id].x, NMAP[id].y]])));
+    const dist = bfs(ADJ, 'quik');
+    for (const id of floats) {
+      const others = NODES.filter(n => n.id !== id && Math.hypot(n.x - NMAP[id].x, n.y - NMAP[id].y) < 400);
+      assert.equal(others.length, 0, id + ' floats clear of every other node (seed ' + seed + ')');
+      assert.ok(ADJ[id].length >= 2, id + ' has edges to its neighbours');
+      assert.ok(dist.has(id), id + ' is reachable');
+    }
+  }
+  const ids = Object.keys(spots[0]);
+  const moved = ids.filter(id => spots.slice(1).every(s => s[id][0] !== spots[0][id][0] || s[id][1] !== spots[0][id][1]));
+  assert.ok(moved.length >= ids.length - 1, 'positions vary between seeds');
+  /* and a fixed seed is reproducible (every client reads the one layout the host dealt) */
+  const a = await seeded(t, 31), b = await seeded(t, 31);
+  assert.deepEqual(a.gen.positions, b.gen.positions);
+});
+
+test('the chokepoints are gateways: each has neighbours in two or more regions', { timeout: 60000 }, async t => {
+  for (const geo of [false, true]) {
+    const { NMAP, ADJ } = await seeded(t, 41, geo);
+    const regions = id => new Set(ADJ[id].map(x => W.regionOf(NMAP[x])));
+    for (const id of ['w_panama', 'w_suez', 'w_hormuz', 'w_malacca', 'w_antarctica']) assert.ok(regions(id).size >= 2, id + ' joins regions: ' + [...regions(id)]);
+    assert.ok(regions('w_panama').has('NAM') && regions('w_panama').has('SAM'));
+    assert.ok(regions('w_suez').has('EUR') && regions('w_suez').has('ME') && regions('w_suez').has('AFR'));
+    assert.ok(regions('w_hormuz').has('ME') && regions('w_hormuz').has('SAS'));
+    assert.ok(regions('w_malacca').has('SAS') && regions('w_malacca').has('SEA'));
+    for (const r of ['SAM', 'AFR', 'OCE']) assert.ok(regions('w_antarctica').has(r), 'Antarctica links ' + r);
+  }
+  assert.ok(W.WORLD_CHOKEPOINTS.includes('w_malacca'));
+  const mal = W.WORLD_NODES.find(n => n.id === 'w_malacca');
+  assert.equal(mal.type, 'COMMODITY');
+  assert.ok(/\$2 toll/.test(mal.sp));
+});
+
+test('The Human Development Index replaced Satoshi in Iceland', { timeout: 60000 }, async t => {
+  const { NMAP } = await seeded(t, 51);
+  assert.ok(!NMAP.w_satoshi && !W.WORLD_NODES.some(n => n.id === 'w_satoshi'));
+  assert.ok(!JSON.stringify(W.WORLD_ROUTES).includes('satoshi'));
+  const hdi = NMAP.w_hdi;
+  assert.ok(hdi && hdi.type === 'CHART' && hdi.name.join(' ').includes('HUMAN DEVELOPMENT INDEX'));
+  assert.ok(Math.abs(hdi.geo[0] - 64.1) < 1 && Math.abs(hdi.geo[1] + 21.9) < 1, 'Reykjavik');
+  assert.equal(W.regionOf(hdi), 'ISL');
+  assert.equal(W.worldStartFx([hdi], () => false)[0].c, -1);
+});
+
+test('route table only names real nodes', async () => {
+  const { BASE_NODES, GEO_NODES } = await import('../static/js/data.js');
+  const all = new Set([...BASE_NODES, ...GEO_NODES, ...W.WORLD_NODES].map(n => n.id));
+  for (const [a, b] of [...W.WORLD_ROUTES, ...W.WORLD_WRAPS]) assert.ok(all.has(a) && all.has(b), a + ' ' + b);
+  assert.ok(W.WORLD_NODES.length >= 100);
+});
+
+test('THE BAIKONUR COSMODROME: launch to anywhere once per game, and it pays alongside a missile launcher', { timeout: 60000 }, async t => {
+  const e = await loadEngine();
+  t.after(() => e.dispose());
+  e.acc.Net.boardLayout = 'random'; e.acc.Net.dlcWorld = true;
+  const S = await makeGame(e, 2, { geo: true });
+  const n = e.acc.NMAP.w_baikonur;
+  assert.ok(n && n.type === 'REGULATOR' && n.icon && n.sub && n.sp.includes('LAUNCH'));
+  assert.ok(!n.image, 'a text placeholder like the other w_ nodes');
+  S.cur = 0; S.mood = 'CALM'; S.owner = { geo_missile: 0 }; S.players[0].money = 0; e.f.income(0);
+  const base = S.players[0].money;
+  S.owner = { w_baikonur: 0, geo_missile: 0 }; S.players[0].money = 0; e.f.income(0);
+  assert.equal(S.players[0].money - base, n.income + 2, 'Baikonur adds its own income plus $2 with MISSILE COMMAND');
+  S.owner = { w_baikonur: 0 }; S.cur = 0; S.phase = 'move'; S.steps = 3; S.mode = null; S.players[0].pos = 'quik'; S.players[0].money = 10; S.wGame = {};
+  await e.f.applyIntent(0, { act: 'worldmode', kind: 'launch' });
+  assert.equal(S.mode, 'launch');
+  const flight = e.f.applyIntent(0, { act: 'launch', id: 'w_hdi' });
+  e.clock.advance(e.acc.PROJ_PAUSE_MS + 100); /* the rocket flies before the landing */
+  await flight;
+  for (let i = 0; i < 8; i++) await new Promise(r => setImmediate(r));
+  assert.equal(S.players[0].pos, 'w_hdi', 'launched to Iceland');
+  assert.equal(S.wGame.baikonur, 1);
+  assert.match(e.ctx.worldBlocked(0, 'launch'), /once per game|MOVE phase/);
+  S.owner = {}; S.wGame = {}; S.phase = 'move'; S.cur = 0; S.mode = null;
+  assert.match(e.ctx.worldBlocked(0, 'launch'), /do not control/);
+  S.owner = { w_baikonur: 0 }; S.players[0].money = 2;
+  assert.match(e.ctx.worldBlocked(0, 'launch'), /\$3/);
 });

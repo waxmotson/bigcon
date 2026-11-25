@@ -3,7 +3,7 @@
 import { NODES, NMAP, EDGES, WORLD_EDGES, WORLD_EXP, worldRandomBounds, ORIGINAL_NODE_LAYOUT, ORIGINAL_LAYOUT_BY_ID, HIGH_VALUE_NODE_IDS, HIGH_VALUE_BASE_IDS, GEO_HIGH_VALUE_IDS, QUIK_SLOTS, rebuildAdj, setEdges } from './data.js';
 import { S } from './state.js';
 import { shuffle } from './util.js';
-import { LAND, WATER, WORLD_ROUTES, WORLD_RANDOM_SCALE, geoOf } from './world.js';
+import { LAND, WATER, WORLD_ROUTES, WORLD_RANDOM_SCALE, WORLD_FLOATING, FLOAT_ZONES, GATEWAY_REGIONS, geoOf, regionOf } from './world.js';
 export function nodeBox(n){
  const sizes={card:[150,84],photo:[140,92],wide:[170,100],bubble:[150,80],logo:[150,80],chart:[130,64],news:[150,84],made:[140,74],mpc:[164,96],sat:[170,90]};
  return sizes[n.shape]||[150,80];
@@ -14,11 +14,13 @@ export function separateNodes(opts){
  const f=WORLD_EXP&&o.minX==null?WORLD_RANDOM_SCALE:1;
  const pad=o.pad==null?16:o.pad,minX=o.minX==null?95*f:o.minX,maxX=o.maxX==null?2305*f:o.maxX,minY=o.minY==null?95*f:o.minY,maxY=o.maxY==null?1455*f:o.maxY;
  const iters=o.iters||90,anchors=o.anchors||null,pull=o.pull||0;
- const boxes=NODES.map(nodeBox);
+ const boxes=NODES.map(nodeBox),skip=o.skip||null;
  for(let iter=0;iter<iters;iter++){
   let moved=false;
   for(let i=0;i<NODES.length;i++){
+   if(skip&&skip.has(NODES[i].id))continue;
    for(let j=i+1;j<NODES.length;j++){
+    if(skip&&skip.has(NODES[j].id))continue;
     const A=NODES[i],B=NODES[j];
     const [aw,ah]=boxes[i],[bw,bh]=boxes[j];
     const dx=B.x-A.x,dy=B.y-A.y;
@@ -33,8 +35,8 @@ export function separateNodes(opts){
   }
   /* a spring toward each node's true geographic spot, for the first 70% of the passes only */
   const springing=!!(anchors&&pull&&iter<iters*0.7);
-  if(springing)NODES.forEach(n=>{const a=anchors[n.id];if(a){n.x+=(a.x-n.x)*pull;n.y+=(a.y-n.y)*pull}});
-  NODES.forEach(n=>{n.x=Math.max(minX,Math.min(maxX,n.x));n.y=Math.max(minY,Math.min(maxY,n.y))});
+  if(springing)NODES.forEach(n=>{const a=anchors[n.id];if(a&&!(skip&&skip.has(n.id))){n.x+=(a.x-n.x)*pull;n.y+=(a.y-n.y)*pull}});
+  NODES.forEach(n=>{if(skip&&skip.has(n.id))return;n.x=Math.max(minX,Math.min(maxX,n.x));n.y=Math.max(minY,Math.min(maxY,n.y))});
   if(!moved&&!springing)break;
  }
 }
@@ -240,13 +242,13 @@ export function boardViewBounds(){
  }
  return {x:0,y:0,w:2400,h:1560};
 }
-/* ================= 🌍 WORLD MAP — every exhibit pinned where it lives ================= */
+/* ================= 🌍 THE BIG CON: GLOBAL EDITION — every exhibit pinned where it lives ================= */
 /* An equirectangular map with a few local "magnifying glasses": the Sydney inset, Europe, the US east coast, Singapore,
    Hong Kong, Tokyo and Mumbai are stretched so the crowded cities have room, and the very same warp is applied to the
    continent outlines, so the backdrop and the pins always agree. */
 const WM_K=26,WM_TOP=84,WM_MARGIN=360;
 const WM_WARPS=[
- {lat:-31,lon:143,A:2.7,R:25},   /* Australia: the home turf and the busiest corner of the board */
+ {lat:-26,lon:134,A:1.35,R:24},{lat:-33.5,lon:148.5,A:3.6,R:9.5},   /* Australia: the home turf and the busiest corner of the board */
  {lat:49,lon:7,A:2.3,R:13},      /* Europe */
  {lat:40,lon:-77,A:2.3,R:9},     /* New York · Washington */
  {lat:1.5,lon:104,A:2,R:5.5},    /* Singapore · Kuala Lumpur */
@@ -296,9 +298,6 @@ export function worldMapSVG(){
   +'<path d="'+WATER.map(ring).join('')+'" fill="#1d201f" stroke="#2f8f8a" stroke-width="4" opacity=".95"/>'
   +'</g>';
 }
-/* the two American continents touch only at Panama: a node is on the south side, the north side, or (Panama) neither */
-const SIDE_S=n=>{const g=geoOf(n);if(!g||n.id==='w_panama')return false;const la=g[0],lo=g[1];return lo>-130&&lo<-34&&(la<8.5||(la<12.4&&lo>-75))};
-const SIDE_N=n=>{const g=geoOf(n);if(!g||n.id==='w_panama')return false;const la=g[0],lo=g[1];return lo>-130&&lo<-30&&la>=8.5&&!SIDE_S(n)};
 /* distance in km on the flat map (no wrapping over the date line: a thread must never cross the whole board) */
 function haversine(a,b){
  const r=Math.PI/180,dx=(b[1]-a[1])*Math.cos((a[0]+b[0])/2*r),dy=b[0]-a[0];
@@ -306,8 +305,8 @@ function haversine(a,b){
 }
 /* Exhibits pinned to (almost) the same spot — a whole city's worth in Sydney — are first laid out as a tidy grid
    around their centroid, so the relaxation below only has small corrections left to make. */
-function spreadClusters(radius){
- const left=NODES.slice(),groups=[];
+function spreadClusters(radius,skip){
+ const left=NODES.filter(n=>!(skip&&skip.has(n.id))),groups=[];
  while(left.length){
   const seed=left.shift(),g=[seed];
   for(let i=left.length-1;i>=0;i--)if(Math.hypot(left[i].x-seed.x,left[i].y-seed.y)<radius){g.push(left[i]);left.splice(i,1)}
@@ -323,33 +322,73 @@ function spreadClusters(radius){
   });
  });
 }
+/* The non-place exhibits (WORLD_FLOATING) are dropped, after everything else has settled, at a random spot in an open zone
+   (ocean, tundra, desert), clear of every other box by a generous margin. The host runs this once; the result travels in
+   S.boardLayout, so every client sees the same spots. */
+function placeFloaters(float){
+ const m=worldMapMetrics(),fixed=NODES.filter(n=>!float.has(n.id)),placed=[];
+ const dmin=(p,list)=>list.reduce((a,q)=>Math.min(a,Math.hypot(q.x-p.x,q.y-p.y)),1e9);
+ const ids=NODES.filter(n=>float.has(n.id)).map(n=>n.id);
+ shuffle(ids.slice()).forEach(id=>{
+  let spot=null,best=null,bestD=-1;
+  for(const clear of [560,480,420]){
+   for(let t=0;t<400&&!spot;t++){
+    const z=FLOAT_ZONES[Math.floor(Math.random()*FLOAT_ZONES.length)];
+    const ang=Math.random()*Math.PI*2,rad=z[2]*Math.sqrt(Math.random());
+    const p=projectGeo(z[0]+Math.sin(ang)*rad*0.8,z[1]+Math.cos(ang)*rad);
+    if(p.x<150||p.x>m.w-150||p.y<560||p.y>m.h-300)continue;
+    const d=Math.min(dmin(p,fixed),dmin(p,placed));
+    if(d>bestD){bestD=d;best=p}
+    if(d>=clear)spot=p;
+   }
+   if(spot)break;
+  }
+  spot=spot||best||{x:m.w/2,y:m.h-400};
+  const n=NMAP[id];n.x=Math.round(spot.x);n.y=Math.round(spot.y);n.rot=0;placed.push({x:n.x,y:n.y});
+ });
+}
 export function generateWorldMapBoard(){
  const m=worldMapMetrics();
+ const float=new Set(WORLD_FLOATING.filter(id=>NMAP[id]));
  const anchors={};
  NODES.forEach(n=>{
   const g=geoOf(n);
   const p=g?projectGeo(g[0],g[1]):{x:m.w/2,y:m.h/2};
   n.x=p.x;n.y=p.y;n.rot=0;anchors[n.id]={x:p.x,y:p.y};
  });
- spreadClusters(150);
- separateNodes({pad:12,iters:900,pull:0.012,minX:110,maxX:m.w-110,minY:110,maxY:m.h-110,anchors});
+ spreadClusters(150,float);
+ separateNodes({pad:12,iters:900,pull:0.012,minX:110,maxX:m.w-110,minY:110,maxY:m.h-110,anchors,skip:float});
  NODES.forEach(n=>{n.x=Math.round(n.x);n.y=Math.round(n.y)});
- /* edges: each exhibit to its two nearest neighbours (true distance), then the cheapest links that join any
-    islands left over, then the long-haul shipping lanes and flight paths. */
- const ids=NODES.map(n=>n.id),geo={};ids.forEach(id=>{geo[id]=geoOf(NMAP[id])||[0,0]});
- const blocked=(a,b)=>(SIDE_N(NMAP[a])&&SIDE_S(NMAP[b]))||(SIDE_S(NMAP[a])&&SIDE_N(NMAP[b]));
+ placeFloaters(float);
+ /* edges, region by region: each exhibit to its two nearest neighbours IN ITS OWN REGION, then the cheapest links that join
+    any islands left over inside a region, then the deliberate routes (the gateways and the long-haul lanes) that are the
+    only way between regions. */
+ const ids=NODES.filter(n=>!float.has(n.id)).map(n=>n.id),geo={},reg={};
+ ids.forEach(id=>{geo[id]=geoOf(NMAP[id])||[0,0];reg[id]=regionOf(NMAP[id])});
  const edges=[],seen=new Set(),par={};ids.forEach(id=>par[id]=id);
  const find=x=>{while(par[x]!==x){par[x]=par[par[x]];x=par[x]}return x};
- const add=(a,b)=>{if(!NMAP[a]||!NMAP[b]||a===b)return false;const key=a<b?a+'|'+b:b+'|'+a;if(seen.has(key))return false;seen.add(key);edges.push([a,b]);par[find(a)]=find(b);return true};
+ const add=(a,b)=>{if(!NMAP[a]||!NMAP[b]||a===b)return false;const key=a<b?a+'|'+b:b+'|'+a;if(seen.has(key))return false;seen.add(key);edges.push([a,b]);if(par[a]!=null&&par[b]!=null)par[find(a)]=find(b);return true};
  const pairs=[];
  for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)pairs.push([ids[i],ids[j],haversine(geo[ids[i]],geo[ids[j]])]);
  pairs.sort((a,b)=>a[2]-b[2]);
+ const same=pairs.filter(p=>reg[p[0]]===reg[p[1]]);
  const near={};ids.forEach(id=>near[id]=0);
- pairs.forEach(([a,b])=>{if(blocked(a,b))return;if(near[a]<2||near[b]<2){if(add(a,b)){near[a]++;near[b]++}}});
- pairs.forEach(([a,b])=>{if(blocked(a,b)||find(a)===find(b))return;add(a,b)});
- WORLD_ROUTES.forEach(([a,b])=>{if(!blocked(a,b))add(a,b)});
+ same.forEach(([a,b])=>{if(near[a]<2||near[b]<2){if(add(a,b)){near[a]++;near[b]++}}});
+ same.forEach(([a,b])=>{if(find(a)!==find(b))add(a,b)});
+ WORLD_ROUTES.forEach(([a,b])=>add(a,b));
+ /* safety net: if something is still cut off, the cheapest link that is not a shortcut across the Atlantic or the Americas */
+ const shortcut=(a,b)=>{const x=reg[a],y=reg[b],has=(p,q)=>(x===p&&y===q)||(x===q&&y===p);return has('EUR','NAM')||has('NAM','SAM')};
+ pairs.forEach(([a,b])=>{if(find(a)!==find(b)&&!shortcut(a,b))add(a,b)});
  /* Quikstop is the hub of the home turf: always at least four ways out */
- pairs.filter(p=>p[0]==='quik'||p[1]==='quik').slice(0,4).forEach(([a,b])=>add(a,b));
+ same.filter(p=>p[0]==='quik'||p[1]==='quik').slice(0,4).forEach(([a,b])=>add(a,b));
+ /* the floating exhibits join the two nearest neighbours of ONE region, so they are reachable without creating a shortcut */
+ const hubs=NODES.filter(n=>!float.has(n.id)&&!GATEWAY_REGIONS.includes(reg[n.id]));
+ float.forEach(id=>{
+  const f=NMAP[id],sorted=hubs.slice().sort((a,b)=>Math.hypot(a.x-f.x,a.y-f.y)-Math.hypot(b.x-f.x,b.y-f.y));
+  if(!sorted.length)return;
+  const r=reg[sorted[0].id];
+  sorted.filter(n=>reg[n.id]===r).slice(0,2).forEach(n=>add(id,n.id));
+ });
  setEdges(edges);rebuildAdj();
  return {positions:NODES.map(n=>({id:n.id,x:n.x,y:n.y,rot:n.rot})),edges:EDGES.map(e=>e.slice())};
 }

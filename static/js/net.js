@@ -835,7 +835,7 @@ export function setGeoUI(v){
  const t=$('geoToggle');
  if(t)t.checked=!!v;
 }
-/* 🌐 The World Expansion: host-chosen, mirrored by guests; the WORLD MAP layout holds it on. */
+/* 🌐 The Global Edition exhibits (the World Expansion): host-chosen, mirrored by guests; the GLOBAL EDITION map layout ('worldmap') holds them on. */
 export function setWorldUI(v){
  Net.dlcWorld=!!v;
  const t=$('worldToggle');
@@ -856,7 +856,7 @@ export function setBoardLayout(val){
  const t=$('boardLayoutSelect');
  if(t){t.value=Net.boardLayout;t.disabled=Net.role!=='host'}
  const note=$('boardLayoutNote');
- if(note)note.textContent=Net.role==='host'?'the host chooses the map':(Net.boardLayout==='worldmap'?'World Map selected by the host — the World Expansion is on':Net.boardLayout==='megaring'?'Mega Ring selected by the host':(Net.ringworld?'Ringworld selected by the host':'random board selected by the host'));
+ if(note)note.textContent=Net.role==='host'?'the host chooses the map':(Net.boardLayout==='worldmap'?'THE BIG CON: GLOBAL EDITION selected by the host — its exhibits are on':Net.boardLayout==='megaring'?'Mega Ring selected by the host':(Net.ringworld?'Ringworld selected by the host':'random board selected by the host'));
 }
 export function setRingworldUI(v){
  setBoardLayout(v?'ringworld':'random');

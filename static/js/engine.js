@@ -18,7 +18,7 @@ export { hooks, setHooks };
 /* The host services the rules call, bound late so a hook swapped in by setHooks
    (or wrapped by a test) is always the one that runs. */
 /* every publish reconciles the regulators' files against ownership first */
-const sync=now=>{acccReconcile();hooks.sync(now)},sysTo=(pi,msg)=>hooks.sysTo(pi,msg),askPlayer=(pi,opt)=>hooks.askPlayer(pi,opt),announceAll=(title,html)=>hooks.announceAll(title,html),revealAll=(title,html)=>hooks.revealAll(title,html);
+const sync=now=>{acccReconcile();hooks.sync(now)},sysTo=(pi,msg)=>hooks.sysTo(pi,msg),askPlayer=async(pi,opt)=>{/* a private prompt can outlast the 30 s action-lock watchdog (a guest has 45 s): the watchdog only releases a lock when no prompt is open */ openPrompts++;try{return await hooks.askPlayer(pi,opt)}finally{openPrompts--}},announceAll=(title,html)=>hooks.announceAll(title,html),revealAll=(title,html)=>hooks.revealAll(title,html);
 /* ================= STATE & HELPERS ================= */
 let fxSeq=0;
 const WORLD_COUNT=WORLD_NODE_IDS.length;
@@ -247,7 +247,7 @@ export function madePay(){
 export function initGame(defs){
  Net.gameEpoch=(Net.gameEpoch||0)+1;
  const boardLayout=Net.boardLayout||(Net.ringworld?'ringworld':'random');
- /* the WORLD MAP layout is the whole world: it forces the WORLD EXPANSION on */
+ /* the GLOBAL EDITION map layout ('worldmap') is the whole world: it forces the global exhibits on */
  const world=!!Net.dlcWorld||boardLayout==='worldmap';
  rebuildWorld(!!Net.dlcGeo,world);
  const quikSlot=(boardLayout==='ringworld'||boardLayout==='megaring'||boardLayout==='worldmap')?0:Math.floor(Math.random()*QUIK_SLOTS.length);
@@ -272,9 +272,9 @@ export function initGame(defs){
  log('🌅 A new board is dealt — '+NODES.length+' exhibits, '+EDGES.length+' freshly rebuilt connections, '+S.players.length+' at the table.');
  if(boardLayout==='ringworld')log('⭕ RINGWORLD — every exhibit is arranged around central Quikstop in three concentric rings.');
  else if(boardLayout==='megaring')log('⭕ MEGA RING — every exhibit sits on one large ring, connected to the central Quikstop hub.');
- else if(boardLayout==='worldmap')log('🌍 WORLD MAP — every exhibit is pinned where it lives; Quikstop opens in Australia.');
+ else if(boardLayout==='worldmap')log('🌍 THE BIG CON: GLOBAL EDITION — every exhibit is pinned where it lives; Quikstop opens in Australia.');
  else log('🧭 High-value targets are seeded further from Quikstop; the board and routes are reshuffled every game.');
- if(S.dlcWorld)log('🌐 WORLD EXPANSION — '+WORLD_COUNT+' global exhibits join the board: central banks, chokepoints, mines, wealth funds and one Nigerian prince.');
+ if(S.dlcWorld)log('🌐 GLOBAL EDITION — '+WORLD_COUNT+' global exhibits join the board: central banks, chokepoints, mines, wealth funds and one Nigerian prince.');
  if(S.dlcWorld)log('💥 '+WORLD_START_RUBBLE.map(id=>nodeName(NMAP[id]).join(' ')).join(', ')+' open the game as RUBBLE — arrive and pay the list price to rebuild them.');
  if(S.dlcGeo)log('🌍 GEOGRAPHY DLC — 12 extra exhibits are on the board: missiles, resorts, disputed waters, ESG pillars, the hermit kingdom and one free country.');
  log('🎲 Seating was shuffled. First to move: '+S.players[0].name+'.');
@@ -288,7 +288,7 @@ export async function startTurn(){
  if(S)S.backroomAbilityUsed=false;
  if(!S||S.over)return;
  log('—— TURN '+S.turn+' · '+pname(S.cur)+' ——');
- S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;S.lobbied=false;S.referred=false;
+ S.phase='move';S.mode=null;S.spun=false;S.audited=false;S.cooked=false;S.budgeted=false;S.pressured=false;S.extraStep=false;S.slipped=false;S.dossier=false;S.blockadeUsed=false;S.lobbied=false;S.referred=false;S.classifiedUsed=false;
  if(S.dlcGeo){S.geoMissiled=false;S.geoBeach=false;S.geoBoeing=false;S.geoCrash=false;S.geoStage5=false;S.geoVenice=false}
  if(S.dlcWorld){
   S.wTurn={};
@@ -398,6 +398,9 @@ export function botView(pi){
  const c={};
  for(const k in S){if(k==='deck'||k==='log'||k==='chat')continue;c[k]=S[k]}
  const out=JSON.parse(JSON.stringify(c));
+ /* a CLASSIFIED site is invisible to a seat that may not see it: no owner, no bug, and the policy skips it as a target */
+ out.hiddenFromMe={};
+ if(S.hidden)Object.keys(S.hidden).forEach(nid=>{if(hiddenFrom(pi,nid)){out.hiddenFromMe[nid]=true;delete out.owner[nid];delete out.bugs[nid]}});
  out.pi=pi;
  out.curSeat=S.cur;
  out.cardIds=CARDS.map(x=>x.id);
@@ -485,10 +488,12 @@ export function income(i){
  fxAt(i,'+$'+inc,'#7fe08d');
  Object.keys(S.bugs).forEach(nid=>{if(S.bugs[nid]===i&&S.owner[nid]!==i){const amt=(S.owner.wef===i)?2:1;p.money+=amt;log('🐛 Skim from '+NMAP[nid].name.join(' ')+': +$'+amt+'.');fxAt(i,'+$'+amt,'#7fe08d')}});
 }
+let openPrompts=0;
+function armLockWatchdog(){hooks.clearTimeout(Net.lockTimer);Net.lockTimer=hooks.setTimeout(()=>{if(Net.lock&&openPrompts>0){armLockWatchdog();return}if(Net.lock){console.error('[BIGCON] stale action lock released');Net.lock=false;Net.lockTimer=null;sync()}},30000)}
 export async function applyIntent(pi,m){
  if(!S||S.over||!m||!m.act)return;
  if(S.cur!==pi){sysTo(pi,'Not your turn.');return}
- if(Net.lock){sysTo(pi,'⏳ Your previous action is still resolving — please wait a moment.');return} Net.lock=true;hooks.clearTimeout(Net.lockTimer);Net.lockTimer=hooks.setTimeout(()=>{if(Net.lock){console.error('[BIGCON] stale action lock released');Net.lock=false;Net.lockTimer=null;sync()}},30000);
+ if(Net.lock){sysTo(pi,'⏳ Your previous action is still resolving — please wait a moment.');return} Net.lock=true;armLockWatchdog();
  try{
   const act=m.act,p=S.players[pi];
   if(act==='move'&&S.phase==='move'&&!S.mode){
@@ -511,7 +516,7 @@ export async function applyIntent(pi,m){
   else if(act==='fly'&&S.phase==='move'&&S.mode==='fly'){await doFly(pi,m.id)}
   else if(act==='cancel'){S.mode=null;sync()}
   else if(act==='seize'&&S.phase==='action'&&!S.mode){await doSeize(pi)}
-  else if(act==='bugmode'&&S.phase==='action'&&!S.mode){S.mode='bug';sync()}
+  else if(act==='bugmode'&&S.phase==='action'&&!S.mode){if(p.intel<(S.owner.insider===pi?0:1)){sysTo(pi,'Planting a bug costs 1 Intel.');return}S.mode='bug';sync()}
   else if(act==='bug'&&S.phase==='action'&&S.mode==='bug'){await doBug(pi,m.id)}
   else if(act==='leakmode'&&abilityPhase(pi)&&!S.mode&&p.intel>=2){S.mode='leak';sync()}
   else if((act==='leak'||act==='audit'||act==='tweet'||act==='roast')&&!isRival(pi,m.target)){sysTo(pi,'Pick a rival in THE SYNDICATE list.');return}
@@ -557,6 +562,7 @@ export async function applyIntent(pi,m){
    const n=NMAP[m.id];
    if(!n||!S.rubble||S.rubble[m.id]){sysTo(pi,'Pick a target that still stands.');S.mode=null;sync();return}
    if(S.owner[m.id]===pi){sysTo(pi,'You cannot missile your own node.');S.mode=null;sync();return}
+   if(hiddenFrom(pi,m.id)){sysTo(pi,'You cannot target a CLASSIFIED site — you cannot even see it.');S.mode=null;sync();return}
    if(isPillarShieldedNode(m.id)){sysTo(pi,'ESG SHIELD — that holding is protected while its owner controls the Pillars. Strike the Pillars to break the shield.');S.mode=null;sync();return}
    const launcherId=S.owner.geo_missile===pi?'geo_missile':(S.owner.geo_shahed===pi?'geo_shahed':null);
    if(!launcherId||!canFireMissileFrom(pi)){sysTo(pi,'You no longer control an armed missile launcher.');S.mode=null;sync();return}
@@ -654,7 +660,7 @@ export async function applyIntent(pi,m){
   else if(act==='overmode'&&S.phase==='action'&&S.dlcGeo&&!S.mode&&S.owner.geo_venice===pi&&p.money>=2&&!S.geoVenice){S.mode='overtour';sync()}
   else if(act==='overtour'&&S.phase==='action'&&S.dlcGeo&&S.mode==='overtour'){
    const n=NMAP[m.id],o=S.owner[m.id];
-   if(!n||o==null||o===pi||S.rubble[m.id]){sysTo(pi,'Overtourism targets a rival-owned node that still stands.');S.mode=null;sync();return}
+   if(!n||o==null||o===pi||S.rubble[m.id]||hiddenFrom(pi,m.id)){sysTo(pi,'Overtourism targets a rival-owned node that still stands.');S.mode=null;sync();return}
    /* ESG does not protect against Overtourism. */
    if(p.money<2||S.geoVenice){S.mode=null;sync();return}
    p.money-=2;fxAt(pi,'−$2','#ff6b5e');
@@ -666,7 +672,7 @@ export async function applyIntent(pi,m){
   else if(act==='blockmode'&&S.phase==='action'&&!S.mode&&S.owner.albo===pi&&!S.blockadeUsed){S.mode='blockade';sync()}
   else if(act==='blockade'&&S.phase==='action'&&S.mode==='blockade'){
    const n=NMAP[m.id];
-   if(!n||S.rubble[m.id]||blockaded(m.id)){sysTo(pi,'That node is rubble or already walled off.');S.mode=null;sync();return}
+   if(!n||S.rubble[m.id]||blockaded(m.id)||hiddenFrom(pi,m.id)){sysTo(pi,'That node is rubble, already walled off or CLASSIFIED.');S.mode=null;sync();return}
    S.blockades[m.id]=S.turn+2;S.blockadeUsed=true;S.mode=null;
    fx(n.x,n.y-64,'🚧 BLOCKADED','#f5c542');
    log('🚧 '+pname(pi)+' walls off '+n.name.join(' ')+' — BLOCKADED until the end of next round: nobody walks in, nobody lands, not even '+pname(pi)+'.');
@@ -674,6 +680,8 @@ export async function applyIntent(pi,m){
   }
   /* ---- 🌐 WORLD EXPANSION actives: a table of handlers (see WORLD_ACTS) ---- */
   else if(S.dlcWorld&&Object.prototype.hasOwnProperty.call(WORLD_ACTS,act)){await WORLD_ACTS[act](pi,m)}
+  /* ---- 🤵 CLASSIC node actives that live in a table (CLASSIC_ACTS) ---- */
+  else if(Object.prototype.hasOwnProperty.call(CLASSIC_ACTS,act)){await CLASSIC_ACTS[act](pi,m)}
   /* ---- INTEL OPS ---- */
   else if(act==='spy'&&S.phase==='action'&&!S.mode&&p.intel>=2){
    p.intel-=2;fxAt(pi,'🛈−2','#55c1ff');log('🛈 '+pname(pi)+' buys a look at tomorrow.');
@@ -710,12 +718,13 @@ export async function applyIntent(pi,m){
     await endOfTurn();
    }
   else if(act==='targetpanic'&&S.phase==='action'&&!S.mode&&p.intel>=30){
-   const rivals=S.players.map((pl,j)=>j).filter(j=>j!==pi);
-   if(!rivals.length){sysTo(pi,'There is nobody else at the table.');return}
+   /* a rival who has VANISHED (Bermuda) cannot be targeted */
+   const rivals=S.players.map((pl,j)=>j).filter(j=>isRival(pi,j));
+   if(!rivals.length){sysTo(pi,'There is nobody at the table you can target right now.');return}
    const target=await askPlayer(pi,{title:'CORTISOL OVERLOAD — 30 INTEL',body:'Choose one rival to receive +6 Cortisol.',options:rivals.map(j=>({label:pname(j)+' · '+S.players[j].cortisol+'/9 Cortisol',v:j})).concat([{label:'Cancel',v:-1}]),def:-1});
    if(target<0){sync();return}
-   if(!Number.isInteger(target)||target===pi||!S.players[target]){sysTo(pi,'Choose a valid rival.');sync();return}
-   if(S.cur!==pi||S.phase!=='action'||S.over||p.intel<30){sysTo(pi,'The overload is no longer available.');sync();return}
+   if(!rivals.includes(target)){sysTo(pi,'Choose a valid rival.');sync();return}
+   if(S.cur!==pi||S.phase!=='action'||S.mode||S.over||p.intel<30||!isRival(pi,target)){sysTo(pi,'The overload is no longer available.');sync();return}
    p.intel-=30;fxAt(pi,'🛈−30','#55c1ff');log('🔥 '+pname(pi)+' spends 30 Intel to overload '+pname(target)+' with +6 Cortisol.');
    addCortisol(target,6,'a 30-Intel intelligence overload',null,true);await endOfTurn();
   }
@@ -730,12 +739,12 @@ export async function applyIntent(pi,m){
    addCortisol(pi,1,'the forced divestment');await endOfTurn();
   }
   else if(act==='bondmageddon'&&S.phase==='action'&&!S.mode&&S.owner.bond===pi&&S.owner.leak===pi&&!S.bondmageddonUsed&&p.money>=16&&p.intel>=4){
-   const rivals=S.players.map((pl,j)=>j).filter(j=>j!==pi&&NODES.some(nn=>S.owner[nn.id]===j&&!S.rubble[nn.id]));
+   const rivals=S.players.map((pl,j)=>j).filter(j=>isRival(pi,j)&&NODES.some(nn=>S.owner[nn.id]===j&&!S.rubble[nn.id]));
    if(!rivals.length){sysTo(pi,'There are no rivals with intact holdings to target.');return}
    const target=await askPlayer(pi,{title:'BONDMAGEDDON — CHOOSE TARGET',body:'Choose which rival to target with all four missiles.',options:rivals.map(j=>({label:pname(j)+' · '+NODES.filter(nn=>nn.type==='CHART'&&S.owner[nn.id]===j).length+' CHART holdings',v:j})).concat([{label:'Cancel',v:-1}]),def:-1});
    if(target<0){sync();return}
-   if(!Number.isInteger(target)||target===pi||!rivals.includes(target)){sysTo(pi,'Choose a valid rival with intact holdings.');sync();return}
-   if(S.cur!==pi||S.phase!=='action'||S.mode||S.over||S.owner.bond!==pi||S.owner.leak!==pi||S.bondmageddonUsed||p.money<16||p.intel<4){sysTo(pi,'Bondmageddon is no longer available.');sync();return}
+   if(!rivals.includes(target)){sysTo(pi,'Choose a valid rival with intact holdings.');sync();return}
+   if(S.cur!==pi||S.phase!=='action'||S.mode||S.over||S.owner.bond!==pi||S.owner.leak!==pi||S.bondmageddonUsed||p.money<16||p.intel<4||!isRival(pi,target)){sysTo(pi,'Bondmageddon is no longer available.');sync();return}
    const owned=NODES.filter(nn=>S.owner[nn.id]===target&&!S.rubble[nn.id]);
    if(!owned.length){sysTo(pi,'The chart leader has no intact holdings to strike.');return}
    const esg=owned.find(nn=>nn.id==='geo_pillars');
@@ -856,9 +865,9 @@ export function cutKeepsBoardConnected(a,b){
 }
 /* why a World Expansion active cannot be used right now ('' when it can) */
 export function worldBlocked(pi,kind){
- if(!S||!S.dlcWorld)return 'The World Expansion is not in play.';
+ if(!S||!S.dlcWorld)return 'The Global Edition exhibits are not in play.';
  const p=S.players[pi],used=S.wTurn||{},game=S.wGame||{};
- const need={chainsaw:'w_milei',brexit:'w_brexit',silkroad:'w_bri',carry:'w_watanabe',advance:'w_nigprince',hold:'w_bangalore',carbon:'w_amazon',vanish:'w_bermuda'}[kind];
+ const need={chainsaw:'w_milei',brexit:'w_brexit',silkroad:'w_bri',carry:'w_watanabe',advance:'w_nigprince',hold:'w_bangalore',carbon:'w_amazon',vanish:'w_bermuda',launch:'w_baikonur'}[kind];
  if(!need||!NMAP[need])return 'Unknown ability.';
  if(S.owner[need]!==pi)return 'You do not control '+nodeName(NMAP[need]).join(' ')+'.';
  if(S.rubble&&S.rubble[need])return 'That node is rubble.';
@@ -871,13 +880,14 @@ export function worldBlocked(pi,kind){
   case 'hold':if(used.hold)return 'You already put someone on hold this turn.';if(!S.players.some((x,i)=>i!==pi&&!isVanished(i)&&x.intel>=1))return 'No rival has any Intel to lose.';break;
   case 'carbon':if(used.carbon)return 'You already sold credits this turn.';break;
   case 'vanish':if(game.bermuda)return 'You have already vanished once this game.';break;
+  case 'launch':if(game.baikonur)return 'The launch window has closed: Baikonur flies once per game.';if(S.phase!=='move'||S.cur!==pi)return 'Baikonur launches in your MOVE phase.';if(p.money<3)return 'A launch costs $3.';break;
  }
  return '';
 }
 const WORLD_ACTS={
  /* enter a targeting mode: chainsaw / brexit / silkroad (pick an edge), vanish (pick a node), hold (pick a rival) */
  async worldmode(pi,m){
-  if(!abilityPhase(pi)||S.mode||!['chainsaw','brexit','silkroad','vanish','hold'].includes(m.kind))return;
+  if(!['chainsaw','brexit','silkroad','vanish','hold','launch'].includes(m.kind)||S.mode||!(m.kind==='launch'?(S.phase==='move'&&S.cur===pi):abilityPhase(pi)))return;
   const why=worldBlocked(pi,m.kind);
   if(why){sysTo(pi,why);return}
   S.edgeA=null;S.mode=m.kind;sync();
@@ -974,6 +984,24 @@ const WORLD_ACTS={
   log('🌀 '+pname(pi)+' vanishes into the Bermuda Triangle — untouchable until the start of their next turn, when they reappear at '+nodeName(n).join(' ')+'.');
   await finishNodeAbility(pi);
  },
+ /* THE BAIKONUR COSMODROME: once per game, in your move phase, pay $3 and land on ANY node (the Qantas jet, only louder) */
+ async launch(pi,m){
+  if(S.phase!=='move'||S.cur!==pi||S.mode!=='launch')return;
+  const p=S.players[pi],why=worldBlocked(pi,'launch');
+  if(why){sysTo(pi,why);S.mode=null;sync();return}
+  const n=NMAP[m.id];
+  if(!n||n.id===p.pos){sysTo(pi,'Pick somewhere else on the board to land.');return}
+  if(!canReach(n.id)){sysTo(pi,qantasGroundedReason()+' — you cannot land there yet.');return}
+  if(blockaded(n.id)){sysTo(pi,nodeName(n).join(' ')+' is BLOCKADED — you cannot land there.');return}
+  const from=p.pos;
+  p.money-=3;fxAt(pi,'−$3','#ff6b5e');S.mode=null;p.pos=n.id;S.steps=0;(S.wGame||(S.wGame={})).baikonur=1;
+  if(!p.visited)p.visited={};p.visited[n.id]=true;
+  if(from==='sisy'&&n.id!=='sisy'&&S.owner.back!==pi)S.sisyPayout=10;
+  const flew=projFx('fly',from,n.id);
+  log('🚀 '+pname(pi)+' pays $3 and rides a Soyuz from the BAIKONUR COSMODROME straight to '+nodeName(n).join(' ')+' — once per game.');
+  if(flew){sync();await projPause()}
+  await endMovement();
+ },
  /* SUEZ: the Ever Given, once per game, in your action phase */
  async evergiven(pi){
   if(S.phase!=='action'||S.mode||S.owner.w_suez!==pi||S.evergivenUsed)return;
@@ -984,6 +1012,52 @@ const WORLD_ACTS={
   log('🚢 '+pname(pi)+' runs the EVER GIVEN aground in the Suez — BLOCKED until the end of next round: nobody walks in, nobody lands, not even '+pname(pi)+'. (Once per game.)');
   await finishNodeAbility(pi);
  }
+};
+/* ---- 🤵 JAMES BOND (bond007) — CLASSIFIED ----
+   Once per turn, in your move or action phase and for 1 Intel or $3, file any node away: until the end of NEXT round it is drawn as an
+   unknown to everyone but its holder and the Bond owner (no name, owner, ability or bugs). It is INFORMATION only: rivals can still walk
+   or fly onto it and seize it blind, but cannot pick it as a remote target (bug, missile, overtourism, blockade). Under Fog of War the
+   hide also wipes it from every rival's `visited` set — permanently; they must visit it again to rediscover it. It lapses at once if
+   Bond changes hands. S.hidden[nid]={by,until} (until is a turn number, like S.blockades). */
+export const CLASSIFIED_MONEY=3,CLASSIFIED_INTEL=1;
+export function hiddenInfo(nid){const h=S&&S.hidden&&S.hidden[nid];return h&&h.until>S.turn&&S.owner.bond007===h.by?h:null}
+/* true when `viewer` may NOT see the node: it is classified and the viewer is neither the filer nor the deed holder */
+export function hiddenFrom(viewer,nid){const h=hiddenInfo(nid);return !!h&&viewer!==h.by&&S.owner[nid]!==viewer}
+/* the name the shared record may use for a node: a classified site stays nameless */
+export function lname(n){return hiddenInfo(n.id)?'a CLASSIFIED site':n.name.join(' ')}
+export function classifiedBlocked(pi,pay){
+ if(!S||S.over)return 'The game is over.';
+ if(S.owner.bond007!==pi)return 'You do not control JAMES BOND.';
+ if(S.classifiedUsed)return 'You have already filed something as CLASSIFIED this turn.';
+ if(S.phase!=='move'&&S.phase!=='action')return 'Not now.';
+ if(pay==='money'){if(S.players[pi].money<CLASSIFIED_MONEY)return 'CLASSIFIED costs $'+CLASSIFIED_MONEY+' (or 1 Intel).'}
+ else if(S.players[pi].intel<CLASSIFIED_INTEL)return 'CLASSIFIED costs 1 Intel (or $'+CLASSIFIED_MONEY+').';
+ return '';
+}
+const CLASSIC_ACTS={
+ /* enter the targeting mode, paying with Intel (default) or cash */
+ async classifiedmode(pi,m){
+  if(S.mode)return;
+  const pay=m.pay==='money'?'money':'intel',why=classifiedBlocked(pi,pay);
+  if(why){sysTo(pi,why);return}
+  S.mode='classified';S.classPay=pay;sync();
+ },
+ /* name the node; a free action, so the phase carries on */
+ async classified(pi,m){
+  if(S.mode!=='classified')return;
+  const pay=S.classPay==='money'?'money':'intel',p=S.players[pi],n=typeof m.id==='string'?NMAP[m.id]:null;
+  const why=classifiedBlocked(pi,pay);
+  if(why){sysTo(pi,why);S.mode=null;sync();return}
+  if(!n){sysTo(pi,'Pick a node to file away.');return}
+  if(pay==='money'){p.money-=CLASSIFIED_MONEY;fxAt(pi,'−$'+CLASSIFIED_MONEY,'#ff6b5e')}else{p.intel-=CLASSIFIED_INTEL;fxAt(pi,'🛈−'+CLASSIFIED_INTEL,'#55c1ff')}
+  (S.hidden||(S.hidden={}))[n.id]={by:pi,until:S.turn+2};
+  S.classifiedUsed=true;S.mode=null;S.classPay=null;
+  /* Fog of War: everyone else forgets it (except a rival standing on it right now). Permanent — it must be visited again. */
+  if(S.fogOfWar)S.players.forEach((pl,j)=>{if(j!==pi&&pl.visited&&pl.pos!==n.id)delete pl.visited[n.id]});
+  fxAt(pi,'🗂️ CLASSIFIED','#9ad7ff');
+  log('🤵 '+pname(pi)+' flashes the credentials and files a site under CLASSIFIED until the end of next round'+(S.fogOfWar?' — everyone who had been there forgets the way':'')+'.');
+  sync();
+ },
 };
 /* A seat index from the wire: a real seat at this table that is not the actor. */
 export function isRival(pi,t){return Number.isInteger(t)&&t!==pi&&!!(S&&S.players[t])&&!isVanished(t)}
@@ -1069,10 +1143,11 @@ export async function doMove(pi,id){
   else{
    let toll=(S.owner.albo===owner)?2:1;const p=S.players[pi];
    if(chokeToll(id))toll=Math.max(toll,2); /* 🌐 CHOKEPOINT: Panama, Hormuz and Suez charge $2 */
-   if(p.money<toll){sysTo(pi,'Toll: you cannot afford the $'+toll+' to enter '+NMAP[id].name.join(' ')+'.');return}
+   if(p.money<toll){sysTo(pi,'Toll: you cannot afford the $'+toll+' to enter '+lname(NMAP[id])+'.');return}
    p.money-=toll;S.players[owner].money+=toll;
    fxAt(pi,'−$'+toll,'#ff6b5e');fxAt(owner,'+$'+toll,'#7fe08d');
-   log('🛂 '+pname(pi)+' pays $'+toll+' toll to '+pname(owner)+(toll===2?' — the PM closed the road.':'.'));
+   if(hiddenInfo(id))log('🛂 '+pname(pi)+' pays $'+toll+' toll to whoever holds a CLASSIFIED site.');
+   else log('🛂 '+pname(pi)+' pays $'+toll+' toll to '+pname(owner)+(toll===2?' — the PM closed the road.':'.'));
   }
  }
  S.players[pi].pos=id;S.steps--;
@@ -1083,7 +1158,7 @@ export async function doMove(pi,id){
  }
  if(!S.players[pi].visited)S.players[pi].visited={};S.players[pi].visited[id]=true;
  if(prevPos==='sisy'&&id!=='sisy'&&S.owner.back!==pi)S.sisyPayout=10;
- log('→ '+pname(pi)+' moves to '+NMAP[id].name.join(' ')+'.');
+ log('→ '+pname(pi)+' moves to '+lname(NMAP[id])+'.');
  if(S.steps<=0)await endMovement();else sync();
 }
 export async function doFly(pi,id){
@@ -1102,7 +1177,7 @@ export async function doFly(pi,id){
  }
  if(!p.visited)p.visited={};p.visited[id]=true;
  if(prevFlyPos==='sisy'&&id!=='sisy'&&S.owner.back!==pi)S.sisyPayout=10;
- log('✈️ '+pname(pi)+' takes the Qantas jet straight to '+NMAP[id].name.join(' ')+'.');
+ log('✈️ '+pname(pi)+' takes the Qantas jet straight to '+lname(NMAP[id])+'.');
  if(flew){sync();await projPause()} /* the jet flies before the landing opens the next phase */
  await endMovement();
 }
@@ -1153,13 +1228,13 @@ export async function doSeize(pi){
  if(useInt>0)fxAt(pi,'🛈−'+useInt,'#55c1ff');
  if(cash>0)fxAt(pi,'−$'+cash,'#ff6b5e');
  if(isTake){
-  S.players[prev].money+=n.cost;log('💸 '+pname(prev)+' pockets a $'+n.cost+' buyout.');fxAt(prev,'+$'+n.cost,'#7fe08d');
+  S.players[prev].money+=n.cost;log(hiddenInfo(nid)?'💸 The previous holder of a CLASSIFIED site pockets a $'+n.cost+' buyout.':'💸 '+pname(prev)+' pockets a $'+n.cost+' buyout.');fxAt(prev,'+$'+n.cost,'#7fe08d');
   if(S.owner.accc===prev&&p.money>=2){p.money-=2;S.players[prev].money+=2;log('🧐 ACCC review fee: '+pname(pi)+' pays '+pname(prev)+' $2.')}
  }
  S.owner[nid]=pi;if(nid==='sisy')S.sisyPayout=10;
  S.seizeCount[nid]=(S.seizeCount[nid]||0)+1;
  const via=useInt>0?' (paid $'+cash+' + '+useInt+' 🛈)':'';
- log('📝 '+pname(pi)+(isTake?' muscles in on ':' seizes ')+n.name.join(' ')+via+'.');
+ log('📝 '+pname(pi)+(isTake?' muscles in on ':' seizes ')+lname(n)+via+'.');
  fx(n.x,n.y-64,'📝 SEIZED',S.players[pi].color);
  if(nid==='bond')giveIntel(pi,2,'desk gossip flows');
  if(nid==='leak')giveIntel(pi,1,'the leak pays');
@@ -1171,13 +1246,13 @@ export async function doSeize(pi){
 }
 export async function doBug(pi,nid){
  const n=NMAP[nid];const p=S.players[pi];
- if(!(ADJ[p.pos]||[]).includes(nid)||S.owner[nid]==null||S.owner[nid]===pi||S.bugs[nid]!=null){sysTo(pi,'Pick a highlighted rival node next to you (not already bugged).');return}
+ if(!(ADJ[p.pos]||[]).includes(nid)||S.owner[nid]==null||S.owner[nid]===pi||S.bugs[nid]!=null||hiddenFrom(pi,nid)){sysTo(pi,'Pick a highlighted rival node next to you (not already bugged).');return}
  const cost=(S.owner.insider===pi)?0:1;
  if(p.intel<cost){sysTo(pi,'Not enough Intel.');S.mode=null;sync();return}
  p.intel-=cost;S.bugs[nid]=pi;
  if(cost>0)fxAt(pi,'🛈−1','#55c1ff');
  fx(n.x,n.y-60,'🐛 PLANTED','#55c1ff');
- log('🐛 '+pname(pi)+' plants a bug on '+n.name.join(' ')+(cost===0?' — the INSIDER TRADING graphic made it free.':'.'));
+ log('🐛 '+pname(pi)+' plants a bug on '+lname(n)+(cost===0?' — the INSIDER TRADING graphic made it free.':'.'));
  S.mode=null;await endOfTurn();
 }
 export async function doSpin(pi,kind){
@@ -1187,6 +1262,8 @@ export async function doSpin(pi,kind){
  if(p.money<cost||S.spun){sysTo(pi,'Spin unavailable.');return}
  const v=await askPlayer(pi,{title:kind==='fox'?'FOX SPIN':'SPIN THE PRESS',body:(kind==='fox'?'Fair. And. Furious. ':'“Quite frankly…” — ')+'for $'+cost+':',options:[{label:'Cool my own Cortisol (−'+cool+' 🔥)',v:'cool'},{label:'Roast a rival (+1 🔥)',v:'cortisol'},{label:'Never mind',v:'no'}],def:'no'});
  if(v==='no')return;
+ /* the prompt may have sat open: the spin is only good if the seat still owns the outlet, still has the cash and the turn */
+ if(S.cur!==pi||S.over||S.mode||S.spun||S.owner[kind==='fox'?'fox':'press']!==pi||p.money<cost){sysTo(pi,'The spin is no longer available.');sync();return}
  if(v==='cool'){p.money-=cost;fxAt(pi,'−$'+cost,'#ff6b5e');S.spun=true;log('🗞️ '+pname(pi)+' spins the story smooth.');addCortisol(pi,-cool,'friendly coverage');await finishNodeAbility(pi);return}
  S.spinKind=kind;S.mode='roast';sync();
 }
