@@ -7,9 +7,9 @@ import { hooks } from './hooks.js';
 import { LOG_SHOWN, Net, S } from './state.js';
 import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
 import { ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost } from './engine.js';
-import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics } from './boards.js';
+import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
-import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setNetStatus, toggleSpectate } from './net.js';
+import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
 const shownFx=new Set();
 let svgEl=null;
 /* the unsent chat line survives the sidebar being re-rendered */
@@ -72,6 +72,7 @@ export function showRules(){
  +'<h4>Cortisol &amp; raids</h4><p>Cortisol is capped at 9, and a player holding only one node (or none) cannot gain Cortisol at all (only the 30-Intel Overload bypasses this). At 🔥9 the regulators raid you, and a raid hurts: your <b>two</b> highest-income nodes are seized, every bug you planted is pulled, you pay a fine of $5 or 30% of your cash (whichever is larger), your Intel is burned down to 1, Cortisol resets to 0 and your <b>next turn brings no income and a single step</b>. <b>The whole table sees the raid</b> — it pops up on every screen. The Hedge Fund pays $3 on every raid; the Group Photograph pays 1 🛈 Intel.</p>'
  +'<h4>ACCC concentration — the regulators keep a file</h4><p>Twelve industries are tracked. Five are type-based — banking, regulators, corporates, commodities and media (charts and WILD nodes don’t count toward them) — and seven are themed books listed by name: coal, oil, education, JTPortal, Jim Chalmers, Big Bessent and monetary policy (MONETARY POLICY also counts the CASH-RATE and INFLATION charts). A themed book is <b>concentrated at 3</b> holdings. A type-based industry is concentrated at <b>a third of its size on the live board, rounded up, never fewer than 3</b>: three banks, regulators or corporates, but <b>four</b> media or four commodities (there are 11 media and 10 commodities, 12 and 11 with the Geography DLC). Hold that many and the regulator <b>opens a public file</b> on the book — every player’s open files are listed in THE SYNDICATE. <b>ASIC</b> runs monetary-policy books as <b>market manipulation</b>; the <b>ACCC</b> takes every other industry. There are no dice: at the start of each of <b>your</b> turns every open file on you gains <b>+1 scrutiny</b>, and at <b>3</b> the ruling lands. You choose which nodes to keep, down to one fewer than the trigger; only the excess is divested, back to the market <b>unowned</b> (never to a rival, and any bugs on it are pulled), and you pay <b>10% of your cash and 10% of your Intel per divested node</b>, capped at 30% each. A file closes the moment the book drops back under the trigger, however that happens — a sale, a deal, a takeover, a raid, a missile — and its scrutiny is discarded. While a file is open you can <b>sell a node from that book to the market</b> for its list price (your action), or <b>lobby</b> (3 🛈, free, once per turn) for −1 scrutiny on one of your files (never below 0). The owner of the <b>ACCC</b> can <b>REFER</b> a rival’s file ($4, your action, once per turn) for +1 scrutiny; the owner of <b>ASIC</b> refers monetary-policy files the same way. You can’t refer your own file, and a referral never rules on the spot — rulings only land at the start of the offender’s own turn. The <b>MONOPOLY ALERT</b> event adds +1 scrutiny to every open file on the table. Owning <b>Mark Watson</b> exempts your holdings in the COAL industry from ACCC monopoly investigations.</p>'
  +'<h4>MADE (???)</h4><p>Nobody knows what the purple graphic is, but it moves money: at the <b>start of every player\'s turn</b> there is a chance MADE pays out (<b>33% at 2 seats, 22% at 3, 17% at 4, 13% at 5, 11% at 6, 10% at 7, 8% at 8</b>) — <b>+$10 and +1 Intel</b> to its owner. Every other player with <b>more than two nodes and at least $50</b> pays 15% of their cash to the void. Seizing MADE always costs list price — it never inflates after a takeover. You may also force MADE to divest from any rival for <b>5 Intel + $7</b> (the $7 goes to the former owner as compensation, and you take +1 Cortisol).</p>'
+ +'<h4>🌐 WORLD MAP &amp; the World Expansion</h4><p>Two host-chosen options in the lobby. <b>THE WORLD EXPANSION</b> adds <b>100 global exhibits</b> — central banks, chokepoints, mines, wealth funds, a Nigerian prince — to <i>any</i> board layout (Random, Ringworld, Mega Ring) and combines freely with the Geography DLC. The <b>WORLD MAP</b> layout pins every exhibit to the place it really lives on a world map (and switches the Expansion on): <b>Quikstop opens in Sydney</b>, Wall Street is in New York, Hormuz is in the Gulf. Threads follow geography — neighbours link up, shipping lanes and flight paths cross the oceans, and North and South America touch only at Panama. The new exhibits ship as <b>text cards</b> (name and icon) until their pictures arrive. Most pay through simple synergies — per node type, a partner node, start-of-turn Cortisol or Intel, and windfalls on events like OIL SPIKES or GOLD RUSH; nodes marked ⚙ have income, price and seizing working while their special ability is still being wired up.</p>'
  +'<h4>🌍 The Geography DLC — the board expands over the water</h4><p>Host-toggled in the lobby (look for <b>ENABLE THE GEOGRAPHY DLC</b>). <b>On: the board deals 82 exhibits.</b> Off: the same 70 exhibits as always.</p>'
  +'<ul><li><b>MISSILE COMMAND ($8) / IRANIAN SHAHED DRONE ($8)</b> — you can own <b>MISSILE COMMAND or the SHAHED DRONE</b>, but not both. Either owned launch site can LAUNCH A MISSILE ($4 + 1 🛈, once per turn): stand on the launcher you own to fire, or own KIM JONG UN to fire from anywhere — during your move (the launch ends it) or as your action. You can’t hit your own nodes, or any other node held by the Pillars owner. An <b>owned node is expropriated with NO payout</b> to its former owner; either way it becomes <b>RUBBLE</b> until rebuilt at list price. The <b>ESG Pillars themselves can be missile-struck</b>, and the shield falls with them. Strike a <b>REGULATOR</b> and an investigation opens — <b>ASIC or the ACCC</b> comes for you on your next turn: a 50/50 indictment, and <b>+1 Cortisol</b> whether it lands or not.</li>'
  +'<li><b>PYONGYANG CITY ($6)</b> — +$1 income per Geography node you own. The capital collects tribute.</li>'
@@ -108,6 +109,19 @@ export function moodBoost(n){
  if(S.mood==='PANIC'&&n.type==='BANK')return -1;
  if(S.mood==='FRENZY'&&n.type==='MEDIA')return 1;
  return 0;
+}
+/* A node with no `image` is a styled text card: its type colour, the icon and the name. Give the node an `image`
+   path and the picture takes over — nothing else has to change. */
+export function placeholderCardSVG(n,w,h){
+ const esc=t=>String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ const col=TYPE_COLORS[n.type]||'#168388',lines=(n.name||[n.id]).slice(0,3),longest=Math.max(...lines.map(l=>String(l).length),4);
+ const fs=Math.max(9,Math.min(17,(w-52)/(0.64*longest))),ty=-(lines.length-1)*fs*0.55+fs*0.3;
+ return '<g class="node-card"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="#17201f" stroke="'+col+'" stroke-width="3"/>'
+  +'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="14" fill="'+col+'"/>'
+  +'<text x="'+(-w/2+8)+'" y="'+(-h/2+11)+'" font-size="9" font-weight="900" letter-spacing="1.5" fill="#fff">'+esc(n.type)+(n.todo?' · ⚙':'')+'</text>'
+  +'<text x="'+(-w/2+22)+'" y="'+(h/2-14)+'" text-anchor="middle" font-size="26">'+(n.icon||'❔')+'</text>'
+  +lines.map((l,i)=>'<text x="'+(w/2-(w-46)/2+2)+'" y="'+(ty+i*fs*1.1+6)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" font-weight="800" fill="#f4f0e6" font-family="Tomkins Display, Bricolage Grotesque, sans-serif">'+esc(l)+'</text>').join('')
+  +'</g>';
 }
 export function nodeSVG(n,cls){
  const me=S&&S.players[Net.myIdx];
@@ -148,7 +162,7 @@ export function nodeSVG(n,cls){
  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
  return '<g class="node '+cls+'" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+') rotate('+n.rot+')">'
   +ownerGlow+moodGlow+halo
-  +'<image class="node-image" href="'+n.image+'" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" preserveAspectRatio="none"/>'
+  +(n.image?'<image class="node-image" href="'+n.image+'" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" preserveAspectRatio="none"/>':placeholderCardSVG(n,w,h))
   +(rb?'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="rgba(8,6,6,0.72)"/><text x="0" y="-4" text-anchor="middle" font-size="22">💥</text><text x="0" y="16" text-anchor="middle" font-size="9" font-weight="900" fill="#ffb08a" letter-spacing="1">REBUILD $'+n.cost+'</text>':'')
   +ownerTag+bugTag+badges
   +'<title>'+esc(nodeTip(n)).replace(/\n/g,'&#10;')+'</title></g>';
@@ -160,6 +174,7 @@ export function nodeTip(n){
  const ot=S&&S.dlcGeo&&S.ov&&S.ov.nid===n.id;
  const bl=S&&blockaded(n.id);
  let t=n.name.join(' ')+' — '+n.type+' · $'+n.income+'/turn · seize $'+n.cost+'\n'+(n.sub||'')+'\n'+(n.sp||'');
+ if(n.todo)t+='\n⚙ Ability still being wired up — income, price and seizing already work.';
  if(bl)t+='\n🚧 BLOCKADED — entry and Qantas landing are prohibited until the blockade expires.';
  if(rb)t+='\n💥 RUBBLE — arrive and pay $'+n.cost+' in your action phase to rebuild. No income, nothing to seize until rebuilt.';
  if(ot)t+='\n🛳️ OVERTOURISM — its owner takes +1 Cortisol on their next turn (one rotation, or until Venice changes hands).';
@@ -445,7 +460,7 @@ export function boardScene(){
  const sisyO=S.owner.sisy;
  return {
   fog:!!S.fogOfWar,
-  key:[S.layoutKind||'',S.dlcGeo?1:0,S.fogOfWar?1:0,NODES.map(n=>n.id+','+n.x+','+n.y+','+(n.rot||0)).join(';'),S.players.map(p=>p.color+'|'+p.char).join(';')].join('#'),
+  key:[S.layoutKind||'',S.dlcGeo?1:0,S.dlcWorld?1:0,S.fogOfWar?1:0,NODES.map(n=>n.id+','+n.x+','+n.y+','+(n.rot||0)).join(';'),S.players.map(p=>p.color+'|'+p.char).join(';')].join('#'),
   edgesKey:edges.map(e=>e[0]+'-'+e[1]).join(','),
   bounds:boardViewBounds(),nodes,edges,seats,owner,rubble,bugs,
   hot:moving?edges.filter(e=>e[0]===curpos||e[1]===curpos):[],
@@ -473,15 +488,17 @@ export function renderBoard(){
  const md=MOODS[S.mood]||MOODS.CALM;
  const mega=!!(S&&S.layoutKind==='megaring');
  const ring=!!(S&&S.layoutKind==='ringworld');
- const special=mega||ring;
+ const wm=!!(S&&S.layoutKind==='worldmap');
+ const special=mega||ring||wm;
  const bounds=boardViewBounds();
- const metrics=mega?megaRingMetrics(Math.max(3,(S.boardLayout||[]).length-1)):(ring?ringworldMetrics(Math.max(3,(S.boardLayout||[]).length-1)):null);
+ const metrics=wm?{cx:bounds.w/2,cy:bounds.h/2}:mega?megaRingMetrics(Math.max(3,(S.boardLayout||[]).length-1)):(ring?ringworldMetrics(Math.max(3,(S.boardLayout||[]).length-1)):null);
  const curpos=S?S.players[S.cur].pos:null;
  let s='';
  s+='<defs><pattern id="dots" width="'+(special?56:26)+'" height="'+(special?56:26)+'" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="rgba(22,131,136,0.18)"/></pattern></defs>';
  s+='<rect x="0" y="0" width="'+bounds.w+'" height="'+bounds.h+'" fill="#1d201f"/><rect x="0" y="0" width="'+bounds.w+'" height="'+bounds.h+'" fill="url(#dots)"/>';
  s+='<rect x="0" y="0" width="'+bounds.w+'" height="'+bounds.h+'" fill="'+md.tint+'" pointer-events="none"/>';
  s+='<rect x="7" y="7" width="'+(bounds.w-14)+'" height="'+(bounds.h-14)+'" rx="0" fill="none" stroke="#168388" stroke-width="'+(special?8:3)+'" opacity=".7"/>';
+ if(wm)s+=worldMapSVG();
  EDGES.forEach((e,i)=>{
   if(!edgeVisible(e))return;
   const c=edgeCurve(e,i);
@@ -492,7 +509,10 @@ export function renderBoard(){
   s+='<path d="'+d+'" fill="none" stroke="#08383a" stroke-width="'+(hot?6:long?3.5:5)+'" opacity="'+(hot?'.7':'.35')+'"/>';
   s+='<path d="'+d+'" fill="none" stroke="'+(hot?'#7ff6fb':'#168388')+'" stroke-width="'+(hot?3:long?1.6:2)+'" stroke-dasharray="'+(long?'11 8':'')+'" opacity="'+(hot?'1':'.9')+'"/>';
  });
- if(mega){
+ if(wm){
+  s+='<g transform="translate('+metrics.cx+',150) scale(2.6)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON v1.13 · WORLD MAP</text></g>';
+  s+='<g transform="translate('+metrics.cx+',330) scale(2.4)"><rect x="-1050" y="-15" width="2100" height="30" fill="#000" stroke="'+md.color+'" stroke-width="2" opacity=".96"/><circle class="tkdot" cx="-1028" cy="0" r="6" fill="'+md.color+'"/><text x="-1008" y="4" font-size="13" font-weight="900" letter-spacing="1.5" fill="aqua">'+md.label+'</text><text x="0" y="4" text-anchor="middle" font-size="12" font-style="italic" fill="#ddd">'+esc((S.wire||'all quiet on the wire').slice(0,100))+'</text><text x="1028" y="4" text-anchor="end" font-size="12" font-weight="800" fill="#9ad">1🛈=$'+md.rate+'</text></g>';
+ }else if(mega){
   s+='<circle cx="'+metrics.cx+'" cy="'+metrics.cy+'" r="'+metrics.radius+'" fill="none" stroke="#168388" stroke-width="3" stroke-dasharray="18 20" opacity=".22"/>';
   s+='<circle cx="'+metrics.cx+'" cy="'+metrics.cy+'" r="'+(metrics.radius-175)+'" fill="none" stroke="#168388" stroke-width="2" stroke-dasharray="4 18" opacity=".14"/>';
   s+='<g transform="translate('+metrics.cx+',95)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON v1.13 · MEGA RING</text></g>';
@@ -512,7 +532,7 @@ export function renderBoard(){
   s+='<g transform="translate(1230,30)"><rect x="-700" y="-13" width="1400" height="26" fill="#000" stroke="'+md.color+'" stroke-width="2" opacity=".96"/><circle class="tkdot" cx="-682" cy="0" r="5" fill="'+md.color+'"/><text x="-668" y="4" font-size="11" font-weight="900" letter-spacing="1.5" fill="aqua">'+md.label+'</text><text x="-20" y="4" text-anchor="middle" font-size="10.5" font-style="italic" fill="#ddd">'+esc((S.wire||'all quiet on the wire').slice(0,88))+'</text><text x="688" y="4" text-anchor="end" font-size="10" font-weight="800" fill="#9ad">1🛈=$'+md.rate+'</text></g>';
  }
  let lx=special?metrics.cx-360:560;
- s+='<g transform="translate(0,'+(special?245:62)+')">';
+ s+='<g transform="translate(0,'+(wm?480:special?245:62)+')">';
  Object.keys(TYPE_COLORS).forEach(k=>{
   s+='<rect x="'+lx+'" y="-7" width="10" height="10" rx="2" fill="'+TYPE_COLORS[k]+'"/><text x="'+(lx+14)+'" y="2" font-size="9" font-weight="800" fill="#cbb992">'+k+'</text>';
   lx+=14+k.length*6.2+16;
@@ -1063,6 +1083,8 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
 })();
 (function(){
  const gt=$('geoToggle');
+ const wt=$('worldToggle');
+ if(wt)wt.onchange=()=>{if(Net.role!=='host'||Net.boardLayout==='worldmap'){wt.checked=!!Net.dlcWorld||Net.boardLayout==='worldmap';hooks.toast(Net.role!=='host'?'The host decides whether the World Expansion is played.':'The World Map layout always includes the World Expansion.');return}setWorldUI(wt.checked);broadcastLobby()};
  if(gt)gt.onchange=()=>{if(Net.role!=='host'){gt.checked=Net.dlcGeo;hooks.toast('The host decides whether the Geography DLC is played.');return}setGeoUI(gt.checked);broadcastLobby()};
  const ft=$('fogToggle');
  if(ft)ft.onchange=()=>{if(Net.role!=='host'){ft.checked=Net.fogOfWar;hooks.toast('The host decides whether Fog of War is enabled.');return}setFogUI(ft.checked);broadcastLobby()};

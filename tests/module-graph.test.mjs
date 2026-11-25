@@ -16,7 +16,7 @@ const isRemote = u => /^[a-z][a-z0-9+.-]*:|^\/\//i.test(u);
 const local = u => path.join(repoRoot, u.replace(/^\.\//, '').replace(/[?#].*$/, ''));
 const byFile = new Map(GAME_MODULES.map(m => [m.file, m]));
 /* The layer that must stay DOM-free, wire-free and timer-free: the rules. */
-const RULES_LAYER = ['static/js/hooks.js', 'static/js/util.js', 'static/js/data.js', 'static/js/state.js', 'static/js/boards.js', 'static/js/engine.js'];
+const RULES_LAYER = ['static/js/hooks.js', 'static/js/util.js', 'static/js/data.js', 'static/js/world.js', 'static/js/state.js', 'static/js/boards.js', 'static/js/engine.js'];
 const BROWSER_LAYER = ['static/js/core.js', 'static/js/net.js', 'static/js/ui.js', 'static/js/app.js', 'static/js/discord.js', 'static/js/main.js', 'static/bots.js'];
 
 test('every local <script src> and stylesheet referenced by index.html exists on disk', () => {
@@ -58,7 +58,7 @@ test('the module graph: main.js reaches every game module, in dependency order',
   const files = GAME_MODULES.map(m => m.file);
   assert.deepEqual([...files].sort(), [
     'static/bots.js', 'static/js/app.js', 'static/js/boards.js', 'static/js/core.js', 'static/js/data.js', 'static/js/discord.js',
-    'static/js/engine.js', 'static/js/hooks.js', 'static/js/main.js', 'static/js/net.js', 'static/js/state.js', 'static/js/ui.js', 'static/js/util.js',
+    'static/js/engine.js', 'static/js/hooks.js', 'static/js/main.js', 'static/js/net.js', 'static/js/state.js', 'static/js/ui.js', 'static/js/util.js', 'static/js/world.js',
   ]);
   assert.equal(files[files.length - 1], 'static/js/main.js', 'the entry evaluates last');
   for (const m of GAME_MODULES) for (const dep of m.imports) assert.ok(files.indexOf(dep) < files.indexOf(m.file), m.file + ' evaluates after ' + dep);

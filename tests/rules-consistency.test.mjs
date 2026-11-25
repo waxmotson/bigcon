@@ -469,6 +469,7 @@ test('RC-07 every S.owner/own() node reference maps to a real node or a known re
      rebuilt on demand, so the static audit unions its ids explicitly. */
   const nodeIds = new Set(engine.acc.NODES.map(n => n.id));
   engine.acc.GEO_NODE_IDS.forEach(id => nodeIds.add(id));
+  engine.acc.WORLD_NODE_IDS.forEach(id => nodeIds.add(id));
   const removedMatch = SOURCE.match(/REMOVED_NODE_IDS=new Set\(\[([^\]]+)\]/);
   assert.ok(removedMatch, 'the removed-node list exists in the source');
   const removed = new Set([...removedMatch[1].matchAll(/'(\w+)'/g)].map(m => m[1]));

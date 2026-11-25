@@ -198,10 +198,10 @@ export function makeConn(engine, playerId, opts = {}) {
 /* ---------- engine loader ---------- */
 globalThis.__BIGCON_ENVS = globalThis.__BIGCON_ENVS || {};
 let genSeq = 0;
-const GAME_MODULE_NAMES = ['hooks', 'util', 'data', 'state', 'boards', 'engine', 'core', 'net', 'ui', 'app'];
+const GAME_MODULE_NAMES = ['hooks', 'util', 'data', 'world', 'state', 'boards', 'engine', 'core', 'net', 'ui', 'app'];
 /* Names the old tests reach through `engine.acc` (live reads of module state). */
 const ACC_NAMES = [
-  'S', 'Net', 'NODES', 'NMAP', 'EDGES', 'ADJ', 'CLEAN_EDGES', 'BASE_EDGES', 'BASE_NODES', 'GEO_NODES', 'GEO_EDGES', 'GEO_NODE_IDS',
+  'S', 'Net', 'NODES', 'NMAP', 'EDGES', 'ADJ', 'CLEAN_EDGES', 'BASE_EDGES', 'BASE_NODES', 'GEO_NODES', 'GEO_EDGES', 'GEO_NODE_IDS', 'WORLD_NODES', 'WORLD_NODE_IDS', 'WORLD_EXP', 'GEO_ANCHORS',
   'GEO_HIGH_VALUE_IDS', 'GEO_NK_IDS', 'PROJ_PAUSE_MS', 'OIL_IDS', 'WORLD_EDGES', 'WORLD_GEO', 'REMOVED_NODE_IDS', 'ORIGINAL_LAYOUT_BY_ID',
   'CARDS', 'CARDBYID', 'MOODS', 'CHARS', 'BUZZWORDS', 'INDUSTRIES', 'INDBYID', 'ACCC_RULING', 'WIN_TYPES', 'QUIK_SLOTS', 'QUIK_HOME', 'HIGH_VALUE_NODE_IDS', 'PCOLORS',
   'TYPE_COLORS', 'MAXPLAYERS', 'GOAL_MIN', 'GOAL_MAX', 'GOAL_DEF', 'COUNTRY',
@@ -216,7 +216,7 @@ const F_NAMES = [
   'shuffle','esc','showRules','setMood','giveIntel','gain','payVoid','payTo','payFee','log','fxAt','fx','pname',
   'doMove','doFly','doBug','doSpin','doSeize','endMovement','maybePeek','seizeListPrice','flatSeize','takeoverCost','priceTip',
   'canReach','qantasGrounded','qantasGroundedReason','abilityPhase','finishNodeAbility','startHostHeartbeat','sync','setNetStatus','toast',
-  'rebuildWorld','strikeNode','canMissileNode','blockaded','projFx','projRig','canUseBackroomAbility',
+  'rebuildWorld', 'generateWorldMapBoard', 'worldMapSVG', 'worldMapMetrics', 'projectGeo', 'boardViewBounds', 'nodeSVG', 'placeholderCardSVG', 'geoOf','strikeNode','canMissileNode','blockaded','projFx','projRig','canUseBackroomAbility',
 ];
 
 export async function loadEngine() {
@@ -293,7 +293,7 @@ export async function loadEngine() {
   const mods = {};
   mods.app = await importMod('static/js/app.js');
   for (const n of GAME_MODULE_NAMES) mods[n] = await importMod('static/js/' + n + '.js');
-  const modList = [mods.engine, mods.state, mods.data, mods.boards, mods.net, mods.ui, mods.core, mods.util, mods.hooks, mods.app];
+  const modList = [mods.engine, mods.state, mods.data, mods.world, mods.boards, mods.net, mods.ui, mods.core, mods.util, mods.hooks, mods.app];
   const owner = n => modList.find(m => n in m);
   /* The same wiring the page does (app.js), then the test doubles on top: the
      DOM modal is replaced by the recorder and timers run on the virtual clock. */

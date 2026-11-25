@@ -1,7 +1,7 @@
 'use strict';
 /* net: state sync (adoptState), prompts, the Cloudflare/PeerJS transports, lobby, host and guest, and the lobby/setup view helpers.
    Allowed to touch the DOM and the wire. The rules engine reaches it only through hooks (sync, sysTo, askPlayer, announceAll, revealAll, beginGame). */
-import { CHARS, MAXPLAYERS, PCOLORS, WORLD_GEO, charMeta, charSrc, codeLabel, genCode, rebuildWorld } from './data.js';
+import { CHARS, MAXPLAYERS, PCOLORS, WORLD_GEO, WORLD_EXP, charMeta, charSrc, codeLabel, genCode, rebuildWorld } from './data.js';
 import { LOG_PART_CHARS, LOG_RETRY_MS, Net, S, STATE_MIN_GAP, mergeTail, pubState, setS } from './state.js';
 import { hooks } from './hooks.js';
 import { addChat, applyIntent, botAPI, endOfTurn, gain, log, pname } from './engine.js';
@@ -11,7 +11,7 @@ import { clampGoal, esc } from './util.js';
 export function adoptState(ns){
  /* The lobby flag travels with the state: rebuild the world before the
     board-render path touches NMAP/EDGES. */
- if(ns.dlcGeo!=null&&!!ns.dlcGeo!==WORLD_GEO)rebuildWorld(!!ns.dlcGeo);
+ if((ns.dlcGeo!=null&&!!ns.dlcGeo!==WORLD_GEO)||(ns.dlcWorld!=null&&!!ns.dlcWorld!==WORLD_EXP))rebuildWorld(ns.dlcGeo!=null?!!ns.dlcGeo:WORLD_GEO,ns.dlcWorld!=null?!!ns.dlcWorld:WORLD_EXP);
  if(S){
   ns.log=mergeTail(S.log,S.logN|0,ns.log||[],ns.logN|0);
   ns.chat=mergeTail(S.chat,S.chatN|0,ns.chat||[],ns.chatN|0);
@@ -448,7 +448,7 @@ export function handleHello(c,name,playerId){
    Net.roster[existing].spect=true;
    c.send({t:'welcome',idx:existing,spect:true,s:pubState(true)});sync(true);return;
   }
-  c.send({t:'welcome',idx:existing,lobby:lobbyPlayers(),goal:clampGoal(Net.goal),dlcGeo:!!Net.dlcGeo,fogOfWar:!!Net.fogOfWar,boardLayout:Net.boardLayout||(Net.ringworld?'ringworld':'random'),ringworld:!!Net.ringworld,chat:Net.lobbyChat.slice(-40)});broadcastLobby();return;
+  c.send({t:'welcome',idx:existing,lobby:lobbyPlayers(),goal:clampGoal(Net.goal),dlcGeo:!!Net.dlcGeo,dlcWorld:!!Net.dlcWorld||Net.boardLayout==='worldmap',fogOfWar:!!Net.fogOfWar,boardLayout:Net.boardLayout||(Net.ringworld?'ringworld':'random'),ringworld:!!Net.ringworld,chat:Net.lobbyChat.slice(-40)});broadcastLobby();return;
  }
  if(Net.started&&S){
   const idx=S.players.findIndex(pl=>pl.dc&&pl.name.toLowerCase()===name.toLowerCase());
@@ -477,7 +477,7 @@ export function joinLobby(c,name,playerId){
  Net.roster.push({name,playerId:playerId||crypto.randomUUID(),conn:c,char:null});
  Net.conns=Net.roster.map(e=>e.conn);
  c.__lastSeen=Date.now();
- c.send({t:'welcome',idx:Net.roster.length-1,lobby:lobbyPlayers(),goal:clampGoal(Net.goal),dlcGeo:!!Net.dlcGeo,fogOfWar:!!Net.fogOfWar,boardLayout:Net.boardLayout||(Net.ringworld?'ringworld':'random'),ringworld:!!Net.ringworld,chat:Net.lobbyChat.slice(-40)});
+ c.send({t:'welcome',idx:Net.roster.length-1,lobby:lobbyPlayers(),goal:clampGoal(Net.goal),dlcGeo:!!Net.dlcGeo,dlcWorld:!!Net.dlcWorld||Net.boardLayout==='worldmap',fogOfWar:!!Net.fogOfWar,boardLayout:Net.boardLayout||(Net.ringworld?'ringworld':'random'),ringworld:!!Net.ringworld,chat:Net.lobbyChat.slice(-40)});
  broadcastLobby();
 }
 /* Mid-con joiners: the game does not stop for them. A new player gets the
@@ -587,7 +587,7 @@ export function startLobbyChatter(){
  },20000);
 }
 export function broadcastLobby(){
- sendAll({t:'lobby',players:lobbyPlayers(),goal:clampGoal(Net.goal),dlcGeo:!!Net.dlcGeo,fogOfWar:!!Net.fogOfWar,boardLayout:Net.boardLayout||(Net.ringworld?'ringworld':'random'),ringworld:!!Net.ringworld,chat:Net.lobbyChat.slice(-40)});
+ sendAll({t:'lobby',players:lobbyPlayers(),goal:clampGoal(Net.goal),dlcGeo:!!Net.dlcGeo,dlcWorld:!!Net.dlcWorld||Net.boardLayout==='worldmap',fogOfWar:!!Net.fogOfWar,boardLayout:Net.boardLayout||(Net.ringworld?'ringworld':'random'),ringworld:!!Net.ringworld,chat:Net.lobbyChat.slice(-40)});
  renderLobbyList();renderLobbyChat();
  lobbyChatter();
  startLobbyChatter();
@@ -788,6 +788,7 @@ export function onGuestData(d){
    if(d.dlcGeo!==undefined)setGeoUI(!!d.dlcGeo);
    if(d.fogOfWar!==undefined)setFogUI(!!d.fogOfWar);
    if(d.boardLayout!==undefined)setBoardLayout(d.boardLayout);else if(d.ringworld!==undefined)setBoardLayout(d.ringworld?'ringworld':'random');
+   if(d.dlcWorld!==undefined)setWorldUI(!!d.dlcWorld);
    if(d.s){setS(null);adoptState(d.s);Net.begun=true;enterGame()}
    else showLobby(false);
    break;
@@ -799,6 +800,7 @@ export function onGuestData(d){
    if(d.dlcGeo!==undefined)setGeoUI(!!d.dlcGeo);
    if(d.fogOfWar!==undefined)setFogUI(!!d.fogOfWar);
    if(d.boardLayout!==undefined)setBoardLayout(d.boardLayout);else if(d.ringworld!==undefined)setBoardLayout(d.ringworld?'ringworld':'random');
+   if(d.dlcWorld!==undefined)setWorldUI(!!d.dlcWorld);
    renderLobbyList();
    break;
   case 'begin':setS(null);Net.spect=false;adoptState(d.s);if(d.idx!=null)Net.myIdx=d.idx;Net.begun=true;enterGame();break;
@@ -833,19 +835,28 @@ export function setGeoUI(v){
  const t=$('geoToggle');
  if(t)t.checked=!!v;
 }
+/* 🌐 The World Expansion: host-chosen, mirrored by guests; the WORLD MAP layout holds it on. */
+export function setWorldUI(v){
+ Net.dlcWorld=!!v;
+ const t=$('worldToggle');
+ if(t){t.checked=!!v||Net.boardLayout==='worldmap';t.disabled=Net.role!=='host'||Net.boardLayout==='worldmap'}
+}
 export function setFogUI(v){
  Net.fogOfWar=!!v;
  const t=$('fogToggle');
  if(t)t.checked=!!v;
 }
 export function setBoardLayout(val){
- const allowed=['random','ringworld','megaring'];
+ const allowed=['random','ringworld','megaring','worldmap'];
+ const was=Net.boardLayout;
  Net.boardLayout=allowed.includes(val)?val:'random';
  Net.ringworld=Net.boardLayout==='ringworld';
+ if(Net.boardLayout==='worldmap')Net.dlcWorld=true;else if(was==='worldmap')Net.dlcWorld=false; /* the WORLD MAP is the whole world */
+ setWorldUI(Net.dlcWorld);
  const t=$('boardLayoutSelect');
  if(t){t.value=Net.boardLayout;t.disabled=Net.role!=='host'}
  const note=$('boardLayoutNote');
- if(note)note.textContent=Net.role==='host'?'the host chooses the map':(Net.boardLayout==='megaring'?'Mega Ring selected by the host':(Net.ringworld?'Ringworld selected by the host':'random board selected by the host'));
+ if(note)note.textContent=Net.role==='host'?'the host chooses the map':(Net.boardLayout==='worldmap'?'World Map selected by the host — the World Expansion is on':Net.boardLayout==='megaring'?'Mega Ring selected by the host':(Net.ringworld?'Ringworld selected by the host':'random board selected by the host'));
 }
 export function setRingworldUI(v){
  setBoardLayout(v?'ringworld':'random');

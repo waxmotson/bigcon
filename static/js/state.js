@@ -6,7 +6,7 @@ import { GOAL_DEF } from './util.js';
    setS(). Reads elsewhere see the live binding. */
 export let S=null;
 export function setS(v){S=v}
-export const Net={role:null,peer:null,conn:null,conns:[],roster:[],myIdx:0,myName:'',playerId:null,roomCode:null,roomLabel:null,lobbyChat:[],lobbyPlayers:[],started:false,begun:false,spect:false,lock:false,lockTimer:null,pendingPrompts:new Map(),acks:null,promptSeq:0,evSeq:0,autoT:null,goal:GOAL_DEF,dlcGeo:false,fogOfWar:false,ringworld:false,boardLayout:'random',hbTimer:null,lastSeen:0};
+export const Net={role:null,peer:null,conn:null,conns:[],roster:[],myIdx:0,myName:'',playerId:null,roomCode:null,roomLabel:null,lobbyChat:[],lobbyPlayers:[],started:false,begun:false,spect:false,lock:false,lockTimer:null,pendingPrompts:new Map(),acks:null,promptSeq:0,evSeq:0,autoT:null,goal:GOAL_DEF,dlcGeo:false,dlcWorld:false,fogOfWar:false,ringworld:false,boardLayout:'random',hbTimer:null,lastSeen:0};
 /* The host keeps the whole record. A join or reconnect carries LOG_WELCOME lines, and
    the rest follows in logpart messages: the relay closes a socket over 256,000 chars.
    The live panel draws LOG_SHOWN lines until the game ends, then all of them. */

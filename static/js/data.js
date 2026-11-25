@@ -1,4 +1,5 @@
 'use strict';
+import { WORLD_NODES, WORLD_NODE_IDS, WORLD_RANDOM_SCALE } from './world.js';
 /* data: static game data — nodes, edges, geography DLC, characters, moods, room-code buzzwords; builds the world graph. Pure: no DOM, no state.
    NODES/EDGES/… are live bindings rebuilt by rebuildWorld(); other modules read them, and replace EDGES/NODES only through setEdges/setNodes. */
 /* ================= THE COMPLETE EVIDENCE BOARD — 70 exhibits · +12 with the GEOGRAPHY DLC ================= */
@@ -173,12 +174,43 @@ export const HIGH_VALUE_BASE_IDS=[
  'qantas','rba','oil','gold','sat','asics','rock','press','fox','sisy',
  'made','bullock','jt','mpc','whistle','term','bond','hedge','petronas'
 ];
-export let WORLD_GEO=false;
-export function rebuildWorld(geo){
- WORLD_GEO=!!geo;
- NODES=geo?BASE_NODES.concat(GEO_NODES):BASE_NODES.slice();
+export let WORLD_GEO=false,WORLD_EXP=false;
+/* Where every exhibit sits on the hand-made collage. Boards rewrite NODES[].x/y in place, so
+   the pristine layout is captured once and rebuildWorld always starts from it. */
+const HOME={};
+BASE_NODES.concat(GEO_NODES).forEach(n=>{HOME[n.id]={x:n.x,y:n.y,rot:n.rot}});
+/* With the WORLD EXPANSION the random board is dealt on a canvas WORLD_RANDOM_SCALE times wider and taller:
+   the 82 hand-placed nodes spread out, and the 100 new ones are dropped into the gaps by a deterministic
+   best-candidate sampler (so every machine in a room derives the very same slots). */
+let WORLD_SLOT_CACHE=null;
+export function worldRandomBounds(){return {x:0,y:0,w:Math.round(2400*WORLD_RANDOM_SCALE),h:Math.round(1560*WORLD_RANDOM_SCALE)}}
+function worldHome(geo){
+ const key=geo?1:0;
+ if(WORLD_SLOT_CACHE&&WORLD_SLOT_CACHE.key===key)return WORLD_SLOT_CACHE.map;
+ const f=WORLD_RANDOM_SCALE,b=worldRandomBounds(),map={};
+ const placed=[];
+ BASE_NODES.concat(geo?GEO_NODES:[]).forEach(n=>{const h=HOME[n.id];map[n.id]={x:Math.round(h.x*f),y:Math.round(h.y*f),rot:h.rot};placed.push(map[n.id])});
+ let a=0x9e3779b9;const rnd=()=>{a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296};
+ const dist=(p,q)=>Math.max(Math.abs(p.x-q.x)/190,Math.abs(p.y-q.y)/112); /* box-ish distance: 1 = two cards just touching */
+ WORLD_NODES.forEach((n,k)=>{
+  let best=null,bd=-1;
+  for(let c=0;c<70;c++){
+   const p={x:130+rnd()*(b.w-260),y:130+rnd()*(b.h-260)};
+   let d=1e9;for(let i=0;i<placed.length;i++){const e=dist(p,placed[i]);if(e<d){d=e;if(d<=bd)break}}
+   if(d>bd){bd=d;best=p}
+  }
+  best.rot=((k*7)%5)-2;best.x=Math.round(best.x);best.y=Math.round(best.y);
+  map[n.id]=best;placed.push(best);
+ });
+ WORLD_SLOT_CACHE={key,map};return map;
+}
+export function rebuildWorld(geo,world){
+ WORLD_GEO=!!geo;WORLD_EXP=!!world;
+ NODES=BASE_NODES.concat(geo?GEO_NODES:[],world?WORLD_NODES:[]);
  Object.keys(NMAP).forEach(k=>delete NMAP[k]);
  NODES.forEach(n=>NMAP[n.id]=n);
+ const slots=world?worldHome(geo):HOME;
+ NODES.forEach(n=>{const h=slots[n.id]||HOME[n.id];if(h){n.x=h.x;n.y=h.y;n.rot=h.rot}});
  ORIGINAL_NODE_LAYOUT=NODES.map(n=>({id:n.id,x:n.x,y:n.y,rot:n.rot}));
  ORIGINAL_LAYOUT_BY_ID=Object.fromEntries(ORIGINAL_NODE_LAYOUT.map(p=>[p.id,p]));
  CLEAN_EDGES=BASE_EDGES.filter(e=>!REMOVED_NODE_IDS.has(e[0])&&!REMOVED_NODE_IDS.has(e[1]));

@@ -12,7 +12,8 @@ import { hooks, setHooks } from './hooks.js';
 import { S, setS, Net, pubState } from './state.js';
 import { clampGoal, esc, shuffle } from './util.js';
 import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld } from './data.js';
-import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, applyLayoutFromState } from './boards.js';
+import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState } from './boards.js';
+import { WORLD_NODE_IDS, worldSynergy, worldStartFx, worldEventPays } from './world.js';
 export { hooks, setHooks };
 /* The host services the rules call, bound late so a hook swapped in by setHooks
    (or wrapped by a test) is always the one that runs. */
@@ -20,6 +21,7 @@ export { hooks, setHooks };
 const sync=now=>{acccReconcile();hooks.sync(now)},sysTo=(pi,msg)=>hooks.sysTo(pi,msg),askPlayer=(pi,opt)=>hooks.askPlayer(pi,opt),announceAll=(title,html)=>hooks.announceAll(title,html),revealAll=(title,html)=>hooks.revealAll(title,html);
 /* ================= STATE & HELPERS ================= */
 let fxSeq=0;
+const WORLD_COUNT=WORLD_NODE_IDS.length;
 export function pname(i){return S.players[i].name}
 export function log(t){S.log.push(t);S.logN=(S.logN|0)+1}
 /* ---- floating FX: visible on every screen, driven purely by synced state ---- */
@@ -233,9 +235,11 @@ export function madePay(){
 /* ================= GAME FLOW (host) ================= */
 export function initGame(defs){
  Net.gameEpoch=(Net.gameEpoch||0)+1;
- rebuildWorld(!!Net.dlcGeo);
  const boardLayout=Net.boardLayout||(Net.ringworld?'ringworld':'random');
- const quikSlot=(boardLayout==='ringworld'||boardLayout==='megaring')?0:Math.floor(Math.random()*QUIK_SLOTS.length);
+ /* the WORLD MAP layout is the whole world: it forces the WORLD EXPANSION on */
+ const world=!!Net.dlcWorld||boardLayout==='worldmap';
+ rebuildWorld(!!Net.dlcGeo,world);
+ const quikSlot=(boardLayout==='ringworld'||boardLayout==='megaring'||boardLayout==='worldmap')?0:Math.floor(Math.random()*QUIK_SLOTS.length);
  const order=defs.map((_,i)=>i);
  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=order[i];order[i]=order[j];order[j]=t}
  const seated=order.map(i=>defs[i]);
@@ -246,16 +250,18 @@ export function initGame(defs){
   Net.myIdx=order.indexOf(hostWas);
  }
  const goal=clampGoal(Net.goal);
- setS({backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false,bot:!!d.bot})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,layoutKind:boardLayout,ringworld:boardLayout==='ringworld',dlcGeo:!!Net.dlcGeo,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,bondmageddonUsed:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null,acccFiles:[],lobbied:false,referred:false});
+ setS({backroomAbilityUsed:false,players:seated.map((d,i)=>({name:d.name,color:(charMeta(d.char)||{}).color||PCOLORS[i%PCOLORS.length],char:d.char||null,money:15,intel:2,cortisol:0,raided:0,pos:'quik',visited:{quik:true},dc:false,bot:!!d.bot})),cur:0,turn:1,phase:'move',steps:3,goal,owner:{},bugs:{},seizeCount:{},sisyPayout:10,deck:shuffle(CARDS.map(c=>c.id)),discard:[],spun:false,audited:false,cooked:false,budgeted:false,extraStep:false,slipped:false,caution:false,dossier:false,jtUsed:false,spinKind:'press',mood:'CALM',wire:'all quiet on the wire… for now',fx:[],over:false,mode:null,log:[],chat:(Net.lobbyChat||[]).slice(-25),logN:0,chatN:0,quikSlot,boardLayout:null,boardEdges:null,layoutKind:boardLayout,ringworld:boardLayout==='ringworld',dlcGeo:!!Net.dlcGeo,dlcWorld:world,fogOfWar:!!Net.fogOfWar,rubble:{},ov:null,geoMissiled:false,geoBeach:false,geoBoeing:false,geoCrash:false,geoStage5:false,geoVenice:false,bondmageddonUsed:false,blockades:{},blockadeUsed:false,missileProbe:null,qantasGroundUntil:0,decline:null,acccFiles:[],lobbied:false,referred:false});
  const slot=QUIK_SLOTS[quikSlot];
  {const bots=hooks.bots();if(bots&&bots.resetForGame)bots.resetForGame((hooks.botSeed()|0)||((Math.random()*0x7fffffff)|0))}
- const generated=boardLayout==='megaring'?generateMegaRingBoard():(boardLayout==='ringworld'?generateRingworldBoard():generateRandomBoard(slot));S.boardLayout=generated.positions;S.boardEdges=generated.edges;
+ const generated=boardLayout==='worldmap'?generateWorldMapBoard():boardLayout==='megaring'?generateMegaRingBoard():(boardLayout==='ringworld'?generateRingworldBoard():generateRandomBoard(slot));S.boardLayout=generated.positions;S.boardEdges=generated.edges;
  applyLayoutFromState();
  Net.started=true;
  log('🌅 A new board is dealt — '+NODES.length+' exhibits, '+EDGES.length+' freshly rebuilt connections, '+S.players.length+' at the table.');
  if(boardLayout==='ringworld')log('⭕ RINGWORLD — every exhibit is arranged around central Quikstop in three concentric rings.');
  else if(boardLayout==='megaring')log('⭕ MEGA RING — every exhibit sits on one large ring, connected to the central Quikstop hub.');
+ else if(boardLayout==='worldmap')log('🌍 WORLD MAP — every exhibit is pinned where it lives; Quikstop opens in Australia.');
  else log('🧭 High-value targets are seeded further from Quikstop; the board and routes are reshuffled every game.');
+ if(S.dlcWorld)log('🌐 WORLD EXPANSION — '+WORLD_COUNT+' global exhibits join the board: central banks, chokepoints, mines, wealth funds and one Nigerian prince.');
  if(S.dlcGeo)log('🌍 GEOGRAPHY DLC — 12 extra exhibits are on the board: missiles, resorts, disputed waters, ESG pillars, the hermit kingdom and one free country.');
  log('🎲 Seating was shuffled. First to move: '+S.players[0].name+'.');
  log('⛽ Quikstop opened '+slot.label+' this game. Everyone starts there with $15 and 2 Intel.');
@@ -302,6 +308,11 @@ export async function startTurn(){
  if(own('rba')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🏛️ Inside the Reserve Bank: −1 Cortisol (now '+p.cortisol+').')}
  if(own('sat')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🛰️ Hiding out in the dry country: −1 Cortisol (now '+p.cortisol+').')}
   if(own('gold')&&p.cortisol>0){const relief=Math.min(2,p.cortisol);p.cortisol-=relief;fxAt(S.cur,'🔥−'+relief,'#8fbf7f');log('🪙 Gold-coloured coins somehow soothe the nerves: −'+relief+' Cortisol (now '+p.cortisol+').')}
+ if(S.dlcWorld)worldStartFx(NODES.filter(n=>S.owner[n.id]===S.cur),own).forEach(f=>{
+  if(f.c<0&&p.cortisol>0){const r=Math.min(-f.c,p.cortisol);p.cortisol-=r;fxAt(S.cur,'🔥−'+r,'#8fbf7f');log('🌐 '+f.name+': −'+r+' Cortisol (now '+p.cortisol+').')}
+  else if(f.c>0)addCortisol(S.cur,f.c,f.name+' weighs on you');
+  if(f.s)giveIntel(S.cur,f.s,f.name);
+ });
  if(S.dlcGeo&&own('geo_pillars')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🧱 ESG SHIELD — the Pillars absorb 1 Cortisol (now '+p.cortisol+').')}
  if(S.dlcGeo&&S.ov){
   const ov=S.ov,turnIndex=S.turn*S.players.length+S.cur;
@@ -430,6 +441,7 @@ export function income(i){
  if(own('watson')&&own('coal'))syn+=2;
  if(own('mpc')&&chart)syn+=chart;
  if(S.dlcGeo&&own('geo_pyoncity')){let gc=0;GEO_NODE_IDS.forEach(gid=>{if(S.owner[gid]===i)gc++});if(gc)syn+=gc}
+ if(S.dlcWorld){const rc=t=>NODES.filter(n=>n.type===t&&S.owner[n.id]!=null&&S.owner[n.id]!==i).length;const w=worldSynergy(owned,own,rc);if(w){syn+=w;log('🌐 World expansion synergies: +$'+w+'.')}}
  /* the market mood pays — or takes */
  if(S.mood==='BOOM'&&comm>0){syn+=comm;log('📈 BOOM: commodities pay +$1 each (+'+comm+').')}
  if(S.mood==='FRENZY'&&med>0){syn+=med;log('🗣️ FRENZY: media pays +$1 each (+'+med+').')}
@@ -827,7 +839,9 @@ export function takeoverCost(pi,nid,base){
  if(flatSeize(nid))return base;
  if(S.dossier)return base;
  const prior=S.seizeCount[nid]||0;
- return base*Math.pow(2,Math.max(1,prior));
+ let c=base*Math.pow(2,Math.max(1,prior));
+ if(S.dlcWorld&&S.owner[nid]!=null&&S.owner.w_jpm===S.owner[nid])c+=2; /* JPMORGAN: its owner's nodes cost the buyer +$2 */
+ return c;
 }
 export async function doMove(pi,id){
  if(!canReach(id)){sysTo(pi,qantasGroundedReason()+' — the jet is still at the gate.');return}
@@ -979,6 +993,7 @@ export async function endOfTurn(){
  if(!S.players.every(p=>p.bot))announceAll('MARKET EVENT — TURN '+S.turn,cardFace(card));
  const tk=S.owner.toktimer;if(tk!=null)giveIntel(tk,1,'Toktimer clocked the event');
  await card.run();
+ if(S.dlcWorld)worldEventPays(card.id,id=>S.owner[id]).forEach(w=>{if(w.amt)gain(w.owner,cs(w.amt),w.name);if(w.intel)giveIntel(w.owner,w.intel,w.name)});
  sync();
  if(await winCheck())return;
  nextTurn();
