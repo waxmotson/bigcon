@@ -76,10 +76,10 @@ test('worldmap layout places every node (base + geo + world) at its real place, 
     for (const id of BIG7) assert.ok(dist.has(id), id + ' reachable');
     assert.ok((ADJ.quik || []).length >= 4, 'Quikstop is a hub');
     assert.ok(Math.max(...dist.values()) <= 16, 'the world is crossable in 16 hops');
-    /* quik is in Australia: nearer to Sydney than to anything else on the map, and well east of Perth */
-    const sydney = engine.f.projectGeo(-33.9, 151.2), london = engine.f.projectGeo(51.5, -0.1), nyc = engine.f.projectGeo(40.7, -74);
+    /* quik is the home spawn in the middle of Australia (Alice Springs) */
+    const sydney = engine.f.projectGeo(-23.7, 133.9), london = engine.f.projectGeo(51.5, -0.1), nyc = engine.f.projectGeo(40.7, -74);
     const q = NMAP.quik;
-    assert.ok(Math.hypot(q.x - sydney.x, q.y - sydney.y) < 700, 'quik sits at the Sydney inset');
+    assert.ok(Math.hypot(q.x - sydney.x, q.y - sydney.y) < 700, 'quik sits in the middle of Australia');
     assert.ok(Math.hypot(q.x - london.x, q.y - london.y) > 3500 && Math.hypot(q.x - nyc.x, q.y - nyc.y) > 3500);
     /* world landmarks are where the real world has them */
     const near = (id, lat, lon, r) => { const p = engine.f.projectGeo(lat, lon); assert.ok(Math.hypot(NMAP[id].x - p.x, NMAP[id].y - p.y) < r, id + ' near its real spot'); };
@@ -283,33 +283,37 @@ test('the Bond Desk is anchored in Sydney', { timeout: 60000 }, async t => {
   assert.ok(W.GEO_ANCHORS.bond[0] < -33 && W.GEO_ANCHORS.bond[0] > -34.5 && W.GEO_ANCHORS.bond[1] > 151 && W.GEO_ANCHORS.bond[1] < 151.5);
   const p = e.f.projectGeo(-33.87, 151.2);
   assert.ok(Math.hypot(NMAP.bond.x - p.x, NMAP.bond.y - p.y) < 700, 'bond sits in the Sydney inset');
-  assert.ok(Math.hypot(NMAP.bond.x - NMAP.quik.x, NMAP.bond.y - NMAP.quik.y) < 900);
 });
 
 test('Australia is spread across the continent', { timeout: 60000 }, async t => {
   const { NMAP } = await seeded(t, 23);
   const at = (id, lat, lon, tol = 3) => { const g = W.GEO_ANCHORS[id]; assert.ok(Math.abs(g[0] - lat) < tol && Math.abs(g[1] - lon) < tol, id + ' is where it should be'); };
-  at('westpac', -31.9, 115.9); at('gold', -30.7, 121.5); at('bhp', -20.3, 118.6); at('anz', -37.8, 145); at('aus', -34.9, 138.6);
-  at('port', -21.3, 149.3); at('jt', -16.9, 145.8); at('press', -19.3, 146.8); at('mpc', -42.9, 147.3); at('nab', -32, 115.9); at('jim', -27.5, 153); at('watson', -32.9, 151.8); at('asic', -34.9, 138.6);
-  at('coal', -23.8, 151.3); at('train', -22, 148.2); at('sat', -23.7, 133.9); at('forklift', -12.5, 130.8);
-  assert.ok(NMAP.westpac.x < NMAP.quik.x - 700 && NMAP.bhp.x < NMAP.quik.x - 700, 'the west of Australia is far from Sydney');
+  at('westpac', -21.9, 131.5); at('commbank', -19.65, 134.2); at('quik', -23.7, 133.9); at('qantas', -22.3, 136.8); at('gold', -30.7, 121.5); at('bhp', -20.3, 118.6); at('anz', -25.9, 137.6); at('aus', -34.9, 138.6);
+  at('port', -21.3, 149.3); at('jt', -16.9, 145.8); at('press', -19.3, 146.8); at('mpc', -42.9, 147.3); at('nab', -29, 134.75); at('jim', -27.5, 153); at('watson', -20.7, 139.5); at('asic', -34.9, 138.6);
+  at('coal', -23.8, 151.3); at('train', -22, 148.2); at('sat', -19.4, 129.6); at('forklift', -12.5, 130.8);
+  assert.ok(NMAP.bhp.x < NMAP.quik.x - 400 && NMAP.bond.x > NMAP.quik.x + 600, 'Perth and Sydney are far from the middle');
 });
 
 test('the non-place exhibits float to open ground, never in a crowd, and not to the same place every game', { timeout: 120000 }, async t => {
   const FL = W.WORLD_FLOATING;
   assert.ok(FL.length >= 12);
+  /* the drawn (warped) land, sampled finely along every edge */
+  const proj = (engine, ring) => ring.flatMap(([lo, la], i) => { const [lo2, la2] = ring[(i + 1) % ring.length]; return Array.from({ length: 12 }, (_, k) => { const p = engine.f.projectGeo(la + (la2 - la) * k / 12, lo + (lo2 - lo) * k / 12); return [p.x, p.y]; }); });
+  const inside = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+  const onLandXY = (engine, x, y) => { const land = W.LAND.map(r => proj(engine, r)), water = W.WATER.map(r => proj(engine, r)); return land.some(r => inside(x, y, r)) && !water.some(r => inside(x, y, r)); };
   const spots = [];
   for (const seed of [31, 32, 33, 34]) {
-    const { NODES, NMAP, ADJ } = await seeded(t, seed, seed % 2 === 0);
+    const { e, NODES, NMAP, ADJ } = await seeded(t, seed, seed % 2 === 0);
     const floats = FL.filter(id => NMAP[id]);
     assert.ok(floats.length >= 12);
     spots.push(Object.fromEntries(floats.map(id => [id, [NMAP[id].x, NMAP[id].y]])));
     const dist = bfs(ADJ, 'quik');
     for (const id of floats) {
-      const others = NODES.filter(n => n.id !== id && Math.hypot(n.x - NMAP[id].x, n.y - NMAP[id].y) < 400);
+      const others = NODES.filter(n => n.id !== id && Math.hypot(n.x - NMAP[id].x, n.y - NMAP[id].y) < 360);
       assert.equal(others.length, 0, id + ' floats clear of every other node (seed ' + seed + ')');
       assert.ok(ADJ[id].length >= 2, id + ' has edges to its neighbours');
       assert.ok(dist.has(id), id + ' is reachable');
+      assert.ok(onLandXY(e, NMAP[id].x, NMAP[id].y), id + ' floats on land, not at sea (seed ' + seed + ')');
     }
   }
   const ids = Object.keys(spots[0]);

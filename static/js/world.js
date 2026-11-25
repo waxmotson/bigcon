@@ -200,17 +200,17 @@ export function worldEventPays(cardId,ownerOf){
 /* ───── GLOBAL EDITION map geography ───── */
 /* lat/lon of the classic and Geography DLC exhibits (the world expansion carries its own `geo`). */
 export const GEO_ANCHORS={
- citi:[40.7061,-74.0088],commbank:[-33.8688,151.2093],nab:[-31.9550,115.8700],anz:[-37.8230,144.9530],westpac:[-31.9505,115.8605],
+ citi:[40.7061,-74.0088],commbank:[-19.6500,134.1900],nab:[-29.0100,134.7500],anz:[-25.9000,137.6000],westpac:[-21.9000,131.5000],
  bond:[-33.8700,151.2050],hedge:[41.0262,-73.6282],rba:[-33.8680,151.2112],asic:[-34.9200,138.5950],accc:[-35.2809,149.1300],gov:[-35.3081,149.1245],
  us:[38.8977,-77.0365],japan:[35.6762,139.6503],uk:[51.5074,-0.1278],aus:[-34.9285,138.6007],tenyear:[48.8566,2.3522],infl:[-34.6,-58.45],
  cash:[-33.8700,151.2000],stock:[31.2304,121.4737],oil:[29.7604,-95.3698],oilgraph:[31.9973,-102.0779],barrels:[51.9244,4.4777],tanker:[1.2,104.5],
  petronas:[3.1579,101.7116],gold:[-30.7489,121.4660],train:[-22.0,148.2],port:[-21.2800,149.3000],bhp:[-20.3100,118.5800],forklift:[-12.4634,130.8456],
- coal:[-23.8400,151.2600],quik:[-33.8830,151.1600],market:[-33.8860,151.1570],f1:[-37.8497,144.9680],qantas:[-33.9399,151.1753],bullet:[34.6937,135.5023],
+ coal:[-23.8400,151.2600],quik:[-23.7000,133.8800],market:[-33.8860,151.1570],f1:[-37.8497,144.9680],qantas:[-22.3000,136.8000],bullet:[34.6937,135.5023],
  press:[-19.2590,146.8180],fox:[40.7580,-73.9855],leak:[38.9072,-77.0369],jim:[-27.4700,153.0200],herald:[-37.8200,144.9800],bess:[38.9000,-77.0300],
  insider:[41.8781,-87.6298],photo:[-35.2900,149.1100],bigshort:[34.0522,-118.2437],news:[-27.4698,153.0251],wef:[46.8,9.8366],
  back:[36.1699,-115.1398],term:[40.7614,-73.9776],golf:[33.4735,-81.9748],whistle:[55.7558,37.6173],iface:[47.6062,-122.3321],
- school:[-33.8710,151.2070],ib:[46.2044,6.1432],mpc:[-42.8821,147.3272],sisy:[37.9060,22.8800],group:[-25.3444,131.0369],sat:[-23.7000,133.8800],
- watson:[-32.9283,151.7817],bessent:[38.8950,-77.0400],chalmers:[-27.6500,153.1000],albo:[-35.3076,149.1244],trump:[40.7624,-73.9733],bullock:[-33.8700,151.2150],
+ school:[-33.8710,151.2070],ib:[46.2044,6.1432],mpc:[-42.8821,147.3272],sisy:[37.9060,22.8800],group:[-25.3444,131.0369],sat:[-19.4000,129.6000],
+ watson:[-20.7300,139.4900],bessent:[38.8950,-77.0400],chalmers:[-27.6500,153.1000],albo:[-35.3076,149.1244],trump:[40.7624,-73.9733],bullock:[-33.8700,151.2150],
  bond007:[51.4975,-0.1357],rock:[21.3069,-157.8583],brad:[37.2090,-93.2923],jt:[-16.9200,145.7700],made:[-48.8767,-123.3933],asics:[34.6900,135.1956],toktimer:[-42.8821,147.3272],
  geo_missile:[40.0333,128.1833],geo_shahed:[35.6892,51.3890],geo_wonsan:[39.1500,127.4400],geo_pyoncity:[39.0392,125.7625],geo_pyothotel:[39.0310,125.7340],
  geo_boeing:[47.9790,-122.2020],geo_scs:[14.5,114.0],geo_stage5:[39.7900,125.7500],geo_pillars:[50.8503,4.3517],geo_venice:[45.4408,12.3155],geo_tuvalu:[-8.5211,179.1983],geo_kim:[39.0100,125.7300]
@@ -250,11 +250,14 @@ export function regionOf(n){
 export const WORLD_FLOATING=['term','geo_stage5','stock','infl','tenyear','cash','oilgraph','iface','back','toktimer','made','sisy','photo','insider','news'];
 /* open ocean and sparse land: [lat, lon, radius in degrees] */
 export const FLOAT_ZONES=[
- [42,-165,10],[8,-135,10],[-24,-140,13],[-46,-118,9],   /* the Pacific */
- [-28,-12,10],[-58,-30,8],                              /* the South Atlantic */
- [-28,80,12],[-56,60,8],[-57,115,8],                    /* the Indian and Southern Oceans */
- [62,100,12],[66,140,9],[47,100,8],                     /* Siberia and Mongolia */
- [23,8,8],[60,-100,10],[21,158,9]                       /* the Sahara, Canada, the western Pacific */
+ [62,100,12],[66,140,9],[46,103,6],[48,68,5],[33,88,6],    /* Siberia, Mongolia, the steppe, Tibet */
+ [23,8,8],[22,25,6],[20,49,4],[0,22,6],[-22,22,5],         /* the Sahara, the Empty Quarter, the Congo, the Kalahari */
+ [60,-100,10],[58,-120,7],[64,-152,5],[74,-40,7],          /* Canada, Alaska, the Greenland ice */
+ [-8,-62,8],[-44,-68,4],[-24,124,5],                       /* the Amazon, Patagonia, the Gibson Desert */
+ [55,85,6],[70,115,6],[14,0,6],[12,32,5],[-12,18,4],       /* more steppe and tundra, the Sahel, Sudan, Angola */
+ [42,-100,5],[68,-110,6],[52,-72,5],[-14,-50,6],[-34,-64,4], /* the Great Plains, the Arctic, Quebec, the Cerrado, the Pampas */
+ [24,44,4],[32,57,3],                                      /* the Arabian interior, the Iranian plateau */
+ [-78,40,10],[-78,-100,10]                                 /* the Antarctic ice */
 ];
 /* edges that cross the date line: drawn as a pair of arrows off the right edge and back in at the left */
 export const WORLD_WRAPS=[['rock','w_fiji']];
@@ -323,3 +326,7 @@ export const WATER=[
  [[28,41.2],[28,43],[29.5,45.3],[31,46.5],[33.5,46],[33.5,44.5],[36.5,45.4],[38,47],[39.5,43.5],[41.5,41.7],[36,41.2],[31,41.1]],
  [[47,45],[50,46.5],[53.2,45.5],[53,42],[53.5,40],[54,37],[51,36.7],[49,37.5],[49.2,40],[47.5,43]]
 ];
+
+/* is a raw [lat,lon] on the drawn land (inside a LAND ring and outside every WATER ring)? */
+const inRing=(lat,lon,r)=>{let c=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const [xi,yi]=r[i],[xj,yj]=r[j];if((yi>lat)!==(yj>lat)&&lon<(xj-xi)*(lat-yi)/(yj-yi)+xi)c=!c}return c};
+export function onLand(lat,lon){return LAND.some(r=>inRing(lat,lon,r))&&!WATER.some(r=>inRing(lat,lon,r))}

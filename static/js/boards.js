@@ -3,7 +3,7 @@
 import { NODES, NMAP, EDGES, WORLD_EDGES, WORLD_EXP, worldRandomBounds, ORIGINAL_NODE_LAYOUT, ORIGINAL_LAYOUT_BY_ID, HIGH_VALUE_NODE_IDS, HIGH_VALUE_BASE_IDS, GEO_HIGH_VALUE_IDS, QUIK_SLOTS, rebuildAdj, setEdges } from './data.js';
 import { S } from './state.js';
 import { shuffle } from './util.js';
-import { LAND, WATER, WORLD_ROUTES, WORLD_RANDOM_SCALE, WORLD_FLOATING, FLOAT_ZONES, GATEWAY_REGIONS, geoOf, regionOf } from './world.js';
+import { LAND, WATER, WORLD_ROUTES, WORLD_RANDOM_SCALE, WORLD_FLOATING, FLOAT_ZONES, onLand, GATEWAY_REGIONS, geoOf, regionOf } from './world.js';
 export function nodeBox(n){
  const sizes={card:[150,84],photo:[140,92],wide:[170,100],bubble:[150,80],logo:[150,80],chart:[130,64],news:[150,84],made:[140,74],mpc:[164,96],sat:[170,90]};
  return sizes[n.shape]||[150,80];
@@ -326,7 +326,7 @@ function spreadClusters(radius,skip){
  });
 }
 /* The non-place exhibits (WORLD_FLOATING) are dropped, after everything else has settled, at a random spot in an open zone
-   (ocean, tundra, desert), clear of every other box by a generous margin. The host runs this once; the result travels in
+   (tundra, desert, jungle, ice: always on land), clear of every other box by a generous margin. The host runs this once; the result travels in
    S.boardLayout, so every client sees the same spots. */
 function placeFloaters(float){
  const m=worldMapMetrics(),fixed=NODES.filter(n=>!float.has(n.id)),placed=[];
@@ -334,11 +334,13 @@ function placeFloaters(float){
  const ids=NODES.filter(n=>float.has(n.id)).map(n=>n.id);
  shuffle(ids.slice()).forEach(id=>{
   let spot=null,best=null,bestD=-1;
-  for(const clear of [560,480,420]){
-   for(let t=0;t<400&&!spot;t++){
+  for(const clear of [560,480,420,380]){
+   for(let t=0;t<1500&&!spot;t++){
     const z=FLOAT_ZONES[Math.floor(Math.random()*FLOAT_ZONES.length)];
     const ang=Math.random()*Math.PI*2,rad=z[2]*Math.sqrt(Math.random());
-    const p=projectGeo(z[0]+Math.sin(ang)*rad*0.8,z[1]+Math.cos(ang)*rad);
+    const la=z[0]+Math.sin(ang)*rad*0.8,lo=z[1]+Math.cos(ang)*rad;
+    if(!onLand(la,lo))continue;
+    const p=projectGeo(la,lo);
     if(p.x<150||p.x>m.w-150||p.y<560||p.y>m.h-300)continue;
     const d=Math.min(dmin(p,fixed),dmin(p,placed));
     if(d>bestD){bestD=d;best=p}
