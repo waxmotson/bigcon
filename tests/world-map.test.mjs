@@ -219,11 +219,11 @@ test('placeholder nodes render as text cards without an image; an image path tak
   t.after(() => engine.dispose());
   engine.f.rebuildWorld(true, true);
   const { NMAP } = engine.acc;
-  const n = NMAP.w_toyota;
-  assert.ok(!n.photo, 'Toyota has no photo yet');
+  const n = NMAP.w_cushing;
+  assert.ok(!n.photo, 'Cushing has no photo yet');
   const svg = engine.f.nodeSVG(n, 'node');
   assert.ok(!svg.includes('<image'), 'no <image> for a placeholder node');
-  assert.ok(svg.includes('TOYOTA') && svg.includes(n.icon), 'name and icon are drawn');
+  assert.ok(svg.includes('CUSHING') && svg.includes(n.icon), 'name and icon are drawn');
   assert.ok(svg.includes('node-card'));
   for (const w of engine.acc.WORLD_NODES) {
     const s = engine.f.nodeSVG(w, 'node');
