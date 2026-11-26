@@ -90,7 +90,7 @@ export function showRules(){
  +'<li><b>CORAL BLEACHING</b> — an extra market event that only exists on the Global Edition. The Reef’s blockade and income are off for the next 2 rounds and its owner takes +1 Cortisol.</li>'
  +'<li><b>THE CRUISE SHIP</b> — standing on a <b>WATER node</b> (the four chokepoints, the South China Sea, Venice, Wonsan, Tuvalu, Fiji, Nauru, Papua New Guinea, Sri Lanka, Easter Island, the Caymans, the BVI, Bermuda, Svalbard, Iceland, Greenland, the Reef, Hawaii (The Rock), Marina Bay, Dover, Nord Stream, Barcelona, the Docks, the Tanker Fleet and the Rotterdam barrel yard), pay $2 in your move phase to sail to any other WATER node; the voyage ends your move. Its owner takes +1 Cortisol each turn unless they also own a REGULATOR.</li>'
  +'<li><b>THE IMF</b> — BAILOUT (your action, once per turn): lend a rival $6 of your own money; $8 is due to you at the start of their next-but-one turn, or they take +2 Cortisol and the loan is written off. One IMF loan per rival at a time.</li>'
- +'<li><b>THE TARIFF WALL</b> — free, once per turn: name a node type. Rivals pay $2 extra (to the wall’s owner) whenever they seize or take over a node of that type. The current wall is shown above THE TURN.</li>'
+ +'<li><b>THE TARIFF WALL</b> — free, once per turn: name a node type. Rivals pay $4 extra (to the wall’s owner) whenever they seize or take over a node of that type, plus an IMPORT DUTY of $1 per node of that type they hold (up to $4) at the start of each of their turns. The current wall is shown above THE TURN.</li>'
  +'<li><b>WOOLWORTHS</b> — your seizures cost $1 less, and every seizure you make gives each rival +1 Cortisol. <b>ANZCERTA</b> replaces the NZ sheep: +$1 per Australian or NZ node and no tolls between them. <b>APPLE</b> pays $2 per tax haven; <b>THE 20-FOOT BOX</b> $1 per chokepoint; <b>OVERSEAS FILIPINO WORKERS</b> −1 Cortisol a turn and $1 per region you hold a node in; <b>THE DOHA ROUND</b> (once per game) pays $2 per commodity for 3 turns, then stalls.</li></ul>'
  +'<h4>🌍 The Geography DLC — the board expands over the water</h4><p>Host-toggled in the lobby (look for <b>ENABLE THE GEOGRAPHY DLC</b>). <b>On: the board deals 82 exhibits.</b> Off: the same 70 exhibits as always.</p>'
  +'<ul><li><b>MISSILE COMMAND ($8) / IRANIAN SHAHED DRONE ($8)</b> — you can own <b>MISSILE COMMAND or the SHAHED DRONE</b>, but not both. Either owned launch site can LAUNCH A MISSILE ($4 + 1 🛈, once per turn): stand on the launcher you own to fire, or own KIM JONG UN to fire from anywhere — during your move (the launch ends it) or as your action. You can’t hit your own nodes, or any other node held by the Pillars owner. An <b>owned node is expropriated with NO payout</b> to its former owner; either way it becomes <b>RUBBLE</b> until rebuilt at list price. The <b>ESG Pillars themselves can be missile-struck</b>, and the shield falls with them. Strike a <b>REGULATOR</b> and an investigation opens — <b>ASIC or the ACCC</b> comes for you on your next turn: a 50/50 indictment, and <b>+1 Cortisol</b> whether it lands or not.</li>'
@@ -226,7 +226,7 @@ export function worldTip(n){
   }else t+='\n'+b.icon+' A MEMBER of '+bn+'. The bloc owner multiplies its income ×(1 + 0.25 per member held, '+(b.noCap?'no cap':'max 2.5')+')'+(b.noWto?'; the treaty is outside the WTO’s jurisdiction, so no file ever opens.':', and '+(BLOC_FREE+1)+' or more members open a WTO file.');
  }
  if(n.id==='w_tariffwall')t+='\n🧱 The wall stands on: '+(S.tariffType||'nothing yet')+'.';
- else if(S.tariffType===n.type&&tariffOwner()!=null)t+='\n🧱 TARIFF WALL: rivals of '+pname(tariffOwner())+' pay $2 extra to seize a '+n.type+' node.';
+ else if(S.tariffType===n.type&&tariffOwner()!=null)t+='\n🧱 TARIFF WALL: rivals of '+pname(tariffOwner())+' pay $4 extra to seize a '+n.type+' node, and $1 a node in import duty each turn.';
  if(n.id==='w_gbr'&&reefBleached())t+='\n🪸 BLEACHED: its blockade and income are off until the end of round '+(S.bleachUntil-1)+'.';
  if(isWaterNode(n.id))t+='\n🌊 A WATER node: the Cruise Ship calls here.';
  if(n.id==='w_pyramids')t+='\n🔺 The next PYRAMID payout: $'+pyramidPayout()+' (it doubles every time it pays and resets when THE BOULDER ROLLS BACK DOWN).';
@@ -345,7 +345,7 @@ export function worldMoveButtons(me,p){
  let h='';
  if(S.owner.w_cruise===me){const why=worldBlocked(me,'cruise');h+='<button class="act" data-act="worldmode:cruise"'+(why?' disabled':'')+' title="'+esc(why||'Pay $2 and sail to any other WATER node; the voyage ends your movement.')+'">🛳️ CRUISE SHIP — $2, sail to any WATER node</button>'}
  if(blockadeFree(me)){const open=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));h+='<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&open?'':' disabled')+' title="FREE, once per turn: you hold two blockade sources, so walling off a node uses neither your action nor your movement.">🚧 BLOCKADE — FREE (once per turn)</button>'}
- if(S.owner.w_tariffwall===me){const why=worldBlocked(me,'tariff');h+='<button class="act" data-act="tariffmode"'+(why?' disabled':'')+' title="'+esc(why||'Free, once per turn: name the node type that costs rivals $2 extra to seize.')+'">🧱 TARIFF WALL — name a type'+(S.tariffType?' (now '+S.tariffType+')':'')+'</button>'}
+ if(S.owner.w_tariffwall===me){const why=worldBlocked(me,'tariff');h+='<button class="act" data-act="tariffmode"'+(why?' disabled':'')+' title="'+esc(why||'Free, once per turn: name the node type that costs rivals $4 extra to seize.')+'">🧱 TARIFF WALL — name a type'+(S.tariffType?' (now '+S.tariffType+')':'')+'</button>'}
  return h;
 }
 export function worldPickable(n){
@@ -943,7 +943,7 @@ export function renderSide(){
 export function worldStrip(){
  if(!S||!S.dlcWorld)return '';
  const bits=[],me=Net.myIdx;
- if(tariffOwner()!=null)bits.push('🧱 TARIFF WALL on <b>'+S.tariffType+'</b> ($2 extra, paid to '+esc(pname(tariffOwner()))+')');
+ if(tariffOwner()!=null)bits.push('🧱 TARIFF WALL on <b>'+S.tariffType+'</b> ($4 extra + import duty, paid to '+esc(pname(tariffOwner()))+')');
  else if(S.owner.w_tariffwall!=null&&!S.tariffType)bits.push('🧱 the Tariff Wall is unbuilt');
  if(reefBleached())bits.push('🪸 the Reef is <b>BLEACHED</b> — no blockade, no income');
  if(inflationExtra()>0)bits.push('📈 INFLATION: every seizure costs <b>+$'+inflationExtra()+'</b>');
@@ -1007,7 +1007,7 @@ export function worldAbilityButtons(me,backroom){
      ['carbon','w_amazon','carbon','🌳 SELL CARBON CREDITS — $3 per non-commodity node','Once per turn: $3 for every node of yours that is not a COMMODITY.'],
      ['vanish','w_bermuda','worldmode:vanish','🌀 THE VANISH — reappear anywhere (once per turn)','Disappear until your next turn; rivals cannot target you. You reappear at any node you name.'],
      ['bailout','w_imf','worldmode:bailout','🆘 IMF BAILOUT — lend a rival $6 (repay $8)','Lend a chosen rival $6 of your own money; $8 is due back at the start of their next-but-one turn, or they take +2 Cortisol.'],
-     ['tariff','w_tariffwall','tariffmode','🧱 TARIFF WALL — name a node type'+(S.tariffType?' (now '+S.tariffType+')':''),'Free, once per turn: rivals pay $2 extra (to you) to seize a node of the type you name.'],
+     ['tariff','w_tariffwall','tariffmode','🧱 TARIFF WALL — name a node type'+(S.tariffType?' (now '+S.tariffType+')':''),'Free, once per turn: rivals pay $4 extra (to you), plus $1 a node in import duty each turn, to seize a node of the type you name.'],
      ['doha','w_doha','doha','🕰️ START THE DOHA ROUND — +$2 per commodity for 3 turns (once per game)','Open a trade round: $2 per COMMODITY node you own at the start of each of your next 3 turns, then the talks stall.']
     ].forEach(([k,nid,act,label,tip])=>{if(S.owner[nid]!==me)return;const why=worldBlocked(me,k);if(backroom&&k==='tariff')return;btns.push('<button class="act" data-act="'+act+'"'+((why||(backroom&&S.steps<2))?' disabled':'')+' title="'+esc(why||tip)+'">'+label+'</button>')});
  return backroom?btns.map(h=>h.replace(/<\/button>$/,' · 2 steps</button>')):btns;

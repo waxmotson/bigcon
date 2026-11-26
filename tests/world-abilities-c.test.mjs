@@ -241,20 +241,20 @@ test('Tariff Wall: a free once-per-turn change; rivals pay +$2 (to the owner) to
   assert.equal(S.tariffType, 'BANK', 'once per turn');
   await act(e, 0, { act: 'tariff', kind: 'NOT A TYPE' });
   assert.equal(S.tariffType, 'BANK');
-  assert.equal(e.ctx.tariffFor(1, 'nab'), 2); assert.equal(e.ctx.tariffFor(0, 'nab'), 0, 'not on the owner');
+  assert.equal(e.ctx.tariffFor(1, 'nab'), 4); assert.equal(e.ctx.tariffFor(0, 'nab'), 0, 'not on the owner');
   assert.equal(e.ctx.tariffFor(1, 'bhp'), 0, 'not on another type');
-  assert.equal(e.ctx.botView(1).seizePrice(1, 'nab'), base + 2, 'the bots see the surcharge');
+  assert.equal(e.ctx.botView(1).seizePrice(1, 'nab'), base + 4, 'the bots see the surcharge');
   /* a rival seizes a BANK: pays list + $2, the $2 goes to the wall's owner */
   S.deck = ['quiet', 'quiet', 'quiet'];
   arm(S, 1); S.players[1].pos = 'nab'; S.players[1].money = 40; const w0 = money(S, 0);
   await e.f.doSeize(1); await settle();
   assert.equal(S.owner.nab, 1);
-  assert.equal(money(S, 1), 40 - base - 2 + QUIET);
-  assert.equal(money(S, 0) - w0, 2 + QUIET, 'the wall collects');
+  assert.equal(money(S, 1), 40 - base - 4 + QUIET);
+  assert.equal(money(S, 0) - w0, 4 + QUIET, 'the wall collects');
   /* the owner pays no surcharge on their own wall, and a non-wall type is untouched */
   arm(S, 0); S.players[0].pos = 'commbank'; S.players[0].money = 40;
   await e.f.doSeize(0); await settle();
-  assert.equal(money(S, 0), 40 - e.f.seizeListPrice(0, N.commbank) + QUIET);
+  assert.equal(money(S, 0), 40 - e.f.seizeListPrice(0, N.commbank) + QUIET + 1, 'plus  import duty from the rival who now holds a BANK');
   /* the wall turns up on the board header and the node tip */
   const strip = e.ctx.worldStrip();
   assert.ok(strip.includes('TARIFF WALL') && strip.includes('BANK'), 'shown in the side panel');
@@ -262,7 +262,7 @@ test('Tariff Wall: a free once-per-turn change; rivals pay +$2 (to the owner) to
   /* a takeover pays the surcharge on top of the doubled price */
   S.deck = ['quiet', 'quiet'];
   arm(S, 2); S.players[2].pos = 'nab'; S.players[2].money = 80;
-  const price = e.f.takeoverCost(2, 'nab', e.f.seizeListPrice(2, N.nab)) + 2;
+  const price = e.f.takeoverCost(2, 'nab', e.f.seizeListPrice(2, N.nab)) + 4;
   await e.f.doSeize(2); await settle();
   assert.equal(S.owner.nab, 2);
   assert.equal(money(S, 2), 80 - price + QUIET);
@@ -648,4 +648,22 @@ test('THE ANTARCTIC TREATY multiplies its claims like a bloc, never opens a WTO 
   assert.ok(await treatyHit(1, ['w_aq_adelie']), 'a rival claim is not recognised');
   assert.ok(!(await treatyHit(1, [])), 'no territory, no Cortisol');
   assert.ok(!(await treatyHit(0, ['w_aq_adelie'])), 'the Treaty owner is exempt');
+});
+
+test('THE TARIFF WALL import duty: $1 per walled-type node a rival holds (up to $4) at the start of their turn, doubled in a tariff war', async t => {
+  const { e, S } = await worldGame(t, { players: 3 });
+  const banks = e.ctx.NODES.filter(n => n.type === 'BANK').map(n => n.id);
+  S.owner = { w_tariffwall: 0 }; S.tariffType = 'BANK';
+  banks.slice(0, 2).forEach(id => { S.owner[id] = 1 });
+  banks.slice(2, 8).forEach(id => { S.owner[id] = 2 });
+  assert.equal(e.ctx.tariffDuty(1), 2);
+  assert.equal(e.ctx.tariffDuty(2), 4, 'capped at $4');
+  assert.equal(e.ctx.tariffDuty(0), 0, 'never on the owner');
+  S.tariffWarUntil = S.turn + 2;
+  assert.equal(e.ctx.tariffDuty(1), 4, 'a tariff war doubles it');
+  S.tariffWarUntil = 0;
+  S.cur = 1; const m0 = S.players[0].money;
+  e.f.startTurn(); await settle();
+  assert.ok(S.log.some(l => l.includes('IMPORT DUTY')), 'the duty is logged');
+  assert.equal(S.players[0].money - m0, 2, 'the wall collects $2');
 });

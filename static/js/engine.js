@@ -375,6 +375,11 @@ export async function startTurn(){
   else log('🕰️ The Doha round meets without its host. Nothing is agreed.');
   if(d.left<=0){log('🕰️ The Doha round STALLS. As ever. The communiqué says “progress”.');fxAt(S.cur,'🕰️ STALLED','#9ad7ff')}
  }
+ /* 🧱 THE TARIFF WALL: the import duty on a rival's walled-type holdings */
+ if(S.dlcWorld){const duty=tariffDuty(S.cur),to=tariffOwner();
+  if(duty&&to!=null){const p=S.players[S.cur],paid=Math.min(duty,Math.max(0,p.money));
+   if(paid){p.money-=paid;S.players[to].money+=paid;fxAt(S.cur,'🧱 −$'+paid,'#ff6b5e');fxAt(to,'🧱 +$'+paid,'#7fe08d');
+    log('🧱 IMPORT DUTY: '+pname(S.cur)+' pays $'+paid+' to '+pname(to)+' on their '+S.tariffType+' holdings behind THE TARIFF WALL.')}}}
  /* 🌐 BANK OF JAPAN (Mrs Watanabe's carry trade): the carry trade comes due */
  if(S.dlcWorld&&S.carry&&S.carry[S.cur]){
   const loan=S.carry[S.cur]>1?S.carry[S.cur]:CARRY_LOAN,due=carryDue(loan);
@@ -949,7 +954,11 @@ export const BLACK_ODDS=0.47;
 /* …or ALL IN ON GREEN: the single zero (1 pocket in 37) pays 35 to 1 */
 export const GREEN_ODDS=1/37,GREEN_PAYS=35;
 export const CASINOS=['w_monaco','w_mbs'];
-const IMF_LOAN=6,IMF_REPAY=8,IMF_CORTISOL=2,DOHA_PER=2,CRUISE_FARE=2,TARIFF_EXTRA=2;
+const IMF_LOAN=6,IMF_REPAY=8,IMF_CORTISOL=2,DOHA_PER=2,CRUISE_FARE=2;
+/* THE TARIFF WALL: $4 on every rival seizure of the walled type, plus an IMPORT DUTY at the start of each rival's turn:
+   $1 per walled-type node they hold (up to $4), all paid to the wall's owner. A TARIFF WAR doubles both. */
+export const TARIFF_EXTRA=4,TARIFF_DUTY_CAP=4;
+export function tariffDuty(pi){const o=tariffOwner();if(o==null||o===pi)return 0;const c=NODES.filter(n=>n.type===S.tariffType&&S.owner[n.id]===pi&&!(S.rubble&&S.rubble[n.id])).length;return Math.min(TARIFF_DUTY_CAP,c)*(S.tariffWarUntil>S.turn?2:1)}
 export function isVanished(i){return !!(S&&S.dlcWorld&&S.vanished&&S.vanished[i]!=null)}
 export function hasEdge(a,b){return EDGES.some(e=>(e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a))}
 function commitEdges(list){S.boardEdges=list.map(e=>e.slice());setEdges(list.map(e=>e.slice()));rebuildAdj()}
@@ -1123,7 +1132,7 @@ const WORLD_ACTS={
   log('🆘 The IMF bails out '+pname(m.target)+': '+pname(pi)+' lends $'+IMF_LOAN+'. $'+IMF_REPAY+' is due to '+pname(pi)+' at the start of '+pname(m.target)+'’s next-but-one turn, or '+IMF_CORTISOL+' Cortisol (austerity) if they cannot pay.');
   await finishNodeAbility(pi);
  },
- /* THE TARIFF WALL: name the node type that costs rivals $2 extra to seize. A free action: it changes the wall and the phase carries on. */
+ /* THE TARIFF WALL: name the node type that costs rivals $4 extra to seize (and an import duty each turn). A free action: it changes the wall and the phase carries on. */
  async tariff(pi,m){
   const why=worldBlocked(pi,'tariff');
   if(why){sysTo(pi,why);return}
@@ -1133,7 +1142,7 @@ const WORLD_ACTS={
   if(S.tariffType===type){sysTo(pi,'The wall already stands on '+type+'.');return}
   S.tariffType=type;(S.wTurn||(S.wTurn={})).tariff=1;
   fxAt(pi,'🧱 '+type,'#f5c542');
-  log('🧱 '+pname(pi)+' raises THE TARIFF WALL on '+type+' nodes — every rival who seizes one pays $'+TARIFF_EXTRA+' extra, to '+pname(pi)+'.');
+  log('🧱 '+pname(pi)+' raises THE TARIFF WALL on '+type+' nodes — every rival who seizes one pays $'+TARIFF_EXTRA+' extra, and $1 a node in IMPORT DUTY each turn (up to $'+TARIFF_DUTY_CAP+'), to '+pname(pi)+'.');
   sync();
  },
  /* THE CRUISE SHIP: from a WATER node, pay $2 and sail to any other WATER node (ends your movement) */
@@ -2195,7 +2204,7 @@ const WORLD_CARDS_B=[
  run(){setMood('FRENZY','de-dollarisation — a currency, then a committee');roundWindow('brics',1);log('🧮 For one full round BRICS members pay ×2 and American nodes pay half.')}},
 {id:'elnino',icon:'🌊',title:'EL NIÑO',text:'The Pacific warms, the rain moves house. Fonterra, ANZCERTA, the Amazon and the Tulip Bulb pay nothing for one full round, and the Great Barrier Reef bleaches.',
  run(){setMood('CALM','El Niño — the rain has moved house');suspendNodes(AGRI_NODES,1);const ids=cardNodes(AGRI_NODES);log('🌊 Switched off for one round: '+(ids.length?ids.map(id=>NMAP[id].name.join(' ')).join(', '):'nothing owned — the paddocks were dry anyway')+'.');bleachReef()}},
-{id:'tariffwar',icon:'🥊',title:'A TARIFF WAR',text:'Retaliation, retaliation to the retaliation, a press conference. Every TARIFF WALL surcharge doubles until the end of next round, and the WTO’s owner collects $3 in filing fees.',
+{id:'tariffwar',icon:'🥊',title:'A TARIFF WAR',text:'Retaliation, retaliation to the retaliation, a press conference. Every TARIFF WALL surcharge and import duty doubles until the end of next round, and the WTO’s owner collects $3 in filing fees.',
  run(){setMood('PANIC','a tariff war — retaliation to the retaliation');S.tariffWarUntil=S.turn+2;log('🥊 The Tariff Wall surcharge is doubled until the end of next round.');const w=S.owner.w_wto;if(w!=null)gain(w,cs(3),'the filing fees roll in')}}
 ];
 export const CARDS=[

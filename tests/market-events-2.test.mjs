@@ -331,14 +331,14 @@ test('A TARIFF WAR: the Tariff Wall surcharge doubles until the end of next roun
   const { e, S } = await game(t, { world: true });
   S.owner = { w_tariffwall: 0, w_wto: 1 };
   S.tariffType = 'BANK';
-  assert.equal(e.ctx.tariffFor(2, 'citi'), 2);
+  assert.equal(e.ctx.tariffFor(2, 'citi'), 4);
   const b = money(S, 1);
   await run(e, 'tariffwar');
   assert.equal(money(S, 1), b + 3);
-  assert.equal(e.ctx.tariffFor(2, 'citi'), 4, 'doubled');
+  assert.equal(e.ctx.tariffFor(2, 'citi'), 8, 'doubled');
   assert.equal(e.ctx.tariffFor(0, 'citi'), 0, 'the wall owner still pays nothing');
-  at(S, 4, 0); assert.equal(e.ctx.tariffFor(2, 'citi'), 4, 'still doubled next round');
-  at(S, 5, 0); assert.equal(e.ctx.tariffFor(2, 'citi'), 2, 'back to normal');
+  at(S, 4, 0); assert.equal(e.ctx.tariffFor(2, 'citi'), 8, 'still doubled next round');
+  at(S, 5, 0); assert.equal(e.ctx.tariffFor(2, 'citi'), 4, 'back to normal');
 });
 
 test('the new cards resolve in a full end-of-turn, all of them, without bots or ticks throwing', async t => {
