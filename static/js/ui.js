@@ -85,7 +85,7 @@ export function showRules(){
 +'<li><b>QUIKSTOP</b> — THE SERVO: +$2 a turn for every player at the table (4 players = +$8). <b>THE GOLF CLUB</b> — THE BACK NINE: once per turn, a free action in your action phase: swap one of your nodes for a rival’s, with cash from either side; they accept or decline in private (bugs on both are cleared; the old $1 seizure discount is gone). <b>JIM CHALMERS</b> — TREASURY BRIEF: at your turn start, privately see the next two market events and choose which is drawn next.</li>'
 +'<li><b>Global Edition:</b> <b>BAIKONUR</b> also lets you ESCAPE ON THE ROCKET once per game: a raid on you is cancelled, your pawn flies to the cosmodrome (or a node you choose) and Cortisol drops to 5. <b>ZIMBABWE</b> — PRINT MONEY (once per game, your action): +20% of the goal, then every seizure costs +$1 more for good (inflation; shown on the strip above THE TURN). <b>THE SWISS VAULT</b> — stash cash (your action) beyond the reach of raids, fines, events and loans; withdraw freely once per turn from anywhere; stashed cash does not count toward the goal. <b>AREA 51</b> — ALIEN ABDUCTION (once per game, $4 + 3 Intel, your action): steal a rival’s node remotely; 50% it arrives as rubble. It cannot take Antarctica, MADE, anyone still holding an unused Commonwealth Bank refusal, Seed Vault holdings or Pillars holdings. <b>THE WALL STREET BELL</b> — RING THE BELL ($2, your action, once per turn): the next market event resolves now, and a rival’s regulator file opens or gains +1 scrutiny. <b>THE TURKISH LIRA</b> — once per game, every rival loses 20% of cash above $30. <b>THE BAHT 1997</b> — CONTAGION: when anyone is raided, every rival of the Baht’s owner with a node in the raided pawn’s region takes +1 Cortisol. <b>SRI LANKA</b> — DEFAULT (free, once per game): all your debts are wiped and your tolls this turn are free. <b>THE PYRAMIDS</b> — a rival who seizes a node adjacent to one of yours pays $1, then $2, $4, $8… (doubling each time; reset by THE BOULDER ROLLS BACK DOWN). <b>GREENLAND</b> — with DONALD TRUMP, force-buy Greenland at list price once per game. <b>MONACO</b> and <b>MARINA BAY SANDS</b> — PUT IT ALL ON BLACK (free, once per turn): bet any amount, 47% it pays double. <b>THE BIG GAMBLE</b> — own a casino, THE PYRAMIDS and THE SISYPHUS BOULDER: once per game every owned node is dealt out again; you lose those three and nobody is dealt all of them. If two players complete the con at the same moment, the one with the most money takes it. <b>BANK OF JAPAN</b> — the carry trade lends up to $50; every $2 not repaid next turn is +1 Cortisol.</li></ul>'
 +'<h4>🌐 Global Edition — trade blocs, the WTO, the water and the reef</h4>'
- +'<ul><li><b>THE QANTAS JET IS A REAL PLANE</b> — it starts parked at QANTAS and stays wherever it lands (✈️ on the map). Whoever stands on it can fly it for $3 to any node within about 8,500 km: the owner flies it, a rival who reaches it <b>steals it</b>.</li><li><b>TRADE BLOCS</b> — <b>THE EU SINGLE MARKET</b> and <b>BRICS</b>. Own the bloc node and your income from its <b>member nodes</b> (EU: the ECB, Deutsche Bahn, Bunds, Greek Debt, ASML, Tulip, Rotterdam, the Paris master chart, the Brussels Pillars, Venice; BRICS: nodes in Brazil, Russia, India, China and South Africa) is multiplied by <b>1 + 0.25 per member you hold, capped at ×2.5</b>. It is added at income time and logged; hover the bloc node to see your members, multiplier and file. The catch: with <b>4 or more members</b> a <b>WTO file</b> opens on you, each member held <b>beyond 3</b> adds that much scrutiny at each of your turn starts (4 members: +1, 5: +2, 6: +3), and at 3 the ruling lands — you keep 3 members, the rest return to the market, and you pay the usual 10% fine per node. Lobby, sell to the market or drop below 4 members to close it. <b>THE ANTARCTIC TREATY</b> is a third bloc over the nine territorial claims: the same multiplier, but Antarctica is outside the WTO’s jurisdiction, so no file ever opens — and while anyone owns the Treaty, the Peninsula sovereignty disputes are settled, but every other player holding Antarctic territory takes +1 Cortisol at the start of each of their turns (the Treaty recognises only its owner). The owner of <b>THE WTO</b> can <b>REFER</b> a rival’s bloc file ($4, your action, once per turn) for +1 scrutiny.</li>'
+ +'<ul><li><b>THE QANTAS JET IS A REAL PLANE</b> — it starts parked at QANTAS and stays wherever it lands (✈️ on the map). Whoever stands on it can fly it for $3 to any node within about 8,500 km: the owner flies it, a rival who reaches it <b>steals it</b>.</li><li><b>TRADE BLOCS</b> — <b>THE EU SINGLE MARKET</b> and <b>BRICS</b>. Own the bloc node and your income from its <b>member nodes</b> (EU: the ECB, Deutsche Bahn, Bunds, Greek Debt, ASML, Tulip, Rotterdam, the Paris master chart, the Brussels Pillars, Venice; BRICS: nodes in Brazil, Russia, India, China and South Africa) is multiplied by <b>1 + 0.25 per member you hold, capped at ×2.5</b> (THE ANTARCTIC TREATY has no cap). It is added at income time and logged; hover the bloc node to see your members, multiplier and file. The catch: with <b>4 or more members</b> a <b>WTO file</b> opens on you, each member held <b>beyond 3</b> adds that much scrutiny at each of your turn starts (4 members: +1, 5: +2, 6: +3), and at 3 the ruling lands — you keep 3 members, the rest return to the market, and you pay the usual 10% fine per node. Lobby, sell to the market or drop below 4 members to close it. <b>THE ANTARCTIC TREATY</b> is a third bloc over the nine territorial claims: the same multiplier, but Antarctica is outside the WTO’s jurisdiction, so no file ever opens — and while anyone owns the Treaty, the Peninsula sovereignty disputes are settled, but every other player holding Antarctic territory takes +1 Cortisol at the start of each of their turns (the Treaty recognises only its owner). The owner of <b>THE WTO</b> can <b>REFER</b> a rival’s bloc file ($4, your action, once per turn) for +1 scrutiny.</li>'
  +'<li><b>BLOCKADE</b> — ALBANESE, <b>THE GREAT BARRIER REEF</b> and <b>CRITICAL PATH ANALYSIS</b> each grant it. With one source it is a once-per-turn <b>action</b> (it ends your turn, as ever). Hold <b>any two</b> of the three and it becomes a <b>FREE action</b> — once per turn, in your move or action phase, using neither your action nor your movement. Only one blockade per turn, however many sources you hold. The Reef stops counting while it is bleached.</li>'
  +'<li><b>CORAL BLEACHING</b> — an extra market event that only exists on the Global Edition. The Reef’s blockade and income are off for the next 2 rounds and its owner takes +1 Cortisol.</li>'
  +'<li><b>THE CRUISE SHIP</b> — standing on a <b>WATER node</b> (the four chokepoints, the South China Sea, Venice, Wonsan, Tuvalu, Fiji, Nauru, Papua New Guinea, Sri Lanka, Easter Island, the Caymans, the BVI, Bermuda, Svalbard, Iceland, Greenland, the Reef, Hawaii (The Rock), Marina Bay, Dover, Nord Stream, Barcelona, the Docks, the Tanker Fleet and the Rotterdam barrel yard), pay $2 in your move phase to sail to any other WATER node; the voyage ends your move. Its owner takes +1 Cortisol each turn unless they also own a REGULATOR.</li>'
@@ -223,7 +223,7 @@ export function worldTip(n){
    const st=seated?blocStatus(me).find(x=>x.id===bid):null;
    if(st)t+='\n'+b.icon+' YOURS: '+st.k+' member node'+(st.k===1?'':'s')+' · income ×'+st.mult.toFixed(2)+' · +$'+st.bonus+'/turn'+(st.noWto?' · outside the WTO: no file':st.file?' · WTO file '+st.file.s+'/'+ACCC_RULING:st.k>BLOC_FREE?' · a WTO file is about to open':'')+(st.step?' · scrutiny +'+st.step+' per turn':'')+'.';
    else if(S.owner[bid]!=null)t+='\n'+b.icon+' Owned by '+pname(S.owner[bid])+'.';
-  }else t+='\n'+b.icon+' A MEMBER of '+bn+'. The bloc owner multiplies its income ×(1 + 0.25 per member held, max 2.5)'+(b.noWto?'; the treaty is outside the WTO’s jurisdiction, so no file ever opens.':', and '+(BLOC_FREE+1)+' or more members open a WTO file.');
+  }else t+='\n'+b.icon+' A MEMBER of '+bn+'. The bloc owner multiplies its income ×(1 + 0.25 per member held, '+(b.noCap?'no cap':'max 2.5')+')'+(b.noWto?'; the treaty is outside the WTO’s jurisdiction, so no file ever opens.':', and '+(BLOC_FREE+1)+' or more members open a WTO file.');
  }
  if(n.id==='w_tariffwall')t+='\n🧱 The wall stands on: '+(S.tariffType||'nothing yet')+'.';
  else if(S.tariffType===n.type&&tariffOwner()!=null)t+='\n🧱 TARIFF WALL: rivals of '+pname(tariffOwner())+' pay $2 extra to seize a '+n.type+' node.';
@@ -498,7 +498,7 @@ function nodeClass(n,curpos){
   return ok?(S.mode==='fly'&&S.dlcWorld?'click reach':'click'):'';
  }
  if(S.mode==='cruise')return (myTurn()&&n.id!==curpos&&isWaterNode(n.id)&&canReach(n.id)&&!blockaded(n.id))?'click':'';
- if(S.mode!=='missile'&&S.mode!=='blockade'&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))return 'click reach';
+ if(!S.mode&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))return 'click reach';
  if(classifiedTargetable(n)||bugTargetable(n)||missileTargetable(n)||overtourTargetable(n)||blockadeTargetable(n)||worldPickable(n))return 'click target';
  return '';
 }
@@ -612,7 +612,11 @@ export function renderBoard(){
   const long=len>520;
   s+='<path d="'+d+'" fill="none" stroke="#08383a" stroke-width="'+(hot?6:long?3.5:5)+'" opacity="'+(hot?'.7':'.35')+'"/>';
   s+='<path d="'+d+'" fill="none" stroke="'+(hot?'#7ff6fb':'#168388')+'" stroke-width="'+(hot?3:long?1.6:2)+'" stroke-dasharray="'+(long?'11 8':'')+'" opacity="'+(hot?'1':'.9')+'"/>';
-  if(c.wrap){const nm=q=>nodeName(q).join(' '),tx='font-size="34" font-weight="900" fill="#f5c542" stroke="#000" stroke-width="6" paint-order="stroke" font-family="Tomkins Display, sans-serif"';s+='<text x="'+(c.W-30)+'" y="'+(c.y0-18)+'" text-anchor="end" '+tx+'>⟶ WRAPS TO '+esc(nm(c.L))+'</text><text x="30" y="'+(c.y0-18)+'" '+tx+'>⟶ FROM '+esc(nm(c.R))+'</text>'}
+  /* a thread out of your square is clickable along its whole length (and its WRAPS TO label): a long dashed thread usually runs off
+     screen, so clicking the line itself walks you to the other end */
+  const go=hot&&myTurn()?(e[0]===curpos?e[1]:e[0]):null;
+  if(go)s+='<path class="edgehit" data-to="'+go+'" d="'+d+'" fill="none" stroke="#000" stroke-opacity="0" stroke-width="30" pointer-events="stroke" style="cursor:pointer"><title>Move to '+esc(nodeName(NMAP[go]).join(' '))+'</title></path>';
+  if(c.wrap){const nm=q=>nodeName(q).join(' '),tx=(go?'class="edgehit" data-to="'+go+'" style="cursor:pointer" ':'pointer-events="none" ')+'font-size="34" font-weight="900" fill="#f5c542" stroke="#000" stroke-width="6" paint-order="stroke" font-family="Tomkins Display, sans-serif"';s+='<text x="'+(c.W-30)+'" y="'+(c.y0-18)+'" text-anchor="end" '+tx+'>⟶ WRAPS TO '+esc(nm(c.L))+'</text><text x="30" y="'+(c.y0-18)+'" '+tx+'>⟶ FROM '+esc(nm(c.R))+'</text>'}
  });
  if(wm){
   s+='<g transform="translate('+metrics.cx+',150) scale(2.6)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON: GLOBAL EDITION v1.14</text></g>';
@@ -760,6 +764,8 @@ export function renderSide(){
      if(S.dlcGeo&&S.owner.geo_boeing===me)phaseHtml+='<button class="act" data-act="qantasdown"'+((p.money>=4&&!S.geoBoeing&&S.owner.qantas!==me?'':' disabled')+backroomStepLock)+' title="Ground a rival or unowned Qantas until the end of next round; unavailable if you own Qantas">🛩️ Ground Qantas — $4 · 2 steps</button>';
      if(S.dlcGeo&&S.owner.geo_scs===me)phaseHtml+='<button class="act" data-act="oilcrash"'+((p.money>=3&&!S.geoCrash?'':' disabled')+backroomStepLock)+'>🌊 Oil crash — $3 · 2 steps</button>';
      if(S.dlcGeo&&S.owner.geo_stage5===me)phaseHtml+='<button class="act" data-act="stage5"'+((p.intel>=2&&!S.geoStage5?'':' disabled')+backroomStepLock)+'>📉 Stage 5 — 2🛈 · 2 steps</button>';
+     /* the Global Edition's node abilities ride the same backroom deal: the Silk Road, the chainsaw, the carry trade… */
+     phaseHtml+=worldAbilityButtons(me,true).join('')+reworkButtons(me,p,'backroom').join('');
      phaseHtml+='</div>';
     }
 
@@ -846,20 +852,7 @@ export function renderSide(){
    if(S.dlcGeo&&S.owner.geo_wonsan===me&&nid==='geo_wonsan')btns.push('<button class="act primary" data-act="beach"'+(!S.geoBeach?'':' disabled')+' title="Free — once per turn">🏖️ Beach day — free −2 🔥</button>');
    if(blockSources(me).length){const blockadeTargets=NODES.some(nn=>!S.rubble[nn.id]&&!blockaded(nn.id));const bfree=blockadeFree(me);btns.push('<button class="act" data-act="blockmode"'+(!S.blockadeUsed&&blockadeTargets?'':' disabled')+' title="Once per turn: wall off any unblocked, non-rubble node until the end of next round. Blocks walking and Qantas landings; shown by a 🚧 marker on the board.'+(bfree?' You hold two blockade sources, so this is a FREE action.':' It uses your action (hold two of ALBANESE, THE GREAT BARRIER REEF and CRITICAL PATH ANALYSIS to make it free).')+'">🚧 Blockade — '+(bfree?'free (once per turn)':'uses your action (once per turn)')+'</button>');}
    if(S.dlcWorld&&S.owner.w_suez===me)btns.push('<button class="act" data-act="evergiven"'+(!S.evergivenUsed&&!blockaded('w_suez')&&!S.rubble['w_suez']?'':' disabled')+' title="Once per game: block the Suez until the end of next round. Nobody walks in or lands there — you included.">🚢 EVER GIVEN — block the Suez (once per game)</button>');
-   if(S.dlcWorld){
-    [['chainsaw','w_milei','worldmode:chainsaw','🪚 CHAINSAW — cut an edge, $3 (once per game)','Pay $3, cut any one edge of the board for good, and pocket $4.'],
-     ['brexit','w_brexit','worldmode:brexit','🇬🇧 TAKE BACK CONTROL — sever an edge (once per game)','Sever any one edge of the board for good. +1 Cortisol.'],
-     ['silkroad','w_bri','worldmode:silkroad','🛤️ NEW SILK ROAD — link two nodes, $4','Pay $4 to add a permanent edge from one of your nodes to any other node.'],
-     ['advance','w_nigprince','advance','👑 ADVANCE FEE — $2, coin flip for $5','Pay $2: heads you receive $5, tails nothing at all.'],
-     ['carry','w_boj','carry','👛 CARRY TRADE — borrow up to $50, repay 1.5× next turn','Borrow up to $50 now; repay half as much again at the start of your next turn. Every $2 you cannot return is +1 Cortisol.'],
-     ['hold','w_bangalore','worldmode:hold','🎧 PUT A RIVAL ON HOLD — they lose 1 🛈','Pick a rival: they lose 1 Intel. Once per turn.'],
-     ['carbon','w_amazon','carbon','🌳 SELL CARBON CREDITS — $3 per non-commodity node','Once per turn: $3 for every node of yours that is not a COMMODITY.'],
-     ['vanish','w_bermuda','worldmode:vanish','🌀 THE VANISH — reappear anywhere (once per turn)','Disappear until your next turn; rivals cannot target you. You reappear at any node you name.'],
-     ['bailout','w_imf','worldmode:bailout','🆘 IMF BAILOUT — lend a rival $6 (repay $8)','Lend a chosen rival $6 of your own money; $8 is due back at the start of their next-but-one turn, or they take +2 Cortisol.'],
-     ['tariff','w_tariffwall','tariffmode','🧱 TARIFF WALL — name a node type'+(S.tariffType?' (now '+S.tariffType+')':''),'Free, once per turn: rivals pay $2 extra (to you) to seize a node of the type you name.'],
-     ['doha','w_doha','doha','🕰️ START THE DOHA ROUND — +$2 per commodity for 3 turns (once per game)','Open a trade round: $2 per COMMODITY node you own at the start of each of your next 3 turns, then the talks stall.']
-    ].forEach(([k,nid,act,label,tip])=>{if(S.owner[nid]!==me)return;const why=worldBlocked(me,k);btns.push('<button class="act" data-act="'+act+'"'+(why?' disabled':'')+' title="'+esc(why||tip)+'">'+label+'</button>')});
-   }
+   worldAbilityButtons(me).forEach(h=>btns.push(h));
    reworkButtons(me,p,'action').forEach(h=>btns.push(h));
    /* ---- 🧐 THE REGULATORS' FILES & NODE DEALS ---- */
    const myFiles=filesOf(me);
@@ -987,8 +980,31 @@ export async function dealFlow(ri){
 }
 /* ===== NODE REWORKS: buttons and the pick-flows that build their intents ===== */
 const rwBtn=(act,label,why,tip,extra)=>'<button class="act" data-act="'+act+'"'+(extra||'')+(why?' disabled':'')+' title="'+esc(why||tip)+'">'+label+'</button>';
+/* the Global Edition's node abilities (one button each). backroom: during movement with BACKROOM DEALS — the free ones (the tariff wall)
+   stay with the move buttons, and each label says it costs 2 steps */
+export function worldAbilityButtons(me,backroom){
+ if(!S||!S.dlcWorld)return [];
+ const btns=[];
+ [['chainsaw','w_milei','worldmode:chainsaw','🪚 CHAINSAW — cut an edge, $3 (once per game)','Pay $3, cut any one edge of the board for good, and pocket $4.'],
+     ['brexit','w_brexit','worldmode:brexit','🇬🇧 TAKE BACK CONTROL — sever an edge (once per game)','Sever any one edge of the board for good. +1 Cortisol.'],
+     ['silkroad','w_bri','worldmode:silkroad','🛤️ NEW SILK ROAD — link two nodes, $4','Pay $4 to add a permanent edge from one of your nodes to any other node.'],
+     ['advance','w_nigprince','advance','👑 ADVANCE FEE — $2, coin flip for $5','Pay $2: heads you receive $5, tails nothing at all.'],
+     ['carry','w_boj','carry','👛 CARRY TRADE — borrow up to $50, repay 1.5× next turn','Borrow up to $50 now; repay half as much again at the start of your next turn. Every $2 you cannot return is +1 Cortisol.'],
+     ['hold','w_bangalore','worldmode:hold','🎧 PUT A RIVAL ON HOLD — they lose 1 🛈','Pick a rival: they lose 1 Intel. Once per turn.'],
+     ['carbon','w_amazon','carbon','🌳 SELL CARBON CREDITS — $3 per non-commodity node','Once per turn: $3 for every node of yours that is not a COMMODITY.'],
+     ['vanish','w_bermuda','worldmode:vanish','🌀 THE VANISH — reappear anywhere (once per turn)','Disappear until your next turn; rivals cannot target you. You reappear at any node you name.'],
+     ['bailout','w_imf','worldmode:bailout','🆘 IMF BAILOUT — lend a rival $6 (repay $8)','Lend a chosen rival $6 of your own money; $8 is due back at the start of their next-but-one turn, or they take +2 Cortisol.'],
+     ['tariff','w_tariffwall','tariffmode','🧱 TARIFF WALL — name a node type'+(S.tariffType?' (now '+S.tariffType+')':''),'Free, once per turn: rivals pay $2 extra (to you) to seize a node of the type you name.'],
+     ['doha','w_doha','doha','🕰️ START THE DOHA ROUND — +$2 per commodity for 3 turns (once per game)','Open a trade round: $2 per COMMODITY node you own at the start of each of your next 3 turns, then the talks stall.']
+    ].forEach(([k,nid,act,label,tip])=>{if(S.owner[nid]!==me)return;const why=worldBlocked(me,k);if(backroom&&k==='tariff')return;btns.push('<button class="act" data-act="'+act+'"'+((why||(backroom&&S.steps<2))?' disabled':'')+' title="'+esc(why||tip)+'">'+label+'</button>')});
+ return backroom?btns.map(h=>h.replace(/<\/button>$/,' · 2 steps</button>')):btns;
+}
 export function reworkButtons(me,p,phase){
  if(!S||S.over)return [];
+ if(phase==='backroom'){ /* the action-only reworks, usable during movement through BACKROOM DEALS */
+  const free=new Set(reworkButtons(me,p,'move'));
+  return reworkButtons(me,p,'action').filter(h=>!free.has(h)).map(h=>h.replace(/<\/button>$/,' · 2 steps</button>').replace(/^<button class="act"/,S.steps<2?'<button class="act" disabled':'<button class="act"'));
+ }
  const out=[],own=id=>S.owner[id]===me&&!(S.rubble&&S.rubble[id]);
  if(own('westpac'))launderBooks(me).forEach(b=>out.push(rwBtn('launder','🧺 LAUNDER — 1 🛈 → $3 · +1 scrutiny, '+b.name+' ('+b.agency+')',reworkBlocked(me,'launder'),'FREE, once per turn: burn 1 Intel for $3. It adds +1 scrutiny to the '+b.agency+' file on your '+b.name+' book (opening a breach file if none is open); a breach file that rules fines you 15% of your cash.',' data-kind="'+b.id+'"')));
  if(own('w_swiss')||swissBalance(me)>0){
@@ -1129,6 +1145,8 @@ export function clampVB(){
 let drag=null,lastTapTarget=null;
 export function handleNodeTap(t){
  if(!t||!t.closest)return;
+ const eh=t.closest('.edgehit');
+ if(eh){tapNode(eh.dataset.to);return}
  const g=t.closest('g.node');
  if(g)tapNode(g.dataset.id);
 }
@@ -1143,6 +1161,9 @@ export function tapNode(id){
   if(S.mode==='cruise'){dispatch({act:'cruise',id});return}
   if(S.mode==='blockade'){dispatch({act:'blockade',id});return}
   if(S.mode==='missile'){dispatch({act:'missile',id});return}
+  /* a node ability opened through BACKROOM DEALS picks its node during movement */
+  if(S.mode==='vanish'){dispatch({act:'vanish',id});return}
+  if(S.mode==='chainsaw'||S.mode==='brexit'||S.mode==='silkroad'){dispatch({act:'edgepick',id});return}
   if(S.steps<=0)return;
   if(!canReach(id)){hooks.toast(qantasGroundedReason()+'.');return}
   if((ADJ[S.players[Net.myIdx].pos]||[]).includes(id))dispatch({act:'move',id});

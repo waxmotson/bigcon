@@ -153,7 +153,7 @@ mk('aq_gbr',['BRITISH ANTARCTIC','TERRITORY'],'🇬🇧','WILD',1,4,-71.5,-68,'t
 mk('aq_arg',['ANTÁRTIDA','ARGENTINA'],'🇦🇷','WILD',1,4,-77.5,-52,'it is on the map · it is on the 50 peso note',
  'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute), unless someone owns THE ANTARCTIC TREATY, which settles the dispute (though anyone but its owner who holds Antarctic territory then takes +1 Cortisol a turn).',{i:[[PENINSULA,1]]}),
 mk('antarctica',['THE ANTARCTIC','TREATY'],'🐧','WILD',2,9,-80,-25,'nobody owns it · nobody pays rent',
- 'THE TREATY SYSTEM: while anyone owns it, the Peninsula sovereignty disputes are settled — but only the Treaty’s owner is recognised: every OTHER player who holds any Antarctic territory takes +1 Cortisol at the start of each of their turns. It is a bloc outside the WTO’s jurisdiction: your income from the seven territorial claims is multiplied ×(1 + 0.25 per claim you own), capped at ×2.5, and no WTO file ever opens, however many you hold. UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible (regulators and raids still reach it).',null),
+ 'THE TREATY SYSTEM: while anyone owns it, the Peninsula sovereignty disputes are settled — but only the Treaty’s owner is recognised: every OTHER player who holds any Antarctic territory takes +1 Cortisol at the start of each of their turns. It is a bloc outside the WTO’s jurisdiction: your income from the seven territorial claims is multiplied ×(1 + 0.25 per claim you own) with NO CAP (all seven: ×2.75), and no WTO file ever opens, however many you hold. UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible (regulators and raids still reach it).',null),
 mk('aq_qml',['QUEEN MAUD','LAND'],'🇳🇴','COMMODITY',1,5,-73,18,'a Norwegian queen · a Norwegian claim · very cold',
  '+$2 income while you also own NORWAY’S WEALTH FUND (the oil money bought a glacier).',{w:[['w_norway',2]]}),
 mk('aq_aatw',['AUSTRALIAN','ANTARCTIC TERRITORY'],'🇦🇺','WILD',1,5,-73,85,'42% of a continent · filed under Canberra',
@@ -326,7 +326,7 @@ export const WATER_NODES=new Set([
 export const BLOC_STEP=0.25,BLOC_MAX=2.5,BLOC_FREE=3;
 export const TRADE_BLOCS={
  w_eu:{short:'EU',book:'EU SINGLE MARKET',icon:'🇪🇺',members:['w_ecb','w_db','w_bunds','w_greek','w_asml','w_tulip','barrels','tenyear','geo_pillars','geo_venice']},
- w_antarctica:{short:'TREATY',book:'ANTARCTIC TREATY',icon:'🐧',noWto:true,members:['w_aq_mbl','w_aq_chl','w_aq_gbr','w_aq_arg','w_aq_qml','w_aq_aatw','w_aq_adelie']},
+ w_antarctica:{short:'TREATY',book:'ANTARCTIC TREATY',icon:'🐧',noWto:true,noCap:true,members:['w_aq_mbl','w_aq_chl','w_aq_gbr','w_aq_arg','w_aq_qml','w_aq_aatw','w_aq_adelie']},
  w_brics:{short:'BRICS',book:'BRICS',icon:'🧮',members:['w_petrobras','w_gazprom','w_kremlin','whistle','w_adani','w_bangalore','w_pboc','w_evergrande','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma']}
 };
 /* the bloc a node is a member of (or null) */

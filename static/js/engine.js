@@ -927,7 +927,7 @@ export function blocStatus(pi){
  Object.keys(TRADE_BLOCS).forEach(bid=>{
   if(S.owner[bid]!==pi||!NMAP[bid]||S.rubble[bid])return;
   const b=TRADE_BLOCS[bid],mem=b.members.filter(id=>NMAP[id]&&S.owner[id]===pi);
-  const base=mem.reduce((a,id)=>a+NMAP[id].income,0),mult=Math.min(BLOC_MAX,1+BLOC_STEP*mem.length);
+  const base=mem.reduce((a,id)=>a+NMAP[id].income,0),mult=b.noCap?1+BLOC_STEP*mem.length:Math.min(BLOC_MAX,1+BLOC_STEP*mem.length); /* the Antarctic Treaty has no cap */
   const g=b.noWto?null:INDBYID['bloc_'+b.short.toLowerCase()],f=g?findFile(pi,g.id):null;
   out.push({id:bid,name:NMAP[bid].name.join(' '),icon:b.icon,k:mem.length,members:mem,base,mult,bonus:Math.round(base*(mult-1)),file:f,noWto:!!b.noWto,step:!b.noWto&&mem.length>BLOC_FREE?mem.length-BLOC_FREE:0});
  });

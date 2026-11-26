@@ -620,6 +620,11 @@ test('THE ANTARCTIC TREATY multiplies its claims like a bloc, never opens a WTO 
   assert.equal(st.bonus, Math.round(mine.reduce((a, id) => a + N[id].income, 0) * 1.5));
   e.f.acccReconcile();
   assert.ok(!S.acccFiles.some(f => f.pi === 0 && String(f.ind).startsWith('bloc_')), 'no WTO file on Antarctica');
+  /* no cap: all seven claims multiply ×2.75 (an ordinary bloc stops at ×2.5) */
+  give(S, 0, claims);
+  const all = e.ctx.blocStatus(0).find(b => b.id === 'w_antarctica');
+  assert.equal(all.k, 7); assert.equal(all.mult, 2.75, 'the Treaty is uncapped');
+  assert.ok(W.TRADE_BLOCS.w_antarctica.noCap && !W.TRADE_BLOCS.w_eu.noCap);
   assert.equal(e.ctx.INDBYID.bloc_treaty, undefined, 'no treaty book exists');
   /* the Peninsula dispute: seat 1 holds two claims, seat 2 the third */
   const disputeHits = async treaty => {

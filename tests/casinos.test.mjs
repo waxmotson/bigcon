@@ -90,3 +90,21 @@ test('two players complete the con at the same moment: the one with the most mon
   assert.ok(S.log.some(l => l.includes('complete the con at the same moment') && l.includes(e.ctx.pname(2))), 'the richer player takes it');
   assert.ok(S.log.some(l => l.startsWith('🏆 ' + e.ctx.pname(2))));
 });
+
+test('BACKROOM DEALS reaches the Global Edition abilities: the New Silk Road during movement, for 2 steps', async t => {
+  const { e, S, P } = await game(t);
+  const N = e.acc.NMAP;
+  S.owner = { back: 0, w_bri: 0, citi: 0 };
+  S.cur = 0; S.phase = 'move'; S.mode = null; S.steps = 3; S.backroomAbilityUsed = false; S.wTurn = {};
+  P[0].pos = 'quik';
+  const far = e.acc.NODES.find(n => n.id !== 'citi' && !e.ctx.hasEdge('citi', n.id) && n.id.startsWith('w_'));
+  await e.f.applyIntent(0, { act: 'worldmode', kind: 'silkroad' });
+  assert.equal(S.mode, 'silkroad', 'the Silk Road opens during movement');
+  await e.f.applyIntent(0, { act: 'edgepick', id: 'citi' });
+  await e.f.applyIntent(0, { act: 'edgepick', id: far.id });
+  await settle();
+  assert.ok(e.ctx.hasEdge('citi', far.id), 'the new road is built');
+  assert.equal(S.phase, 'move', 'still moving');
+  assert.equal(S.steps, 1, 'it cost 2 movement steps');
+  assert.ok(S.backroomAbilityUsed);
+});
