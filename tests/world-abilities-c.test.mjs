@@ -280,7 +280,7 @@ test('the bloc member lists are explicit, real, disjoint and exclude the non-mem
     assert.ok(br.includes(id), id + ' is a BRICS member');
   for (const id of ['w_aramco', 'w_temasek', 'w_kazatom', 'w_mpesa', 'w_nigprince', 'w_tsmc']) assert.ok(!br.includes(id), id + ' is not');
   assert.equal(W.blocOfMember('w_ecb'), 'w_eu'); assert.equal(W.blocOfMember('w_rbi'), 'w_brics'); assert.equal(W.blocOfMember('citi'), null);
-  assert.deepEqual([W.BLOC_STEP, W.BLOC_MAX, W.BLOC_FREE], [0.25, 2.5, 2]);
+  assert.deepEqual([W.BLOC_STEP, W.BLOC_MAX, W.BLOC_FREE], [0.25, 2.5, 3]);
 });
 
 test('EU bloc: the multiplier is 1 + 0.25 per member (cap ×2.5), is paid at income time and shown in the log, tooltip and status', async t => {
@@ -322,39 +322,39 @@ test('EU bloc: the multiplier is 1 + 0.25 per member (cap ×2.5), is paid at inc
   assert.equal(e.ctx.blocStatus(0)[0].mult, 2.5, 'capped at ×2.5');
 });
 
-test('trade-bloc scrutiny: 3 members open a WTO file, each member beyond 2 adds scrutiny per turn, the ruling strips to 2 and fines', async t => {
+test('trade-bloc scrutiny: 4 members open a WTO file, each member beyond 3 adds scrutiny per turn, the ruling strips to 3 and fines', async t => {
   const { e, S } = await worldGame(t, { players: 3 });
   const N = e.acc.NMAP;
-  const mem = ['w_btp', 'w_tulip', 'w_bunds', 'w_greek', 'w_lux'];
-  /* two members: no file */
-  S.owner = { w_eu: 1 }; give(S, 1, mem.slice(0, 2)); e.f.acccReconcile();
-  assert.equal(e.f.findFile(1, 'bloc_eu'), null, 'two members is fine');
-  /* the bloc node is what makes it a bloc book: members alone are not */
-  S.owner = {}; give(S, 1, mem.slice(0, 4)); e.f.acccReconcile();
-  assert.equal(e.f.findFile(1, 'bloc_eu'), null, 'no bloc node, no WTO file');
-  /* three members and the node: a WTO file opens, +1 a turn */
+  const mem = ['w_btp', 'w_tulip', 'w_bunds', 'w_greek', 'w_lux', 'w_asml'];
+  /* three members: no file */
   S.owner = { w_eu: 1 }; give(S, 1, mem.slice(0, 3)); e.f.acccReconcile();
+  assert.equal(e.f.findFile(1, 'bloc_eu'), null, 'three members is fine');
+  /* the bloc node is what makes it a bloc book: members alone are not */
+  S.owner = {}; give(S, 1, mem.slice(0, 5)); e.f.acccReconcile();
+  assert.equal(e.f.findFile(1, 'bloc_eu'), null, 'no bloc node, no WTO file');
+  /* four members and the node: a WTO file opens, +1 a turn */
+  S.owner = { w_eu: 1 }; give(S, 1, mem.slice(0, 4)); e.f.acccReconcile();
   let f = e.f.findFile(1, 'bloc_eu');
   assert.ok(f && f.agency === 'WTO' && f.s === 0, 'a WTO file opens');
   assert.ok(S.log.some(l => l.includes('THE WTO OPENS A FILE')), 'logged');
   assert.equal(e.ctx.fileStep(f), 1);
-  e.f.acccAdvance(1); assert.equal(f.s, 1, '3 members: +1');
-  /* four members: +2 per turn */
-  S.owner.w_greek = 1; e.f.acccReconcile();
-  assert.equal(e.ctx.fileStep(f), 2);
-  f.s = 0; e.f.acccAdvance(1); assert.equal(f.s, 2, '4 members: +2');
-  /* five members: +3 per turn, i.e. the ruling lands at the very next turn start */
+  e.f.acccAdvance(1); assert.equal(f.s, 1, '4 members: +1');
+  /* five members: +2 per turn */
   S.owner.w_lux = 1; e.f.acccReconcile();
+  assert.equal(e.ctx.fileStep(f), 2);
+  f.s = 0; e.f.acccAdvance(1); assert.equal(f.s, 2, '5 members: +2');
+  /* six members: +3 per turn, i.e. the ruling lands at the very next turn start */
+  S.owner.w_asml = 1; e.f.acccReconcile();
   assert.equal(e.ctx.fileStep(f), 3);
   f.s = 0; const due = e.f.acccAdvance(1);
-  assert.deepEqual(due, ['bloc_eu'], 'five members rule at once');
-  /* the ruling (seat 1 is an auto-answering guest): keeps 2, divests 3 back to the market, fines 30% */
+  assert.deepEqual(due, ['bloc_eu'], 'six members rule at once');
+  /* the ruling (seat 1 is an auto-answering guest): keeps 3, divests 3 back to the market, fines 30% */
   S.players[1].money = 100; S.players[1].intel = 10;
   const held = () => mem.filter(id => S.owner[id] === 1);
   let done = false; const run = e.f.acccRule(1, 'bloc_eu').then(() => { done = true; });
   for (let i = 0; i < 20 && !done; i++) { await settle(); e.clock.advance(50); }
   await run;
-  assert.equal(held().length, 2, 'stripped back to 2 members');
+  assert.equal(held().length, 3, 'stripped back to 3 members');
   assert.equal(S.players[1].money, 70, '30% fine on three divested nodes');
   assert.equal(S.players[1].intel, 7);
   assert.equal(e.f.findFile(1, 'bloc_eu'), null, 'the file is closed');
@@ -366,7 +366,7 @@ test('trade-bloc scrutiny: 3 members open a WTO file, each member beyond 2 adds 
 
 test('WTO owner can REFER a rival’s bloc file for $4; the ACCC owner cannot; no WTO, no refer; +$2 on TRUMP TWEETS TARIFFS', async t => {
   const { e, S } = await worldGame(t, { players: 3 });
-  const mem = ['w_btp', 'w_tulip', 'w_bunds'];
+  const mem = ['w_btp', 'w_tulip', 'w_bunds', 'w_greek'];
   S.owner = { w_eu: 1, w_wto: 0, accc: 2 }; give(S, 1, mem); e.f.acccReconcile();
   const f = e.f.findFile(1, 'bloc_eu'); assert.ok(f);
   /* the ACCC owner cannot refer it */
@@ -399,7 +399,7 @@ test('BRICS: the same multiplier on Brazil, Russia, India, China and South Afric
   e.f.acccReconcile();
   const f = e.f.findFile(0, 'bloc_brics');
   assert.ok(f && f.agency === 'WTO');
-  assert.equal(e.ctx.fileStep(f), 2);
+  assert.equal(e.ctx.fileStep(f), 1, 'four members: one beyond the three allowed');
   /* EU members are not BRICS members */
   S.owner = { w_brics: 0 }; give(S, 0, ['w_ecb', 'w_db', 'w_btp']);
   assert.equal(e.ctx.blocStatus(0)[0].k, 0);
@@ -602,4 +602,35 @@ test('bots in a Global Edition game holding the new actives never crash and use 
   const errs = e.consoleOut.error.filter(l => String(l).includes('bot turn error'));
   assert.equal(errs.length, 0, 'no bot turn crashed: ' + String(errs[0]).slice(0, 300));
   assert.ok(used.has('blockade') || used.has('tariff') || used.has('bailout'), 'a bot used a new active (used: ' + [...used].join(',') + ')');
+});
+
+/* ---------- THE ANTARCTIC TREATY: a bloc outside the WTO, and the end of the Peninsula disputes ---------- */
+test('THE ANTARCTIC TREATY multiplies its claims like a bloc, never opens a WTO file, and settles the Peninsula disputes', async t => {
+  const { e, S } = await worldGame(t, { players: 3 });
+  const N = e.acc.NMAP;
+  const claims = W.TRADE_BLOCS.w_antarctica.members;
+  assert.equal(claims.length, 9, 'the nine territorial claims');
+  assert.ok(W.TRADE_BLOCS.w_antarctica.noWto);
+  for (const id of claims) assert.ok(N[id], id + ' is on the board');
+  /* six claims: ×2.5, and no WTO file however many you hold */
+  const mine = claims.slice(0, 6);
+  S.owner = { w_antarctica: 0 }; give(S, 0, mine);
+  const st = e.ctx.blocStatus(0).find(b => b.id === 'w_antarctica');
+  assert.equal(st.k, 6); assert.equal(st.mult, 2.5); assert.equal(st.step, 0); assert.ok(st.noWto);
+  assert.equal(st.bonus, Math.round(mine.reduce((a, id) => a + N[id].income, 0) * 1.5));
+  e.f.acccReconcile();
+  assert.ok(!S.acccFiles.some(f => f.pi === 0 && String(f.ind).startsWith('bloc_')), 'no WTO file on Antarctica');
+  assert.equal(e.ctx.INDBYID.bloc_treaty, undefined, 'no treaty book exists');
+  /* the Peninsula dispute: seat 1 holds two claims, seat 2 the third */
+  const disputeHits = async treaty => {
+    S.owner = treaty ? { w_antarctica: 0 } : {};
+    give(S, 1, ['w_aq_chl', 'w_aq_gbr']); give(S, 2, ['w_aq_arg']);
+    S.players[2].cortisol = 0; S.cur = 1;
+    await e.f.startTurn(); await settle();
+    return S.log.filter(l => l.includes('SOVEREIGNTY DISPUTE')).length;
+  };
+  const before = await disputeHits(false);
+  assert.ok(before >= 1, 'without the treaty the dispute is filed');
+  S.log.length = 0;
+  assert.equal(await disputeHits(true), 0, 'with the treaty owned, the claims are settled');
 });

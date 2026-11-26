@@ -138,13 +138,13 @@ export const INDBYID={};INDUSTRIES.forEach(g=>INDBYID[g.id]=g);
 /* 🌐 TRADE BLOCS: a WTO "book" per bloc node (THE EU SINGLE MARKET, BRICS). Not in INDUSTRIES (the twelve classic books are unchanged): the bloc books are
    only tracked while the Global Edition is on, and only for the seat that OWNS the bloc node. They reuse the whole file machinery: scrutiny, lobby,
    market sale, referral (by the WTO owner) and the proportional ruling. */
-export const BLOC_BOOKS=Object.keys(TRADE_BLOCS).map(bid=>({id:'bloc_'+TRADE_BLOCS[bid].short.toLowerCase(),name:TRADE_BLOCS[bid].book,bloc:bid,ids:TRADE_BLOCS[bid].members}));
+export const BLOC_BOOKS=Object.keys(TRADE_BLOCS).filter(bid=>!TRADE_BLOCS[bid].noWto).map(bid=>({id:'bloc_'+TRADE_BLOCS[bid].short.toLowerCase(),name:TRADE_BLOCS[bid].book,bloc:bid,ids:TRADE_BLOCS[bid].members}));
 BLOC_BOOKS.forEach(g=>{INDBYID[g.id]=g});
 export function industryNodes(g){
  if(g.ids)return g.ids.map(id=>NMAP[id]).filter(Boolean);
  return NODES.filter(g.pick);
 }
-export function industryTrigger(g){return g.ids?3:Math.max(3,Math.ceil(industryNodes(g).length/3))}
+export function industryTrigger(g){return g.bloc?BLOC_FREE+1:g.ids?3:Math.max(3,Math.ceil(industryNodes(g).length/3))}
 export function industryAllowed(g){return industryTrigger(g)-1}
 export function ownedInIndustry(pi,g){return industryNodes(g).filter(n=>S.owner[n.id]===pi)}
 /* Mark Watson exempts the holder's COAL book only. */
@@ -351,7 +351,7 @@ export async function startTurn(){
   if(f.s)giveIntel(S.cur,f.s,f.name);
  });
  /* 🌐 ANTARCTIC PENINSULA: hold two of the three overlapping claims and the owner of the third takes +1 Cortisol (the sovereignty dispute) */
- if(S.dlcWorld){const held=PENINSULA.filter(id=>S.owner[id]===S.cur);if(held.length===2){const third=PENINSULA.find(id=>!held.includes(id)),o=S.owner[third];if(o!=null&&o!==S.cur&&S.players[o]&&!S.rubble[third]&&!isVanished(o)){log('🇦🇶 SOVEREIGNTY DISPUTE: '+pname(S.cur)+' files against '+pname(o)+'’s claim on '+lname(NMAP[third])+'.');addCortisol(o,1,'a sovereignty dispute over the Peninsula',false,true)}}}
+ if(S.dlcWorld&&!treatyInForce()){const held=PENINSULA.filter(id=>S.owner[id]===S.cur);if(held.length===2){const third=PENINSULA.find(id=>!held.includes(id)),o=S.owner[third];if(o!=null&&o!==S.cur&&S.players[o]&&!S.rubble[third]&&!isVanished(o)){log('🇦🇶 SOVEREIGNTY DISPUTE: '+pname(S.cur)+' files against '+pname(o)+'’s claim on '+lname(NMAP[third])+'.');addCortisol(o,1,'a sovereignty dispute over the Peninsula',false,true)}}}
  /* 🌐 CRUISE EMISSIONS: +1 Cortisol each turn unless the owner also holds a REGULATOR */
  if(S.dlcWorld&&own('w_cruise')&&!S.rubble.w_cruise&&!NODES.some(n=>n.type==='REGULATOR'&&S.owner[n.id]===S.cur))addCortisol(S.cur,1,'the cruise ship’s emissions');
  /* 🌐 THE IMF: a bailout comes due at the start of the borrower's next-but-one turn */
@@ -901,6 +901,8 @@ export function blockSources(pi){
  return ids.filter(id=>S.owner[id]===pi&&NMAP[id]&&!(S.rubble&&S.rubble[id]));
 }
 export function blockadeFree(pi){return blockSources(pi).length>=2}
+/* 🐧 THE ANTARCTIC TREATY settles the Peninsula claims while anyone owns it (and it is not rubble) */
+export function treatyInForce(){return !!(S&&S.dlcWorld&&S.owner&&S.owner.w_antarctica!=null&&!(S.rubble&&S.rubble.w_antarctica))}
 /* ---- 🌐 TRADE BLOCS: member count, multiplier and bonus for each bloc node a seat owns ---- */
 export function blocStatus(pi){
  const out=[];if(!S||!S.dlcWorld||!S.owner)return out;
@@ -908,8 +910,8 @@ export function blocStatus(pi){
   if(S.owner[bid]!==pi||!NMAP[bid]||S.rubble[bid])return;
   const b=TRADE_BLOCS[bid],mem=b.members.filter(id=>NMAP[id]&&S.owner[id]===pi);
   const base=mem.reduce((a,id)=>a+NMAP[id].income,0),mult=Math.min(BLOC_MAX,1+BLOC_STEP*mem.length);
-  const g=INDBYID['bloc_'+b.short.toLowerCase()],f=findFile(pi,g.id);
-  out.push({id:bid,name:NMAP[bid].name.join(' '),icon:b.icon,k:mem.length,members:mem,base,mult,bonus:Math.round(base*(mult-1)),file:f,step:mem.length>BLOC_FREE?mem.length-BLOC_FREE:0});
+  const g=b.noWto?null:INDBYID['bloc_'+b.short.toLowerCase()],f=g?findFile(pi,g.id):null;
+  out.push({id:bid,name:NMAP[bid].name.join(' '),icon:b.icon,k:mem.length,members:mem,base,mult,bonus:Math.round(base*(mult-1)),file:f,noWto:!!b.noWto,step:!b.noWto&&mem.length>BLOC_FREE?mem.length-BLOC_FREE:0});
  });
  return out;
 }

@@ -160,13 +160,13 @@ mk('png',['PNG','GOLD'],'🪙','COMMODITY',2,5,-6.31,155.1,'a big pit · a small
 mk('aq_mbl',['MARIE BYRD','LAND'],'🧊','WILD',1,3,-79,-135,'unclaimed · nobody wanted it · nobody asked',
  'UNCLAIMED: the first player to arrive here owns it free: no action, no cost, no Cortisol (like Tuvalu). Income $1.',null),
 mk('aq_chl',['TERRITORIO CHILENO','ANTÁRTICO'],'🇨🇱','WILD',1,4,-76,-88,'drawn in 1940 · overlapping on purpose',
- 'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute).',{i:[[PENINSULA,1]]}),
+ 'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute), unless someone owns THE ANTARCTIC TREATY, which settles every claim.',{i:[[PENINSULA,1]]}),
 mk('aq_gbr',['BRITISH ANTARCTIC','TERRITORY'],'🇬🇧','WILD',1,4,-71.5,-68,'the oldest claim · the thinnest ice',
- 'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute).',{i:[[PENINSULA,1]]}),
+ 'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute), unless someone owns THE ANTARCTIC TREATY, which settles every claim.',{i:[[PENINSULA,1]]}),
 mk('aq_arg',['ANTÁRTIDA','ARGENTINA'],'🇦🇷','WILD',1,4,-77.5,-52,'it is on the map · it is on the 50 peso note',
- 'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute).',{i:[[PENINSULA,1]]}),
+ 'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute), unless someone owns THE ANTARCTIC TREATY, which settles every claim.',{i:[[PENINSULA,1]]}),
 mk('antarctica',['THE ANTARCTIC','TREATY'],'🐧','WILD',2,9,-80,-25,'nobody owns it · nobody pays rent',
- 'UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible (regulators and raids still reach it). Its income is a flat $2.',null),
+ 'THE TREATY SYSTEM: while anyone owns it, the Peninsula sovereignty disputes are settled (no dispute Cortisol for anyone). It is a bloc outside the WTO’s jurisdiction: your income from the nine territorial claims is multiplied ×(1 + 0.25 per claim you own), capped at ×2.5, and no WTO file ever opens, however many you hold. UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible (regulators and raids still reach it).',null),
 mk('aq_qml',['QUEEN MAUD','LAND'],'🇳🇴','COMMODITY',1,5,-73,18,'a Norwegian queen · a Norwegian claim · very cold',
  '+$2 income while you also own NORWAY’S WEALTH FUND (the oil money bought a glacier).',{w:[['w_norway',2]]}),
 mk('aq_aatw',['AUSTRALIAN','ANTARCTIC TERRITORY'],'🇦🇺','WILD',1,5,-73,85,'42% of a continent · filed under Canberra',
@@ -186,15 +186,15 @@ mk('bermuda',['THE BERMUDA','TRIANGLE'],'🌀','WILD',1,5,25.0,-71.0,'ships · p
 mk('bvi',['THE BRITISH','VIRGIN ISLANDS'],'🏝️','CORPORATE',2,5,18.4286,-64.6185,'a million companies · a very small island','+$2 income while you also own THE CAYMAN ISLANDS; +$3 on A QUIET QUARTER.',{w:[['w_cayman',2]],e:{quiet:3}}),
 /* ── batch C: regulators, trade blocs, the water and the reef ── */
 mk('wto',['THE WTO'],'🌐','REGULATOR',2,8,46.2292,6.1503,'the appellate body has not met since 2019 · the rulebook is a suggestion',
- 'TRADE WATCHDOG: it runs its own investigation files (WTO files) into anyone who owns a trade-bloc node (THE EU SINGLE MARKET or BRICS) and holds 3 or more of its member nodes. REFER: the owner may refer a rival’s bloc file ($4, your action, once per turn) for +1 scrutiny. +$2 on TRUMP TWEETS TARIFFS (the docket is enormous).',{e:{tariffs:2}}),
+ 'TRADE WATCHDOG: it runs its own investigation files (WTO files) into anyone who owns a trade-bloc node (THE EU SINGLE MARKET or BRICS) and holds 4 or more of its member nodes. REFER: the owner may refer a rival’s bloc file ($4, your action, once per turn) for +1 scrutiny. +$2 on TRUMP TWEETS TARIFFS (the docket is enormous).',{e:{tariffs:2}}),
 mk('imf',['THE IMF'],'🆘','REGULATOR',2,8,38.8991,-77.0425,'a rescue package · with conditions · and further conditions',
  'BAILOUT: once per turn, on your action, lend a chosen rival $6 out of your own pocket. At the start of their next-but-one turn they repay you $8, or take +2 Cortisol (austerity) if they cannot, and the loan is written off. A rival can carry only one IMF loan at a time.',null),
 mk('tariffwall',['THE TARIFF','WALL'],'🧱','REGULATOR',1,7,38.0,-97.0,'big · beautiful · somebody else pays for it',
  'THE WALL: name one node TYPE (a free action, once per turn, in your move or action phase). Every rival who seizes or takes over a node of that type pays $2 extra, and the $2 is paid to you. The current wall is shown on the board header and in tooltips. Floats to a random open spot each game.',null),
 mk('eu',['THE EU','SINGLE MARKET'],'🇪🇺','REGULATOR',2,9,50.8467,4.3525,'one market · twenty-seven opinions · a form for everything',
- 'TRADE BLOC: your income from member nodes (nodes in EU countries: the ECB, Deutsche Bank, German Bunds, the Italian BTP, the Greek Debt, the Luxembourg Letterbox, ASML, the Tulip Bulb, OPEC Vienna, the Rotterdam barrel yard, the Paris master chart, the Brussels Pillars, Venice) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. Not members: the UK, Norway, Switzerland, Russia, Turkey, Iceland, the Vatican, Monaco. SCRUTINY: with 3 or more members a WTO file opens on you; each member beyond 2 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 2 members.',null),
+ 'TRADE BLOC: your income from member nodes (nodes in EU countries: the ECB, Deutsche Bank, German Bunds, the Italian BTP, the Greek Debt, the Luxembourg Letterbox, ASML, the Tulip Bulb, OPEC Vienna, the Rotterdam barrel yard, the Paris master chart, the Brussels Pillars, Venice) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. Not members: the UK, Norway, Switzerland, Russia, Turkey, Iceland, the Vatican, Monaco. SCRUTINY: with 4 or more members a WTO file opens on you; each member beyond 3 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 3 members.',null),
 mk('brics',['BRICS'],'🧮','WILD',2,8,-26.1952,28.034,'five letters · one summit · a currency that does not exist yet',
- 'TRADE BLOC: your income from member nodes (nodes in Brazil, Russia, India, China and South Africa: Vale, Petrobras, Gazprom, the Kremlin, the Whistleblower, the RBI, Dalal Street, Adani, Bangalore, the PBOC, Evergrande, Shenzhen, Baotou, the Belt and Road, HSBC, the HKMA, Witwatersrand, De Beers) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. SCRUTINY: with 3 or more members a WTO file opens on you; each member beyond 2 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 2 members. Floats to a random open spot each game.',null),
+ 'TRADE BLOC: your income from member nodes (nodes in Brazil, Russia, India, China and South Africa: Vale, Petrobras, Gazprom, the Kremlin, the Whistleblower, the RBI, Dalal Street, Adani, Bangalore, the PBOC, Evergrande, Shenzhen, Baotou, the Belt and Road, HSBC, the HKMA, Witwatersrand, De Beers) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. SCRUTINY: with 4 or more members a WTO file opens on you; each member beyond 3 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 3 members. Floats to a random open spot each game.',null),
 mk('apple',['APPLE'],'🍎','CORPORATE',2,9,37.3349,-122.009,'a trillion dollars · an infinite loop · one very low tax rate',
  'IRISH SANDWICH: +$2 income for every tax haven you own (THE CAYMAN ISLANDS, THE BRITISH VIRGIN ISLANDS, THE LUXEMBOURG LETTERBOX, THE VATICAN BANK, THE BERMUDA TRIANGLE, THE SWISS VAULT, MONACO CASINO).',{i:[[TAX_HAVENS,2]]}),
 mk('cruise',['THE CRUISE SHIP','“THE 3,000-BERTH','ENCLAVE”'],'🛳️','CORPORATE',2,8,41.3851,2.1734,'a floating city-state · no laws · the buffet is endless',
@@ -335,10 +335,12 @@ export const WATER_NODES=new Set([
  'port','tanker','barrels'                                                          /* the Docks, the Tanker Fleet, the Rotterdam barrel yard */
 ]);
 /* TRADE BLOCS. The bloc node multiplies its owner's income from member nodes by 1 + BLOC_STEP per member held (capped at BLOC_MAX); holding
-   more than BLOC_FREE members opens a WTO file on the owner: +1 scrutiny at each turn start per member beyond BLOC_FREE, ruling at the usual 3. */
-export const BLOC_STEP=0.25,BLOC_MAX=2.5,BLOC_FREE=2;
+   more than BLOC_FREE members opens a WTO file on the owner: +1 scrutiny at each turn start per member beyond BLOC_FREE, ruling at the usual 3.
+   A bloc marked noWto (THE ANTARCTIC TREATY) multiplies the same way but is outside the WTO's jurisdiction: no file ever opens. */
+export const BLOC_STEP=0.25,BLOC_MAX=2.5,BLOC_FREE=3;
 export const TRADE_BLOCS={
  w_eu:{short:'EU',book:'EU SINGLE MARKET',icon:'🇪🇺',members:['w_ecb','w_db','w_bunds','w_btp','w_greek','w_lux','w_asml','w_tulip','w_opec','barrels','tenyear','geo_pillars','geo_venice']},
+ w_antarctica:{short:'TREATY',book:'ANTARCTIC TREATY',icon:'🐧',noWto:true,members:['w_aq_mbl','w_aq_chl','w_aq_gbr','w_aq_arg','w_aq_qml','w_aq_aatw','w_aq_adelie','w_aq_aate','w_aq_ross']},
  w_brics:{short:'BRICS',book:'BRICS',icon:'🧮',members:['w_vale','w_petrobras','w_gazprom','w_kremlin','whistle','w_rbi','w_dalal','w_adani','w_bangalore','w_pboc','w_evergrande','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma','w_witz','w_debeers']}
 };
 /* the bloc a node is a member of (or null) */
