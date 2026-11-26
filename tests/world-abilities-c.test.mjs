@@ -51,12 +51,12 @@ test('batch C: every new node exists with the right type, a witty sub, an sp and
 test('ANZCERTA replaced the NZ sheep: no w_sheep anywhere, Fonterra and Antarctica point at the treaty', () => {
   assert.ok(!W.WORLD_NODE_IDS.includes('w_sheep'));
   assert.ok(!JSON.stringify(W.WORLD_ROUTES).includes('w_sheep'), 'no route names the sheep');
-  assert.ok(W.WORLD_ROUTES.some(([a, b]) => a === 'w_aq_ross' && b === 'w_anzcerta'), 'the Ross Dependency is the Christchurch gateway');
+  assert.ok(W.WORLD_ROUTES.some(([a, b]) => a === 'w_aq_adelie' && b === 'w_anzcerta'), 'Terre Adélie is the Christchurch gateway');
   const fon = W.WORLD_NODES.find(n => n.id === 'w_fonterra');
   assert.deepEqual(fon.fx.w, [['w_anzcerta', 2]]);
   assert.ok(/ANZCERTA/.test(fon.sp) && !/SHEEP/.test(fon.sp));
   for (const id of ['w_fonterra', 'w_rbnz', 'w_anzcerta', 'quik', 'qantas', 'w_gbr', 'w_woolies']) assert.ok(W.AUSNZ.has(id), id + ' is Australian or New Zealand');
-  for (const id of ['w_hsbc', 'geo_tuvalu', 'w_fiji', 'w_cpa', 'cash', 'w_nauru', 'w_png']) assert.ok(!W.AUSNZ.has(id), id + ' is not');
+  for (const id of ['w_hsbc', 'geo_tuvalu', 'w_fiji', 'w_cpa', 'cash', 'w_nauru']) assert.ok(!W.AUSNZ.has(id), id + ' is not');
 });
 
 test('ANZCERTA: +$1 per Australian or NZ node (cap $5), and the tolls between them are waived', async t => {
@@ -276,10 +276,10 @@ test('the bloc member lists are explicit, real, disjoint and exclude the non-mem
   assert.equal(new Set(eu.concat(br)).size, eu.length + br.length, 'a node belongs to one bloc');
   for (const id of ['w_boe', 'w_city', 'w_brexit', 'w_norway', 'w_cs', 'w_bis', 'w_swiss', 'w_gazprom', 'w_kremlin', 'w_lira', 'w_hdi', 'w_monaco', 'w_nordstream', 'w_cruise', 'whistle', 'wef', 'ib', 'bond007'])
     assert.ok(!eu.includes(id), id + ' is not an EU member');
-  for (const id of ['w_gazprom', 'w_kremlin', 'whistle', 'w_petrobras', 'w_rbi', 'w_pboc', 'w_hkma', 'w_hsbc'])
+  for (const id of ['w_gazprom', 'w_kremlin', 'whistle', 'w_petrobras', 'w_adani', 'w_pboc', 'w_hkma', 'w_hsbc'])
     assert.ok(br.includes(id), id + ' is a BRICS member');
   for (const id of ['w_aramco', 'w_temasek', 'w_kazatom', 'w_zim', 'w_nigprince', 'w_tsmc']) assert.ok(!br.includes(id), id + ' is not');
-  assert.equal(W.blocOfMember('w_ecb'), 'w_eu'); assert.equal(W.blocOfMember('w_rbi'), 'w_brics'); assert.equal(W.blocOfMember('citi'), null);
+  assert.equal(W.blocOfMember('w_ecb'), 'w_eu'); assert.equal(W.blocOfMember('w_adani'), 'w_brics'); assert.equal(W.blocOfMember('citi'), null);
   assert.deepEqual([W.BLOC_STEP, W.BLOC_MAX, W.BLOC_FREE], [0.25, 2.5, 3]);
 });
 
@@ -391,7 +391,7 @@ test('WTO owner can REFER a rival’s bloc file for $4; the ACCC owner cannot; n
 test('BRICS: the same multiplier on Brazil, Russia, India, China and South Africa nodes, with its own WTO file', async t => {
   const { e, S } = await worldGame(t, { players: 3 });
   const N = e.acc.NMAP;
-  const mem = ['w_petrobras', 'w_rbi', 'w_pboc', 'w_hkma'];
+  const mem = ['w_petrobras', 'w_adani', 'w_pboc', 'w_hkma'];
   S.owner = { w_brics: 0 }; give(S, 0, mem);
   const st = e.ctx.blocStatus(0)[0];
   assert.equal(st.id, 'w_brics'); assert.equal(st.k, 4); assert.equal(st.mult, 2);
@@ -609,7 +609,7 @@ test('THE ANTARCTIC TREATY multiplies its claims like a bloc, never opens a WTO 
   const { e, S } = await worldGame(t, { players: 3 });
   const N = e.acc.NMAP;
   const claims = W.TRADE_BLOCS.w_antarctica.members;
-  assert.equal(claims.length, 9, 'the nine territorial claims');
+  assert.equal(claims.length, 7, 'the seven territorial claims');
   assert.ok(W.TRADE_BLOCS.w_antarctica.noWto);
   for (const id of claims) assert.ok(N[id], id + ' is on the board');
   /* six claims: ×2.5, and no WTO file however many you hold */
@@ -640,7 +640,7 @@ test('THE ANTARCTIC TREATY multiplies its claims like a bloc, never opens a WTO 
     await e.f.startTurn(); await settle();
     return S.log.some(l => l.includes('THE ANTARCTIC TREATY:'));
   };
-  assert.ok(await treatyHit(1, ['w_aq_ross']), 'a rival claim is not recognised');
+  assert.ok(await treatyHit(1, ['w_aq_adelie']), 'a rival claim is not recognised');
   assert.ok(!(await treatyHit(1, [])), 'no territory, no Cortisol');
-  assert.ok(!(await treatyHit(0, ['w_aq_ross'])), 'the Treaty owner is exempt');
+  assert.ok(!(await treatyHit(0, ['w_aq_adelie'])), 'the Treaty owner is exempt');
 });

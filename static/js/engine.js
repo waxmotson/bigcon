@@ -369,7 +369,7 @@ export async function startTurn(){
   else log('🕰️ The Doha round meets without its host. Nothing is agreed.');
   if(d.left<=0){log('🕰️ The Doha round STALLS. As ever. The communiqué says “progress”.');fxAt(S.cur,'🕰️ STALLED','#9ad7ff')}
  }
- /* 🌐 MRS WATANABE: the carry trade comes due */
+ /* 🌐 BANK OF JAPAN (Mrs Watanabe's carry trade): the carry trade comes due */
  if(S.dlcWorld&&S.carry&&S.carry[S.cur]){
   delete S.carry[S.cur];
   if(p.money>=CARRY_REPAY){p.money-=CARRY_REPAY;fxAt(S.cur,'−$'+CARRY_REPAY,'#ff6b5e');log('👛 The carry trade unwinds: '+pname(S.cur)+' repays $'+CARRY_REPAY+' on the $'+CARRY_LOAN+' borrowed from Tokyo.')}
@@ -952,7 +952,7 @@ export function worldBlocked(pi,kind){
  if(!S||!S.dlcWorld)return 'The Global Edition exhibits are not in play.';
  if(kind==='launch'||kind==='cruise'){const cb=cardGate('fly');if(cb)return cb}
  const p=S.players[pi],used=S.wTurn||{},game=S.wGame||{};
- const need={chainsaw:'w_milei',brexit:'w_brexit',silkroad:'w_bri',carry:'w_watanabe',advance:'w_nigprince',hold:'w_bangalore',carbon:'w_amazon',vanish:'w_bermuda',launch:'w_baikonur',bailout:'w_imf',tariff:'w_tariffwall',cruise:'w_cruise',doha:'w_doha'}[kind];
+ const need={chainsaw:'w_milei',brexit:'w_brexit',silkroad:'w_bri',carry:'w_boj',advance:'w_nigprince',hold:'w_bangalore',carbon:'w_amazon',vanish:'w_bermuda',launch:'w_baikonur',bailout:'w_imf',tariff:'w_tariffwall',cruise:'w_cruise',doha:'w_doha'}[kind];
  if(!need||!NMAP[need])return 'Unknown ability.';
  if(S.owner[need]!==pi)return 'You do not control '+nodeName(NMAP[need]).join(' ')+'.';
  if(S.rubble&&S.rubble[need])return 'That node is rubble.';
@@ -1029,7 +1029,7 @@ const WORLD_ACTS={
   else log('👑 '+pname(pi)+' wires the $2 advance fee. Tails: the prince has gone silent. The inbox is empty.');
   await finishNodeAbility(pi);
  },
- /* MRS WATANABE: borrow now, repay (or be punished) at the start of your next turn */
+ /* BANK OF JAPAN (Mrs Watanabe's carry trade): borrow now, repay (or be punished) at the start of your next turn */
  async carry(pi){
   if(!abilityPhase(pi)||S.mode)return;
   const why=worldBlocked(pi,'carry');if(why){sysTo(pi,why);return}
@@ -1614,7 +1614,7 @@ const WORLD_REWORKS={
   gMark('srilanka');
   const wiped=[];
   if(S.imf&&S.imf[pi]){delete S.imf[pi];wiped.push('the IMF loan')}
-  if(S.carry&&S.carry[pi]){delete S.carry[pi];wiped.push('the Mrs Watanabe carry trade')}
+  if(S.carry&&S.carry[pi]){delete S.carry[pi];wiped.push('the Bank of Japan carry trade')}
   S.tollFree=pi;
   fxAt(pi,'🍃 DEFAULT','#9ad7ff');
   log('🍃 DEFAULT — '+pname(pi)+' stops paying: '+(wiped.length?wiped.join(' and ')+' wiped out':'no debts to wipe')+', and every toll '+pname(pi)+' would owe this turn is free. (Once per game.)');

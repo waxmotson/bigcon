@@ -111,9 +111,8 @@ mk('cobalt',['CONGO','COBALT'],'🔵','COMMODITY',3,6,-10.7167,25.4667,'every ph
 mk('zim',['ZIMBABWE','TRILLION-DOLLAR','NOTE'],'🧾','CHART',1,2,-17.8252,31.0335,'a trillion · buys a loaf · nearly','+$3 on BONDMAGEDDON and on A QUIET QUARTER (hyperinflation is at least predictable). PRINT MONEY: once per game, as your action, gain 20% of the game’s target. Then INFLATION: every seizure on the board costs +$1 more for the rest of the game (it stacks with any later inflation).',{e:{bondrevolt:3,quiet:3}}),
 mk('pyramids',['THE PYRAMIDS'],'🔺','WILD',2,6,29.9792,31.1342,'the original pyramid scheme','PYRAMID SCHEME: whenever a rival seizes a node ADJACENT (on the board graph) to any node you own, they pay you the current payout — $1, then $2, $4, $8… doubling each time it pays, capped by what they can pay — until THE BOULDER ROLLS BACK DOWN is drawn and it resets to $1. The payout is shown on the node.',null),
 /* ── Asia ── */
-mk('boj',['BANK OF','JAPAN'],'🏯','REGULATOR',2,8,35.6866,139.7735,'yield curve control · the rubber band','+$2 income while you also own JAPAN BOND YIELDS; +$3 on BONDMAGEDDON (the curve control fails here first).',{w:[['japan',2]],e:{bondrevolt:3}}),
-mk('watanabe',['MRS','WATANABE'],'👛','WILD',1,5,35.7,139.7,'the carry trade has a face',
- 'CARRY TRADE: on your action, borrow $6 against Tokyo’s zero rates now; repay $9 at the start of your next turn, or take +3 Cortisol instead if you cannot. One loan at a time.',null),
+mk('boj',['BANK OF','JAPAN'],'🏯','REGULATOR',2,8,35.6866,139.7735,'yield curve control · the rubber band',
+ '+$2 income while you also own JAPAN BOND YIELDS; +$3 on BONDMAGEDDON (the curve control fails here first). CARRY TRADE (Mrs Watanabe, who now works here): on your action, borrow $6 against Tokyo’s zero rates now; repay $9 at the start of your next turn, or take +3 Cortisol instead if you cannot. One loan at a time.',{w:[['japan',2]],e:{bondrevolt:3}}),
 mk('toyota',['TOYOTA'],'🚗','CORPORATE',3,8,35.0825,137.1561,'just in time · always on time','+$2 income while you also own THE BULLET TRAIN (the lines run to the minute); +$2 on A QUIET QUARTER.',{w:[['bullet',2]],e:{quiet:2}}),
 mk('pboc',['THE PBOC'],'🏦','REGULATOR',2,8,39.9042,116.4074,'the reserve requirement is a mood','+$2 income while you also own the HKMA PEG; +$2 on the RBA CASH-RATE DECISION and on TRUMP TWEETS TARIFFS (it responds).',{w:[['w_hkma',2]],e:{rates:2,tariffs:2}}),
 mk('evergrande',['EVERGRANDE'],'🏗️','CORPORATE',3,3,22.5429,114.0596,'the towers are very tall · and empty',
@@ -129,8 +128,6 @@ mk('tsmc',['TSMC'],'🧠','CORPORATE',4,10,24.7804,120.9983,'the island that mak
 mk('samsung',['SAMSUNG'],'📱','CORPORATE',3,8,37.2636,127.0286,'chaebol · everything with a screen','+$2 income while you also own ASML; +$2 on A QUIET QUARTER.',{w:[['w_asml',2]],e:{quiet:2}}),
 mk('temasek',['TEMASEK'],'🇸🇬','BANK',3,8,1.2833,103.8501,'the sovereign that owns the airline','+$2 income while you also own MARINA BAY SANDS; +$1 income per OTHER BANK you own.',{w:[['w_mbs',2]],t:[['BANK',1,1]]}),
 mk('mbs',['MARINA BAY','SANDS'],'🏨','CORPORATE',3,8,1.2834,103.8607,'a ship on three towers · the casino pays','+$3 on A QUIET QUARTER and on MADE PAYS OUT… PROBABLY (the casino collects).',{e:{quiet:3,madeout:3}}),
-mk('rbi',['THE RBI'],'🇮🇳','REGULATOR',2,7,18.9322,72.8348,'the repo rate · the repo man','+$2 income while you also own DALAL STREET; +$2 on the RBA CASH-RATE DECISION (rates echo down the world).',{w:[['w_dalal',2]],e:{rates:2}}),
-mk('dalal',['DALAL STREET'],'📊','CHART',2,4,18.9298,72.8333,'the Sensex has opinions','+$2 income while you also own the STOCK-MARKET CHARTS; +$2 on BONDMAGEDDON.',{w:[['stock',2]],e:{bondrevolt:2}}),
 mk('adani',['ADANI'],'🏗️','CORPORATE',3,8,23.0225,72.5714,'ports · power · coal · allegedly','+$4 on COAL RUSH; +$2 income while you also own the COAL TERMINAL (allegedly shipped and sold).',{e:{coalrush:4},w:[['port',2]]}),
 mk('bangalore',['THE BANGALORE','CALL CENTRE'],'🎧','WILD',2,5,12.9716,77.5946,'“have you tried turning it off and on”',
  'WARRANTY EXPIRED: once per turn, on your action, put a rival on hold: they lose 1 Intel (they were told it would be a ten-minute wait).',null),
@@ -140,14 +137,13 @@ mk('kazatom',['KAZATOMPROM','URANIUM'],'☢️','COMMODITY',2,5,51.1694,71.4491,
 mk('baht',['THE BAHT','1997'],'📉','CHART',1,3,13.7563,100.5018,'the contagion started in Bangkok','+$3 on BONDMAGEDDON (the flu begins here). CONTAGION: whenever any player is raided, every rival of the Baht’s owner who owns a node in the region the raided player’s pawn stood in takes +1 Cortisol.',{e:{bondrevolt:3}}),
 mk('baikonur',['THE BAIKONUR','COSMODROME'],'🚀','REGULATOR',2,8,45.965,63.305,'the first rocket · the first satellite · the lease is in roubles',
  'LIFTOFF: +$2 income while you own MISSILE COMMAND or the IRANIAN SHAHED DRONE (the Geography DLC supplies the payload). LAUNCH WINDOW: once per game, in your MOVE phase, pay $3 to be launched to ANY node on the board (the Qantas jet, only once, and it burns more). ESCAPE ON THE ROCKET: once per game, when you would be RAIDED, the raid is cancelled — your pawn is launched to the cosmodrome (or a node you choose) and your Cortisol drops to 5.',{w:[['geo_missile',2],['geo_shahed',2]]}),
-mk('srilanka',['SRI LANKA'],'🍃','WILD',1,2,6.9271,79.8612,'in default · the tea is still excellent','Pays $1 a turn and costs almost nothing: +$3 on BONDMAGEDDON (the default was early). DEFAULT: once per game, as a free action, wipe all your debts (the IMF loan, the Mrs Watanabe carry trade) — and every toll you would owe this turn is free.',{e:{bondrevolt:3}}),
+mk('srilanka',['SRI LANKA'],'🍃','WILD',1,2,6.9271,79.8612,'in default · the tea is still excellent','Pays $1 a turn and costs almost nothing: +$3 on BONDMAGEDDON (the default was early). DEFAULT: once per game, as a free action, wipe all your debts (the IMF loan, the Bank of Japan carry trade) — and every toll you would owe this turn is free.',{e:{bondrevolt:3}}),
 /* ── Oceania, polar & offshore ── */
 mk('rbnz',['THE RBNZ'],'🥝','REGULATOR',1,5,-41.2866,174.7756,'a cash rate · and a kiwi','+$2 income while you also own the RBA; +$2 on the RBA CASH-RATE DECISION (the Reserve Bank of the other island).',{w:[['rba',2]],e:{rates:2}}),
 mk('fonterra',['FONTERRA'],'🥛','COMMODITY',2,5,-36.8485,174.7633,'milk · a lot of it · powdered','+$3 on A QUIET QUARTER; +$2 income while you also own ANZCERTA (the dairy rides the treaty).',{e:{quiet:3},w:[['w_anzcerta',2]]}),
 mk('nauru',['NAURU'],'🏝️','WILD',1,2,-0.5477,166.9209,'phosphate · a nation · a parking lot','+$3 on GOLD RUSH (everything shiny gets looked at) and +$1 income while you also own TUVALU.',{e:{goldrush:3},w:[['geo_tuvalu',1]]}),
 mk('fiji',['FIJI','WATER'],'💧','CORPORATE',2,5,-17.7134,178.065,'bottled somewhere very far from here','+$2 income while you also own QUIKSTOP (the bottled water sells best at the servo).',{w:[['quik',2]]}),
-mk('png',['PNG','GOLD'],'🪙','COMMODITY',2,5,-6.31,155.1,'a big pit · a small island','+$4 on GOLD RUSH; +$1 income per OTHER COMMODITY you own.',{e:{goldrush:4},t:[['COMMODITY',1,1]]}),
-/* ── Antarctica: ten stops along the ice, west to east. Only four links leave the continent (see WORLD_ROUTES). ── */
+/* ── Antarctica: eight stops along the ice, west to east. Only four links leave the continent (see WORLD_ROUTES). ── */
 mk('aq_mbl',['MARIE BYRD','LAND'],'🧊','WILD',1,3,-79,-135,'unclaimed · nobody wanted it · nobody asked',
  'UNCLAIMED: the first player to arrive here owns it free: no action, no cost, no Cortisol (like Tuvalu). Income $1.',null),
 mk('aq_chl',['TERRITORIO CHILENO','ANTÁRTICO'],'🇨🇱','WILD',1,4,-76,-88,'drawn in 1940 · overlapping on purpose',
@@ -157,17 +153,13 @@ mk('aq_gbr',['BRITISH ANTARCTIC','TERRITORY'],'🇬🇧','WILD',1,4,-71.5,-68,'t
 mk('aq_arg',['ANTÁRTIDA','ARGENTINA'],'🇦🇷','WILD',1,4,-77.5,-52,'it is on the map · it is on the 50 peso note',
  'DISPUTED: +$1 income for each OTHER Peninsula claim you hold (CHILE, BRITAIN, ARGENTINA). Hold two and the owner of the third takes +1 Cortisol at the start of each of your turns (you have filed a sovereignty dispute), unless someone owns THE ANTARCTIC TREATY, which settles the dispute (though anyone but its owner who holds Antarctic territory then takes +1 Cortisol a turn).',{i:[[PENINSULA,1]]}),
 mk('antarctica',['THE ANTARCTIC','TREATY'],'🐧','WILD',2,9,-80,-25,'nobody owns it · nobody pays rent',
- 'THE TREATY SYSTEM: while anyone owns it, the Peninsula sovereignty disputes are settled — but only the Treaty’s owner is recognised: every OTHER player who holds any Antarctic territory takes +1 Cortisol at the start of each of their turns. It is a bloc outside the WTO’s jurisdiction: your income from the nine territorial claims is multiplied ×(1 + 0.25 per claim you own), capped at ×2.5, and no WTO file ever opens, however many you hold. UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible (regulators and raids still reach it).',null),
+ 'THE TREATY SYSTEM: while anyone owns it, the Peninsula sovereignty disputes are settled — but only the Treaty’s owner is recognised: every OTHER player who holds any Antarctic territory takes +1 Cortisol at the start of each of their turns. It is a bloc outside the WTO’s jurisdiction: your income from the seven territorial claims is multiplied ×(1 + 0.25 per claim you own), capped at ×2.5, and no WTO file ever opens, however many you hold. UNTOUCHABLE: once you own it, no hostile takeover of it is ever possible (regulators and raids still reach it).',null),
 mk('aq_qml',['QUEEN MAUD','LAND'],'🇳🇴','COMMODITY',1,5,-73,18,'a Norwegian queen · a Norwegian claim · very cold',
  '+$2 income while you also own NORWAY’S WEALTH FUND (the oil money bought a glacier).',{w:[['w_norway',2]]}),
 mk('aq_aatw',['AUSTRALIAN','ANTARCTIC TERRITORY'],'🇦🇺','WILD',1,5,-73,85,'42% of a continent · filed under Canberra',
  '+$1 income per Australian or New Zealand node you own, up to $3 (the paperwork says it is basically Tasmania).',{an:[1,3]}),
 mk('aq_adelie',['TERRE','ADÉLIE'],'🐧','WILD',1,4,-72,139,'France claimed a penguin colony · and a wife’s name',
  'MARCH OF THE PENGUINS: −1 Cortisol at the start of each of your turns (the penguins are not judging you; much).',{c:-1}),
-mk('aq_aate',['AUSTRALIAN','ANTARCTIC · EAST'],'🛷','WILD',1,5,-74,158,'the other half · the Hobart supply run',
- '+$2 income while you also own THE AUSTRALIAN MONETARY POLICY COMPETITION in Hobart (every ship leaves from Hobart).',{w:[['mpc',2]]}),
-mk('aq_ross',['ROSS','DEPENDENCY'],'🇳🇿','COMMODITY',1,5,-78,178,'New Zealand’s slice · sheep not included',
- '+$2 income while you also own ANZCERTA (Christchurch is the gateway); +$1 while you also own FONTERRA (milk powder keeps well in the cold).',{w:[['w_anzcerta',2],['w_fonterra',1]]}),
 mk('greenland',['GREENLAND'],'❄️','WILD',2,6,64.1835,-51.7216,'it is not for sale · apparently it is','+$3 income while you also own DONALD TRUMP (he is, allegedly, interested). MAKE AN OFFER: if you own DONALD TRUMP, once per game and as your action, force-buy Greenland from whoever owns it at its list price. The owner cannot refuse; the money goes to them.',{w:[['trump',3]]}),
 mk('svalbard',['SVALBARD','SEED VAULT'],'🌱','WILD',1,6,78.2386,15.5086,'every seed on earth · in a very cold cupboard',
  'ANTI-RUBBLE: any node of yours that a missile would turn to rubble survives; once per game, you may rebuild a rubble node for free (stand on it in your action phase).',null),
@@ -185,7 +177,7 @@ mk('tariffwall',['THE TARIFF','WALL'],'🧱','REGULATOR',1,7,38.0,-97.0,'big · 
 mk('eu',['THE EU','SINGLE MARKET'],'🇪🇺','REGULATOR',2,9,50.8467,4.3525,'one market · twenty-seven opinions · a form for everything',
  'TRADE BLOC: your income from member nodes (nodes in EU countries: the ECB, Deutsche Bahn, German Bunds, the Greek Debt, ASML, the Tulip Bulb, the Rotterdam barrel yard, the Paris master chart, the Brussels Pillars, Venice) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. Not members: the UK, Norway, Switzerland, Russia, Turkey, Iceland, Monaco. SCRUTINY: with 4 or more members a WTO file opens on you; each member beyond 3 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 3 members.',null),
 mk('brics',['BRICS'],'🧮','WILD',2,8,-26.1952,28.034,'five letters · one summit · a currency that does not exist yet',
- 'TRADE BLOC: your income from member nodes (nodes in Brazil, Russia, India, China and South Africa: Vale, Petrobras, Gazprom, the Kremlin, the Whistleblower, the RBI, Dalal Street, Adani, Bangalore, the PBOC, Evergrande, Shenzhen, Baotou, the Belt and Road, HSBC, the HKMA) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. SCRUTINY: with 4 or more members a WTO file opens on you; each member beyond 3 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 3 members. Floats to a random open spot each game.',null),
+ 'TRADE BLOC: your income from member nodes (nodes in Brazil, Russia, India, China and South Africa: Vale, Petrobras, Gazprom, the Kremlin, the Whistleblower, Adani, Bangalore, the PBOC, Evergrande, Shenzhen, Baotou, the Belt and Road, HSBC, the HKMA) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. SCRUTINY: with 4 or more members a WTO file opens on you; each member beyond 3 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 3 members. Floats to a random open spot each game.',null),
 mk('apple',['APPLE'],'🍎','CORPORATE',2,9,37.3349,-122.009,'a trillion dollars · an infinite loop · one very low tax rate',
  'IRISH SANDWICH: +$2 income for every tax haven you own (THE CAYMAN ISLANDS, THE BRITISH VIRGIN ISLANDS, THE BERMUDA TRIANGLE, THE SWISS VAULT, MONACO CASINO).',{i:[[TAX_HAVENS,2]]}),
 mk('cruise',['THE CRUISE SHIP','“THE 3,000-BERTH','ENCLAVE”'],'🛳️','CORPORATE',2,8,41.3851,2.1734,'a floating city-state · no laws · the buffet is endless',
@@ -324,7 +316,7 @@ export const FLOAT_ZONES=[
 export const WATER_NODES=new Set([
  'w_panama','w_hormuz','w_suez','w_malacca',                                       /* the chokepoints */
  'geo_scs','geo_tuvalu','geo_venice','geo_wonsan',                                 /* the South China Sea, Tuvalu, Venice, Wonsan harbour */
- 'w_fiji','w_nauru','w_png','w_srilanka','w_easter','w_cayman','w_bvi','w_bermuda', /* islands */
+ 'w_fiji','w_nauru','w_srilanka','w_easter','w_cayman','w_bvi','w_bermuda', /* islands */
  'w_svalbard','w_hdi','w_greenland','w_gbr','rock','w_mbs','w_brexit','w_nordstream','w_cruise', /* the Arctic, Iceland, Greenland, the Reef, Hawaii, Marina Bay, Dover, the Baltic, Barcelona */
  'port','tanker','barrels'                                                          /* the Docks, the Tanker Fleet, the Rotterdam barrel yard */
 ]);
@@ -334,8 +326,8 @@ export const WATER_NODES=new Set([
 export const BLOC_STEP=0.25,BLOC_MAX=2.5,BLOC_FREE=3;
 export const TRADE_BLOCS={
  w_eu:{short:'EU',book:'EU SINGLE MARKET',icon:'🇪🇺',members:['w_ecb','w_db','w_bunds','w_greek','w_asml','w_tulip','barrels','tenyear','geo_pillars','geo_venice']},
- w_antarctica:{short:'TREATY',book:'ANTARCTIC TREATY',icon:'🐧',noWto:true,members:['w_aq_mbl','w_aq_chl','w_aq_gbr','w_aq_arg','w_aq_qml','w_aq_aatw','w_aq_adelie','w_aq_aate','w_aq_ross']},
- w_brics:{short:'BRICS',book:'BRICS',icon:'🧮',members:['w_petrobras','w_gazprom','w_kremlin','whistle','w_rbi','w_dalal','w_adani','w_bangalore','w_pboc','w_evergrande','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma']}
+ w_antarctica:{short:'TREATY',book:'ANTARCTIC TREATY',icon:'🐧',noWto:true,members:['w_aq_mbl','w_aq_chl','w_aq_gbr','w_aq_arg','w_aq_qml','w_aq_aatw','w_aq_adelie']},
+ w_brics:{short:'BRICS',book:'BRICS',icon:'🧮',members:['w_petrobras','w_gazprom','w_kremlin','whistle','w_adani','w_bangalore','w_pboc','w_evergrande','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma']}
 };
 /* the bloc a node is a member of (or null) */
 export function blocOfMember(id){for(const b of Object.keys(TRADE_BLOCS))if(TRADE_BLOCS[b].members.includes(id))return b;return null}
@@ -344,7 +336,7 @@ const geoById=id=>{const n=WORLD_NODES.find(x=>x.id===id);return n?n.geo:(GEO_AN
 const inAusNz=g=>!!g&&((g[0]<=-9&&g[0]>=-48&&g[1]>=112&&g[1]<=154)||(g[0]<=-34&&g[0]>=-48&&g[1]>=165&&g[1]<=180));
 export const AUSNZ=new Set(Object.keys(GEO_ANCHORS).concat(WORLD_NODE_IDS).filter(id=>!WORLD_FLOATING.includes(id)&&inAusNz(geoById(id))));
 /* edges that cross the date line: drawn as a pair of arrows off the right edge and back in at the left */
-export const WORLD_WRAPS=[['rock','w_fiji'],['w_aq_ross','w_aq_mbl']];
+export const WORLD_WRAPS=[['rock','w_fiji'],['w_aq_adelie','w_aq_mbl']];
 /* The ONLY links between regions (everything else is a local web, see generateWorldMapBoard). Walking across the world is meant to be
    slow: the chokepoints are the gateways (Panama, Suez, Hormuz, Malacca, Antarctica), the North Atlantic corridor is the single way from
    Europe to North America (via Iceland and Greenland), and a handful of overland and island hops join neighbouring regions. There are
@@ -355,14 +347,14 @@ export const WORLD_ROUTES=[
  /* the South Atlantic */ ['w_petrobras','w_dangote'],
  /* Panama: the two Americas */ ['w_panama','w_pemex'],['w_panama','w_pdvsa'],['w_panama','w_amazon'],
  /* Suez: Europe, the Middle East and Africa */ ['w_suez','w_greek'],['w_suez','w_neom'],['w_suez','w_pyramids'],
- /* Hormuz: the Gulf and South Asia */ ['w_hormuz','w_burj'],['w_hormuz','w_rbi'],['w_hormuz','w_adani'],
+ /* Hormuz: the Gulf and South Asia */ ['w_hormuz','w_burj'],['w_hormuz','w_adani'],
  /* Malacca: South Asia and South-East Asia */ ['w_malacca','w_srilanka'],['w_malacca','petronas'],['w_malacca','w_temasek'],
  /* the overland road across Eurasia: Moscow, the steppe, the Chinese north */ ['w_kremlin','w_kazatom'],['w_kazatom','w_baotou'],
  /* South-East Asia: the Pacific rim to the north, the Indonesian islands to the south */ ['geo_scs','w_hsbc'],['w_nickel','forklift'],
- /* Antarctica: ten territories chained west to east along the ice and closed into a RING by a date-line wrap (Ross Dependency to Marie Byrd Land); ONLY FOUR links leave it: the Peninsula to South America, Queen Maud Land to South Africa, the Australian Antarctic Territory to Hobart and the Ross Dependency to Christchurch */
- ['w_aq_ross','w_aq_mbl'],['w_aq_mbl','w_aq_chl'],['w_aq_chl','w_aq_gbr'],['w_aq_gbr','w_aq_arg'],['w_aq_arg','w_antarctica'],['w_antarctica','w_aq_qml'],['w_aq_qml','w_aq_aatw'],['w_aq_aatw','w_aq_adelie'],['w_aq_adelie','w_aq_aate'],['w_aq_aate','w_aq_ross'],
- ['w_aq_gbr','w_milei'],['w_aq_qml','w_zim'],['w_aq_aate','mpc'],['w_aq_ross','w_anzcerta'],
- /* the Pacific islands */ ['w_fiji','geo_tuvalu'],['w_nauru','geo_tuvalu'],['w_png','w_nauru']
+ /* Antarctica: eight territories chained west to east along the ice and closed into a RING by a date-line wrap (Terre Adélie to Marie Byrd Land); ONLY FOUR links leave it: the Peninsula to South America, Queen Maud Land to South Africa, the Australian Antarctic Territory to Hobart and Terre Adélie to Christchurch */
+ ['w_aq_adelie','w_aq_mbl'],['w_aq_mbl','w_aq_chl'],['w_aq_chl','w_aq_gbr'],['w_aq_gbr','w_aq_arg'],['w_aq_arg','w_antarctica'],['w_antarctica','w_aq_qml'],['w_aq_qml','w_aq_aatw'],['w_aq_aatw','w_aq_adelie'],
+ ['w_aq_gbr','w_milei'],['w_aq_qml','w_zim'],['w_aq_aatw','mpc'],['w_aq_adelie','w_anzcerta'],
+ /* the Pacific islands */ ['w_fiji','geo_tuvalu'],['w_nauru','geo_tuvalu']
 ];
 
 /* low-detail continent outlines: [lon,lat] rings. Hand-simplified; the look is "evidence board", not an atlas. */

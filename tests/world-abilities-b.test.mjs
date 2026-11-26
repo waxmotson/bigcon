@@ -1,6 +1,6 @@
 /*
  * WORLD EXPANSION abilities, batch B: the eight actives. Milei's chainsaw, Brexit and the Belt and Road change the
- * edge graph (kept in S.boardEdges so it syncs); the Nigerian Prince flips a coin; Mrs Watanabe's carry trade comes due
+ * edge graph (kept in S.boardEdges so it syncs); the Nigerian Prince flips a coin; the Bank of Japan's carry trade comes due
  * next turn; the Bangalore call centre drains Intel; the Amazon sells credits; the Bermuda Triangle hides a seat.
  * All run through the real engine (applyIntent / startTurn) on a host game.
  */
@@ -43,7 +43,7 @@ async function pickEdge(e, pi, kind, a, b) {
 
 test('none of the nodes is flagged todo any more, and the sp text is consistent', async () => {
   const W = await import('../static/js/world.js');
-  for (const id of ['w_milei', 'w_brexit', 'w_bri', 'w_nigprince', 'w_watanabe', 'w_bangalore', 'w_amazon', 'w_bermuda']) {
+  for (const id of ['w_milei', 'w_brexit', 'w_bri', 'w_nigprince', 'w_boj', 'w_bangalore', 'w_amazon', 'w_bermuda']) {
     const n = W.WORLD_NODES.find(x => x.id === id);
     assert.ok(n && !n.todo, id + ' is live');
     assert.ok(!/Phase 2/.test(n.sp), id + ' has no leftover phase-2 marker');
@@ -216,10 +216,10 @@ test('Nigerian Prince: $2 and a coin: heads +$5, tails nothing, once per turn, o
   assert.equal(S.players[0].money, 1);
 });
 
-/* ---------- MRS WATANABE ---------- */
-test('Watanabe: borrow $6, repay $9 at the start of your next turn', async t => {
+/* ---------- BANK OF JAPAN (carry trade) ---------- */
+test('Bank of Japan carry trade: borrow $6, repay $9 at the start of your next turn', async t => {
   const { e, S } = await worldGame(t);
-  S.owner = { w_watanabe: 0 };
+  S.owner = { w_boj: 0 };
   armAction(S, 0); S.players[0].money = 10; S.players[0].cortisol = 0;
   await e.f.applyIntent(0, { act: 'carry' });
   await settle();
@@ -239,13 +239,13 @@ test('Watanabe: borrow $6, repay $9 at the start of your next turn', async t => 
   assert.equal(S.players[0].cortisol, 0);
 });
 
-test('Watanabe: if you cannot repay, +3 Cortisol instead and the debt is gone', async t => {
+test('Bank of Japan carry trade: if you cannot repay, +3 Cortisol instead and the debt is gone', async t => {
   const { e, S } = await worldGame(t);
-  S.owner = { w_watanabe: 0, citi: 0 };
+  S.owner = { w_boj: 0, citi: 0 };
   S.carry = { 0: 1 };
   S.cur = 0; S.players[0].money = 0; S.players[0].cortisol = 0; S.turn = 2;
   /* nothing on the board pays, so the player truly cannot cover $9 */
-  S.owner = { w_watanabe: 0 };
+  S.owner = { w_boj: 0 };
   await e.f.startTurn();
   await settle();
   assert.equal(S.carry[0], undefined);

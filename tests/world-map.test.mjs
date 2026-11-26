@@ -405,7 +405,7 @@ test('New Zealand sits across the Tasman Sea: east of every Australian node, wit
 /* ---------- the connection graph: rich local webs, few and slow ways between regions ---------- */
 test('connections: long journeys, a handful of inter-region links, rich local webs, tidy edges', { timeout: 240000 }, async t => {
   const FLOAT = new Set(W.WORLD_FLOATING);
-  const CORRIDOR = new Set(['w_hdi', 'w_greenland', 'w_aq_gbr', 'w_aq_qml', 'w_aq_aate', 'w_aq_ross', 'w_petrobras', 'w_kazatom']); /* the corridor, the southern route, the South Atlantic and the steppe: allowed to be long */
+  const CORRIDOR = new Set(['w_hdi', 'w_greenland', 'w_aq_gbr', 'w_aq_qml', 'w_aq_aatw', 'w_aq_adelie', 'w_petrobras', 'w_kazatom']); /* the corridor, the southern route, the South Atlantic and the steppe: allowed to be long */
   let worstInter = 0, worstQL = 99, worstSN = 99, worstEU = 99, worstDeg = 9, crossings = 0;
   for (const geo of [false, true]) for (const seed of [61, 62, 63, 64]) {
     const { e, gen, NODES, NMAP, ADJ } = await seeded(t, seed, geo);
@@ -471,11 +471,11 @@ test('connections: the board is connected over many seeds, with and without the 
   }
 });
 
-/* ---------- Antarctica: ten territories on the ice, four ways in, no mega shortcut ---------- */
+/* ---------- Antarctica: eight territories on the ice, four ways in, no mega shortcut ---------- */
 test('Antarctica is a long chain of territories with four gateways and no continent-hopping hub', { timeout: 240000 }, async t => {
   const ANT = W.WORLD_NODES.filter(n => W.regionOf(n) === 'ANT').map(n => n.id);
-  const ring = ['w_aq_mbl', 'w_aq_chl', 'w_aq_gbr', 'w_aq_arg', 'w_antarctica', 'w_aq_qml', 'w_aq_aatw', 'w_aq_adelie', 'w_aq_aate', 'w_aq_ross'];
-  assert.deepEqual(ANT.slice().sort(), ring.slice().sort(), 'exactly the ten territories are Antarctic');
+  const ring = ['w_aq_mbl', 'w_aq_chl', 'w_aq_gbr', 'w_aq_arg', 'w_antarctica', 'w_aq_qml', 'w_aq_aatw', 'w_aq_adelie'];
+  assert.deepEqual(ANT.slice().sort(), ring.slice().sort(), 'exactly the eight territories are Antarctic');
   for (const id of ring) {
     const n = W.WORLD_NODES.find(x => x.id === id);
     assert.ok(W.onLand(n.geo[0], n.geo[1]), id + ' lies on the Antarctic landmass');
@@ -486,14 +486,14 @@ test('Antarctica is a long chain of territories with four gateways and no contin
     const e0w = () => e.f.worldMapMetrics().w;
     const reg = id => W.regionOf(NMAP[id]);
     const off = gen.edges.filter(([a, b]) => (reg(a) === 'ANT') !== (reg(b) === 'ANT')).map(([a, b]) => (reg(a) === 'ANT' ? [a, b] : [b, a]).join('>')).sort();
-    assert.deepEqual(off, ['w_aq_aate>mpc', 'w_aq_gbr>w_milei', 'w_aq_qml>w_zim', 'w_aq_ross>w_anzcerta'].sort(), 'the four gateways only');
+    assert.deepEqual(off, ['w_aq_aatw>mpc', 'w_aq_gbr>w_milei', 'w_aq_qml>w_zim', 'w_aq_adelie>w_anzcerta'].sort(), 'the four gateways only');
     /* the chain is closed into a ring by the date-line wrap: every node has exactly two Antarctic neighbours */
-    assert.ok(W.WORLD_WRAPS.some(([a, b]) => [a, b].sort().join() === ['w_aq_mbl', 'w_aq_ross'].sort().join()), 'the Ross Dependency wraps to Marie Byrd Land');
-    assert.ok(ADJ.w_aq_ross.includes('w_aq_mbl') && ADJ.w_aq_mbl.includes('w_aq_ross'), 'the wrap is a walkable edge');
-    assert.ok(Math.abs(NMAP.w_aq_ross.x - NMAP.w_aq_mbl.x) > e0w(NMAP) * 0.6, 'and it spans the canvas');
+    assert.ok(W.WORLD_WRAPS.some(([a, b]) => [a, b].sort().join() === ['w_aq_mbl', 'w_aq_adelie'].sort().join()), 'Terre Adélie wraps to Marie Byrd Land');
+    assert.ok(ADJ.w_aq_adelie.includes('w_aq_mbl') && ADJ.w_aq_mbl.includes('w_aq_adelie'), 'the wrap is a walkable edge');
+    assert.ok(Math.abs(NMAP.w_aq_adelie.x - NMAP.w_aq_mbl.x) > e0w(NMAP) * 0.6, 'and it spans the canvas');
     for (const id of ring) assert.equal(ADJ[id].filter(o => reg(o) === 'ANT').length, 2, id + ' has exactly 2 Antarctic neighbours');
-    /* circling the continent: eastward from Marie Byrd visits all ten */
-    { const seenR = bfs(Object.fromEntries(ring.map(id => [id, ADJ[id].filter(o => reg(o) === 'ANT')])), 'w_aq_mbl'); assert.equal(seenR.size, 10); assert.equal(seenR.get('w_antarctica'), 4, 'Treaty is 4 hops from Marie Byrd either way round'); }
+    /* circling the continent: eastward from Marie Byrd visits all eight */
+    { const seenR = bfs(Object.fromEntries(ring.map(id => [id, ADJ[id].filter(o => reg(o) === 'ANT')])), 'w_aq_mbl'); assert.equal(seenR.size, 8); assert.equal(seenR.get('w_antarctica'), 4, 'Treaty is 4 hops from Marie Byrd either way round'); }
     for (const id of ring) {
       const outside = new Set(ADJ[id].filter(o => reg(o) !== 'ANT').map(reg));
       assert.ok(outside.size <= 1, id + ' touches at most one outside region: ' + [...outside]);
