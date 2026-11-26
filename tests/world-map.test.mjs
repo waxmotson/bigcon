@@ -41,7 +41,7 @@ test('every world node has the required fields, a valid type, a geo and balanced
     assert.ok(Number.isInteger(n.income) && n.income >= 0 && n.income <= 8, n.id + ' income');
     assert.ok(Number.isInteger(n.cost) && n.cost >= 2 && n.cost <= 20, n.id + ' cost');
     assert.ok(Math.abs(n.geo[0]) <= 90 && Math.abs(n.geo[1]) <= 180, n.id + ' geo in range');
-    assert.ok(!n.image, n.id + ' has no image yet (placeholder card)');
+    assert.ok((!n.image || n.image.startsWith('./static/GlobalEdition/')), n.id + ' has no image or a Global Edition photo');
     assert.ok(n.sp.length > 10, n.id + ' has ability text');
   }
   for (const t of TYPES) assert.ok(WORLD_NODES.some(n => n.type === t), 'the expansion has ' + t);
@@ -220,7 +220,8 @@ test('placeholder nodes render as text cards without an image; an image path tak
   engine.f.rebuildWorld(true, true);
   const { NMAP } = engine.acc;
   const n = NMAP.w_cushing;
-  assert.ok(!n.photo, 'Cushing has no photo yet');
+  /* every world node has a photo now: strip Cushing's to see the text card a node without one falls back to */
+  const photo = n.image, crop = n.crop; delete n.image; delete n.crop;
   const svg = engine.f.nodeSVG(n, 'node');
   assert.ok(!svg.includes('<image'), 'no <image> for a placeholder node');
   assert.ok(svg.includes('CUSHING') && svg.includes(n.icon), 'name and icon are drawn');
@@ -228,17 +229,15 @@ test('placeholder nodes render as text cards without an image; an image path tak
   for (const w of engine.acc.WORLD_NODES) {
     const s = engine.f.nodeSVG(w, 'node');
     assert.ok(s.includes('<g class="node '), w.id + ' renders');
-    if (w.photo) assert.ok(s.includes('href="' + w.photo + '"') && s.includes('node-photo'), w.id + ' shows its photo');
-    else assert.ok(!s.includes('<image'), w.id + ' is a text card');
+    if (w.image) assert.ok(s.includes('href="' + w.image + '"') && s.includes('xMidYMid slice') && !s.includes('node-card'), w.id + ' shows its photo, uncaptioned like a classic node');
+    else assert.ok(w === n && !s.includes('<image'), w.id + ' is a text card');
   }
-  /* a photo card keeps its readable name */
-  assert.ok(engine.f.nodeSVG(NMAP.w_fed, 'node').includes('THE FEDERAL RESERVE'));
   /* classic nodes keep their pictures */
   assert.ok(engine.f.nodeSVG(NMAP.citi, 'node').includes('<image'));
   /* drop an image in later and it is used */
   n.image = './static/example.png';
   assert.ok(engine.f.nodeSVG(n, 'node').includes('href="./static/example.png"'));
-  delete n.image;
+  n.image = photo; n.crop = crop;
 });
 
 /* ---------- the region-structured graph ---------- */
@@ -369,7 +368,7 @@ test('THE BAIKONUR COSMODROME: launch to anywhere once per game, and it pays alo
   const S = await makeGame(e, 2, { geo: true });
   const n = e.acc.NMAP.w_baikonur;
   assert.ok(n && n.type === 'REGULATOR' && n.icon && n.sub && n.sp.includes('LAUNCH'));
-  assert.ok(!n.image, 'a text placeholder like the other w_ nodes');
+  assert.ok((!n.image || n.image.startsWith('./static/GlobalEdition/')), 'a text card or its Global Edition photo');
   S.cur = 0; S.mood = 'CALM'; S.owner = { geo_missile: 0 }; S.players[0].money = 0; e.f.income(0);
   const base = S.players[0].money;
   S.owner = { w_baikonur: 0, geo_missile: 0 }; S.players[0].money = 0; e.f.income(0);
@@ -414,8 +413,10 @@ test('connections: long journeys, a handful of inter-region links, rich local we
     const m = e.f.worldMapMetrics();
     const dist = bfs(ADJ, 'quik');
     for (const n of NODES) assert.ok(dist.has(n.id), n.id + ' reachable from quik (seed ' + seed + ')');
-    /* long journeys, in hops on the walking graph (no flights) */
-    const ql = dist.get('uk'), sn = bfs(ADJ, 'bond').get('citi'), eu = bfs(ADJ, 'uk').get('japan');
+    /* long journeys, in hops on the walking graph (no flights) and off the floaters: floater-to-floater links are allowed to shortcut */
+    const ROAD = Object.fromEntries(Object.entries(ADJ).filter(([k]) => !FLOAT.has(k)).map(([k, v]) => [k, v.filter(o => !FLOAT.has(o))]));
+    const rd = bfs(ROAD, 'quik');
+    const ql = rd.get('uk'), sn = bfs(ROAD, 'bond').get('citi'), eu = bfs(ROAD, 'uk').get('japan');
     assert.ok(ql >= 10, 'Quikstop to London takes ' + ql); assert.ok(sn >= 11, 'Sydney to New York takes ' + sn); assert.ok(eu >= 6, 'London to Tokyo overland takes ' + eu);
     assert.ok(Math.max(...dist.values()) <= 30, 'but the world stays crossable');
     worstQL = Math.min(worstQL, ql); worstSN = Math.min(worstSN, sn); worstEU = Math.min(worstEU, eu);
@@ -479,7 +480,7 @@ test('Antarctica is a long chain of territories with four gateways and no contin
   for (const id of ring) {
     const n = W.WORLD_NODES.find(x => x.id === id);
     assert.ok(W.onLand(n.geo[0], n.geo[1]), id + ' lies on the Antarctic landmass');
-    assert.ok(n.geo[0] < -60 && !n.image && n.sp && n.sub, id + ' is a polar text card');
+    assert.ok(n.geo[0] < -60 && (!n.image || n.image.startsWith('./static/GlobalEdition/')) && n.sp && n.sub, id + ' is a polar text card');
   }
   for (const geo of [false, true]) for (const seed of [71, 72, 73]) {
     const { e, NMAP, ADJ, gen } = await seeded(t, seed, geo);
@@ -508,5 +509,18 @@ test('Antarctica is a long chain of territories with four gateways and no contin
     assert.ok(stops >= 4, 'South America to Australia crosses ' + stops + ' Antarctic nodes');
     const dist = bfs(ADJ, 'quik');
     for (const id of Object.keys(NMAP)) assert.ok(dist.has(id), id + ' reachable (seed ' + seed + ', geo ' + geo + ')');
+  }
+});
+
+/* ---------- the floating exhibits reach each other ---------- */
+test('every floating exhibit links to at least one other floater (dropped in pairs; a lone one links to its nearest)', { timeout: 120000 }, async t => {
+  for (const seed of [21, 22, 23, 24, 25, 26]) {
+    const { gen, NMAP } = await seeded(t, seed);
+    const F = new Set(W.WORLD_FLOATING.filter(id => NMAP[id]));
+    assert.ok(F.size >= 10);
+    for (const id of F) {
+      const fellows = gen.edges.filter(([a, b]) => (a === id && F.has(b)) || (b === id && F.has(a)));
+      assert.ok(fellows.length >= 1, id + ' has a fellow floater (seed ' + seed + ')');
+    }
   }
 });

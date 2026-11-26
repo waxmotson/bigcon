@@ -40,7 +40,7 @@ test('batch C: every new node exists with the right type, a witty sub, an sp and
     const n = by[id];
     assert.ok(n, id + ' exists');
     assert.equal(n.type, type, id + ' type');
-    assert.ok(n.sub.length > 10 && n.sp.length > 40 && !n.image && !n.todo, id + ' has copy, no image, not todo');
+    assert.ok(n.sub.length > 10 && n.sp.length > 40 && (!n.image || n.image.startsWith('./static/GlobalEdition/')) && !n.todo, id + ' has copy, not todo, any picture is a GE photo');
     assert.ok(n.income >= 1 && n.income <= 3 && n.cost >= 6 && n.cost <= 9, id + ' income/cost are in family: ' + n.income + '/' + n.cost);
   }
   for (const id of ['w_tariffwall', 'w_brics', 'w_cpa', 'w_box']) assert.ok(W.WORLD_FLOATING.includes(id), id + ' floats (no place)');

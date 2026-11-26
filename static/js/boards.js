@@ -329,29 +329,56 @@ function spreadClusters(radius,skip){
    (tundra, desert, jungle, ice: always on land), clear of every other box by a generous margin. The host runs this once; the result travels in
    S.boardLayout, so every client sees the same spots. */
 function placeFloaters(float){
- const m=worldMapMetrics(),fixed=NODES.filter(n=>!float.has(n.id)),placed=[];
+ const m=worldMapMetrics(),fixed=NODES.filter(n=>!float.has(n.id)),placed=[],geoAt={};
  const dmin=(p,list)=>list.reduce((a,q)=>Math.min(a,Math.hypot(q.x-p.x,q.y-p.y)),1e9);
- const ids=NODES.filter(n=>float.has(n.id)).map(n=>n.id);
- shuffle(ids.slice()).forEach(id=>{
-  let spot=null,best=null,bestD=-1;
+ const ids=shuffle(NODES.filter(n=>float.has(n.id)).map(n=>n.id).slice());
+ floatPartner={};const paired=new Set();
+ const inBounds=p=>!(p.x<150||p.x>m.w-150||p.y<560||p.y>m.h-300);
+ ids.forEach((id,k)=>{
+  let spot=null,best=null,bestD=-1,ll=null,bestLL=null;
+  /* floaters are dropped in pairs: a new one lands beside a floater still waiting for a partner (FLOAT_PAIR_MIN..MAX px away, still clear
+     of everything else), so the two link; the last one, if nobody is waiting, joins any pair. Only if no spot fits does it go out alone. */
+  const placedIds=ids.slice(0,k),waiting=placedIds.filter(x=>!paired.has(x));
+  const mates=shuffle((waiting.length?waiting:(k===ids.length-1?placedIds:[])).slice());
+  for(const mate of mates){
+   const mp=NMAP[mate],mg=geoAt[mate];if(!mg)continue;
+   for(const clear of [460,420,385]){
+    for(let t=0;t<1200&&!spot;t++){
+     const la=mg[0]+(Math.random()*2-1)*22,lo=mg[1]+(Math.random()*2-1)*32;
+     if(!onLand(la,lo))continue;
+     const p=projectGeo(la,lo),dm=Math.hypot(p.x-mp.x,p.y-mp.y);
+     if(!inBounds(p)||dm<FLOAT_PAIR_MIN||dm>FLOAT_PAIR_MAX)continue;
+     const d=Math.min(dmin(p,fixed),dmin(p,placed));
+     if(d>=clear){spot=p;ll=[la,lo]}
+    }
+    if(spot)break;
+   }
+   if(spot){floatPartner[id]=mate;paired.add(id);paired.add(mate);break}
+  }
   for(const clear of [560,480,420,380]){
+   if(spot)break;
    for(let t=0;t<1500&&!spot;t++){
     const z=FLOAT_ZONES[Math.floor(Math.random()*FLOAT_ZONES.length)];
     const ang=Math.random()*Math.PI*2,rad=z[2]*Math.sqrt(Math.random());
     const la=z[0]+Math.sin(ang)*rad*0.8,lo=z[1]+Math.cos(ang)*rad;
     if(!onLand(la,lo))continue;
     const p=projectGeo(la,lo);
-    if(p.x<150||p.x>m.w-150||p.y<560||p.y>m.h-300)continue;
+    if(!inBounds(p))continue;
     const d=Math.min(dmin(p,fixed),dmin(p,placed));
-    if(d>bestD){bestD=d;best=p}
-    if(d>=clear)spot=p;
+    if(d>bestD){bestD=d;best=p;bestLL=[la,lo]}
+    if(d>=clear){spot=p;ll=[la,lo]}
    }
-   if(spot)break;
   }
-  spot=spot||best||{x:m.w/2,y:m.h-400};
+  if(!spot){spot=best||{x:m.w/2,y:m.h-400};ll=bestLL}
+  geoAt[id]=ll;
   const n=NMAP[id];n.x=Math.round(spot.x);n.y=Math.round(spot.y);n.rot=0;placed.push({x:n.x,y:n.y});
  });
 }
+/* the floaters' pairs from the last placement: partner id by id */
+let floatPartner={};
+const FLOAT_PAIR_MIN=390,FLOAT_PAIR_MAX=900;
+/* two floaters link only if they are already this close by road: a neighbourhood tie, never a continent jump */
+const FLOAT_LINK_HOPS=4;
 export function generateWorldMapBoard(){
  const m=worldMapMetrics();
  const float=new Set(WORLD_FLOATING.filter(id=>NMAP[id]));
@@ -437,6 +464,25 @@ export function generateWorldMapBoard(){
   const r=reg[sorted[0].id];
   const own=sorted.filter(n=>reg[n.id]===r),clean=own.filter(n=>!crosses(id,n.id)&&!hitsCard(id,n.id));
   clean.concat(own.filter(n=>!clean.includes(n))).slice(0,2).forEach(n=>add(id,n.id));
+ });
+/* ...and the floaters reach each other: each one also links to its nearest fellow floater that is already within FLOAT_LINK_HOPS
+    hops of it, so the link ties a neighbourhood together without opening a wormhole across the map (the journeys stay long). A line
+    clear of other links and cards is preferred, but a floater is not left without a fellow just because the line crosses a road. */
+ const hops=(a,b)=>{const adj={};edges.forEach(([x,y])=>{(adj[x]||(adj[x]=[])).push(y);(adj[y]||(adj[y]=[])).push(x)});
+  const d={[a]:0},q=[a];for(let i=0;i<q.length;i++){const x=q[i];if(x===b)return d[x];if(d[x]>=FLOAT_LINK_HOPS)continue;(adj[x]||[]).forEach(y=>{if(d[y]==null){d[y]=d[x]+1;q.push(y)}})}return 1e9};
+ float.forEach(id=>{
+  const ok=[...float].filter(o=>o!==id&&hops(id,o)<=FLOAT_LINK_HOPS).sort((a,b)=>dist(id,a)-dist(id,b));
+  const pick=ok.find(o=>!crosses(id,o)&&!hitsCard(id,o))||ok.find(o=>!hitsCard(id,o))||ok[0];
+  if(pick)add(id,pick);
+ });
+/* the floaters are dropped in pairs (placeFloaters), so each has a partner close by: they always link */
+ Object.keys(floatPartner).forEach(a=>{const b=floatPartner[a];if(float.has(a)&&float.has(b))add(a,b)});
+/* and none is ever left alone: a floater still without a fellow links to its nearest one, wherever it is (a floater shortcut is allowed) */
+ float.forEach(id=>{
+  if(edges.some(([x,y])=>(x===id&&float.has(y))||(y===id&&float.has(x))))return;
+  const ok=[...float].filter(o=>o!==id).sort((a,b)=>dist(id,a)-dist(id,b));
+  const pick=ok.find(o=>!crosses(id,o)&&!hitsCard(id,o))||ok.find(o=>!hitsCard(id,o))||ok[0];
+  if(pick)add(id,pick);
  });
  setEdges(edges);rebuildAdj();
  return {positions:NODES.map(n=>({id:n.id,x:n.x,y:n.y,rot:n.rot})),edges:EDGES.map(e=>e.slice())};

@@ -297,7 +297,7 @@ test('Amazon: carbon credits pay $3 per node you own that is not a COMMODITY, on
 });
 
 /* ---------- THE BERMUDA TRIANGLE ---------- */
-test('Bermuda: vanish for a round, untargetable, reappear at the named node, once per game', async t => {
+test('Bermuda: vanish for a round, untargetable, reappear at the named node, once per turn', async t => {
   const { e, S } = await worldGame(t, { players: 3 });
   S.owner = { w_bermuda: 0 };
   const dest = 'w_panama';
@@ -310,7 +310,7 @@ test('Bermuda: vanish for a round, untargetable, reappear at the named node, onc
   await e.f.applyIntent(0, { act: 'vanish', id: dest });
   await settle();
   assert.equal(S.vanished[0], dest);
-  assert.equal(S.wGame.bermuda, 1);
+  assert.ok(!(S.wGame && S.wGame.bermuda), 'no once-per-game mark');
   assert.equal(e.ctx.isVanished(0), true);
   assert.equal(e.ctx.isRival(1, 0), false, 'a rival cannot target the vanished seat');
   assert.equal(e.ctx.isRival(1, 2), true);
@@ -329,10 +329,10 @@ test('Bermuda: vanish for a round, untargetable, reappear at the named node, onc
   assert.equal(S.vanished[0], undefined);
   assert.equal(e.ctx.isVanished(0), false);
   assert.ok(S.log.some(l => l.includes('reappears')));
-  /* once per game */
+  /* ...and it comes back every turn (not once per game) */
   armAction(S, 0); S.deck = ['quiet', 'quiet'];
   await e.f.applyIntent(0, { act: 'worldmode', kind: 'vanish' });
-  assert.equal(S.mode, null);
+  assert.equal(S.mode, 'vanish', 'the Triangle opens again next turn');
 });
 
 test('Bermuda: cannot reappear at a blockaded node; blockade turns the pick away', async t => {

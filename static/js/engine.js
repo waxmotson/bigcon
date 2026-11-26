@@ -964,7 +964,7 @@ export function worldBlocked(pi,kind){
   case 'advance':if(used.advance)return 'The prince only writes once a turn.';if(p.money<2)return 'The advance fee is $2.';break;
   case 'hold':if(used.hold)return 'You already put someone on hold this turn.';if(!S.players.some((x,i)=>i!==pi&&!isVanished(i)&&x.intel>=1))return 'No rival has any Intel to lose.';break;
   case 'carbon':if(used.carbon)return 'You already sold credits this turn.';break;
-  case 'vanish':if(game.bermuda)return 'You have already vanished once this game.';break;
+  case 'vanish':if(used.vanish)return 'You already vanished this turn.';break;
   case 'bailout':if(used.bailout)return 'You already made a bailout this turn.';if(p.money<IMF_LOAN)return 'A bailout lends $'+IMF_LOAN+' out of your own pocket.';if(!S.players.some((x,i)=>i!==pi&&!isVanished(i)&&!(S.imf&&S.imf[i])))return 'Every rival already carries an IMF loan.';break;
   case 'tariff':if(used.tariff)return 'You already moved the wall this turn.';if(S.phase!=='move'&&S.phase!=='action')return 'Not now.';break;
   case 'cruise':if(S.phase!=='move'||S.cur!==pi)return 'The cruise ship sails in your MOVE phase.';if(!isWaterNode(p.pos))return 'The ship only sails from a WATER node (a strait, island, port or sea).';if(p.money<CRUISE_FARE)return 'The fare is $'+CRUISE_FARE+'.';break;
@@ -1068,7 +1068,7 @@ const WORLD_ACTS={
   if(why){sysTo(pi,why);S.mode=null;sync();return}
   const n=NMAP[m.id];
   if(!n||blockaded(n.id)||!canReach(n.id)){sysTo(pi,'You cannot reappear there.');return}
-  (S.vanished||(S.vanished={}))[pi]=n.id;(S.wGame||(S.wGame={})).bermuda=1;S.mode=null;
+  (S.vanished||(S.vanished={}))[pi]=n.id;(S.wTurn||(S.wTurn={})).vanish=1;S.mode=null;
   fxAt(pi,'🌀 VANISHED','#9ad7ff');
   log('🌀 '+pname(pi)+' vanishes into the Bermuda Triangle — untouchable until the start of their next turn, when they reappear at '+nodeName(n).join(' ')+'.');
   await finishNodeAbility(pi);

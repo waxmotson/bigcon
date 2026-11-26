@@ -25,7 +25,7 @@ const GE_GROUPS = [
   { key: 'MEA', title: 'THE MIDDLE EAST & AFRICA', flav: 'the oil, the straits, the minerals and the pyramids', regs: ['ME', 'AFR', 'SUZ', 'HRM'] },
   { key: 'ASIA', title: 'ASIA', flav: 'the factories, the ports and the Strait', regs: ['CAS', 'SAS', 'SEA', 'EAS', 'MAL'] },
   { key: 'OCE', title: 'OCEANIA', flav: 'the banks, the reef and the rest of the Pacific', regs: ['OCE'] },
-  { key: 'ANT', title: 'ANTARCTICA', flav: 'ten territorial claims on a long ice chain', regs: ['ANT'] },
+  { key: 'ANT', title: 'ANTARCTICA', flav: 'eight territorial claims on a ring of ice', regs: ['ANT'] },
   { key: 'FLT', title: 'FLOATING', flav: 'not places — screens, graphs and boxes that drift to open ground each game', regs: [] }
 ];
 const floatSet = new Set(WORLD_FLOATING);
