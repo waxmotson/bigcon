@@ -424,7 +424,7 @@ test('connections: long journeys, a handful of inter-region links, rich local we
     }
     /* no kangaroo route */
     for (const id of ['qantas']) assert.ok(ADJ[id].every(o => reg(o) === 'OCE'), id + ' has local links only');
-    assert.ok(!ADJ.gold.includes('w_witz'));
+    assert.ok(!ADJ.gold.includes('w_zim'));
     /* local webs: degree and edge length */
     const regions = {};
     NODES.forEach(n => { if (!FLOAT.has(n.id) && !W.GATEWAY_REGIONS.includes(reg(n.id))) (regions[reg(n.id)] = regions[reg(n.id)] || []).push(n.id); });
@@ -481,7 +481,7 @@ test('Antarctica is a long chain of territories with four gateways and no contin
     const e0w = () => e.f.worldMapMetrics().w;
     const reg = id => W.regionOf(NMAP[id]);
     const off = gen.edges.filter(([a, b]) => (reg(a) === 'ANT') !== (reg(b) === 'ANT')).map(([a, b]) => (reg(a) === 'ANT' ? [a, b] : [b, a]).join('>')).sort();
-    assert.deepEqual(off, ['w_aq_aate>mpc', 'w_aq_gbr>w_milei', 'w_aq_qml>w_debeers', 'w_aq_ross>w_anzcerta'].sort(), 'the four gateways only');
+    assert.deepEqual(off, ['w_aq_aate>mpc', 'w_aq_gbr>w_milei', 'w_aq_qml>w_zim', 'w_aq_ross>w_anzcerta'].sort(), 'the four gateways only');
     /* the chain is closed into a ring by the date-line wrap: every node has exactly two Antarctic neighbours */
     assert.ok(W.WORLD_WRAPS.some(([a, b]) => [a, b].sort().join() === ['w_aq_mbl', 'w_aq_ross'].sort().join()), 'the Ross Dependency wraps to Marie Byrd Land');
     assert.ok(ADJ.w_aq_ross.includes('w_aq_mbl') && ADJ.w_aq_mbl.includes('w_aq_ross'), 'the wrap is a walkable edge');

@@ -679,7 +679,7 @@ export const BigConBots = (function () {
     let loss = 0;
     for (const g of v.industryIds) {
       if (g.id === 'coal' && book.has('watson')) continue;
-      if ((g.id === 'bank' || g.id === 'monetary') && v.dlcWorld && book.has('w_vatican')) continue; /* the Vatican's exemption */
+      if (g.id === 'bank' && v.dlcWorld && book.has('w_cs') && v.rebuilt && v.rebuilt.w_cs) continue; /* UBS: too big to fail */
       const drop = excessOf(v, g, book);
       if (!drop.length) continue;
       const f = fileOf(v, seat, g.id);
@@ -1648,6 +1648,14 @@ export const BigConBots = (function () {
       }
       if (bj) list.push(bj);
     }
+    /* DEUTSCHE BAHN: $3 to hold the front-runner (the nearest to the goal) to 1 space a turn for two turns */
+    if (v.dlcWorld && v.owner['w_db'] === pi && me.money >= 8 && !(v.rubble && v.rubble['w_db'])) {
+      const lead = leaderSeat(v, pi);
+      if (lead >= 0 && lead !== pi && !(v.delays && v.delays[lead] > 0) && !(v.vanished && v.vanished[lead] != null)) {
+        const c = closeness(v, lead);
+        if (c > 0.4) list.push({ kind: 'delays', target: lead, val: 12 + 40 * c });
+      }
+    }
     /* THE TARIFF WALL: free; put it on a type the front-runner still needs for a full set */
     if (v.dlcWorld && v.owner['w_tariffwall'] === pi && !(v.wTurn && v.wTurn.tariff)) {
       const lead = leaderSeat(v, pi);
@@ -1772,7 +1780,7 @@ export const BigConBots = (function () {
     }
     /* apply the character's temperament: hostility through urg, cash plays
        through cashRush (see the convergence block at the top) */
-    const ATTACK = { refer: 1, leak: 1, audit: 1, tweet: 1, roast: 1, targetpanic: 1, masspanic: 1, bondmageddon: 1, pressure: 1, stage5: 1, qantasdown: 1, oilcrash: 1, missile: 1, overtour: 1, divestmade: 1, blockade: 1, bailout: 1 };
+    const ATTACK = { refer: 1, leak: 1, audit: 1, tweet: 1, roast: 1, targetpanic: 1, masspanic: 1, bondmageddon: 1, pressure: 1, stage5: 1, qantasdown: 1, oilcrash: 1, missile: 1, overtour: 1, divestmade: 1, blockade: 1, bailout: 1, delays: 1 };
     for (const c of list) {
       if (ATTACK[c.kind]) c.val *= urg;
       else if (c.kind === 'bug') c.val *= 1 + (urg - 1) * 0.5;
@@ -2045,6 +2053,7 @@ export const BigConBots = (function () {
         await tryIntent(api, pi, { act: 'blockade', id: pick.nid });
         return !pick.free; /* two blockade sources make it a free action: the turn goes on */
       case 'tariff': await tryIntent(api, pi, { act: 'tariff', kind: pick.type }); return false;
+      case 'delays': await tryIntent(api, pi, { act: 'delays', target: pick.target }); return true;
       case 'bailout': {
         await tryIntent(api, pi, { act: 'worldmode', kind: 'bailout' });
         const bv = api.viewOf(pi);

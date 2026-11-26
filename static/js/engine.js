@@ -143,11 +143,11 @@ export function industryTrigger(g){return g.bloc?BLOC_FREE+1:g.ids?3:Math.max(3,
 export function industryAllowed(g){return industryTrigger(g)-1}
 export function ownedInIndustry(pi,g){return industryNodes(g).filter(n=>S.owner[n.id]===pi)}
 /* Mark Watson exempts the holder's COAL book only. */
-/* The Vatican exempts its holder's BANKING (ACCC) and MONETARY POLICY (ASIC) books. */
+/* UBS (a rebuilt Credit Suisse) is too big to fail: it exempts its holder's BANKING (ACCC) book. */
 export function acccExempt(pi,ind){
  if(!S)return false;
  if(ind==='coal'&&S.owner.watson===pi)return true;
- return !!(S.dlcWorld&&S.owner.w_vatican===pi&&(ind==='bank'||ind==='monetary'));
+ return !!(S.dlcWorld&&ind==='bank'&&S.owner.w_cs===pi&&S.rebuilt&&S.rebuilt.w_cs&&!(S.rubble&&S.rubble.w_cs));
 }
 export function concentratedIndustries(pi){
  const books=INDUSTRIES.concat(S&&S.dlcWorld?BLOC_BOOKS.filter(g=>S.owner[g.bloc]===pi):[]);
@@ -397,6 +397,13 @@ export async function startTurn(){
  const rail=(S.owner.train===S.cur||S.owner.bullet===S.cur)?1:0;
  S.steps=underCaution?1:3+(S.owner.coal===S.cur?1:0)+rail+(S.owner.asics===S.cur?1:0);
  if(windowOn('lockdown')){S.steps=Math.min(S.steps,1);log('😷 LOCKDOWN: everyone moves at most 1 step this round.')}
+ /* 🚆 DEUTSCHE BAHN — DELAYS: a delayed seat moves at most 1 space, for its next two turns */
+ S.delayedNow=false;
+ if(S.dlcWorld&&S.delays&&S.delays[S.cur]>0){
+  S.delayedNow=true;S.steps=Math.min(S.steps,1);
+  const left=--S.delays[S.cur];if(left<=0)delete S.delays[S.cur];
+  log('🚆 DELAYED: '+pname(S.cur)+' can only move 1 space this turn (the 17:42 is running late)'+(left>0?' — '+left+' more delayed turn'+(left>1?'s':'')+' to go.':' — the last delayed turn.'));
+ }
  p.raided=0;
  sysTo(S.cur,'👁️ YOUR TURN, '+p.name.toUpperCase());
  sync(true);
@@ -543,6 +550,7 @@ export async function applyIntent(pi,m){
    if(!(ADJ[p.pos]||[]).includes(m.id)){sysTo(pi,'You can only move along the red threads.');return}
    await doMove(pi,m.id);
   }
+  else if((act==='favor'||act==='slip')&&S.phase==='move'&&S.delayedNow){sysTo(pi,'🚆 You are DELAYED — you can only move 1 space this turn, no favors or slipstreams.')}
   else if(act==='favor'&&S.phase==='move'&&!S.extraStep&&p.intel>=1){
    p.intel--;S.extraStep=true;S.steps++;
    log('🤝 '+pname(pi)+' cashes a favor — +1 step this turn.');
@@ -1197,7 +1205,7 @@ const CLASSIC_ACTS={
    · AREA 51 · THE WALL STREET BELL · THE TURKISH LIRA · THE BAHT 1997 · SRI LANKA · THE PYRAMIDS · GREENLAND.
    Once-per-game flags live in S.wGame, once-per-turn flags in S.nTurn (cleared at every turn start); both ride the synced state.
    The new actives are added to the handler tables below (CLASSIC_ACTS / WORLD_ACTS), never as new `act===` branches. */
-export const NAB_FEE=2,SERVO_PER=2,LAUNDER_CASH=3,BREACH_FINE_PCT=15,BELL_COST=2,ESCAPE_CORTISOL=5,ABDUCT_INTEL=3,ABDUCT_MONEY=4,ABDUCT_RUBBLE=0.5,ZIM_PCT=20,LIRA_PCT=20,LIRA_FLOOR=30;
+export const NAB_FEE=2,SERVO_PER=2,LAUNDER_CASH=3,BREACH_FINE_PCT=15,BELL_COST=2,DELAYS_COST=3,DELAYS_TURNS=2,AT1_PER_NODE=2,ESCAPE_CORTISOL=5,ABDUCT_INTEL=3,ABDUCT_MONEY=4,ABDUCT_RUBBLE=0.5,ZIM_PCT=20,LIRA_PCT=20,LIRA_FLOOR=30;
 const gUsed=k=>!!(S&&S.wGame&&S.wGame[k]),gMark=k=>{(S.wGame||(S.wGame={}))[k]=1};
 const tUsed=k=>!!(S&&S.nTurn&&S.nTurn[k]),tMark=k=>{(S.nTurn||(S.nTurn={}))[k]=1};
 export function inflationExtra(){return S&&S.inflation>0?S.inflation|0:0}
@@ -1210,7 +1218,7 @@ export function nabFee(pi){
  if(o==null||o===pi||S.owner.nab!==o||isVanished(pi)||p.money<=0)return;
  payTo(pi,NAB_FEE,o,'NAB: FEE FOR NO SERVICE for ending the move on '+lname(NMAP[p.pos]));
 }
-/* 🏦 WESTPAC — 23 MILLION BREACHES: the two books a breach can be filed on (the Vatican exempts its owner from both) */
+/* 🏦 WESTPAC — 23 MILLION BREACHES: the two books a breach can be filed on (UBS exempts its owner from the banking book) */
 export function launderBooks(pi){return ['bank','monetary'].filter(id=>!acccExempt(pi,id)).map(id=>({id,name:INDBYID[id].name,agency:fileAgency(id)}))}
 function openBreach(pi,ind,s){
  const f={pi,ind,s:s|0,agency:fileAgency(ind),breach:true};acccFileList().push(f);
@@ -1321,7 +1329,7 @@ export function reworkBlocked(pi,kind){
   case 'launder':
    if(!own('westpac'))return need('westpac');if(!either)return 'Not now.';if(tUsed('launder'))return 'You already laundered this turn.';
    if(p.intel<1)return 'Laundering burns 1 Intel.';
-   if(!launderBooks(pi).length)return 'The Vatican shields both your banking and monetary books — there is no file for the breach to open.';
+   if(!launderBooks(pi).length)return 'Your books are shielded — there is no file for the breach to open.';
    return '';
   case 'golf':
    if(!own('golf'))return need('golf');if(S.phase!=='action'||S.mode)return 'The Back Nine is played in your action phase.';if(tUsed('golf'))return 'You already proposed a swap this turn.';
@@ -1341,6 +1349,12 @@ export function reworkBlocked(pi,kind){
   case 'ringbell':
    if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_bell'))return need('w_bell');if(!act)return 'Ringing the Bell is your action.';if(tUsed('bell'))return 'You already rang the Bell this turn.';
    if(p.money<BELL_COST)return 'Ringing the Bell costs $'+BELL_COST+'.';if(!S.players.some((x,j)=>isRival(pi,j)))return 'There is no rival to investigate.';return '';
+  case 'delays':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_db'))return need('w_db');if(!act)return 'DELAYS is your action.';if(tUsed('delays'))return 'You already delayed someone this turn.';
+   if(p.money<DELAYS_COST)return 'DELAYS costs $'+DELAYS_COST+'.';if(!delayTargets(pi).length)return 'Every rival is already delayed.';return '';
+  case 'at1':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_cs'))return need('w_cs');if(!act)return 'The AT1 WIPE-OUT is your action.';if(gUsed('at1'))return 'The AT1 bonds have already been wiped: once per game.';
+   if(!S.players.some((x,j)=>isRival(pi,j)))return 'There is no rival to wipe out.';return '';
   case 'lira':
    if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_lira'))return need('w_lira');if(!act)return 'ERDOĞANOMICS is your action.';if(gUsed('lira'))return 'The rate cut has already happened: once per game.';return '';
   case 'srilankadefault':
@@ -1382,6 +1396,15 @@ export function honeypotPicks(pi){
 /* 🧥 HONEYPOT: the buying ban — South-East Asia (and the Strait of Malacca) and the USA, for the seat's next two turns */
 export const HONEYPOT_TURNS=2,HONEYPOT_ROUNDS=2;
 const US_BAN=new Set(US_NODES);
+/* 🚆 DEUTSCHE BAHN — rivals who can still be delayed (not already carrying a delay) */
+export function delayTargets(pi){return S.players.map((x,j)=>j).filter(j=>isRival(pi,j)&&!(S.delays&&S.delays[j]>0))}
+/* 🏔️ UBS — AT1 WIPE-OUT: what each rival would owe (BANK and CHART nodes held, $2 each, capped at their cash) */
+export function at1Bill(pi){
+ return S.players.map((x,j)=>j).filter(j=>isRival(pi,j)).map(j=>{
+  const k=NODES.filter(n=>S.owner[n.id]===j&&!(S.rubble&&S.rubble[n.id])&&(n.type==='BANK'||n.type==='CHART')).length;
+  return {j,k,pay:Math.min(S.players[j].money,k*AT1_PER_NODE)};
+ });
+}
 export function honeypotBan(pi,nid){
  if(!S||!S.dlcWorld||!S.honeyBan||!(S.honeyBan[pi]>rtick()))return '';
  const n=NMAP[nid];if(!n)return '';
@@ -1475,6 +1498,35 @@ const CLASSIC_REWORKS={
 };
 Object.assign(CLASSIC_ACTS,CLASSIC_REWORKS);
 const WORLD_REWORKS={
+ /* 🚆 DEUTSCHE BAHN — DELAYS ($3, your action, once per turn): a rival moves at most 1 space for their next two turns */
+ async delays(pi,m){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'delays');if(why){sysTo(pi,why);return}
+  if(!isRival(pi,m.target)){sysTo(pi,'Pick a rival in THE SYNDICATE list.');return}
+  if(S.delays&&S.delays[m.target]>0){sysTo(pi,pname(m.target)+' is already delayed.');return}
+  S.players[pi].money-=DELAYS_COST;tMark('delays');fxAt(pi,'🚆 −$'+DELAYS_COST,'#f5c542');
+  (S.delays||(S.delays={}))[m.target]=DELAYS_TURNS;
+  const d=NMAP.w_db;if(d)fx(d.x,d.y-64,'🚆 DELAYED','#f5c542');
+  log('🚆 DELAYS — '+pname(pi)+' (DEUTSCHE BAHN) pays $'+DELAYS_COST+': '+pname(m.target)+' can only move 1 space for their next '+DELAYS_TURNS+' turns. We apologise for the inconvenience.');
+  sync();
+  await finishNodeAbility(pi);
+ },
+ /* 🏔️ UBS — AT1 WIPE-OUT (once per game, your action): every rival pays $2 per BANK or CHART node they hold */
+ async at1(pi){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'at1');if(why){sysTo(pi,why);return}
+  gMark('at1');
+  const c=NMAP.w_cs;if(c)fx(c.x,c.y-64,'🏔️ AT1 WIPED','#f5c542');
+  log('🏔️ AT1 WIPE-OUT — '+pname(pi)+' (UBS) writes the Credit Suisse AT1 bonds down to zero: every rival pays $'+AT1_PER_NODE+' for each BANK or CHART node they hold. (Once per game.)');
+  let total=0;
+  at1Bill(pi).forEach(({j,k,pay})=>{
+   if(pay>0){payTo(j,pay,pi,'AT1 bondholders take the loss ('+k+' BANK/CHART node'+(k===1?'':'s')+')');total+=pay}
+   else log('🏔️ '+pname(j)+' holds '+(k?k+' BANK/CHART node'+(k===1?'':'s')+' but no cash':'no BANK or CHART nodes')+' — nothing to wipe out.');
+  });
+  sync();
+  if(await winCheck())return;
+  await finishNodeAbility(pi);
+ },
  /* 🧾 ZIMBABWE — PRINT MONEY: once per game, 20% of the goal in cash; from then on every seizure on the board costs +$1 more */
  async printmoney(pi){
   if(S.mode)return;

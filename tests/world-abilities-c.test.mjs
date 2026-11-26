@@ -95,11 +95,11 @@ test('Apple pays $2 per tax haven; the Box $1 per chokepoint; the OFW $1 per reg
   const N = e.acc.NMAP;
   const syn = ids => W.worldSynergy(ids.map(id => N[id]), id => ids.includes(id), () => 0);
   assert.deepEqual(W.TAX_HAVENS.filter(id => !W.WORLD_NODE_IDS.includes(id)), [], 'every haven is a real node');
-  for (const id of ['w_cayman', 'w_bvi', 'w_lux', 'w_vatican']) assert.ok(W.TAX_HAVENS.includes(id), id + ' is a tax haven');
+  for (const id of ['w_cayman', 'w_bvi', 'w_bermuda', 'w_swiss']) assert.ok(W.TAX_HAVENS.includes(id), id + ' is a tax haven');
   assert.equal(syn(['w_apple']), 0);
   assert.equal(syn(['w_apple', 'w_cayman']) - syn(['w_cayman']), 2, 'one haven: +$2 from Apple');
-  const withHavens = syn(['w_apple', 'w_cayman', 'w_bvi', 'w_lux', 'w_vatican']);
-  const without = syn(['w_cayman', 'w_bvi', 'w_lux', 'w_vatican']);
+  const withHavens = syn(['w_apple', 'w_cayman', 'w_bvi', 'w_bermuda', 'w_swiss']);
+  const without = syn(['w_cayman', 'w_bvi', 'w_bermuda', 'w_swiss']);
   assert.equal(withHavens - without, 8, 'four havens: +$8 from Apple');
   /* the box */
   assert.equal(syn(['w_box']), 0);
@@ -111,7 +111,7 @@ test('Apple pays $2 per tax haven; the Box $1 per chokepoint; the OFW $1 per reg
   assert.equal(R('w_ofw'), 'SEA');
   assert.equal(reg(['w_ofw']), 1, 'its own region');
   assert.equal(reg(['w_ofw', 'citi', 'w_hormuz']), new Set(['w_ofw', 'citi', 'w_hormuz'].map(R)).size);
-  const many = ['w_ofw', 'citi', 'w_hormuz', 'w_panama', 'w_suez', 'w_malacca', 'w_aramco', 'w_milei', 'w_witz', 'w_pboc', 'w_fiji', 'w_antarctica'];
+  const many = ['w_ofw', 'citi', 'w_hormuz', 'w_panama', 'w_suez', 'w_malacca', 'w_aramco', 'w_milei', 'w_zim', 'w_pboc', 'w_fiji', 'w_antarctica'];
   assert.equal(reg(many), 6, 'capped at +$6 however many regions');
   /* −1 Cortisol at the start of each turn, through the real turn start */
   S.owner = { w_ofw: 0, citi: 0 }; S.players[0].cortisol = 3; S.cur = 0;
@@ -274,11 +274,11 @@ test('the bloc member lists are explicit, real, disjoint and exclude the non-mem
   const eu = W.TRADE_BLOCS.w_eu.members, br = W.TRADE_BLOCS.w_brics.members;
   for (const id of eu.concat(br)) assert.ok(ids.has(id), id + ' is a real node');
   assert.equal(new Set(eu.concat(br)).size, eu.length + br.length, 'a node belongs to one bloc');
-  for (const id of ['w_boe', 'w_city', 'w_brexit', 'w_norway', 'w_cs', 'w_bis', 'w_swiss', 'w_gazprom', 'w_kremlin', 'w_lira', 'w_hdi', 'w_vatican', 'w_monaco', 'w_nordstream', 'w_cruise', 'whistle', 'wef', 'ib', 'bond007'])
+  for (const id of ['w_boe', 'w_city', 'w_brexit', 'w_norway', 'w_cs', 'w_bis', 'w_swiss', 'w_gazprom', 'w_kremlin', 'w_lira', 'w_hdi', 'w_monaco', 'w_nordstream', 'w_cruise', 'whistle', 'wef', 'ib', 'bond007'])
     assert.ok(!eu.includes(id), id + ' is not an EU member');
-  for (const id of ['w_gazprom', 'w_kremlin', 'whistle', 'w_petrobras', 'w_rbi', 'w_pboc', 'w_witz', 'w_debeers'])
+  for (const id of ['w_gazprom', 'w_kremlin', 'whistle', 'w_petrobras', 'w_rbi', 'w_pboc', 'w_hkma', 'w_hsbc'])
     assert.ok(br.includes(id), id + ' is a BRICS member');
-  for (const id of ['w_aramco', 'w_temasek', 'w_kazatom', 'w_mpesa', 'w_nigprince', 'w_tsmc']) assert.ok(!br.includes(id), id + ' is not');
+  for (const id of ['w_aramco', 'w_temasek', 'w_kazatom', 'w_zim', 'w_nigprince', 'w_tsmc']) assert.ok(!br.includes(id), id + ' is not');
   assert.equal(W.blocOfMember('w_ecb'), 'w_eu'); assert.equal(W.blocOfMember('w_rbi'), 'w_brics'); assert.equal(W.blocOfMember('citi'), null);
   assert.deepEqual([W.BLOC_STEP, W.BLOC_MAX, W.BLOC_FREE], [0.25, 2.5, 3]);
 });
@@ -286,7 +286,7 @@ test('the bloc member lists are explicit, real, disjoint and exclude the non-mem
 test('EU bloc: the multiplier is 1 + 0.25 per member (cap ×2.5), is paid at income time and shown in the log, tooltip and status', async t => {
   const { e, S } = await worldGame(t, { players: 3 });
   const N = e.acc.NMAP;
-  const members = ['w_btp', 'w_tulip', 'w_bunds', 'w_greek', 'w_lux', 'w_asml'];
+  const members = ['w_ecb', 'w_tulip', 'w_bunds', 'w_greek', 'w_db', 'w_asml'];
   /* no members: no bonus */
   S.owner = { w_eu: 0 };
   assert.deepEqual(e.ctx.blocStatus(0).map(b => [b.k, b.mult, b.bonus]), [[0, 1, 0]]);
@@ -325,7 +325,7 @@ test('EU bloc: the multiplier is 1 + 0.25 per member (cap ×2.5), is paid at inc
 test('trade-bloc scrutiny: 4 members open a WTO file, each member beyond 3 adds scrutiny per turn, the ruling strips to 3 and fines', async t => {
   const { e, S } = await worldGame(t, { players: 3 });
   const N = e.acc.NMAP;
-  const mem = ['w_btp', 'w_tulip', 'w_bunds', 'w_greek', 'w_lux', 'w_asml'];
+  const mem = ['w_ecb', 'w_tulip', 'w_bunds', 'w_greek', 'w_db', 'w_asml'];
   /* three members: no file */
   S.owner = { w_eu: 1 }; give(S, 1, mem.slice(0, 3)); e.f.acccReconcile();
   assert.equal(e.f.findFile(1, 'bloc_eu'), null, 'three members is fine');
@@ -340,7 +340,7 @@ test('trade-bloc scrutiny: 4 members open a WTO file, each member beyond 3 adds 
   assert.equal(e.ctx.fileStep(f), 1);
   e.f.acccAdvance(1); assert.equal(f.s, 1, '4 members: +1');
   /* five members: +2 per turn */
-  S.owner.w_lux = 1; e.f.acccReconcile();
+  S.owner.w_db = 1; e.f.acccReconcile();
   assert.equal(e.ctx.fileStep(f), 2);
   f.s = 0; e.f.acccAdvance(1); assert.equal(f.s, 2, '5 members: +2');
   /* six members: +3 per turn, i.e. the ruling lands at the very next turn start */
@@ -366,7 +366,7 @@ test('trade-bloc scrutiny: 4 members open a WTO file, each member beyond 3 adds 
 
 test('WTO owner can REFER a rival’s bloc file for $4; the ACCC owner cannot; no WTO, no refer; +$2 on TRUMP TWEETS TARIFFS', async t => {
   const { e, S } = await worldGame(t, { players: 3 });
-  const mem = ['w_btp', 'w_tulip', 'w_bunds', 'w_greek'];
+  const mem = ['w_ecb', 'w_tulip', 'w_bunds', 'w_greek'];
   S.owner = { w_eu: 1, w_wto: 0, accc: 2 }; give(S, 1, mem); e.f.acccReconcile();
   const f = e.f.findFile(1, 'bloc_eu'); assert.ok(f);
   /* the ACCC owner cannot refer it */
@@ -391,7 +391,7 @@ test('WTO owner can REFER a rival’s bloc file for $4; the ACCC owner cannot; n
 test('BRICS: the same multiplier on Brazil, Russia, India, China and South Africa nodes, with its own WTO file', async t => {
   const { e, S } = await worldGame(t, { players: 3 });
   const N = e.acc.NMAP;
-  const mem = ['w_petrobras', 'w_rbi', 'w_pboc', 'w_witz'];
+  const mem = ['w_petrobras', 'w_rbi', 'w_pboc', 'w_hkma'];
   S.owner = { w_brics: 0 }; give(S, 0, mem);
   const st = e.ctx.blocStatus(0)[0];
   assert.equal(st.id, 'w_brics'); assert.equal(st.k, 4); assert.equal(st.mult, 2);
@@ -401,7 +401,7 @@ test('BRICS: the same multiplier on Brazil, Russia, India, China and South Afric
   assert.ok(f && f.agency === 'WTO');
   assert.equal(e.ctx.fileStep(f), 1, 'four members: one beyond the three allowed');
   /* EU members are not BRICS members */
-  S.owner = { w_brics: 0 }; give(S, 0, ['w_ecb', 'w_db', 'w_btp']);
+  S.owner = { w_brics: 0 }; give(S, 0, ['w_ecb', 'w_db', 'w_bunds']);
   assert.equal(e.ctx.blocStatus(0)[0].k, 0);
 });
 

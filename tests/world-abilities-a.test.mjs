@@ -25,7 +25,7 @@ const armAction = (S, cur = 0) => { S.cur = cur; S.phase = 'action'; S.mode = nu
 
 test('the abilities in this batch are no longer flagged todo', async () => {
   const W = await import('../static/js/world.js');
-  const done = ['w_mamdani', 'w_cs', 'w_nordstream', 'w_evergrande', 'w_panama', 'w_hormuz', 'w_suez', 'w_vero', 'w_vatican', 'w_antarctica', 'w_svalbard'];
+  const done = ['w_mamdani', 'w_cs', 'w_nordstream', 'w_evergrande', 'w_panama', 'w_hormuz', 'w_suez', 'w_vero', 'w_antarctica', 'w_svalbard'];
   for (const id of done) {
     const n = W.WORLD_NODES.find(x => x.id === id);
     assert.ok(n, id + ' exists');
@@ -85,7 +85,7 @@ test('rebuilding a world rubble node: list price, returns unowned, fires the Pyo
   assert.ok(S.players[1].money >= 10 + 2, 'and the Hotel owner banked it');
 });
 
-test('Evergrande +$2 per CORPORATE, Credit Suisse rebuilds as UBS and pays +$2 per BANK', async t => {
+test('Evergrande +$2 per CORPORATE, Credit Suisse rebuilds as UBS and pays +$3 per BANK', async t => {
   const { e, S } = await worldGame(t);
   const W = await import('../static/js/world.js');
   const NM = e.ctx.NMAP;
@@ -93,7 +93,7 @@ test('Evergrande +$2 per CORPORATE, Credit Suisse rebuilds as UBS and pays +$2 p
   assert.equal(syn(['w_evergrande']), 2, 'Evergrande counts itself');
   const corp = e.ctx.NODES.find(n => n.type === 'CORPORATE' && !n.fx).id;
   assert.equal(syn(['w_evergrande', corp]), 4, 'two corporates: $2 each');
-  assert.equal(syn(['w_cs']), 2);
+  assert.equal(syn(['w_cs']), 3);
   /* the rename lives in synced state: UBS only after the rebuild */
   assert.deepEqual(e.ctx.nodeName(NM.w_cs), ['CREDIT SUISSE']);
   S.players[0].pos = 'w_cs'; S.players[0].money = 30; armAction(S);
@@ -106,7 +106,7 @@ test('Evergrande +$2 per CORPORATE, Credit Suisse rebuilds as UBS and pays +$2 p
   /* and the engine income picks the fx up */
   S.cur = 0; S.mood = 'CALM'; S.owner = { w_cs: 0 }; S.players[0].money = 0;
   e.f.income(0);
-  assert.equal(S.players[0].money, 3 + 2 + 2, 'salary + holding + $2 per BANK (itself)');
+  assert.equal(S.players[0].money, 3 + 6 + 3, 'salary + holding + $3 per BANK (itself)');
 });
 
 test('Nord Stream pays +$3 on OIL SPIKES once rebuilt and owned', async t => {
@@ -211,33 +211,34 @@ test("Lloyd's: $3 for any missile kill, and the full list price when the destroy
 });
 
 /* ---------- VATICAN ---------- */
-test('the Vatican exempts its holder from ACCC banking and ASIC monetary-policy files; others are still caught', async t => {
+test('UBS (a rebuilt Credit Suisse) exempts its holder from the ACCC banking file only; others are still caught', async t => {
   const { e, S } = await worldGame(t);
   const C = e.ctx;
   const ind = id => C.INDBYID[id];
   const bankTrigger = C.industryTrigger(ind('bank'));
-  const banks = C.NODES.filter(n => n.type === 'BANK' && n.id !== 'w_vatican' && !S.rubble[n.id]).slice(0, bankTrigger).map(n => n.id);
+  const banks = C.NODES.filter(n => n.type === 'BANK' && n.id !== 'w_cs' && !S.rubble[n.id]).slice(0, bankTrigger).map(n => n.id);
   S.owner = {}; banks.forEach(id => { S.owner[id] = 0; });
   C.acccReconcile();
   assert.ok(C.findFile(0, 'bank'), 'control: a concentrated banking book opens a file');
-  S.owner.w_vatican = 0;
+  /* still rubble (never rebuilt): no shield */
+  S.owner.w_cs = 0;
   C.acccReconcile();
-  assert.equal(C.findFile(0, 'bank'), null, 'the Vatican closes the file');
+  assert.ok(C.findFile(0, 'bank'), 'a Credit Suisse that was never rebuilt shields nothing');
+  S.rebuilt = { w_cs: 1 }; S.rubble.w_cs = undefined; delete S.rubble.w_cs;
+  C.acccReconcile();
+  assert.equal(C.findFile(0, 'bank'), null, 'UBS closes the file');
   assert.equal(C.concentratedIndustries(0).some(x => x.g.id === 'bank'), false);
-  /* monetary policy (ASIC) */
-  S.owner = { mpc: 0, rba: 0, cash: 0 };
+  /* monetary policy (ASIC) is NOT covered */
+  S.owner = { mpc: 0, rba: 0, cash: 0, w_cs: 0 };
   C.acccReconcile();
-  assert.ok(C.findFile(0, 'monetary'), 'control: ASIC opens a file');
-  S.owner.w_vatican = 0;
-  C.acccReconcile();
-  assert.equal(C.findFile(0, 'monetary'), null, 'exempt from ASIC too');
-  /* a rival is not covered by someone else's Vatican */
-  S.owner = { w_vatican: 1 }; banks.forEach(id => { S.owner[id] = 0; });
+  assert.ok(C.findFile(0, 'monetary'), 'ASIC still opens a file');
+  /* a rival is not covered by someone else's UBS */
+  S.owner = { w_cs: 1 }; banks.forEach(id => { S.owner[id] = 0; });
   C.acccReconcile();
   assert.ok(C.findFile(0, 'bank'), 'it only shields its own holder');
-  /* without the world expansion the exemption does not exist */
   assert.equal(C.acccExempt(0, 'bank'), false);
   assert.equal(C.acccExempt(1, 'bank'), true);
+  assert.equal(C.acccExempt(1, 'monetary'), false);
   assert.equal(C.acccExempt(1, 'coal'), false);
 });
 

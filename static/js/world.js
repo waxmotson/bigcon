@@ -24,7 +24,7 @@ export const PENINSULA=['w_aq_chl','w_aq_gbr','w_aq_arg'];
 export const WORLD_CHOKEPOINTS=['w_panama','w_hormuz','w_suez','w_malacca'];
 export const BATTERY=['w_lithium','w_cobalt','w_nickel','w_baotou'];
 /* the offshore nodes: APPLE pays $2 for each one you own */
-export const TAX_HAVENS=['w_cayman','w_bvi','w_lux','w_vatican','w_bermuda','w_swiss','w_monaco'];
+export const TAX_HAVENS=['w_cayman','w_bvi','w_bermuda','w_swiss','w_monaco'];
 /* MARKET-EVENT NODE SETS (the second batch of cards): who a card switches off, pays or taxes. Ids missing from the live board are simply skipped. */
 export const TOURISM_NODES=['qantas','market','quik','geo_venice','geo_wonsan','geo_tuvalu','geo_pyothotel','w_cruise','w_mbs','w_monaco','w_gbr','w_burj','w_pyramids','w_fiji']; /* SWIFTONOMICS */
 export const IRON_NODES=['bhp','coal','w_codelco','w_potosi','w_nickel']; /* IRON ORE CRASH */
@@ -77,15 +77,13 @@ mk('vero',['VERO','INSURANCE'],'☂️','BANK',2,6,-31.9523,115.8613,'insured ·
 mk('brexit','BREXIT','🇬🇧','WILD',1,6,51.1279,1.3134,'the cliffs of Dover · the border of vibes',
  'TAKE BACK CONTROL: once per game, on your action, sever any one edge of the board for the rest of the con (pick a node, then one of its neighbours; Dover, the Channel, the whole lot) — and take +1 Cortisol. A cut that would strand part of the board from Quikstop is refused.',null),
 mk('ecb',['THE ECB'],'💶','REGULATOR',2,8,50.1109,8.6821,'whatever it takes · for nineteen governments','+$2 on the RBA CASH-RATE DECISION and BONDMAGEDDON; +$2 income while you also own GERMAN BUNDS.',{e:{rates:2,bondrevolt:2},w:[['w_bunds',2]]}),
-mk('db',['DEUTSCHE BANK'],'🏦','BANK',2,6,50.1135,8.6732,'allegedly well capitalised · always','+$1 income per CORPORATE you own (it lends to everybody, then again).',{t:[['CORPORATE',1]]}),
+mk('db',['DEUTSCHE','BAHN'],'🚆','CORPORATE',2,6,50.1135,8.6732,'allegedly on time · always','DELAYS: your action, once per turn, $3: name a rival. For their next two turns they can only move 1 space (no favors, no slipstream). A rival already delayed cannot be delayed again until it runs out. (“We apologise for the inconvenience.”)',null),
 mk('bunds',['GERMAN','BUNDS'],'🇩🇪','CHART',1,3,52.52,13.405,'boring is the product','+$2 income while you also own the 10-YEAR MASTER CHART; +$2 on BONDMAGEDDON (the safe haven of the safe havens).',{w:[['tenyear',2]],e:{bondrevolt:2}}),
-mk('btp',['ITALIAN','BTP SPREAD'],'🍝','CHART',1,3,41.9028,12.4964,'the spread widens, the espresso stays hot','+$3 on BONDMAGEDDON (the spread explodes first).',{e:{bondrevolt:3}}),
 mk('greek',['THE GREEK','DEBT'],'🏺','CHART',3,2,37.9838,23.7275,'cursed · a gift that keeps giving','CURSED: pays $3 a turn at a fire-sale price, but holding it costs +1 Cortisol at the start of every turn. (The bailouts were also “temporary”.)',{c:1}),
-mk('cs',['CREDIT SUISSE'],'🏔️','BANK',2,3,47.3769,8.5417,'160 years · gone in a weekend',
- 'STARTS AS RUBBLE. When rebuilt it comes back as UBS: a BANK that pays +$2 per BANK you own (itself included).',{t:[['BANK',2]]}),
+mk('cs',['CREDIT SUISSE'],'🏔️','BANK',6,3,47.3769,8.5417,'160 years · gone in a weekend',
+ 'STARTS AS RUBBLE. When rebuilt it comes back as UBS, backed by the Swiss state: a BANK that pays +$3 per BANK you own (itself included) on top of its $6 income, soothes −1 Cortisol a turn, and TOO BIG TO FAIL: no ACCC file can open on your BANKING book. AT1 WIPE-OUT: once per game, your action: every rival pays you $2 for each BANK or CHART node they hold (the bondholders get nothing, you get it all).',{t:[['BANK',3]],c:-1}),
 mk('bis',['THE BIS','BASEL'],'🌀','REGULATOR',1,6,47.5596,7.5886,'the central bank of central banks','+$1 income per OTHER REGULATOR you own (the committee of committees).',{t:[['REGULATOR',1,1]]}),
 mk('swiss',['THE SWISS','VAULT'],'🔒','WILD',2,7,46.948,7.4474,'discretion is the product','+1 Intel on THE TAPES GO MISSING and on ANONYMOUS TIP (the vault keeps copies). NUMBERED ACCOUNT: stash any amount of cash here as your action — raids, fines, events and loans cannot touch it, and it does NOT count toward the win goal until withdrawn. Withdraw all or part as a FREE action, once per turn, from anywhere. Losing the vault never loses the money; you just cannot deposit more.',{e:{tapes:[0,1],tip:[0,1]}}),
-mk('lux',['LUXEMBOURG','LETTERBOX'],'📮','CORPORATE',2,6,49.6117,6.1319,'two hundred thousand companies · one door','+$1 income per BANK you own; +$3 on A QUIET QUARTER.',{t:[['BANK',1]],e:{quiet:3}}),
 mk('asml',['ASML'],'🔬','CORPORATE',3,9,51.4096,5.4586,'the only machine that can make the machine','+$3 income while you also own TSMC; +$2 while you own SAMSUNG (the customers queue).',{w:[['w_tsmc',3],['w_samsung',2]]}),
 mk('tulip',['THE TULIP','BULB'],'🌷','COMMODITY',1,3,52.3676,4.9041,'1637 · the original bubble','+$4 on A QUIET QUARTER and +$3 on GOLD RUSH (the bubble loves a quiet room).',{e:{quiet:4,goldrush:3}}),
 mk('norway',['NORWAY’S','WEALTH FUND'],'🛢️','BANK',3,9,59.9139,10.7522,'a trillion · mostly oil · politely','+$1 income per oil node you own; +$4 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:4}}),
@@ -95,28 +93,22 @@ mk('nordstream',['NORD STREAM'],'💥','COMMODITY',2,4,54.9,15.5,'built · inspe
 mk('kremlin',['THE KREMLIN'],'🏰','REGULATOR',2,8,55.752,37.6175,'a very long table · nobody sits','+1 Intel at the start of your turn; +$2 income while you also own GAZPROM.',{s:1,w:[['w_gazprom',2]]}),
 mk('lira',['THE TURKISH','LIRA'],'💸','CHART',1,2,39.9334,32.8597,'the line goes the other way','+$3 on BONDMAGEDDON (it was already in free fall). ERDOĞANOMICS: once per game, as your action, every rival loses 20% of their cash above $30.',{e:{bondrevolt:3}}),
 mk('monaco',['MONACO','CASINO'],'🎰','WILD',2,6,43.7384,7.4246,'the house always wins · the house is a principality','+$3 on A QUIET QUARTER and on MADE PAYS OUT… PROBABLY (the house collects on everything).',{e:{quiet:3,madeout:3}}),
-mk('vatican',['THE VATICAN','BANK'],'⛪','BANK',2,7,41.9022,12.4539,'works in mysterious ways · accounts in more','−1 Cortisol at the start of each of your turns (confession is free). REGULATOR-EXEMPT: no ACCC file can ever open on your BANKING book and no ASIC file on your MONETARY POLICY book.',{c:-1}),
 /* ── Middle East & Africa ── */
 mk('bigyahu',['BIG YAHU'],'🛡️','WILD',2,8,31.7683,35.2137,'the iron dome · the long coalition','+$2 income while you also own DONALD TRUMP. LIBERATE OIL: if you also own DONALD TRUMP and LOCKHEED MARTIN, once per game and as your action, divest every oil node on the board: your own oil nodes are sold back to the market at list price, and of the oil nodes your rivals own you take HALF (rounded up, the best-paying first); the rest are liberated (unowned).',{w:[['trump',2]]}),
 mk('aramco',['SAUDI','ARAMCO'],'🛢️','COMMODITY',5,11,26.3,50.15,'the biggest oil on the board','+$8 when OIL SPIKES. Pays $5 a turn — the largest oil position on the board.',{e:{oilspike:8}}),
-mk('opec',['OPEC','VIENNA'],'🛢️','REGULATOR',2,8,48.2082,16.3738,'the cartel meets · the cartel decides','+$1 income per oil node you own; +$4 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:4}}),
 mk('malacca',['STRAIT OF','MALACCA'],'⚓','COMMODITY',3,8,2.5,101.2,'a quarter of world trade · squeezed through a drinking straw',
  'CHOKEPOINT: every rival who enters this node pays you a $2 toll (instead of the usual $1). It is the gateway between the Indian Ocean (South Asia) and the Pacific side: Singapore, South-East and East Asia.',null),
 mk('hormuz',['STRAIT OF','HORMUZ'],'⚓','COMMODITY',3,8,26.57,56.25,'a fifth of the world’s oil · two miles wide',
  'CHOKEPOINT: every rival who enters this node pays you a $2 toll (instead of the usual $1), and on OIL SPIKES you collect $2 per oil node a rival owns.',null),
 mk('suez',['THE SUEZ','CANAL'],'🛳️','COMMODITY',3,8,30.4574,32.3499,'the Ever Given · six days · one very big boat',
  'CHOKEPOINT: every rival who enters this node pays you a $2 toll (instead of the usual $1); once per game, in your action phase, you may BLOCK it (EVER GIVEN) until the end of next round: nobody walks in or lands there, you included.',null),
-mk('burj',['BURJ KHALIFA'],'🏙️','CORPORATE',3,8,25.1972,55.2744,'828 metres of confidence','+$2 income while you also own the ABU DHABI WEALTH FUND (the floors are rented to the sovereign).',{w:[['w_adia',2]]}),
+mk('burj',['BURJ KHALIFA'],'🏙️','CORPORATE',3,8,25.1972,55.2744,'828 metres of confidence','+$2 income while you also own NEOM (the floors are rented to the future).',{w:[['w_neom',2]]}),
 mk('neom',['NEOM','THE LINE'],'📏','CORPORATE',1,7,28.1,35.1,'170 km long · zero metres built','+$3 income while you also own SAUDI ARAMCO (the funding round is crude).',{w:[['w_aramco',3]]}),
-mk('adia',['ABU DHABI','WEALTH FUND'],'🏦','BANK',3,9,24.4539,54.3773,'sovereign · patient · a lot of it','+$1 income per oil node you own; +$3 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:3}}),
 mk('nigprince',['THE NIGERIAN','PRINCE'],'👑','WILD',1,3,6.5244,3.3792,'a confidential business proposal',
  'ADVANCE FEE: once per turn, on your action, pay $2 and flip a coin — heads you receive $5, tails you receive nothing at all and the prince has gone silent.',null),
 mk('dangote',['DANGOTE','REFINERY'],'🏭','COMMODITY',3,7,6.4474,3.9718,'the largest refinery in Africa · the queue is for petrol','+$4 when OIL SPIKES; +$2 income while you also own CUSHING, OKLAHOMA.',{e:{oilspike:4},w:[['w_cushing',2]]}),
 mk('cobalt',['CONGO','COBALT'],'🔵','COMMODITY',3,6,-10.7167,25.4667,'every phone · every battery · very deep','+$2 income per other battery metal you own.',{i:[[BATTERY,2]]}),
-mk('witz',['WITWATERSRAND','GOLD'],'⛏️','COMMODITY',3,7,-26.2041,28.0473,'a third of all the gold ever mined','+$5 on GOLD RUSH.',{e:{goldrush:5}}),
-mk('debeers',['DE BEERS'],'💎','COMMODITY',3,8,-28.7282,24.7499,'a diamond is forever · the supply was not','+$3 on GOLD RUSH; +$2 income while you also own WITWATERSRAND GOLD.',{e:{goldrush:3},w:[['w_witz',2]]}),
 mk('zim',['ZIMBABWE','TRILLION-DOLLAR','NOTE'],'🧾','CHART',1,2,-17.8252,31.0335,'a trillion · buys a loaf · nearly','+$3 on BONDMAGEDDON and on A QUIET QUARTER (hyperinflation is at least predictable). PRINT MONEY: once per game, as your action, gain 20% of the game’s target. Then INFLATION: every seizure on the board costs +$1 more for the rest of the game (it stacks with any later inflation).',{e:{bondrevolt:3,quiet:3}}),
-mk('mpesa',['M-PESA'],'📱','BANK',2,5,-1.2921,36.8219,'a bank in your pocket before the banks were','+$1 income per OTHER WILD node you own (the app reaches everywhere).',{t:[['WILD',1,1]]}),
 mk('pyramids',['THE PYRAMIDS'],'🔺','WILD',2,6,29.9792,31.1342,'the original pyramid scheme','PYRAMID SCHEME: whenever a rival seizes a node ADJACENT (on the board graph) to any node you own, they pay you the current payout — $1, then $2, $4, $8… doubling each time it pays, capped by what they can pay — until THE BOULDER ROLLS BACK DOWN is drawn and it resets to $1. The payout is shown on the node.',null),
 /* ── Asia ── */
 mk('boj',['BANK OF','JAPAN'],'🏯','REGULATOR',2,8,35.6866,139.7735,'yield curve control · the rubber band','+$2 income while you also own JAPAN BOND YIELDS; +$3 on BONDMAGEDDON (the curve control fails here first).',{w:[['japan',2]],e:{bondrevolt:3}}),
@@ -191,11 +183,11 @@ mk('imf',['THE IMF'],'🆘','REGULATOR',2,8,38.8991,-77.0425,'a rescue package �
 mk('tariffwall',['THE TARIFF','WALL'],'🧱','REGULATOR',1,7,38.0,-97.0,'big · beautiful · somebody else pays for it',
  'THE WALL: name one node TYPE (a free action, once per turn, in your move or action phase). Every rival who seizes or takes over a node of that type pays $2 extra, and the $2 is paid to you. The current wall is shown on the board header and in tooltips. Floats to a random open spot each game.',null),
 mk('eu',['THE EU','SINGLE MARKET'],'🇪🇺','REGULATOR',2,9,50.8467,4.3525,'one market · twenty-seven opinions · a form for everything',
- 'TRADE BLOC: your income from member nodes (nodes in EU countries: the ECB, Deutsche Bank, German Bunds, the Italian BTP, the Greek Debt, the Luxembourg Letterbox, ASML, the Tulip Bulb, OPEC Vienna, the Rotterdam barrel yard, the Paris master chart, the Brussels Pillars, Venice) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. Not members: the UK, Norway, Switzerland, Russia, Turkey, Iceland, the Vatican, Monaco. SCRUTINY: with 4 or more members a WTO file opens on you; each member beyond 3 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 3 members.',null),
+ 'TRADE BLOC: your income from member nodes (nodes in EU countries: the ECB, Deutsche Bahn, German Bunds, the Greek Debt, ASML, the Tulip Bulb, the Rotterdam barrel yard, the Paris master chart, the Brussels Pillars, Venice) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. Not members: the UK, Norway, Switzerland, Russia, Turkey, Iceland, Monaco. SCRUTINY: with 4 or more members a WTO file opens on you; each member beyond 3 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 3 members.',null),
 mk('brics',['BRICS'],'🧮','WILD',2,8,-26.1952,28.034,'five letters · one summit · a currency that does not exist yet',
- 'TRADE BLOC: your income from member nodes (nodes in Brazil, Russia, India, China and South Africa: Vale, Petrobras, Gazprom, the Kremlin, the Whistleblower, the RBI, Dalal Street, Adani, Bangalore, the PBOC, Evergrande, Shenzhen, Baotou, the Belt and Road, HSBC, the HKMA, Witwatersrand, De Beers) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. SCRUTINY: with 4 or more members a WTO file opens on you; each member beyond 3 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 3 members. Floats to a random open spot each game.',null),
+ 'TRADE BLOC: your income from member nodes (nodes in Brazil, Russia, India, China and South Africa: Vale, Petrobras, Gazprom, the Kremlin, the Whistleblower, the RBI, Dalal Street, Adani, Bangalore, the PBOC, Evergrande, Shenzhen, Baotou, the Belt and Road, HSBC, the HKMA) is multiplied ×(1 + 0.25 per member node you own), capped at ×2.5. SCRUTINY: with 4 or more members a WTO file opens on you; each member beyond 3 adds +1 scrutiny at each of your turn starts, and at 3 the ruling strips you back to 3 members. Floats to a random open spot each game.',null),
 mk('apple',['APPLE'],'🍎','CORPORATE',2,9,37.3349,-122.009,'a trillion dollars · an infinite loop · one very low tax rate',
- 'IRISH SANDWICH: +$2 income for every tax haven you own (THE CAYMAN ISLANDS, THE BRITISH VIRGIN ISLANDS, THE LUXEMBOURG LETTERBOX, THE VATICAN BANK, THE BERMUDA TRIANGLE, THE SWISS VAULT, MONACO CASINO).',{i:[[TAX_HAVENS,2]]}),
+ 'IRISH SANDWICH: +$2 income for every tax haven you own (THE CAYMAN ISLANDS, THE BRITISH VIRGIN ISLANDS, THE BERMUDA TRIANGLE, THE SWISS VAULT, MONACO CASINO).',{i:[[TAX_HAVENS,2]]}),
 mk('cruise',['THE CRUISE SHIP','“THE 3,000-BERTH','ENCLAVE”'],'🛳️','CORPORATE',2,8,41.3851,2.1734,'a floating city-state · no laws · the buffet is endless',
  'SET SAIL: during your move phase, while standing on a WATER node (a strait, island, port or sea; see the rules), pay $2 to sail to any other WATER node. The voyage ends your movement. CRUISE EMISSIONS: you take +1 Cortisol at the start of each of your turns unless you also own a REGULATOR.',null),
 mk('gbr',['THE GREAT','BARRIER REEF'],'🪸','WILD',1,6,-17.9,148.2,'visible from space · bleaching quietly · tourists dispatched hourly',
@@ -338,9 +330,9 @@ export const WATER_NODES=new Set([
    A bloc marked noWto (THE ANTARCTIC TREATY) multiplies the same way but is outside the WTO's jurisdiction: no file ever opens. */
 export const BLOC_STEP=0.25,BLOC_MAX=2.5,BLOC_FREE=3;
 export const TRADE_BLOCS={
- w_eu:{short:'EU',book:'EU SINGLE MARKET',icon:'🇪🇺',members:['w_ecb','w_db','w_bunds','w_btp','w_greek','w_lux','w_asml','w_tulip','w_opec','barrels','tenyear','geo_pillars','geo_venice']},
+ w_eu:{short:'EU',book:'EU SINGLE MARKET',icon:'🇪🇺',members:['w_ecb','w_db','w_bunds','w_greek','w_asml','w_tulip','barrels','tenyear','geo_pillars','geo_venice']},
  w_antarctica:{short:'TREATY',book:'ANTARCTIC TREATY',icon:'🐧',noWto:true,members:['w_aq_mbl','w_aq_chl','w_aq_gbr','w_aq_arg','w_aq_qml','w_aq_aatw','w_aq_adelie','w_aq_aate','w_aq_ross']},
- w_brics:{short:'BRICS',book:'BRICS',icon:'🧮',members:['w_petrobras','w_gazprom','w_kremlin','whistle','w_rbi','w_dalal','w_adani','w_bangalore','w_pboc','w_evergrande','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma','w_witz','w_debeers']}
+ w_brics:{short:'BRICS',book:'BRICS',icon:'🧮',members:['w_petrobras','w_gazprom','w_kremlin','whistle','w_rbi','w_dalal','w_adani','w_bangalore','w_pboc','w_evergrande','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma']}
 };
 /* the bloc a node is a member of (or null) */
 export function blocOfMember(id){for(const b of Object.keys(TRADE_BLOCS))if(TRADE_BLOCS[b].members.includes(id))return b;return null}
@@ -360,13 +352,13 @@ export const WORLD_ROUTES=[
  /* the South Atlantic */ ['w_petrobras','w_dangote'],
  /* Panama: the two Americas */ ['w_panama','w_pemex'],['w_panama','w_pdvsa'],['w_panama','w_amazon'],
  /* Suez: Europe, the Middle East and Africa */ ['w_suez','w_greek'],['w_suez','w_neom'],['w_suez','w_pyramids'],
- /* Hormuz: the Gulf and South Asia */ ['w_hormuz','w_adia'],['w_hormuz','w_rbi'],['w_hormuz','w_adani'],
+ /* Hormuz: the Gulf and South Asia */ ['w_hormuz','w_burj'],['w_hormuz','w_rbi'],['w_hormuz','w_adani'],
  /* Malacca: South Asia and South-East Asia */ ['w_malacca','w_srilanka'],['w_malacca','petronas'],['w_malacca','w_temasek'],
  /* the overland road across Eurasia: Moscow, the steppe, the Chinese north */ ['w_kremlin','w_kazatom'],['w_kazatom','w_baotou'],
  /* South-East Asia: the Pacific rim to the north, the Indonesian islands to the south */ ['geo_scs','w_hsbc'],['w_nickel','forklift'],
  /* Antarctica: ten territories chained west to east along the ice and closed into a RING by a date-line wrap (Ross Dependency to Marie Byrd Land); ONLY FOUR links leave it: the Peninsula to South America, Queen Maud Land to South Africa, the Australian Antarctic Territory to Hobart and the Ross Dependency to Christchurch */
  ['w_aq_ross','w_aq_mbl'],['w_aq_mbl','w_aq_chl'],['w_aq_chl','w_aq_gbr'],['w_aq_gbr','w_aq_arg'],['w_aq_arg','w_antarctica'],['w_antarctica','w_aq_qml'],['w_aq_qml','w_aq_aatw'],['w_aq_aatw','w_aq_adelie'],['w_aq_adelie','w_aq_aate'],['w_aq_aate','w_aq_ross'],
- ['w_aq_gbr','w_milei'],['w_aq_qml','w_debeers'],['w_aq_aate','mpc'],['w_aq_ross','w_anzcerta'],
+ ['w_aq_gbr','w_milei'],['w_aq_qml','w_zim'],['w_aq_aate','mpc'],['w_aq_ross','w_anzcerta'],
  /* the Pacific islands */ ['w_fiji','geo_tuvalu'],['w_nauru','geo_tuvalu'],['w_png','w_nauru']
 ];
 

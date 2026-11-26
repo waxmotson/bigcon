@@ -286,7 +286,7 @@ test('CHINA BANS AUSTRALIAN COAL: the coal chain pays nothing for two rounds', a
 
 test('THE PANAMA PAPERS: +2 Cortisol per tax haven; APPLE’s owner takes an extra +1', async t => {
   const { e, S } = await game(t, { world: true });
-  S.owner = { w_cayman: 0, w_bvi: 0, w_lux: 1, w_apple: 1, citi: 2, nab: 2 };
+  S.owner = { w_cayman: 0, w_bvi: 0, w_monaco: 1, w_apple: 1, citi: 2, nab: 2 };
   await run(e, 'panamapapers');
   assert.equal(S.players[0].cortisol, 4, 'two havens');
   assert.equal(S.players[1].cortisol, 3, 'one haven and Apple');
