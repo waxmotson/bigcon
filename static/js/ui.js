@@ -131,14 +131,34 @@ export function moodBoost(n){
 }
 /* A node with no `image` is a styled text card: its type colour, the icon and the name. Give the node an `image`
    path and the picture takes over — nothing else has to change. */
+/* Colour emoji drawn as SVG <text> are re-rasterised glyph by glyph on every zoom/pan frame, and the Global Edition board carries ~200 of them
+   (a 10× frame-time cost, measured). Each icon is painted ONCE onto a canvas and reused as a bitmap <image>, which the browser scales for free.
+   Without a canvas (the Node test harness) it falls back to the plain text glyph. */
+const EMOJI_SPRITES=new Map();
+export function emojiSprite(ch){
+ if(EMOJI_SPRITES.has(ch))return EMOJI_SPRITES.get(ch);
+ let url=null;
+ try{
+  const c=typeof document!=='undefined'&&document.createElement?document.createElement('canvas'):null;
+  const x=c&&c.getContext?c.getContext('2d'):null;
+  if(x&&c.toDataURL){
+   c.width=c.height=96;
+   x.font='80px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif';
+   x.textAlign='center';x.textBaseline='middle';x.fillText(ch,48,54);
+   const u=c.toDataURL('image/png');if(typeof u==='string'&&u.startsWith('data:image/png'))url=u;
+  }
+ }catch(_){url=null}
+ EMOJI_SPRITES.set(ch,url);return url;
+}
 export function placeholderCardSVG(n,w,h){
  const esc=t=>String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
  const col=TYPE_COLORS[n.type]||'#168388',lines=(nodeName(n)||[n.id]).slice(0,3),longest=Math.max(...lines.map(l=>String(l).length),4);
  const fs=Math.max(9,Math.min(17,(w-52)/(0.64*longest))),ty=-(lines.length-1)*fs*0.55+fs*0.3;
+ const sp=emojiSprite(n.icon||'❔');
  return '<g class="node-card"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="#17201f" stroke="'+col+'" stroke-width="3"/>'
   +'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="14" fill="'+col+'"/>'
   +'<text x="'+(-w/2+8)+'" y="'+(-h/2+11)+'" font-size="9" font-weight="900" letter-spacing="1.5" fill="#fff">'+esc(n.type)+(n.todo?' · ⚙':'')+'</text>'
-  +'<text x="'+(-w/2+22)+'" y="'+(h/2-14)+'" text-anchor="middle" font-size="26">'+(n.icon||'❔')+'</text>'
+  +(sp?'<image href="'+sp+'" x="'+(-w/2+7)+'" y="'+(h/2-39)+'" width="30" height="30"/>':'<text x="'+(-w/2+22)+'" y="'+(h/2-14)+'" text-anchor="middle" font-size="26">'+(n.icon||'❔')+'</text>')
   +lines.map((l,i)=>'<text x="'+(w/2-(w-46)/2+2)+'" y="'+(ty+i*fs*1.1+6)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" font-weight="800" fill="#f4f0e6" font-family="Tomkins Display, Bricolage Grotesque, sans-serif">'+esc(l)+'</text>').join('')
   +'</g>';
 }
@@ -1108,7 +1128,16 @@ export function showGame(){
 /* Everything below attaches listeners and reads the DOM, so it waits for initUI(). */
 export function initUI(){
  svgEl=$('board');
-svgEl.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.deltaY>0?1.13:0.885,e.clientX,e.clientY)},{passive:false});
+/* a trackpad fires many wheel events per frame: fold them into one viewBox write per animation frame */
+let wheelZ=null;
+svgEl.addEventListener('wheel',e=>{
+ e.preventDefault();
+ const f=e.deltaY>0?1.13:0.885;
+ if(wheelZ){wheelZ.f*=f;wheelZ.x=e.clientX;wheelZ.y=e.clientY;return}
+ wheelZ={f,x:e.clientX,y:e.clientY};
+ const raf=typeof requestAnimationFrame==='function'?requestAnimationFrame:(cb=>cb());
+ raf(()=>{const z=wheelZ;wheelZ=null;if(z)zoomAt(z.f,z.x,z.y)});
+},{passive:false});
 svgEl.addEventListener('pointerdown',e=>{if(e.button>0)return;if(pinnedId!=null&&!(e.target.closest&&e.target.closest('g.node')))clearPin();drag={x:e.clientX,y:e.clientY,moved:false};lastTapTarget=e.target;});
 svgEl.addEventListener('pointermove',e=>{
  if(!drag)return;
