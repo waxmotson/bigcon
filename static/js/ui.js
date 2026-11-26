@@ -8,7 +8,7 @@ import { LOG_SHOWN, Net, S } from './state.js';
 import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
 import { CLASSIFIED_INTEL, CLASSIFIED_MONEY, classifiedBlocked, hiddenFrom, hiddenInfo, ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost, blocStatus, tariffFor, tariffOwner, blockSources, blockadeFree, reefBleached, fileAuthority, isWaterNode } from './engine.js';
 import { TRADE_BLOCS, blocOfMember, BLOC_FREE } from './world.js';
-import { launderBooks, reworkBlocked, swissBalance, abductTargets, inflationExtra, pyramidPayout } from './engine.js';
+import { launderBooks, reworkBlocked, honeypotBan, swissBalance, abductTargets, inflationExtra, pyramidPayout } from './engine.js';
 import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
 import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
@@ -785,6 +785,8 @@ export function renderSide(){
     btns.push('<button class="act primary" data-act="rebuild"'+(p.money>=n.cost?'':' disabled')+'>♻️ Rebuild '+nodeName(n).join(' ')+' — $'+n.cost+' (returns unowned — first bids from next turn)</button>');
     if(svalbardFreeRebuild(me))btns.push('<button class="act primary" data-act="rebuildfree" title="Once per game: the Seed Vault pays for the rebuild">🌱 Rebuild FREE — Seed Vault (once per game)</button>');
     btns.push('<div class="ownnote">Rubble since a missile strike — no income, nothing to seize, until it is rebuilt.</div>');
+   }else if(honeypotBan(me,nid)){
+    btns.push('<div class="ownnote">🍯 '+honeypotBan(me,nid)+'</div>');
    }else if(isTake&&noTakeover(nid)){
     btns.push('<div class="ownnote">🐧 <b>'+n.name.join(' ')+'</b> is UNTOUCHABLE — no hostile takeover of it is ever possible.</div>');
    }else{
@@ -971,6 +973,8 @@ export function reworkButtons(me,p,phase){
  if(own('w_bell'))out.push(rwBtn('ringbell','🔔 RING THE BELL — $2: the next event NOW + investigate a rival',reworkBlocked(me,'ringbell'),'Your action, once per turn: the next market event is drawn and resolved right now, and an ASIC/ACCC file on a rival you choose opens or gains +1 scrutiny.'));
  if(own('w_lira'))out.push(rwBtn('lira','💸 ERDOĞANOMICS — every rival loses 20% of cash above $30 (once per game)',reworkBlocked(me,'lira'),'Your action, once per game: each rival loses 20% of the cash they hold above $30.'));
  if(own('trump')&&S.dlcWorld&&NMAP.w_greenland)out.push(rwBtn('greenbuy','🇬🇱 MAKE AN OFFER — force-buy Greenland at list price (once per game)',reworkBlocked(me,'greenbuy'),'Your action, once per game, with DONALD TRUMP: buy Greenland from its owner at list price. They cannot refuse.'));
+ if(S.dlcWorld&&own('w_bigyahu')&&own('trump')&&own('w_lockheed'))out.push(rwBtn('liberate','🛢️ LIBERATE OIL — divest all oil, take half of your rivals’ (once per game)',reworkBlocked(me,'liberate'),'Your action, once per game, with BIG YAHU, DONALD TRUMP and LOCKHEED MARTIN: your oil nodes are sold to the market at list price; you take half (rounded up) of your rivals’ oil nodes and the rest go unowned.'));
+ if(S.dlcWorld&&own('w_jensen'))out.push(rwBtn('honeypot','🍯 HONEYPOT — 2 free Chinese nodes; US nodes stop paying (once per game)',reworkBlocked(me,'honeypot'),'Your action, once per game: take 2 Chinese nodes for free. No US node earns income for 2 rounds, and you cannot buy in South-East Asia or the USA for your next 2 turns.'));
  return out;
 }
 const rivalsWith=pred=>S.players.map((pl,i)=>i).filter(i=>i!==Net.myIdx&&!isVanished(i)&&pred(i));
@@ -1276,7 +1280,7 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
   case 'abduct':abductFlow();break;
   case 'ringbell':bellFlow();break;
   case 'swissdeposit':case 'swisswithdraw':swissFlow(act);break;
-  case 'printmoney':case 'lira':case 'greenbuy':case 'srilankadefault':dispatch({act});break;
+  case 'printmoney':case 'lira':case 'greenbuy':case 'liberate':case 'honeypot':case 'srilankadefault':dispatch({act});break;
   case 'laylowcash':dispatch({act:'laylow',choice:'cash'});break;
   case 'laylowcool':dispatch({act:'laylow',choice:'cool'});break;
  }

@@ -31,7 +31,11 @@ export const IRON_NODES=['bhp','w_vale','coal','w_codelco','w_potosi','w_nickel'
 export const SANCTIONED_NODES=['w_gazprom','w_nordstream','w_kremlin','geo_shahed','geo_missile','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_kim']; /* SANCTIONS: Russia, Iran, North Korea */
 export const COAL_CHAIN=['coal','train','port','watson','bhp']; /* CHINA BANS AUSTRALIAN COAL */
 export const AGRI_NODES=['w_fonterra','w_anzcerta','w_amazon','w_tulip']; /* EL NINO */
-export const US_NODES=['citi','hedge','us','oil','fox','leak','bess','bigshort','golf','bessent','trump','brad','geo_boeing','w_bell','w_fed','w_powell','w_sec','w_goldman','w_jpm','w_svb','w_cushing','w_permian','w_knox','w_cme','w_malago','w_area51','w_hollywood','w_imf','w_apple','w_tariffwall']; /* BRICS SUMMIT: the dollar's own nodes */
+export const US_NODES=['citi','hedge','us','oil','fox','leak','bess','bigshort','golf','bessent','trump','brad','geo_boeing','w_bell','w_fed','w_powell','w_sec','w_goldman','w_jpm','w_svb','w_cushing','w_permian','w_knox','w_cme','w_malago','w_area51','w_hollywood','w_imf','w_apple','w_tariffwall','w_lockheed']; /* BRICS SUMMIT: the dollar's own nodes */
+/* JENSEN HUANG — HONEYPOT: the mainland nodes he can pick up for free */
+export const CHINA_NODES=['w_pboc','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma','w_evergrande'];
+/* the three a liberator needs */
+export const LIBERATORS=['w_bigyahu','trump','w_lockheed'];
 const mk=(id,name,icon,type,income,cost,lat,lon,sub,sp,fx,todo)=>{
  const n={id:'w_'+id,name:[].concat(name),icon,type,shape:'card',income,cost,geo:[lat,lon],x:0,y:0,rot:0,sub,sp};
  if(fx)n.fx=fx;if(todo)n.todo=true;return n;
@@ -47,6 +51,7 @@ mk('goldman','GOLDMAN SACHS','🐙','BANK',3,10,40.7145,-74.0147,'a great vampir
 mk('jpm','JPMORGAN','🏦','BANK',3,8,40.7556,-73.9733,'too big to jail','Hostile takeovers of any node YOU own cost the buyer +$2 (the house always has a lawyer).',null),
 mk('svb','SILICON VALLEY BANK','📉','BANK',2,5,37.3541,-121.9552,'the duration was a surprise to everyone',
  'STARTS AS RUBBLE: it falls on turn one and must be rebuilt (arrive and pay its list price in your action phase) before anyone can own it. Once rebuilt and owned, it pays +$1 per CHART you own (the duration mismatch is a feature).',{t:[['CHART',1]]}),
+mk('lockheed',['LOCKHEED','MARTIN'],'✈️','CORPORATE',3,9,32.77,-97.44,'the F-35 line · the order book is the foreign policy','+$2 income while you also own BIG YAHU (the order book); +$3 on HOUTHIS IN THE RED SEA and +$2 on SANCTIONS (somebody needs more planes). LIBERATE OIL: with BIG YAHU and DONALD TRUMP, see BIG YAHU.',{w:[['w_bigyahu',2]],e:{houthis:3,sanctions:2}}),
 mk('cushing','CUSHING, OKLAHOMA','🛢️','COMMODITY',2,6,35.9851,-96.7676,'pipeline crossroads · the WTI delivery point','+$5 when OIL SPIKES, DOUBLED to $10 if you also own the CRUDE OIL PIT (the barrel has to land somewhere).',{e:{oilspike:5},x2:'oil'}),
 mk('permian','THE PERMIAN BASIN','⛽','COMMODITY',3,7,31.9,-102.1,'fracked flat · the pump jacks nod','+$3 when OIL SPIKES; +$1 income per other oil node you own.',{e:{oilspike:3},i:[[OIL_ALL,1]]}),
 mk('knox','FORT KNOX','🥇','COMMODITY',2,6,37.89,-85.96,'audit pending since 1974','+$5 on GOLD RUSH. +$2 income while you also own the GOLD-COLOURED COINS (the gold is, allegedly, there).',{e:{goldrush:5},w:[['gold',2]]}),
@@ -100,6 +105,7 @@ mk('lira',['THE TURKISH','LIRA'],'💸','CHART',1,2,39.9334,32.8597,'the line go
 mk('monaco',['MONACO','CASINO'],'🎰','WILD',2,6,43.7384,7.4246,'the house always wins · the house is a principality','+$3 on A QUIET QUARTER and on MADE PAYS OUT… PROBABLY (the house collects on everything).',{e:{quiet:3,madeout:3}}),
 mk('vatican',['THE VATICAN','BANK'],'⛪','BANK',2,7,41.9022,12.4539,'works in mysterious ways · accounts in more','−1 Cortisol at the start of each of your turns (confession is free). REGULATOR-EXEMPT: no ACCC file can ever open on your BANKING book and no ASIC file on your MONETARY POLICY book.',{c:-1}),
 /* ── Middle East & Africa ── */
+mk('bigyahu',['BIG YAHU'],'🛡️','WILD',2,8,31.7683,35.2137,'the iron dome · the long coalition','+$2 income while you also own DONALD TRUMP. LIBERATE OIL: if you also own DONALD TRUMP and LOCKHEED MARTIN, once per game and as your action, divest every oil node on the board: your own oil nodes are sold back to the market at list price, and of the oil nodes your rivals own you take HALF (rounded up, the best-paying first); the rest are liberated (unowned).',{w:[['trump',2]]}),
 mk('aramco',['SAUDI','ARAMCO'],'🛢️','COMMODITY',5,11,26.3,50.15,'the biggest oil on the board','+$8 when OIL SPIKES. Pays $5 a turn — the largest oil position on the board.',{e:{oilspike:8}}),
 mk('opec',['OPEC','VIENNA'],'🛢️','REGULATOR',2,8,48.2082,16.3738,'the cartel meets · the cartel decides','+$1 income per oil node you own; +$4 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:4}}),
 mk('malacca',['STRAIT OF','MALACCA'],'⚓','COMMODITY',3,8,2.5,101.2,'a quarter of world trade · squeezed through a drinking straw',
@@ -134,6 +140,7 @@ mk('bri',['THE BELT','AND ROAD'],'🛤️','WILD',2,8,34.3416,108.9398,'every ro
  'NEW SILK ROAD: once per turn, on your action, pay $4 to link one of your nodes to any other node it is not already joined to, with a permanent edge for everyone.',null),
 mk('hsbc',['HSBC','HONG KONG'],'🏦','BANK',3,8,22.2796,114.1588,'the world’s local bank · the Hong Kong one','+$2 income while you also own the HKMA PEG; +$2 on the RBA CASH-RATE DECISION.',{w:[['w_hkma',2]],e:{rates:2}}),
 mk('hkma',['THE HKMA','PEG'],'📌','REGULATOR',2,7,22.2831,114.1733,'7.80 · hold the line','−1 Cortisol at the start of each of your turns (the peg holds, the nerves hold).',{c:-1}),
+mk('jensen',['JENSEN HUANG'],'🧥','WILD',2,8,25.033,121.5654,'the leather jacket · home for Computex','+$3 income while you also own TSMC. HONEYPOT: once per game, as your action, take 2 Chinese nodes for free (unowned ones first, the best-paying first; if there are not enough, a rival’s). The US stock market crashes: no US node earns income for 2 rounds, and you are banned from buying anything in South-East Asia or the USA for your next 2 turns.',{w:[['w_tsmc',3]]}),
 mk('tsmc',['TSMC'],'🧠','CORPORATE',4,10,24.7804,120.9983,'the island that makes the chips','+$3 income while you also own ASML; +$2 income while you own SAMSUNG (the foundries watch each other).',{w:[['w_asml',3],['w_samsung',2]]}),
 mk('samsung',['SAMSUNG'],'📱','CORPORATE',3,8,37.2636,127.0286,'chaebol · everything with a screen','+$2 income while you also own ASML; +$2 on A QUIET QUARTER.',{w:[['w_asml',2]],e:{quiet:2}}),
 mk('temasek',['TEMASEK'],'🇸🇬','BANK',3,8,1.2833,103.8501,'the sovereign that owns the airline','+$2 income while you also own MARINA BAY SANDS; +$1 income per OTHER BANK you own.',{w:[['w_mbs',2]],t:[['BANK',1,1]]}),

@@ -14,7 +14,7 @@ import { clampGoal, esc, shuffle } from './util.js';
 import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld, setEdges, rebuildAdj } from './data.js';
 import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState } from './boards.js';
 import { regionOf, REGION_NAMES } from './world.js';
-import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays, WATER_NODES, TAX_HAVENS, TOURISM_NODES, IRON_NODES, SANCTIONED_NODES, COAL_CHAIN, AGRI_NODES, US_NODES, TRADE_BLOCS, BLOC_STEP, BLOC_MAX, BLOC_FREE, AUSNZ, PENINSULA } from './world.js';
+import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays, WATER_NODES, TAX_HAVENS, TOURISM_NODES, IRON_NODES, SANCTIONED_NODES, COAL_CHAIN, AGRI_NODES, US_NODES, CHINA_NODES, LIBERATORS, TRADE_BLOCS, BLOC_STEP, BLOC_MAX, BLOC_FREE, AUSNZ, PENINSULA } from './world.js';
 export { hooks, setHooks };
 /* The host services the rules call, bound late so a hook swapped in by setHooks
    (or wrapped by a test) is always the one that runs. */
@@ -859,6 +859,7 @@ export async function applyIntent(pi,m){
    const buyer=m.target,n=typeof m.id==='string'?NMAP[m.id]:null,price=m.n;
    if(!isRival(pi,buyer)){bail('Offer the deal to a rival at the table.');return}
    if(!n||S.owner[m.id]!==pi){bail('You can only offer a node you own.');return}
+   {const hb=honeypotBan(buyer,m.id);if(hb){bail(pname(buyer)+' cannot buy it: '+hb);return}}
    if(!Number.isInteger(price)||price<0||price>S.players[buyer].money){bail('Name a whole-dollar price from $0 to '+pname(buyer)+'’s cash ($'+S.players[buyer].money+').');return}
    S.mode=null;
    const nm=n.name.join(' ');
@@ -1345,6 +1346,14 @@ export function reworkBlocked(pi,kind){
    if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_lira'))return need('w_lira');if(!act)return 'ERDOĞANOMICS is your action.';if(gUsed('lira'))return 'The rate cut has already happened: once per game.';return '';
   case 'srilankadefault':
    if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_srilanka'))return need('w_srilanka');if(!either)return 'Not now.';if(gUsed('srilanka'))return 'The default has already been declared: once per game.';return '';
+  case 'liberate':
+   if(!w)return 'The Global Edition exhibits are not in play.';
+   for(const id of LIBERATORS)if(!own(id))return need(id);
+   if(!act)return 'Liberating the oil is your action.';if(gUsed('liberate'))return 'The oil has already been liberated: once per game.';
+   if(!oilStanding().some(id=>S.owner[id]!=null))return 'Nobody owns any oil to liberate.';return '';
+  case 'honeypot':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_jensen'))return need('w_jensen');if(!act)return 'The HONEYPOT is your action.';if(gUsed('honeypot'))return 'The honeypot has already been set: once per game.';
+   if(!honeypotPicks(pi).length)return 'There is no Chinese node to take.';return '';
   case 'greenbuy':{
    if(!w)return 'The Global Edition exhibits are not in play.';if(!own('trump'))return need('trump');if(!act)return 'Making an offer is your action.';if(gUsed('greenland'))return 'You have already made your offer: once per game.';
    const g=NMAP.w_greenland,o=S.owner.w_greenland;
@@ -1353,6 +1362,34 @@ export function reworkBlocked(pi,kind){
    return '';}
  }
  return 'Unknown ability.';
+}
+/* 🛢️ LIBERATE OIL: the standing oil nodes on this board */
+function oilStanding(){return OIL_ALL.filter(id=>NMAP[id]&&!(S.rubble&&S.rubble[id]))}
+const byPay=(a,b)=>(NMAP[b].income-NMAP[a].income)||(NMAP[b].cost-NMAP[a].cost)||(a<b?-1:1);
+/* the split LIBERATE OIL would make right now: mine (sold to the market), taken (rival oil that comes to me), freed (rival oil that goes unowned) */
+export function liberatePlan(pi){
+ const oil=oilStanding(),mine=oil.filter(id=>S.owner[id]===pi);
+ const theirs=oil.filter(id=>S.owner[id]!=null&&S.owner[id]!==pi&&!hiddenFrom(pi,id)&&!isPillarShieldedNode(id)).sort(byPay);
+ const k=Math.ceil(theirs.length/2);
+ return {mine,taken:theirs.slice(0,k),freed:theirs.slice(k)};
+}
+/* 🧥 HONEYPOT: the (up to) two Chinese nodes Jensen would take — unowned first, then a rival's (honouring every takeover guard), the best-paying first */
+export function honeypotPicks(pi){
+ const ids=CHINA_NODES.filter(id=>NMAP[id]&&!(S.rubble&&S.rubble[id]));
+ const free=ids.filter(id=>S.owner[id]==null&&!hiddenFrom(pi,id)).sort(byPay);
+ const rival=ids.filter(id=>S.owner[id]!=null&&!abductBlocked(pi,id)).sort(byPay);
+ return free.concat(rival).slice(0,2);
+}
+/* 🧥 HONEYPOT: the buying ban — South-East Asia (and the Strait of Malacca) and the USA, for the seat's next two turns */
+export const HONEYPOT_TURNS=2,HONEYPOT_ROUNDS=2;
+const US_BAN=new Set(US_NODES);
+export function honeypotBan(pi,nid){
+ if(!S||!S.dlcWorld||!S.honeyBan||!(S.honeyBan[pi]>rtick()))return '';
+ const n=NMAP[nid];if(!n)return '';
+ const r=regionOf(n);
+ if(r==='SEA'||r==='MAL')return 'HONEYPOT — you are banned from buying anything in South-East Asia for now.';
+ if(US_BAN.has(nid))return 'HONEYPOT — you are banned from buying anything in the USA for now.';
+ return '';
 }
 /* 👽 AREA 51: why a node cannot be abducted ('' when it can). It honours every existing takeover guard: Antarctica, MADE, the Commonwealth Bank's unused refusal,
    the Svalbard owner's rubble protection and the ESG Pillars shield, and CLASSIFIED sites you cannot see. */
@@ -1547,6 +1584,42 @@ const WORLD_REWORKS={
   if(await winCheck())return;
   await finishNodeAbility(pi);
  },
+ /* 🛢️ BIG YAHU — LIBERATE OIL (once per game, your action, with DONALD TRUMP and LOCKHEED MARTIN): every oil node is divested.
+    Your own are sold to the market at list price; of your rivals' you take half (rounded up, the best-paying first) and the rest go unowned. */
+ async liberate(pi){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'liberate');if(why){sysTo(pi,why);return}
+  const p=S.players[pi],pl=liberatePlan(pi),nm=id=>nodeName(NMAP[id]).join(' ');
+  gMark('liberate');
+  let cash=0;pl.mine.forEach(id=>{cash+=NMAP[id].cost;handOver(id,null)});
+  if(cash){p.money+=cash;fxAt(pi,'+$'+cash,'#7fe08d')}
+  const from={};pl.taken.forEach(id=>{const o=S.owner[id];(from[o]||(from[o]=[])).push(nm(id));handOver(id,pi);S.seizeCount[id]=(S.seizeCount[id]||0)+1});
+  pl.freed.forEach(id=>handOver(id,null));
+  const b=NMAP.w_bigyahu;if(b)fx(b.x,b.y-64,'🛢️ LIBERATED','#f5c542');
+  log('🛢️ LIBERATE OIL — '+pname(pi)+' (BIG YAHU, DONALD TRUMP and LOCKHEED MARTIN) brings freedom to the oil fields. '
+   +(pl.mine.length?pname(pi)+' divests '+pl.mine.map(nm).join(', ')+' to the market for $'+cash+'. ':'')
+   +(pl.taken.length?'Liberated into '+pname(pi)+'’s hands: '+Object.keys(from).map(o=>from[o].join(', ')+' (from '+pname(+o)+')').join('; ')+'. ':'')
+   +(pl.freed.length?'Set free (unowned): '+pl.freed.map(nm).join(', ')+'. ':'')+'(Once per game.)');
+  acccReconcile();sync();
+  if(await winCheck())return;
+  await finishNodeAbility(pi);
+ },
+ /* 🧥 JENSEN HUANG — HONEYPOT (once per game, your action): two Chinese nodes for free; the US market crashes (no US node pays for 2 rounds)
+    and the seat is banned from buying in South-East Asia or the USA for its next 2 turns */
+ async honeypot(pi){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'honeypot');if(why){sysTo(pi,why);return}
+  const picks=honeypotPicks(pi),nm=id=>nodeName(NMAP[id]).join(' ');
+  gMark('honeypot');
+  const got=picks.map(id=>{const o=S.owner[id];handOver(id,pi);S.seizeCount[id]=(S.seizeCount[id]||0)+1;return nm(id)+(o!=null?' (from '+pname(o)+')':'')});
+  suspendNodes(US_NODES,HONEYPOT_ROUNDS);
+  (S.honeyBan||(S.honeyBan={}))[pi]=rtick()+HONEYPOT_TURNS*S.players.length+1;
+  const j=NMAP.w_jensen;if(j)fx(j.x,j.y-64,'🍯 HONEYPOT','#f5c542');
+  log('🍯 HONEYPOT — '+pname(pi)+' (JENSEN HUANG) picks up '+got.join(' and ')+' for nothing. The US stock market crashes: no US node earns income for '+HONEYPOT_ROUNDS+' rounds, and '+pname(pi)+' is banned from buying anything in South-East Asia or the USA for their next '+HONEYPOT_TURNS+' turns. (Once per game.)');
+  acccReconcile();sync();
+  if(await winCheck())return;
+  await finishNodeAbility(pi);
+ },
 };
 Object.assign(WORLD_ACTS,WORLD_REWORKS);
 /* A seat index from the wire: a real seat at this table that is not the actor. */
@@ -1707,6 +1780,7 @@ export async function doSeize(pi){
  if(S.rubble&&S.rubble[nid]){sysTo(pi,'That node is rubble — it must be rebuilt before it can be owned.');return}
  if(prev===pi)return;
  if(prev!=null&&noTakeover(nid)){sysTo(pi,nodeName(n).join(' ')+' is UNTOUCHABLE — no hostile takeover of it is ever possible.');return}
+ {const hb=honeypotBan(pi,nid);if(hb){sysTo(pi,hb);return}}
  if(S.dlcGeo&&((nid==='geo_shahed'&&S.owner.geo_missile===pi)||(nid==='geo_missile'&&S.owner.geo_shahed===pi))){sysTo(pi,'You can own either MISSILE COMMAND or the SHAHED DRONE, not both.');return}
  let base=seizeListPrice(pi,n);
  /* the slipstream discount is only spent once the deal actually goes through */
