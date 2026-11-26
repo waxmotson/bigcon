@@ -162,6 +162,22 @@ export function placeholderCardSVG(n,w,h){
   +lines.map((l,i)=>'<text x="'+(w/2-(w-46)/2+2)+'" y="'+(ty+i*fs*1.1+6)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" font-weight="800" fill="#f4f0e6" font-family="Tomkins Display, Bricolage Grotesque, sans-serif">'+esc(l)+'</text>').join('')
   +'</g>';
 }
+/* a Global Edition node with a photo: the picture cropped to fill the card, the type band on top and the name on a dark strip at the foot */
+export function photoCardSVG(n,w,h){
+ const esc=t=>String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ const col=TYPE_COLORS[n.type]||'#168388',lines=(nodeName(n)||[n.id]).slice(0,2),longest=Math.max(...lines.map(l=>String(l).length),4);
+ const fs=Math.max(8,Math.min(14,(w-14)/(0.62*longest))),sh=lines.length*fs*1.12+8;
+ const cid='pc_'+String(n.id).replace(/[^a-z0-9_]/gi,'');
+ return '<g class="node-card node-photo"><clipPath id="'+cid+'"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'"/></clipPath>'
+  +'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="#17201f"/>'
+  +'<image class="node-image" href="'+n.photo+'" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" preserveAspectRatio="xMidYMid slice" clip-path="url(#'+cid+')"/>'
+  +'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="14" fill="'+col+'"/>'
+  +'<text x="'+(-w/2+8)+'" y="'+(-h/2+11)+'" font-size="9" font-weight="900" letter-spacing="1.5" fill="#fff">'+esc(n.type)+'</text>'
+  +'<rect x="'+(-w/2)+'" y="'+(h/2-sh)+'" width="'+w+'" height="'+sh+'" fill="rgba(10,14,14,.82)"/>'
+  +lines.map((l,i)=>'<text x="0" y="'+(h/2-sh+4+fs*(i+0.9)*1.08)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" font-weight="800" fill="#f4f0e6" font-family="Tomkins Display, Bricolage Grotesque, sans-serif">'+esc(l)+'</text>').join('')
+  +'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="none" stroke="'+col+'" stroke-width="3"/>'
+  +'</g>';
+}
 export function nodeSVG(n,cls){
  const me=S&&S.players[Net.myIdx];
  const classified=hiddenFromMe(n.id);
@@ -204,7 +220,7 @@ export function nodeSVG(n,cls){
  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
  return '<g class="node '+cls+'" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+') rotate('+n.rot+')">'
   +ownerGlow+moodGlow+halo
-  +(n.image?'<image class="node-image" href="'+n.image+'" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" preserveAspectRatio="none"/>':placeholderCardSVG(n,w,h))
+  +(n.image?'<image class="node-image" href="'+n.image+'" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" preserveAspectRatio="none"/>':n.photo?photoCardSVG(n,w,h):placeholderCardSVG(n,w,h))
   +(rb?'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="rgba(8,6,6,0.72)"/><text x="0" y="-4" text-anchor="middle" font-size="22">💥</text><text x="0" y="16" text-anchor="middle" font-size="9" font-weight="900" fill="#ffb08a" letter-spacing="1">REBUILD $'+n.cost+'</text>':'')
   +ownerTag+bugTag+badges
   +'<title>'+esc(nodeTip(n)).replace(/\n/g,'&#10;')+'</title></g>';

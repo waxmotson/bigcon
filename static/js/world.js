@@ -206,6 +206,9 @@ mk('doha',['THE DOHA','ROUND'],'🕰️','WILD',1,6,25.2854,51.531,'launched 200
  'START THE ROUND: once per game, on your action, open a new trade round: for your next 3 turns you collect +$2 per COMMODITY node you own, then the talks stall (they always do). The round only pays while you still hold the Doha node.',null)
 ];
 WORLD_NODES.find(n=>n.id==='w_cs').rebuiltName=['UBS'];
+/* photos for the Global Edition cards (static/GlobalEdition/<id>.<ext>): drawn as a cropped photo under a name strip, so they keep the card's readable title */
+export const WORLD_PHOTOS='amazon.jpg aramco.jpg area51.jpg asml.jpg bell.jpg bigyahu.jpg bis.jpg boe.jpg brexit.jpg bunds.avif burj.avif city.jpg cobalt.jpg codelco.png cruise.jpg cs.jpg dangote.jpg db.jpg doha.jpg easter.jpg ecb.jpg eu.jpg fed.jpg gazprom.jpg greek.jpg hdi.jpg hollywood.jpg hormuz.jpg jpm.jpg knox.jpg kremlin.jpg lira.jpg lithium.png lockheed.jpg malago.jpg mamdani.avif milei.avif monaco.jpg neom.jpg nigprince.png nordstream.jpg norway.jpg panama.jpg pdvsa.jpg pemex.png petrobras.jpg potosi.jpg pyramids.jpg sec.jpeg suez.jpg svalbard.webp swiss.jpg tulip.jpg vero.jpg wto.jpg zim.jpg'.split(' ');
+for(const f of WORLD_PHOTOS){const n=WORLD_NODES.find(x=>x.id==='w_'+f.replace(/\.[a-z]+$/,''));if(n)n.photo='./static/GlobalEdition/'+f;}
 export const WORLD_NODE_IDS=WORLD_NODES.map(n=>n.id);
 /* the WORLD EXPANSION is wide: a random board with it on is dealt on a canvas this much larger */
 export const WORLD_RANDOM_SCALE=1.6;

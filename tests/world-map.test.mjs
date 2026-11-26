@@ -219,15 +219,20 @@ test('placeholder nodes render as text cards without an image; an image path tak
   t.after(() => engine.dispose());
   engine.f.rebuildWorld(true, true);
   const { NMAP } = engine.acc;
-  const n = NMAP.w_fed;
+  const n = NMAP.w_toyota;
+  assert.ok(!n.photo, 'Toyota has no photo yet');
   const svg = engine.f.nodeSVG(n, 'node');
   assert.ok(!svg.includes('<image'), 'no <image> for a placeholder node');
-  assert.ok(svg.includes('THE FEDERAL RESERVE') && svg.includes(n.icon), 'name and icon are drawn');
+  assert.ok(svg.includes('TOYOTA') && svg.includes(n.icon), 'name and icon are drawn');
   assert.ok(svg.includes('node-card'));
   for (const w of engine.acc.WORLD_NODES) {
     const s = engine.f.nodeSVG(w, 'node');
-    assert.ok(!s.includes('<image') && s.includes('<g class="node '), w.id + ' renders');
+    assert.ok(s.includes('<g class="node '), w.id + ' renders');
+    if (w.photo) assert.ok(s.includes('href="' + w.photo + '"') && s.includes('node-photo'), w.id + ' shows its photo');
+    else assert.ok(!s.includes('<image'), w.id + ' is a text card');
   }
+  /* a photo card keeps its readable name */
+  assert.ok(engine.f.nodeSVG(NMAP.w_fed, 'node').includes('THE FEDERAL RESERVE'));
   /* classic nodes keep their pictures */
   assert.ok(engine.f.nodeSVG(NMAP.citi, 'node').includes('<image'));
   /* drop an image in later and it is used */
