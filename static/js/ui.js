@@ -324,6 +324,22 @@ export function overtourTargetable(n){
 }
 /* the World Expansion's picks: a node then a neighbour (chainsaw, brexit), one of yours then any node (silk road), any node (vanish) */
 /* the Global Edition buttons that live in the MOVE phase: the Cruise Ship, the free blockade combo and the Tariff Wall */
+/* the prompt for a Global Edition pick (chainsaw, brexit, silk road, vanish, hold); the same in the action phase and,
+   through BACKROOM DEALS, during movement */
+function worldPickPanel(powline){
+ let phaseHtml='';
+ if(S.mode==='chainsaw'||S.mode==='brexit'||S.mode==='silkroad'){
+   const lab={chainsaw:'🪚 CHAINSAW — $3 · +$4 · ONCE PER GAME',brexit:'🇬🇧 TAKE BACK CONTROL — ONCE PER GAME · +1 🔥',silkroad:'🛤️ NEW SILK ROAD — $4'}[S.mode];
+   const a=S.edgeA!=null&&NMAP[S.edgeA]?nodeName(NMAP[S.edgeA]).join(' '):null;
+   const how=S.mode==='silkroad'?(a?'Now click <b>any other node</b> to link it to <b>'+a+'</b> (click '+a+' again to start over).':'Click <b>one of your own nodes</b> to start the road.'):(a?'Now click one of the <b>neighbours</b> of <b>'+a+'</b> to cut the line between them (click '+a+' again to start over).':'Click the <b>thread</b> you want to cut (or its first node, then one of its neighbours).');
+   phaseHtml='<div class="phlabel">'+lab+'</div>'+powline+'<p>'+how+(S.mode==='silkroad'?'':' A cut that would strand part of the board from Quikstop is refused.')+'</p><button class="act" data-act="cancel">Cancel</button>';
+ } else if(S.mode==='vanish'){
+   phaseHtml='<div class="phlabel">🌀 THE VANISH — ONCE PER GAME</div>'+powline+'<p>Click <b>any node</b>: you disappear until the start of your next turn, then reappear there. Rivals cannot target you meanwhile.</p><button class="act" data-act="cancel">Cancel</button>';
+ } else if(S.mode==='hold'){
+   phaseHtml='<div class="phlabel">🎧 PUT A RIVAL ON HOLD (rival −1 🛈)</div>'+powline+'<p>Click a <b>rival</b> in THE SYNDICATE list below.</p><button class="act" data-act="cancel">Cancel</button>';
+ }
+ return phaseHtml;
+}
 export function worldMoveButtons(me,p){
  if(!S||!S.dlcWorld)return '';
  let h='';
@@ -334,7 +350,7 @@ export function worldMoveButtons(me,p){
 }
 export function worldPickable(n){
  const me=Net.myIdx,k=S&&S.mode;
- if(!S||S.phase!=='action'||!myTurn()||!S.dlcWorld||!k)return false;
+ if(!S||(S.phase!=='action'&&S.phase!=='move')||!myTurn()||!S.dlcWorld||!k)return false;
  if(k==='vanish')return !blockaded(n.id)&&canReach(n.id);
  if(k!=='chainsaw'&&k!=='brexit'&&k!=='silkroad')return false;
  const a=S.edgeA;
@@ -603,18 +619,21 @@ export function renderBoard(){
  s+='<rect x="0" y="0" width="'+bounds.w+'" height="'+bounds.h+'" fill="'+md.tint+'" pointer-events="none"/>';
  s+='<rect x="7" y="7" width="'+(bounds.w-14)+'" height="'+(bounds.h-14)+'" rx="0" fill="none" stroke="#168388" stroke-width="'+(special?8:3)+'" opacity=".7"/>';
  if(wm)s+=worldMapSVG();
+ const cutMode=!!(S&&!S.over&&S.dlcWorld&&(S.mode==='chainsaw'||S.mode==='brexit')&&myTurn()&&(S.phase==='action'||S.phase==='move'));
  EDGES.forEach((e,i)=>{
   if(!edgeVisible(e))return;
   const c=edgeCurve(e,i);
   if(!c)return;
   const d=c.d,len=c.len;
-  const hot=S&&!S.over&&S.phase==='move'&&S.mode!=='fly'&&S.steps>0&&(e[0]===curpos||e[1]===curpos);
+  const hot=S&&!S.over&&S.phase==='move'&&!S.mode&&S.steps>0&&(e[0]===curpos||e[1]===curpos);
   const long=len>520;
   s+='<path d="'+d+'" fill="none" stroke="#08383a" stroke-width="'+(hot?6:long?3.5:5)+'" opacity="'+(hot?'.7':'.35')+'"/>';
   s+='<path d="'+d+'" fill="none" stroke="'+(hot?'#7ff6fb':'#168388')+'" stroke-width="'+(hot?3:long?1.6:2)+'" stroke-dasharray="'+(long?'11 8':'')+'" opacity="'+(hot?'1':'.9')+'"/>';
   /* a thread out of your square is clickable along its whole length (and its WRAPS TO label): a long dashed thread usually runs off
      screen, so clicking the line itself walks you to the other end */
   const go=hot&&myTurn()?(e[0]===curpos?e[1]:e[0]):null;
+  /* CHAINSAW / BREXIT: click any thread to cut it (the two-node pick still works) */
+  if(cutMode){const sel=S.edgeA!=null&&(e[0]===S.edgeA||e[1]===S.edgeA);s+='<path class="edgecut" data-a="'+e[0]+'" data-b="'+e[1]+'" d="'+d+'" fill="none" stroke="#ff6b5e" stroke-opacity="'+(sel?'.45':'0')+'" stroke-width="26" pointer-events="stroke" style="cursor:crosshair"><title>Cut '+esc(nodeName(NMAP[e[0]]).join(' '))+' ⇄ '+esc(nodeName(NMAP[e[1]]).join(' '))+'</title></path>'}
   if(go)s+='<path class="edgehit" data-to="'+go+'" d="'+d+'" fill="none" stroke="#000" stroke-opacity="0" stroke-width="30" pointer-events="stroke" style="cursor:pointer"><title>Move to '+esc(nodeName(NMAP[go]).join(' '))+'</title></path>';
   if(c.wrap){const nm=q=>nodeName(q).join(' '),tx=(go?'class="edgehit" data-to="'+go+'" style="cursor:pointer" ':'pointer-events="none" ')+'font-size="34" font-weight="900" fill="#f5c542" stroke="#000" stroke-width="6" paint-order="stroke" font-family="Tomkins Display, sans-serif"';s+='<text x="'+(c.W-30)+'" y="'+(c.y0-18)+'" text-anchor="end" '+tx+'>⟶ WRAPS TO '+esc(nm(c.L))+'</text><text x="30" y="'+(c.y0-18)+'" '+tx+'>⟶ FROM '+esc(nm(c.R))+'</text>'}
  });
@@ -734,6 +753,7 @@ export function renderSide(){
   else if(S.mode==='blockade'){phaseHtml='<div class="phlabel">🚧 BLOCKADE — FREE ACTION · ONCE PER TURN</div><p>Your blockade sources make this a <b>free action</b>: click any <b>highlighted node</b> to wall it off until the end of next round. Your movement and your action are untouched.</p><button class="act" data-act="cancel">Cancel</button>'}
   else if(S.mode==='launch'){phaseHtml='<div class="phlabel">🚀 BAIKONUR LAUNCH — $3, ONCE PER GAME</div><p><b>LAUNCHING:</b> click <b>any node</b> on the board to land there. Your move ends on arrival.</p><button class="act" data-act="cancel">Scrub the launch</button>'}
   else if(S.mode==='fly'){phaseHtml='<div class="phlabel">PHASE 1 · MOVE — FLYING</div><p><b>FLYING:</b> '+(S.dlcWorld?'click a <b>highlighted node</b> (within ~8,500 km of the jet) to land there ($3). The jet stays parked where you land.':'click <b>any node</b> on the board to land there ($3).')+'</p><button class="act" data-act="cancel">Cancel flight</button>'}
+  else if(['chainsaw','brexit','silkroad','vanish','hold'].includes(S.mode))phaseHtml=worldPickPanel('');
   else if(S.mode==='missile'){phaseHtml='<div class="phlabel">🚀 MISSILE AWAY — $4 + 1 🛈</div><p><b>LAUNCHING:</b> click <b>any node</b> on the board to strike it. The launch <b>ends your move</b>, and your action phase still follows.</p><button class="act" data-act="cancel">Abort the launch</button>'}
   else{
    phaseHtml='<div class="phlabel">PHASE 1 · MOVE</div>'
@@ -790,15 +810,8 @@ export function renderSide(){
    phaseHtml='<div class="phlabel">🤝 OFFER A DEAL — USES YOUR ACTION</div>'+powline+'<p>Click a <b>rival</b> in THE SYNDICATE list, then pick one of your nodes and name a whole-dollar price ($0 up to their cash). They accept or decline in private; a declined offer still ends your turn. No Cortisol either way, and any bugs on the node are cleared.</p><button class="act" data-act="cancel">Cancel</button>';
   } else if(S.mode==='refer'){
    phaseHtml='<div class="phlabel">🧐 REFER A FILE — $4 (+1 SCRUTINY)</div>'+powline+'<p>Click a highlighted <b>rival</b> with an open file you can refer ('+(S.owner.accc===me?'ACCC: every book but monetary policy':'')+(S.owner.accc===me&&S.owner.asic===me?' · ':'')+(S.owner.asic===me?'ASIC: monetary policy':'')+'). Any ruling still waits for their own turn start.</p><button class="act" data-act="cancel">Cancel</button>';
-  } else if(S.mode==='chainsaw'||S.mode==='brexit'||S.mode==='silkroad'){
-   const lab={chainsaw:'🪚 CHAINSAW — $3 · +$4 · ONCE PER GAME',brexit:'🇬🇧 TAKE BACK CONTROL — ONCE PER GAME · +1 🔥',silkroad:'🛤️ NEW SILK ROAD — $4'}[S.mode];
-   const a=S.edgeA!=null&&NMAP[S.edgeA]?nodeName(NMAP[S.edgeA]).join(' '):null;
-   const how=S.mode==='silkroad'?(a?'Now click <b>any other node</b> to link it to <b>'+a+'</b> (click '+a+' again to start over).':'Click <b>one of your own nodes</b> to start the road.'):(a?'Now click one of the <b>neighbours</b> of <b>'+a+'</b> to cut the line between them (click '+a+' again to start over).':'Click the <b>first node</b> of the edge to cut, then one of its neighbours.');
-   phaseHtml='<div class="phlabel">'+lab+'</div>'+powline+'<p>'+how+(S.mode==='silkroad'?'':' A cut that would strand part of the board from Quikstop is refused.')+'</p><button class="act" data-act="cancel">Cancel</button>';
-  } else if(S.mode==='vanish'){
-   phaseHtml='<div class="phlabel">🌀 THE VANISH — ONCE PER GAME</div>'+powline+'<p>Click <b>any node</b>: you disappear until the start of your next turn, then reappear there. Rivals cannot target you meanwhile.</p><button class="act" data-act="cancel">Cancel</button>';
-  } else if(S.mode==='hold'){
-   phaseHtml='<div class="phlabel">🎧 PUT A RIVAL ON HOLD (rival −1 🛈)</div>'+powline+'<p>Click a <b>rival</b> in THE SYNDICATE list below.</p><button class="act" data-act="cancel">Cancel</button>';
+  } else if(['chainsaw','brexit','silkroad','vanish','hold'].includes(S.mode)){
+   phaseHtml=worldPickPanel(powline);
   } else if(S.mode==='leak'||S.mode==='audit'||S.mode==='tweet'||S.mode==='roast'){
    const lab={leak:'LEAK DIRT — 2 🛈 (rival +2 🔥)',audit:'AUDIT — $4 (rival +1 🔥)',tweet:'THE TWEET — $2 (rival loses Intel)',roast:(S.spinKind==='fox'?'FOX SPIN — $2 (rival +1 🔥)':'SPIN THE PRESS — $3 (rival +1 🔥)')}[S.mode];
    phaseHtml='<div class="phlabel">'+lab+'</div>'+powline+'<p>Click a <b>rival</b> in THE SYNDICATE list below.</p><button class="act" data-act="cancel">Cancel</button>';
@@ -1022,7 +1035,7 @@ export function reworkButtons(me,p,phase){
  if(own('w_lira'))out.push(rwBtn('lira','💸 ERDOĞANOMICS — every rival loses 20% of cash above $30 (once per game)',reworkBlocked(me,'lira'),'Your action, once per game: each rival loses 20% of the cash they hold above $30.'));
  if(own('trump')&&S.dlcWorld&&NMAP.w_greenland)out.push(rwBtn('greenbuy','🇬🇱 MAKE AN OFFER — force-buy Greenland at list price (once per game)',reworkBlocked(me,'greenbuy'),'Your action, once per game, with DONALD TRUMP: buy Greenland from its owner at list price. They cannot refuse.'));
  if(S.dlcWorld&&own('w_bigyahu')&&own('trump')&&own('w_lockheed'))out.push(rwBtn('liberate','🛢️ LIBERATE OIL — divest all oil, take half of your rivals’ (once per game)',reworkBlocked(me,'liberate'),'Your action, once per game, with BIG YAHU, DONALD TRUMP and LOCKHEED MARTIN: your oil nodes are sold to the market at list price; you take half (rounded up) of your rivals’ oil nodes and the rest go unowned.'));
- if(S.dlcWorld&&(own('w_monaco')||own('w_mbs')))out.push(rwBtn('black','⚫ PUT IT ALL ON BLACK — bet, 47% pays double (free, once per turn)',reworkBlocked(me,'black'),'FREE, once per turn: name a bet. 47% of the time the wheel lands black and you win the same again; otherwise the house keeps it.'));
+ if(S.dlcWorld&&(own('w_monaco')||own('w_mbs')))out.push(rwBtn('black','⚫ PUT IT ALL ON BLACK / 🟢 GREEN — bet, 47% pays double; all in on green pays 35× (free, once per turn)',reworkBlocked(me,'black'),'FREE, once per turn: name a bet. 47% of the time the wheel lands black and you win the same again; otherwise the house keeps it. Or go ALL IN ON GREEN: 1 in 37, pays 35 to 1.'));
  if(S.dlcWorld&&own('w_pyramids')&&own('sisy')&&(own('w_monaco')||own('w_mbs')))out.push(rwBtn('biggamble','🎲 THE BIG GAMBLE — reshuffle who owns every node (once per game)',reworkBlocked(me,'biggamble'),'Your action, once per game: every owned node is dealt out again (each player keeps the same number of nodes). You lose the Pyramids, the Boulder and your casino, and nobody is dealt all of them. If two players complete the con at once, the richer one takes it.'));
  if(S.dlcWorld&&own('w_jensen'))out.push(rwBtn('honeypot','🍯 HONEYPOT — 2 free Chinese nodes; US nodes stop paying (once per game)',reworkBlocked(me,'honeypot'),'Your action, once per game: take 2 Chinese nodes for free. No US node earns income for 2 rounds, and you cannot buy in South-East Asia or the USA for your next 2 turns.'));
  return out;
@@ -1083,8 +1096,9 @@ export async function carryFlow(){
 export async function blackFlow(){
  const max=S.players[Net.myIdx].money;if(max<1)return;
  const set=[...new Set([1,5,10,20,50,max].filter(x=>x>=1&&x<=max))].sort((a,b)=>a-b);
- const n=await hooks.modal({title:'PUT IT ALL ON BLACK',body:'The wheel lands black 47% of the time: you win the stake again. Otherwise the house keeps it. You have $'+max+'.',options:set.map(x=>({label:(x===max?'ALL IN — $':'Bet $')+x,v:x})).concat([{label:'Walk away',v:0}])});
+ const n=await hooks.modal({title:'PUT IT ALL ON BLACK',body:'The wheel lands black 47% of the time: you win the stake again. Otherwise the house keeps it. Or push everything onto GREEN: the zero comes up 1 time in 37 and pays 35 to 1. You have $'+max+'.',options:set.map(x=>({label:(x===max?'ALL IN — $':'Bet $')+x,v:x})).concat([{label:'🟢 ALL IN ON GREEN — $'+max+' (pays 35×: +$'+max*35+')',v:'green'},{label:'Walk away',v:0}])});
  if(!S||!n||!myTurn())return;
+ if(n==='green'){dispatch({act:'black',color:'green',n:max});return}
  dispatch({act:'black',n});
 }
 export async function swissFlow(kind){
@@ -1145,6 +1159,8 @@ export function clampVB(){
 let drag=null,lastTapTarget=null;
 export function handleNodeTap(t){
  if(!t||!t.closest)return;
+ const ec=t.closest('.edgecut');
+ if(ec&&S&&!S.over&&myTurn()&&(S.mode==='chainsaw'||S.mode==='brexit')){dispatch({act:'edgepick',a:ec.dataset.a,id:ec.dataset.b});return}
  const eh=t.closest('.edgehit');
  if(eh){tapNode(eh.dataset.to);return}
  const g=t.closest('g.node');

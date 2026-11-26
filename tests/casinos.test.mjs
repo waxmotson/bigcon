@@ -108,3 +108,40 @@ test('BACKROOM DEALS reaches the Global Edition abilities: the New Silk Road dur
   assert.equal(S.steps, 1, 'it cost 2 movement steps');
   assert.ok(S.backroomAbilityUsed);
 });
+
+test('ALL IN ON GREEN: the whole stack, 1 in 37, pays 35x; shares the once-per-turn spin', async t => {
+  const { e, S, P } = await game(t);
+  S.owner.w_monaco = 0;
+  assert.equal(e.ctx.GREEN_PAYS, 35);
+  await withRandomSeq([0.01], () => e.f.applyIntent(0, { act: 'black', color: 'green', n: 5 }));
+  await settle();
+  assert.equal(P[0].money, 50 + 50 * 35, 'zero: the whole stack pays 35 to 1, whatever n said');
+  await e.f.applyIntent(0, { act: 'black', n: 10 });
+  assert.equal(P[0].money, 1800, 'the green spin was the turn’s spin');
+  S.nTurn = {}; P[0].money = 40;
+  await withRandomSeq([0.5], () => e.f.applyIntent(0, { act: 'black', color: 'green' }));
+  await settle();
+  assert.equal(P[0].money, 0, 'not the zero: everything is lost');
+});
+
+test('CHAINSAW / BREXIT: clicking the thread itself cuts it, in the action phase and through BACKROOM DEALS', async t => {
+  const { e, S, P } = await game(t);
+  const edge = e.ctx.EDGES.find(x => e.ctx.cutKeepsBoardConnected(x[0], x[1])).slice();
+  S.owner = { w_brexit: 0 };
+  await e.f.applyIntent(0, { act: 'worldmode', kind: 'brexit' });
+  await e.f.applyIntent(0, { act: 'edgepick', a: edge[0], id: edge[1] });
+  await settle();
+  assert.ok(!e.ctx.hasEdge(edge[0], edge[1]), 'one click on the thread severs it');
+  assert.ok(S.wGame.brexit);
+  /* the chainsaw, during movement via BACKROOM DEALS */
+  const e2 = e.ctx.EDGES.find(x => e.ctx.cutKeepsBoardConnected(x[0], x[1])).slice();
+  S.owner = { back: 0, w_milei: 0 };
+  S.cur = 0; S.phase = 'move'; S.mode = null; S.steps = 3; S.backroomAbilityUsed = false; S.wTurn = {};
+  await e.f.applyIntent(0, { act: 'worldmode', kind: 'chainsaw' });
+  assert.equal(S.mode, 'chainsaw');
+  await e.f.applyIntent(0, { act: 'edgepick', a: e2[0], id: e2[1] });
+  await settle();
+  assert.ok(!e.ctx.hasEdge(e2[0], e2[1]), 'cut during movement');
+  assert.equal(S.phase, 'move'); assert.equal(S.steps, 1);
+  assert.ok(S.wGame.milei, 'the chainsaw is spent');
+});

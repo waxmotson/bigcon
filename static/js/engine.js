@@ -946,6 +946,8 @@ export const CARRY_LOAN=6,CARRY_CAP=50;
 export const carryDue=loan=>Math.ceil(loan*1.5),carryPenalty=short=>Math.ceil(short/2);
 /* 🎰 PUT IT ALL ON BLACK (Monaco Casino, Marina Bay Sands): a bet that pays double 47% of the time */
 export const BLACK_ODDS=0.47;
+/* …or ALL IN ON GREEN: the single zero (1 pocket in 37) pays 35 to 1 */
+export const GREEN_ODDS=1/37,GREEN_PAYS=35;
 export const CASINOS=['w_monaco','w_mbs'];
 const IMF_LOAN=6,IMF_REPAY=8,IMF_CORTISOL=2,DOHA_PER=2,CRUISE_FARE=2,TARIFF_EXTRA=2;
 export function isVanished(i){return !!(S&&S.dlcWorld&&S.vanished&&S.vanished[i]!=null)}
@@ -1003,6 +1005,7 @@ const WORLD_ACTS={
   const bail=msg=>{sysTo(pi,msg);S.mode=null;S.edgeA=null;sync()};
   const why=worldBlocked(pi,k);
   if(why){bail(why);return}
+  if(k!=='silkroad'&&m.a!=null&&NMAP[m.a]&&hasEdge(m.a,m.id))S.edgeA=m.a; /* clicked the thread itself */
   const id=m.id,a=S.edgeA;
   if(a==null||!NMAP[a]){
    if(k==='silkroad'&&S.owner[id]!==pi){sysTo(pi,'Start the new road from one of YOUR nodes.');return}
@@ -1729,11 +1732,19 @@ const WORLD_REWORKS={
  async black(pi,m){
   if(S.mode)return;
   const why=reworkBlocked(pi,'black');if(why){sysTo(pi,why);return}
-  const p=S.players[pi],bet=Math.floor(Number(m&&m.n)||0);
+  const p=S.players[pi],green=!!(m&&m.color==='green'),bet=green?p.money:Math.floor(Number(m&&m.n)||0);
   if(bet<1||bet>p.money){sysTo(pi,'Bet between $1 and your $'+p.money+'.');return}
   tMark('black');
   const house=CASINOS.filter(id=>S.owner[id]===pi).map(id=>nodeName(NMAP[id]).join(' ')).join(' / ');
-  if(Math.random()<BLACK_ODDS){
+  if(green){ /* everything on the zero */
+   if(Math.random()<GREEN_ODDS){
+    const win=bet*GREEN_PAYS;p.money+=win;fxAt(pi,'🟢 +$'+win,'#7fe08d');
+    log('🟢 '+pname(pi)+' pushes ALL $'+bet+' onto GREEN at '+house+'… ZERO! The table pays 35 to 1: +$'+win+'.');
+   }else{
+    p.money-=bet;fxAt(pi,'🟢 −$'+bet,'#ff6b5e');
+    log('🟢 '+pname(pi)+' pushes ALL $'+bet+' onto GREEN at '+house+'… it is not the zero. The house keeps all $'+bet+'.');
+   }
+  }else if(Math.random()<BLACK_ODDS){
    p.money+=bet;fxAt(pi,'⚫ +$'+bet,'#7fe08d');
    log('⚫ '+pname(pi)+' puts $'+bet+' on BLACK at '+house+'… BLACK! The table pays $'+bet+'.');
   }else{
