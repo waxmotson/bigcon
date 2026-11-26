@@ -351,6 +351,8 @@ export async function startTurn(){
   if(f.s)giveIntel(S.cur,f.s,f.name);
  });
  /* 🌐 ANTARCTIC PENINSULA: hold two of the three overlapping claims and the owner of the third takes +1 Cortisol (the sovereignty dispute) */
+ /* 🐧 THE ANTARCTIC TREATY: its owner's claims are settled, but every other seat still holding Antarctic territory is in breach: +1 Cortisol a turn */
+ if(treatyInForce()&&S.owner.w_antarctica!==S.cur){const held=TRADE_BLOCS.w_antarctica.members.filter(id=>S.owner[id]===S.cur&&!S.rubble[id]);if(held.length){log('🐧 THE ANTARCTIC TREATY: '+pname(S.owner.w_antarctica)+' holds the Treaty, and '+pname(S.cur)+'’s claim on '+held.map(id=>lname(NMAP[id])).join(', ')+' is not recognised.');addCortisol(S.cur,1,'an Antarctic claim the Treaty does not recognise',false,true)}}
  if(S.dlcWorld&&!treatyInForce()){const held=PENINSULA.filter(id=>S.owner[id]===S.cur);if(held.length===2){const third=PENINSULA.find(id=>!held.includes(id)),o=S.owner[third];if(o!=null&&o!==S.cur&&S.players[o]&&!S.rubble[third]&&!isVanished(o)){log('🇦🇶 SOVEREIGNTY DISPUTE: '+pname(S.cur)+' files against '+pname(o)+'’s claim on '+lname(NMAP[third])+'.');addCortisol(o,1,'a sovereignty dispute over the Peninsula',false,true)}}}
  /* 🌐 CRUISE EMISSIONS: +1 Cortisol each turn unless the owner also holds a REGULATOR */
  if(S.dlcWorld&&own('w_cruise')&&!S.rubble.w_cruise&&!NODES.some(n=>n.type==='REGULATOR'&&S.owner[n.id]===S.cur))addCortisol(S.cur,1,'the cruise ship’s emissions');

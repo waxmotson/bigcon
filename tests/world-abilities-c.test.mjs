@@ -633,4 +633,14 @@ test('THE ANTARCTIC TREATY multiplies its claims like a bloc, never opens a WTO 
   assert.ok(before >= 1, 'without the treaty the dispute is filed');
   S.log.length = 0;
   assert.equal(await disputeHits(true), 0, 'with the treaty owned, the claims are settled');
+  /* but only the Treaty's owner is recognised: anyone else holding territory takes +1 Cortisol a turn */
+  const treatyHit = async (cur, owned) => {
+    S.owner = { w_antarctica: 0 }; give(S, cur, owned);
+    S.players[cur].cortisol = 0; S.cur = cur; S.log.length = 0;
+    await e.f.startTurn(); await settle();
+    return S.log.some(l => l.includes('THE ANTARCTIC TREATY:'));
+  };
+  assert.ok(await treatyHit(1, ['w_aq_ross']), 'a rival claim is not recognised');
+  assert.ok(!(await treatyHit(1, [])), 'no territory, no Cortisol');
+  assert.ok(!(await treatyHit(0, ['w_aq_ross'])), 'the Treaty owner is exempt');
 });
