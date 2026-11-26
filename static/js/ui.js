@@ -32,7 +32,7 @@ export function modal(o){return new Promise(res=>{
 /* ================= LOCAL DESKTOP TURN ALERTS =================
    Alerts are opt-out and default on. Permission is requested only from a
    user gesture; the preference is local to this browser/device. */
-const TURN_ALERTS_KEY='bigcon-v1.13-turn-alerts';
+const TURN_ALERTS_KEY='bigcon-v1.14-turn-alerts';
 let lastTurnAlertKey='',lastDeliveredTurnAlertKey='';
 export function turnAlertsEnabled(){try{return localStorage.getItem(TURN_ALERTS_KEY)!=='off'}catch(_){return true}}
 export function requestTurnNotificationPermission(){
@@ -49,7 +49,7 @@ export function notifyCurrentTurn(force){
  lastTurnAlertKey=key;
  if(lastDeliveredTurnAlertKey===key||typeof Notification==='undefined'||Notification.permission!=='granted')return;
  try{
-  const p=S.players[S.cur];const n=new Notification('THE BIG CON v1.13 — Your turn',{body:(p&&p.name?p.name+' — ':'')+'It is your move. Open the game to make your play.',tag:'bigcon-turn-'+key,renotify:false});
+  const p=S.players[S.cur];const n=new Notification('THE BIG CON v1.14 — Your turn',{body:(p&&p.name?p.name+' — ':'')+'It is your move. Open the game to make your play.',tag:'bigcon-turn-'+key,renotify:false});
   lastDeliveredTurnAlertKey=key;
   n.onclick=()=>{try{window.focus()}catch(_){}try{n.close()}catch(_){}};
  }catch(_){}
@@ -590,24 +590,24 @@ export function renderBoard(){
   if(c.wrap){const nm=q=>nodeName(q).join(' '),tx='font-size="34" font-weight="900" fill="#f5c542" stroke="#000" stroke-width="6" paint-order="stroke" font-family="Tomkins Display, sans-serif"';s+='<text x="'+(c.W-30)+'" y="'+(c.y0-18)+'" text-anchor="end" '+tx+'>⟶ WRAPS TO '+esc(nm(c.L))+'</text><text x="30" y="'+(c.y0-18)+'" '+tx+'>⟶ FROM '+esc(nm(c.R))+'</text>'}
  });
  if(wm){
-  s+='<g transform="translate('+metrics.cx+',150) scale(2.6)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON: GLOBAL EDITION v1.13</text></g>';
+  s+='<g transform="translate('+metrics.cx+',150) scale(2.6)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON: GLOBAL EDITION v1.14</text></g>';
   s+='<g transform="translate('+metrics.cx+',330) scale(2.4)"><rect x="-1050" y="-15" width="2100" height="30" fill="#000" stroke="'+md.color+'" stroke-width="2" opacity=".96"/><circle class="tkdot" cx="-1028" cy="0" r="6" fill="'+md.color+'"/><text x="-1008" y="4" font-size="13" font-weight="900" letter-spacing="1.5" fill="aqua">'+md.label+'</text><text x="0" y="4" text-anchor="middle" font-size="12" font-style="italic" fill="#ddd">'+esc((S.wire||'all quiet on the wire').slice(0,100))+'</text><text x="1028" y="4" text-anchor="end" font-size="12" font-weight="800" fill="#9ad">1🛈=$'+md.rate+'</text></g>';
  }else if(mega){
   s+='<circle cx="'+metrics.cx+'" cy="'+metrics.cy+'" r="'+metrics.radius+'" fill="none" stroke="#168388" stroke-width="3" stroke-dasharray="18 20" opacity=".22"/>';
   s+='<circle cx="'+metrics.cx+'" cy="'+metrics.cy+'" r="'+(metrics.radius-175)+'" fill="none" stroke="#168388" stroke-width="2" stroke-dasharray="4 18" opacity=".14"/>';
-  s+='<g transform="translate('+metrics.cx+',95)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON v1.13 · MEGA RING</text></g>';
+  s+='<g transform="translate('+metrics.cx+',95)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON v1.14 · MEGA RING</text></g>';
   s+='<g transform="translate('+metrics.cx+',175)"><rect x="-1050" y="-15" width="2100" height="30" fill="#000" stroke="'+md.color+'" stroke-width="2" opacity=".96"/><circle class="tkdot" cx="-1028" cy="0" r="6" fill="'+md.color+'"/><text x="-1008" y="4" font-size="13" font-weight="900" letter-spacing="1.5" fill="aqua">'+md.label+'</text><text x="0" y="4" text-anchor="middle" font-size="12" font-style="italic" fill="#ddd">'+esc((S.wire||'all quiet on the wire').slice(0,100))+'</text><text x="1028" y="4" text-anchor="end" font-size="12" font-weight="800" fill="#9ad">1🛈=$'+md.rate+'</text></g>';
  }else if(ring){
   metrics.radii.forEach((r,i)=>{
    s+='<ellipse cx="'+metrics.cx+'" cy="'+metrics.cy+'" rx="'+r.x+'" ry="'+r.y+'" fill="none" stroke="#168388" stroke-width="'+(i===0?3:2)+'" stroke-dasharray="'+(i===0?'18 20':'4 18')+'" opacity="'+(i===0?'.22':'.14')+'"/>';
   });
-  s+='<g transform="translate('+metrics.cx+',95)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON v1.13 · RINGWORLD</text></g>';
+  s+='<g transform="translate('+metrics.cx+',95)"><rect x="-330" y="-27" width="660" height="48" fill="#168388" stroke="#000" stroke-width="2"/><text text-anchor="middle" y="5" font-size="22" font-weight="900" letter-spacing="3" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON v1.14 · RINGWORLD</text></g>';
   s+='<g transform="translate('+metrics.cx+',175)"><rect x="-1050" y="-15" width="2100" height="30" fill="#000" stroke="'+md.color+'" stroke-width="2" opacity=".96"/><circle class="tkdot" cx="-1028" cy="0" r="6" fill="'+md.color+'"/><text x="-1008" y="4" font-size="13" font-weight="900" letter-spacing="1.5" fill="aqua">'+md.label+'</text><text x="0" y="4" text-anchor="middle" font-size="12" font-style="italic" fill="#ddd">'+esc((S.wire||'all quiet on the wire').slice(0,100))+'</text><text x="1028" y="4" text-anchor="end" font-size="12" font-weight="800" fill="#9ad">1🛈=$'+md.rate+'</text></g>';
  }else{
   s+=scribble(1830,860,100,64,4)+scribble(1150,540,95,72,-3)+scribble(1000,1380,92,62,5)+scribble(1630,930,96,62,-4)+scribble(1500,470,98,62,3)+scribble(2020,185,92,66,-5)+scribble(390,1200,102,68,3);
   s+=redArrow(2090,330,1140,310)+redArrow(1965,235,1580,440)+redArrow(1080,585,480,1140)+redArrow(1130,1170,420,640);
   s+=scribText(1930,392,-4,'CASH RATE ↑')+scribText(1150,390,3,'“BOND…”')+scribText(1715,448,-6,'WTI +12%')+scribText(455,295,2,'TOO BIG TO FAIL')+scribText(1930,745,-3,'GOLD ↑')+scribText(1050,1150,4,'RATES ON HOLD')+scribText(640,810,-5,'INSIDER TRADING?');
-  s+='<g transform="translate(58,40)"><rect x="-4" y="-22" width="268" height="36" fill="#168388" stroke="#000" stroke-width="2"/><text x="14" y="3" font-size="16" font-weight="900" letter-spacing="2" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON v1.13</text></g>';
+  s+='<g transform="translate(58,40)"><rect x="-4" y="-22" width="268" height="36" fill="#168388" stroke="#000" stroke-width="2"/><text x="14" y="3" font-size="16" font-weight="900" letter-spacing="2" fill="#fff" font-family="Tomkins Display, sans-serif">THE BIG CON v1.14</text></g>';
   /* the market wire — the mood, live */
   s+='<g transform="translate(1230,30)"><rect x="-700" y="-13" width="1400" height="26" fill="#000" stroke="'+md.color+'" stroke-width="2" opacity=".96"/><circle class="tkdot" cx="-682" cy="0" r="5" fill="'+md.color+'"/><text x="-668" y="4" font-size="11" font-weight="900" letter-spacing="1.5" fill="aqua">'+md.label+'</text><text x="-20" y="4" text-anchor="middle" font-size="10.5" font-style="italic" fill="#ddd">'+esc((S.wire||'all quiet on the wire').slice(0,88))+'</text><text x="688" y="4" text-anchor="end" font-size="10" font-weight="800" fill="#9ad">1🛈=$'+md.rate+'</text></g>';
  }
@@ -887,7 +887,7 @@ export function renderSide(){
  side.innerHTML='<div class="netstrip">ROOM <b>'+(Net.roomLabel||Net.roomCode||'·····')+'</b> · '+(Net.role==='host'?'HOST':(Net.spect?'👁 SPECTATOR':'SEAT '+(Net.myIdx+1)))+' · 🎯 TARGET $'+goalAmount()+' · '+(S.players.filter(pl=>!pl.dc).length+'/'+S.players.length+' connected')+(S.deckCount!=null?' · 🎴 '+S.deckCount+' events left':'')+' · ⛽ '+(QUIK_SLOTS[S.quikSlot|0]||QUIK_SLOTS[0]).label+'</div>'
   +'<div class="moodstrip" style="border-color:'+md.color+'"><span class="mdot" style="background:'+md.color+'"></span><b style="color:'+md.color+'">'+md.label+'</b><span>'+md.desc+'</span><span class="mwire">“'+esc(S.wire||'all quiet on the wire')+'”</span></div>'
   +worldStrip()
-  +'<div class="brand"><div class="t1">THE BIG CON</div><div class="t2">v1.13 · '+(S.dlcGeo?'82':'70')+' exhibits · three board layouts · online, 2–8</div></div>'
+  +'<div class="brand"><div class="t1">THE BIG CON</div><div class="t2">v1.14 · '+(S.dlcGeo?'82':'70')+' exhibits · three board layouts · online, 2–8</div></div>'
   +'<div class="turncard" style="border-color:'+p.color+'"><div class="turnlab">TURN '+S.turn+'</div><div class="turnname" style="color:'+p.color+'">'+esc(p.name)+(isTurn?' — that’s you':'')+'</div>'
   +'<div class="resline">$ '+p.money+' &nbsp;·&nbsp; 🛈 '+p.intel+' &nbsp;·&nbsp; 🔥 '+p.cortisol+(p.cortisol>=6?' <span class="danger">RAID AT 9</span>':'')+'</div>'
   +'<div class="holds" title="holdings of '+esc(p.name)+'">'+(isTurn?ownedIcons:'<span style="opacity:.5;font-size:12px;">'+NODES.filter(n=>S.owner[n.id]===S.cur).length+' holdings</span>')+'</div></div>'

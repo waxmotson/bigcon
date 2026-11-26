@@ -72,11 +72,6 @@ export function addCortisol(i,n,why,ev,force){
  if(!n)return;
  if(n>0&&!force&&NODES.filter(node=>S.owner[node.id]===i).length<=1)return;
  if(ev&&n>0&&(S.owner.bess===i||S.owner.jim===i)){n-=1;if(n<=0){log('📺 Big Bessent / The Jim buries the story — '+pname(i)+' takes no Cortisol at all.');return}log('📺 Breaking news softens the story — '+pname(i)+' takes only +'+n+' Cortisol.')}
- /* 🌐 JEROME POWELL — TRANSITORY: the first Cortisol each round is cancelled outright */
- if(n>0&&S.dlcWorld&&S.owner.w_powell===i){
-  const used=S.powell||(S.powell={});
-  if(used[i]!==S.turn){used[i]=S.turn;log('🎙️ TRANSITORY — Powell says it will pass, and it does: '+pname(i)+'’s +'+n+' Cortisol'+(why?' ('+why+')':'')+' is cancelled outright.');fxAt(i,'🎙️ TRANSITORY','#8fbf7f');return}
- }
  if(ev&&n>0){const h=S.owner.herald;if(h!=null&&h!==i)giveIntel(h,1,'THE JIM REAPER files the cortisol')}
  const p=S.players[i];p.cortisol=Math.max(0,Math.min(9,p.cortisol+n));
  log('🔥 '+pname(i)+(n>0?' +'+n:' '+n)+' Cortisol (now '+p.cortisol+')'+(why?' — '+why:'')+'.');
@@ -351,6 +346,8 @@ export async function startTurn(){
   if(f.s)giveIntel(S.cur,f.s,f.name);
  });
  /* 🌐 ANTARCTIC PENINSULA: hold two of the three overlapping claims and the owner of the third takes +1 Cortisol (the sovereignty dispute) */
+ /* 🗽 ZOHRAN MAMDANI — TAX THE RICH: the richest rival (if richer than you) pays you $2 at the start of your turn */
+ if(S.dlcWorld&&S.owner.w_mamdani===S.cur&&!S.rubble.w_mamdani&&!suspended('w_mamdani')){let r=-1;S.players.forEach((pl,j)=>{if(j!==S.cur&&!isVanished(j)&&pl.money>p.money&&(r<0||pl.money>S.players[r].money))r=j});if(r>=0){const amt=Math.min(2,S.players[r].money);S.players[r].money-=amt;p.money+=amt;fxAt(r,'−$'+amt,'#ff6b5e');fxAt(S.cur,'+$'+amt,'#7fe08d');log('🗽 TAX THE RICH — '+pname(r)+' is the richest at the table and pays $'+amt+' to '+pname(S.cur)+' (ZOHRAN MAMDANI).')}}
  /* 🐧 THE ANTARCTIC TREATY: its owner's claims are settled, but every other seat still holding Antarctic territory is in breach: +1 Cortisol a turn */
  if(treatyInForce()&&S.owner.w_antarctica!==S.cur){const held=TRADE_BLOCS.w_antarctica.members.filter(id=>S.owner[id]===S.cur&&!S.rubble[id]);if(held.length){log('🐧 THE ANTARCTIC TREATY: '+pname(S.owner.w_antarctica)+' holds the Treaty, and '+pname(S.cur)+'’s claim on '+held.map(id=>lname(NMAP[id])).join(', ')+' is not recognised.');addCortisol(S.cur,1,'an Antarctic claim the Treaty does not recognise',false,true)}}
  if(S.dlcWorld&&!treatyInForce()){const held=PENINSULA.filter(id=>S.owner[id]===S.cur);if(held.length===2){const third=PENINSULA.find(id=>!held.includes(id)),o=S.owner[third];if(o!=null&&o!==S.cur&&S.players[o]&&!S.rubble[third]&&!isVanished(o)){log('🇦🇶 SOVEREIGNTY DISPUTE: '+pname(S.cur)+' files against '+pname(o)+'’s claim on '+lname(NMAP[third])+'.');addCortisol(o,1,'a sovereignty dispute over the Peninsula',false,true)}}}
@@ -623,7 +620,7 @@ export async function applyIntent(pi,m){
     log('🚀 '+pname(pi)+' launches a missile at TUVALU — the island REFUSES it. The warhead comes back down on '+pname(pi)+'’s own holdings.');
     if(rubbleShielded(launcherId))log('🌱 The SEED VAULT saves '+pname(pi)+'’s '+launcherName+' from the backblast — it survives.');
     else{
-     const lo=S.owner.w_lloyds;
+     const lo=S.owner.w_vero;
      delete S.owner[launcherId];delete S.bugs[launcherId];S.rubble[launcherId]=1;
      fx(NMAP[launcherId].x,NMAP[launcherId].y-70,'💥 BACKFIRE','#ff6b5e');
      log('💥 '+pname(pi)+'’s '+launcherName+' is destroyed in the backblast — rubble, no payout, no refund.');
@@ -1637,16 +1634,16 @@ export function qantasGroundedReason(){if(!S)return '';return qantasGrounded()?'
 /* 🌐 SVALBARD: a node its owner holds cannot be turned to rubble. */
 export function rubbleShielded(nid){return !!(S&&S.dlcWorld&&S.owner[nid]!=null&&S.owner.w_svalbard===S.owner[nid])}
 export function svalbardFreeRebuild(pi){return !!(S&&S.dlcWorld&&S.owner.w_svalbard===pi&&!S.svalbardUsed&&S.rubble&&S.rubble[S.players[pi].pos])}
-/* 🌐 LLOYD'S OF LONDON: the underwriters pay $3 on any missile kill, or the full list price if it was their own node. */
+/* 🌐 VERO INSURANCE: the underwriters pay $3 on any missile kill, or the full list price if it was their own node. */
 function lloydsPays(nid,prev,lo){
  if(!S.dlcWorld||lo==null||!S.players[lo])return;
  const n=NMAP[nid];
- if(prev===lo)gain(lo,n.cost,'LLOYD’S pays out in full on '+nodeName(n).join(' '));
- else gain(lo,3,'LLOYD’S underwrites the loss of '+nodeName(n).join(' '));
+ if(prev===lo)gain(lo,n.cost,'VERO pays out in full on '+nodeName(n).join(' '));
+ else gain(lo,3,'VERO underwrites the loss of '+nodeName(n).join(' '));
 }
 export function strikeNode(pi,nid,opts){
  const silent=opts&&opts.silent;
- const n=NMAP[nid],prev=S.owner[nid],lo=S.owner.w_lloyds;
+ const n=NMAP[nid],prev=S.owner[nid],lo=S.owner.w_vero;
  if(rubbleShielded(nid)){
   log('🚀 '+pname(pi)+' launches a missile at '+nodeName(n).join(' ')+' — the SEED VAULT shrugs it off. '+pname(prev)+' keeps it; nothing becomes rubble.');
   fx(n.x,n.y-70,'🌱 SURVIVES','#7fe08d');

@@ -1,5 +1,5 @@
 'use strict';
-import { WORLD_NODES, WORLD_NODE_IDS, WORLD_RANDOM_SCALE } from './world.js';
+import { WORLD_NODES, WORLD_NODE_IDS, WORLD_RANDOM_SCALE, OIL_ALL } from './world.js';
 /* data: static game data — nodes, edges, geography DLC, characters, moods, room-code buzzwords; builds the world graph. Pure: no DOM, no state.
    NODES/EDGES/… are live bindings rebuilt by rebuildWorld(); other modules read them, and replace EDGES/NODES only through setEdges/setNodes. */
 /* ================= THE COMPLETE EVIDENCE BOARD — 70 exhibits · +12 with the GEOGRAPHY DLC ================= */
@@ -205,11 +205,15 @@ function worldHome(geo){
  WORLD_SLOT_CACHE={key,map};return map;
 }
 /* ALBANESE's text is rewritten while the Global Edition is on (the blockade can then be a free action; see the Reef and Critical Path nodes) */
+const OIL_NODE=BASE_NODES.find(n=>n.id==='oil')||{},OIL_SP=OIL_NODE.sp,OIL_INCOME=OIL_NODE.income,OIL_WORLD_INCOME=11,OIL_WORLD_FX={i:[[OIL_ALL,2]]};
+const OIL_WORLD_SP=OIL_SP?OIL_SP.replace('Pays $8 a turn.','Pays $'+OIL_WORLD_INCOME+' a turn on the Global Edition (the world’s benchmark).')+' GLOBAL EDITION: +$2 income per other oil node you own, and CUSHING, OKLAHOMA doubles its OIL SPIKES windfall for you.':'';
 const ALBO_SP=(BASE_NODES.find(n=>n.id==='albo')||{}).sp;
 const ALBO_WORLD_SP=ALBO_SP?ALBO_SP.replace('BLOCKADE (free, once per turn)','BLOCKADE (once per turn, uses your action)')+' GLOBAL EDITION: if you also own THE GREAT BARRIER REEF or CRITICAL PATH ANALYSIS (any two of the three), BLOCKADE becomes a FREE action: it uses neither your action nor your movement.':'';
 export function rebuildWorld(geo,world){
  WORLD_GEO=!!geo;WORLD_EXP=!!world;
  {const albo=BASE_NODES.find(n=>n.id==='albo');if(albo&&ALBO_SP)albo.sp=world?ALBO_WORLD_SP:ALBO_SP}
+ /* WTI CRUDE is the world's benchmark on the Global Edition: it pays more and every other oil node feeds it */
+ {const oil=BASE_NODES.find(n=>n.id==='oil');if(oil&&OIL_SP){oil.sp=world?OIL_WORLD_SP:OIL_SP;oil.income=world?OIL_WORLD_INCOME:OIL_INCOME;if(world)oil.fx=OIL_WORLD_FX;else delete oil.fx}}
  NODES=BASE_NODES.concat(geo?GEO_NODES:[],world?WORLD_NODES:[]);
  Object.keys(NMAP).forEach(k=>delete NMAP[k]);
  NODES.forEach(n=>NMAP[n.id]=n);

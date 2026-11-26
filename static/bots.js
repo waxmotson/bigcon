@@ -845,7 +845,7 @@ export const BigConBots = (function () {
      the cheapest one it can pay for AND still bank the goal on, and seizes it the
      moment it arrives. If it cannot afford that yet but is close, it hoards:
      nothing but cash-making plays until the money is there. */
-  const KILL_OK = { laylow: 1, sell: 1, push: 1, jog: 1, beach: 1, venicecool: 1 };
+  const KILL_OK = { laylow: 1, sell: 1, push: 1, jog: 1, beach: 1, venicecool: 1, tariff: 1 }; /* the tariff wall is free and keeps the turn going */
   /* what seizing nid would cost this seat, in the engine's own terms (slipstream
      comes off the list price BEFORE any takeover doubling; the Dossier drops a
      takeover back to list). null when it cannot be taken at all. */
@@ -1789,6 +1789,9 @@ export const BigConBots = (function () {
       keep.forEach(c => list.push(c));
     }
     const open = refused ? list.filter(c => !refused[c.kind]) : list;
+    /* a FREE play that keeps the turn going (the Tariff Wall, a free blockade) comes first: the main action still follows */
+    const freebie = open.find(c => (c.kind === 'tariff' || (c.kind === 'blockade' && c.free)) && c.val > 1);
+    if (freebie) return freebie;
     let best = null;
     for (const c of open) if (!best || c.val > best.val) best = c;
     if (best && best.val < 0.55 && !(refused && refused.laylow)) return { kind: 'laylow', choice: me.cortisol >= 3 ? 'cool' : 'cash' };

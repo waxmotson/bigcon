@@ -16,9 +16,9 @@
    s:n                  Intel at the start of your turn;  wi:[[id,n]]  +n Intel at the start of your turn while you also own id
    e:{cardId:$|[$,intel]} windfall when that market event is drawn;  x2:id doubles the cash if you also own id
    rg:[$,cap]  +$ per REGION (regionOf) in which you own at least one node, capped;  an:[$,cap]  +$ per Australian or New Zealand node you own, capped */
-export const OIL_ALL=['oil','oilgraph','barrels','tanker','petronas','geo_scs','w_aramco','w_cushing','w_permian','w_tar','w_pemex','w_petrobras','w_pdvsa','w_dangote','w_gazprom'];
+export const OIL_ALL=['oil','oilgraph','barrels','tanker','petronas','geo_scs','w_aramco','w_cushing','w_pemex','w_petrobras','w_pdvsa','w_dangote','w_gazprom'];
 /* nodes that begin the game as rubble (the World Expansion's casualties) and the ones that rename when rebuilt */
-export const WORLD_START_RUBBLE=['w_svb','w_cs','w_nordstream','w_evergrande'];
+export const WORLD_START_RUBBLE=['w_cs','w_nordstream','w_evergrande'];
 /* the three overlapping claims on the Antarctic Peninsula */
 export const PENINSULA=['w_aq_chl','w_aq_gbr','w_aq_arg'];
 export const WORLD_CHOKEPOINTS=['w_panama','w_hormuz','w_suez','w_malacca'];
@@ -27,11 +27,11 @@ export const BATTERY=['w_lithium','w_cobalt','w_nickel','w_baotou'];
 export const TAX_HAVENS=['w_cayman','w_bvi','w_lux','w_vatican','w_bermuda','w_swiss','w_monaco'];
 /* MARKET-EVENT NODE SETS (the second batch of cards): who a card switches off, pays or taxes. Ids missing from the live board are simply skipped. */
 export const TOURISM_NODES=['qantas','market','quik','geo_venice','geo_wonsan','geo_tuvalu','geo_pyothotel','w_cruise','w_mbs','w_monaco','w_gbr','w_burj','w_pyramids','w_fiji']; /* SWIFTONOMICS */
-export const IRON_NODES=['bhp','w_vale','coal','w_codelco','w_potosi','w_nickel']; /* IRON ORE CRASH */
+export const IRON_NODES=['bhp','coal','w_codelco','w_potosi','w_nickel']; /* IRON ORE CRASH */
 export const SANCTIONED_NODES=['w_gazprom','w_nordstream','w_kremlin','geo_shahed','geo_missile','geo_wonsan','geo_pyoncity','geo_pyothotel','geo_kim']; /* SANCTIONS: Russia, Iran, North Korea */
 export const COAL_CHAIN=['coal','train','port','watson','bhp']; /* CHINA BANS AUSTRALIAN COAL */
 export const AGRI_NODES=['w_fonterra','w_anzcerta','w_amazon','w_tulip']; /* EL NINO */
-export const US_NODES=['citi','hedge','us','oil','fox','leak','bess','bigshort','golf','bessent','trump','brad','geo_boeing','w_bell','w_fed','w_powell','w_sec','w_goldman','w_jpm','w_svb','w_cushing','w_permian','w_knox','w_cme','w_malago','w_area51','w_hollywood','w_imf','w_apple','w_tariffwall','w_lockheed']; /* BRICS SUMMIT: the dollar's own nodes */
+export const US_NODES=['citi','hedge','us','oil','fox','leak','bess','bigshort','golf','bessent','trump','brad','geo_boeing','w_bell','w_fed','w_mamdani','w_sec','w_jpm','w_cushing','w_knox','w_malago','w_area51','w_hollywood','w_imf','w_apple','w_tariffwall','w_lockheed']; /* BRICS SUMMIT: the dollar's own nodes */
 /* JENSEN HUANG — HONEYPOT: the mainland nodes he can pick up for free */
 export const CHINA_NODES=['w_pboc','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma','w_evergrande'];
 /* the three a liberator needs */
@@ -44,24 +44,17 @@ export const WORLD_NODES=[
 /* ── North America ── */
 mk('bell','WALL STREET BELL','🔔','MEDIA',2,5,40.707,-74.011,'rung by whoever paid the most this year','+$2 on BONDMAGEDDON, A QUIET QUARTER or THE BIG SHORT SCREENING (the bell rings either way). RING THE BELL: once per turn, as your action, pay $2: the next market event is drawn and resolved RIGHT NOW, and an ASIC/ACCC investigation opens (or escalates by +1 scrutiny) on a rival you choose.',{e:{bondrevolt:2,quiet:2,bigscreen:2}}),
 mk('fed','THE FEDERAL RESERVE','🏛️','REGULATOR',2,9,38.893,-77.045,'dual mandate · triple vibes','−1 Cortisol at the start of each of your turns. +$2 on the RBA CASH-RATE DECISION and BIG BESSENT SPEAKS (the world is listening).',{c:-1,e:{rates:2,besspeak:2}}),
-mk('powell','JEROME POWELL','🎙️','WILD',1,7,38.886,-77.03,'“transitory” · still being said',
- 'TRANSITORY: the first Cortisol you would take each round is cancelled outright. (He said it would pass. It passed.)',null),
+mk('mamdani',['ZOHRAN','MAMDANI'],'🗽','WILD',2,7,40.7754,-73.9431,'Gracie Mansion · freeze the rent',
+ 'TAX THE RICH: at the start of each of your turns, the rival holding the most cash (if they hold more than you) pays you $2.',null),
 mk('sec','THE SEC','📋','REGULATOR',1,6,38.896,-77.014,'the paperwork arrives eventually','+$3 on MONOPOLY ALERT. +1 Intel at the start of your turn while you also own THE WHISTLEBLOWER (they file everything).',{e:{crackdown:3},wi:[['whistle',1]]}),
-mk('goldman','GOLDMAN SACHS','🐙','BANK',3,10,40.7145,-74.0147,'a great vampire squid · allegedly','+$2 income per BANK your rivals own (the squid has many arms).',{r:[['BANK',2]]}),
 mk('jpm','JPMORGAN','🏦','BANK',3,8,40.7556,-73.9733,'too big to jail','Hostile takeovers of any node YOU own cost the buyer +$2 (the house always has a lawyer).',null),
-mk('svb','SILICON VALLEY BANK','📉','BANK',2,5,37.3541,-121.9552,'the duration was a surprise to everyone',
- 'STARTS AS RUBBLE: it falls on turn one and must be rebuilt (arrive and pay its list price in your action phase) before anyone can own it. Once rebuilt and owned, it pays +$1 per CHART you own (the duration mismatch is a feature).',{t:[['CHART',1]]}),
 mk('lockheed',['LOCKHEED','MARTIN'],'✈️','CORPORATE',3,9,32.77,-97.44,'the F-35 line · the order book is the foreign policy','+$2 income while you also own BIG YAHU (the order book); +$3 on HOUTHIS IN THE RED SEA and +$2 on SANCTIONS (somebody needs more planes). LIBERATE OIL: with BIG YAHU and DONALD TRUMP, see BIG YAHU.',{w:[['w_bigyahu',2]],e:{houthis:3,sanctions:2}}),
-mk('cushing','CUSHING, OKLAHOMA','🛢️','COMMODITY',2,6,35.9851,-96.7676,'pipeline crossroads · the WTI delivery point','+$5 when OIL SPIKES, DOUBLED to $10 if you also own the CRUDE OIL PIT (the barrel has to land somewhere).',{e:{oilspike:5},x2:'oil'}),
-mk('permian','THE PERMIAN BASIN','⛽','COMMODITY',3,7,31.9,-102.1,'fracked flat · the pump jacks nod','+$3 when OIL SPIKES; +$1 income per other oil node you own.',{e:{oilspike:3},i:[[OIL_ALL,1]]}),
+mk('cushing',['CUSHING, OKLAHOMA','THE OIL CROSSROADS'],'🛢️','COMMODITY',2,6,35.9851,-96.7676,'pipeline crossroads · the WTI delivery point','+$5 when OIL SPIKES, DOUBLED to $10 if you also own the CRUDE OIL PIT (the barrel has to land somewhere).',{e:{oilspike:5},x2:'oil'}),
 mk('knox','FORT KNOX','🥇','COMMODITY',2,6,37.89,-85.96,'audit pending since 1974','+$5 on GOLD RUSH. +$2 income while you also own the GOLD-COLOURED COINS (the gold is, allegedly, there).',{e:{goldrush:5},w:[['gold',2]]}),
-mk('cme','CME TRADING FLOOR','📟','CHART',2,5,41.8819,-87.6278,'open outcry, now silent','+$1 income per COMMODITY node you own (the futures all clear here).',{t:[['COMMODITY',1]]}),
 mk('malago','MAR-A-LAGO','⛳','WILD',2,7,26.6773,-80.0368,'the gold-plated clubhouse','+$3 income while you also own DONALD TRUMP (the member lives here).',{w:[['trump',3]]}),
 mk('area51','AREA 51','👽','WILD',1,5,37.2431,-115.793,'nothing to see here · see here','ALIEN ABDUCTION: once per game, as your action, pay $4 and 3 Intel to steal any rival’s node remotely. A coin flip decides: 50% it arrives intact, 50% it arrives as RUBBLE (nobody owns it). Not allowed on Antarctica, MADE, a holder of the Commonwealth Bank while its refusal is unused, nodes the Seed Vault protects, or the ESG Pillars owner’s holdings.',null),
 mk('panama','THE PANAMA CANAL','🚢','COMMODITY',3,8,9.08,-79.68,'one lock, ten thousand invoices',
  'CHOKEPOINT: every rival who walks into this node pays you a $2 transit toll (instead of the usual $1), and on the GLOBAL EDITION map it is the gateway between North and South America.',null),
-mk('bay','BAY STREET','🍁','BANK',2,6,43.6532,-79.3832,'polite · well-capitalised · sorry','+$2 income while you also own the ALBERTA TAR SANDS (the TSX is all mines and oil).',{w:[['w_tar',2]]}),
-mk('tar','ALBERTA TAR SANDS','⚫','COMMODITY',3,7,56.7267,-111.3803,'it flows if you wait','+$4 when OIL SPIKES.',{e:{oilspike:4}}),
 mk('pemex','PEMEX','🛢️','COMMODITY',2,5,19.4326,-99.1332,'the state oil company · the books are a mood','+$3 when OIL SPIKES; +$1 when TRUMP TWEETS TARIFFS (a neighbour has opinions).',{e:{oilspike:3,tariffs:1}}),
 mk('hollywood','HOLLYWOOD','🎬','MEDIA',2,6,34.1016,-118.3267,'the sign still says it','+$2 income while you own THE BIG SHORT cinema and +$2 while you own BRAD PITT; +$3 on THE BIG SHORT SCREENING.',{w:[['bigshort',2],['brad',2]],e:{bigscreen:3}}),
 mk('hdi',['THE HUMAN','DEVELOPMENT INDEX'],'📈','CHART',1,6,64.1466,-21.9426,'Iceland tops it · again · the rest of us are being polite','−1 Cortisol at the start of each of your turns (the happiest chart on the board), and +$2 on A QUIET QUARTER.',{c:-1,e:{quiet:2}}),
@@ -69,7 +62,6 @@ mk('hdi',['THE HUMAN','DEVELOPMENT INDEX'],'📈','CHART',1,6,64.1466,-21.9426,'
 mk('milei','JAVIER MILEI','🪚','WILD',2,7,-34.6037,-58.3816,'the chainsaw · the wig · the inflation graph',
  'CHAINSAW: once per game, on your action, pay $3 and cut any one edge of the board for good (pick a node, then one of its neighbours); the savings pay you $4. A cut that would strand part of the board from Quikstop is refused.',null),
 mk('lithium',['THE LITHIUM','TRIANGLE'],'🔋','COMMODITY',3,7,-23.65,-67.8,'salt flats · white gold · batteries for everyone','+$2 income per other battery metal you own (LITHIUM TRIANGLE, CONGO COBALT, INDONESIAN NICKEL, BAOTOU RARE EARTHS).',{i:[[BATTERY,2]]}),
-mk('vale',['VALE','IRON ORE'],'⛏️','COMMODITY',3,7,-6.0667,-50.1833,'a red mountain that ships itself','+$3 income while you also own BHP; +$2 on COAL RUSH (the ore rides the rails too).',{w:[['bhp',3]],e:{coalrush:2}}),
 mk('codelco',['CODELCO','COPPER'],'🟠','COMMODITY',3,6,-22.3,-68.9,'the biggest hole in Chile','+$3 on COAL RUSH or GOLD RUSH (the whole metals complex lifts).',{e:{coalrush:3,goldrush:3}}),
 mk('petrobras','PETROBRAS','🛢️','CORPORATE',3,8,-22.9068,-43.1729,'the oil chain, deep-sea division','+$1 income per OTHER oil node you own; +$4 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:4}}),
 mk('pdvsa','PDVSA','🚫','COMMODITY',3,4,10.4806,-66.9036,'sanctioned · yet somehow still shipping','Sanctioned, so cheap: +$5 when OIL SPIKES, but the compliance burden costs +1 Cortisol at the start of your turns.',{e:{oilspike:5},c:1}),
@@ -80,7 +72,7 @@ mk('easter',['EASTER','ISLAND'],'🗿','WILD',1,4,-27.1127,-109.3497,'the heads 
 /* ── Europe ── */
 mk('boe',['BANK OF','ENGLAND'],'🏛️','REGULATOR',2,8,51.5142,-0.0885,'the Old Lady of Threadneedle Street','+$1 income per BANK you own; +$2 on BONDMAGEDDON (the gilts were here first).',{t:[['BANK',1]],e:{bondrevolt:2}}),
 mk('city',['THE CITY','OF LONDON'],'🏙️','BANK',3,8,51.5133,-0.0899,'LIBOR was a vibe, not a number','+$2 income while you also own the BANK OF ENGLAND; +$3 on the RBA CASH-RATE DECISION (the rate fix pays regardless).',{w:[['w_boe',2]],e:{rates:3}}),
-mk('lloyds',['LLOYD’S','OF LONDON'],'☂️','BANK',2,6,51.5128,-0.0821,'insured · except for that',
+mk('vero',['VERO','INSURANCE'],'☂️','BANK',2,6,-31.9523,115.8613,'insured · except for that',
  'MISSILE INSURANCE: whenever ANY node is destroyed by a missile, you are paid $3 by the bank (the underwriters had read the small print), and if the node destroyed is one of YOURS, the bank pays out its full list price instead.',null),
 mk('brexit','BREXIT','🇬🇧','WILD',1,6,51.1279,1.3134,'the cliffs of Dover · the border of vibes',
  'TAKE BACK CONTROL: once per game, on your action, sever any one edge of the board for the rest of the con (pick a node, then one of its neighbours; Dover, the Channel, the whole lot) — and take +1 Cortisol. A cut that would strand part of the board from Quikstop is refused.',null),
@@ -119,7 +111,7 @@ mk('neom',['NEOM','THE LINE'],'📏','CORPORATE',1,7,28.1,35.1,'170 km long · z
 mk('adia',['ABU DHABI','WEALTH FUND'],'🏦','BANK',3,9,24.4539,54.3773,'sovereign · patient · a lot of it','+$1 income per oil node you own; +$3 when OIL SPIKES.',{i:[[OIL_ALL,1]],e:{oilspike:3}}),
 mk('nigprince',['THE NIGERIAN','PRINCE'],'👑','WILD',1,3,6.5244,3.3792,'a confidential business proposal',
  'ADVANCE FEE: once per turn, on your action, pay $2 and flip a coin — heads you receive $5, tails you receive nothing at all and the prince has gone silent.',null),
-mk('dangote',['DANGOTE','REFINERY'],'🏭','COMMODITY',3,7,6.4474,3.9718,'the largest refinery in Africa · the queue is for petrol','+$4 when OIL SPIKES; +$2 income while you also own THE PERMIAN BASIN.',{e:{oilspike:4},w:[['w_permian',2]]}),
+mk('dangote',['DANGOTE','REFINERY'],'🏭','COMMODITY',3,7,6.4474,3.9718,'the largest refinery in Africa · the queue is for petrol','+$4 when OIL SPIKES; +$2 income while you also own CUSHING, OKLAHOMA.',{e:{oilspike:4},w:[['w_cushing',2]]}),
 mk('cobalt',['CONGO','COBALT'],'🔵','COMMODITY',3,6,-10.7167,25.4667,'every phone · every battery · very deep','+$2 income per other battery metal you own.',{i:[[BATTERY,2]]}),
 mk('witz',['WITWATERSRAND','GOLD'],'⛏️','COMMODITY',3,7,-26.2041,28.0473,'a third of all the gold ever mined','+$5 on GOLD RUSH.',{e:{goldrush:5}}),
 mk('debeers',['DE BEERS'],'💎','COMMODITY',3,8,-28.7282,24.7499,'a diamond is forever · the supply was not','+$3 on GOLD RUSH; +$2 income while you also own WITWATERSRAND GOLD.',{e:{goldrush:3},w:[['w_witz',2]]}),
@@ -348,7 +340,7 @@ export const BLOC_STEP=0.25,BLOC_MAX=2.5,BLOC_FREE=3;
 export const TRADE_BLOCS={
  w_eu:{short:'EU',book:'EU SINGLE MARKET',icon:'🇪🇺',members:['w_ecb','w_db','w_bunds','w_btp','w_greek','w_lux','w_asml','w_tulip','w_opec','barrels','tenyear','geo_pillars','geo_venice']},
  w_antarctica:{short:'TREATY',book:'ANTARCTIC TREATY',icon:'🐧',noWto:true,members:['w_aq_mbl','w_aq_chl','w_aq_gbr','w_aq_arg','w_aq_qml','w_aq_aatw','w_aq_adelie','w_aq_aate','w_aq_ross']},
- w_brics:{short:'BRICS',book:'BRICS',icon:'🧮',members:['w_vale','w_petrobras','w_gazprom','w_kremlin','whistle','w_rbi','w_dalal','w_adani','w_bangalore','w_pboc','w_evergrande','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma','w_witz','w_debeers']}
+ w_brics:{short:'BRICS',book:'BRICS',icon:'🧮',members:['w_petrobras','w_gazprom','w_kremlin','whistle','w_rbi','w_dalal','w_adani','w_bangalore','w_pboc','w_evergrande','w_shenzhen','w_baotou','w_bri','w_hsbc','w_hkma','w_witz','w_debeers']}
 };
 /* the bloc a node is a member of (or null) */
 export function blocOfMember(id){for(const b of Object.keys(TRADE_BLOCS))if(TRADE_BLOCS[b].members.includes(id))return b;return null}
@@ -363,10 +355,10 @@ export const WORLD_WRAPS=[['rock','w_fiji'],['w_aq_ross','w_aq_mbl']];
    Europe to North America (via Iceland and Greenland), and a handful of overland and island hops join neighbouring regions. There are
    no kangaroo-route shortcuts: for those there are Qantas, the Cruise Ship and Baikonur. At most one or two links per pair of neighbours. */
 export const WORLD_ROUTES=[
- /* the North Atlantic corridor: Europe, Iceland, Greenland, Canada */ ['uk','w_hdi'],['w_norway','w_hdi'],['w_hdi','w_greenland'],['w_greenland','w_bay'],
+ /* the North Atlantic corridor: Europe, Iceland, Greenland, Canada */ ['uk','w_hdi'],['w_norway','w_hdi'],['w_hdi','w_greenland'],['w_greenland','w_mamdani'],
  /* the date line: Hawaii wraps around the world to Fiji; and Hawaii's one link to the American mainland */ ['rock','w_fiji'],['rock','w_hollywood'],
  /* the South Atlantic */ ['w_petrobras','w_dangote'],
- /* Panama: the two Americas */ ['w_panama','w_pemex'],['w_panama','w_pdvsa'],['w_panama','w_vale'],
+ /* Panama: the two Americas */ ['w_panama','w_pemex'],['w_panama','w_pdvsa'],['w_panama','w_amazon'],
  /* Suez: Europe, the Middle East and Africa */ ['w_suez','w_greek'],['w_suez','w_neom'],['w_suez','w_pyramids'],
  /* Hormuz: the Gulf and South Asia */ ['w_hormuz','w_adia'],['w_hormuz','w_rbi'],['w_hormuz','w_adani'],
  /* Malacca: South Asia and South-East Asia */ ['w_malacca','w_srilanka'],['w_malacca','petronas'],['w_malacca','w_temasek'],

@@ -274,9 +274,9 @@ test('the bloc member lists are explicit, real, disjoint and exclude the non-mem
   const eu = W.TRADE_BLOCS.w_eu.members, br = W.TRADE_BLOCS.w_brics.members;
   for (const id of eu.concat(br)) assert.ok(ids.has(id), id + ' is a real node');
   assert.equal(new Set(eu.concat(br)).size, eu.length + br.length, 'a node belongs to one bloc');
-  for (const id of ['w_boe', 'w_city', 'w_lloyds', 'w_brexit', 'w_norway', 'w_cs', 'w_bis', 'w_swiss', 'w_gazprom', 'w_kremlin', 'w_lira', 'w_hdi', 'w_vatican', 'w_monaco', 'w_nordstream', 'w_cruise', 'whistle', 'wef', 'ib', 'bond007'])
+  for (const id of ['w_boe', 'w_city', 'w_brexit', 'w_norway', 'w_cs', 'w_bis', 'w_swiss', 'w_gazprom', 'w_kremlin', 'w_lira', 'w_hdi', 'w_vatican', 'w_monaco', 'w_nordstream', 'w_cruise', 'whistle', 'wef', 'ib', 'bond007'])
     assert.ok(!eu.includes(id), id + ' is not an EU member');
-  for (const id of ['w_gazprom', 'w_kremlin', 'whistle', 'w_vale', 'w_petrobras', 'w_rbi', 'w_pboc', 'w_witz', 'w_debeers'])
+  for (const id of ['w_gazprom', 'w_kremlin', 'whistle', 'w_petrobras', 'w_rbi', 'w_pboc', 'w_witz', 'w_debeers'])
     assert.ok(br.includes(id), id + ' is a BRICS member');
   for (const id of ['w_aramco', 'w_temasek', 'w_kazatom', 'w_mpesa', 'w_nigprince', 'w_tsmc']) assert.ok(!br.includes(id), id + ' is not');
   assert.equal(W.blocOfMember('w_ecb'), 'w_eu'); assert.equal(W.blocOfMember('w_rbi'), 'w_brics'); assert.equal(W.blocOfMember('citi'), null);
@@ -391,7 +391,7 @@ test('WTO owner can REFER a rival’s bloc file for $4; the ACCC owner cannot; n
 test('BRICS: the same multiplier on Brazil, Russia, India, China and South Africa nodes, with its own WTO file', async t => {
   const { e, S } = await worldGame(t, { players: 3 });
   const N = e.acc.NMAP;
-  const mem = ['w_vale', 'w_rbi', 'w_pboc', 'w_witz'];
+  const mem = ['w_petrobras', 'w_rbi', 'w_pboc', 'w_witz'];
   S.owner = { w_brics: 0 }; give(S, 0, mem);
   const st = e.ctx.blocStatus(0)[0];
   assert.equal(st.id, 'w_brics'); assert.equal(st.k, 4); assert.equal(st.mult, 2);

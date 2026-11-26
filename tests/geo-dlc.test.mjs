@@ -601,7 +601,7 @@ test('GD-15 the geo flag is host-gated in the lobby and travels with every paylo
 test('GD-16 the help panel explains the DLC without breaking the base-game copy pins', t => {
   assert.ok(SOURCE.includes('The Geography DLC'), 'the help section is titled');
   assert.ok(SOURCE.includes('82 exhibits'), 'help copy says what the board becomes');
-  assert.ok(SOURCE.includes('v1.13'), 'the current version stamp is documented');
+  assert.ok(SOURCE.includes('v1.14'), 'the current version stamp is documented');
   assert.ok(SOURCE.includes('70 exhibits'), 'the base-game exhibit copy is intact (RC-01 pin)');
   assert.ok(!SOURCE.includes('81 exhibits'), 'no stale exhibit counts');
   assert.ok(SOURCE.includes('KIM JONG UN ($6)'), 'the Supreme Leader has a help bullet');

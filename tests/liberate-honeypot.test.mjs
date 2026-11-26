@@ -40,32 +40,32 @@ test('the three new exhibits are on the Global Edition board at real places, wit
 test('LIBERATE OIL: needs all three; own oil sold at list, half of rivals’ oil taken (rounded up, best first), the rest freed; once per game', async t => {
   const { e, S, P } = await game(t);
   const N = e.acc.NMAP;
-  S.owner = { w_bigyahu: 0, trump: 0, w_permian: 0, w_aramco: 1, w_cushing: 1, w_pemex: 2, w_tar: 2, w_pdvsa: 1 };
+  S.owner = { w_bigyahu: 0, trump: 0, w_cushing: 0, w_aramco: 1, w_dangote: 1, w_pemex: 2, w_petrobras: 2, w_pdvsa: 1 };
   /* without Lockheed: refused */
   await run(e, 0, { act: 'liberate' });
   assert.equal(S.owner.w_aramco, 1, 'no Lockheed, no liberation');
   assert.ok(!S.wGame.liberate);
   S.owner.w_lockheed = 0; act(S, 0);
   const plan = e.ctx.liberatePlan(0);
-  assert.deepEqual(plan.mine, ['w_permian']);
+  assert.deepEqual(plan.mine, ['w_cushing']);
   assert.equal(plan.taken.length, 3, 'half of five, rounded up');
   assert.equal(plan.taken[0], 'w_aramco', 'the best-paying oil comes first');
   const before = P[0].money;
   await run(e, 0, { act: 'liberate' });
   assert.ok(S.wGame.liberate);
-  assert.equal(S.owner.w_permian, undefined, 'my own oil is divested');
-  assert.ok(P[0].money >= before + N.w_permian.cost, 'sold at list price');
+  assert.equal(S.owner.w_cushing, undefined, 'my own oil is divested');
+  assert.ok(P[0].money >= before + N.w_cushing.cost, 'sold at list price');
   for (const id of plan.taken) assert.equal(S.owner[id], 0, id + ' is liberated into my hands');
   for (const id of plan.freed) assert.equal(S.owner[id], undefined, id + ' is set free');
   /* once per game */
-  S.owner.w_tar = 2; act(S, 0);
+  S.owner.w_pemex = 2; act(S, 0);
   await run(e, 0, { act: 'liberate' });
-  assert.equal(S.owner.w_tar, 2);
+  assert.equal(S.owner.w_pemex, 2);
 });
 
 test('HONEYPOT: two free Chinese nodes (unowned first), US nodes stop paying, and no buying in South-East Asia or the USA for two turns', async t => {
   const { e, S, P } = await game(t);
-  S.owner = { w_jensen: 0, w_goldman: 1, w_hsbc: 2 };
+  S.owner = { w_jensen: 0, w_jpm: 1, w_hsbc: 2 };
   const picks = e.ctx.honeypotPicks(0);
   assert.equal(picks.length, 2);
   assert.ok(picks.every(id => S.owner[id] == null), 'unowned Chinese nodes are taken first');
@@ -75,7 +75,7 @@ test('HONEYPOT: two free Chinese nodes (unowned first), US nodes stop paying, an
   for (const id of picks) assert.equal(S.owner[id], 0, id + ' is mine for free');
   assert.ok(P[0].money >= cash, 'it cost nothing');
   assert.equal(S.owner.w_hsbc, 2, 'a rival’s node is only taken when the unowned ones run out');
-  assert.ok(e.ctx.suspended('w_goldman'), 'the US market has crashed');
+  assert.ok(e.ctx.suspended('w_jpm'), 'the US market has crashed');
   /* the ban: the seat cannot seize a US node or a South-East Asian one */
   act(S, 0);
   assert.ok(e.ctx.honeypotBan(0, 'w_bell'));
@@ -88,7 +88,7 @@ test('HONEYPOT: two free Chinese nodes (unowned first), US nodes stop paying, an
   /* after two of the setter's turns the ban and the crash lapse */
   S.turn += 3;
   assert.equal(e.ctx.honeypotBan(0, 'w_bell'), '');
-  assert.ok(!e.ctx.suspended('w_goldman'));
+  assert.ok(!e.ctx.suspended('w_jpm'));
   /* once per game */
   S.owner = { w_jensen: 0 }; act(S, 0);
   await run(e, 0, { act: 'honeypot' });

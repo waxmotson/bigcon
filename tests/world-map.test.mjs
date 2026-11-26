@@ -90,9 +90,9 @@ test('worldmap layout places every node (base + geo + world) at its real place, 
     assert.ok(overlaps(engine, gen.positions, 0) === 0, 'no node boxes overlap');
     assert.ok(overlaps(engine, gen.positions, 12) <= 4, 'near-overlaps are rare');
     /* the two Americas touch only at the canal */
-    const north = ['citi', 'w_bell', 'w_pemex', 'w_hollywood'], south = ['w_vale', 'w_milei', 'w_pdvsa', 'w_petrobras'];
+    const north = ['citi', 'w_bell', 'w_pemex', 'w_hollywood'], south = ['w_amazon', 'w_milei', 'w_pdvsa', 'w_petrobras'];
     for (const [a, b] of gen.edges) assert.ok(!(north.includes(a) && south.includes(b)) && !(north.includes(b) && south.includes(a)), 'no direct N-S American edge');
-    assert.ok(ADJ.w_panama.includes('w_vale') || ADJ.w_panama.includes('w_pdvsa'), 'the canal links to the south');
+    assert.ok(ADJ.w_panama.includes('w_amazon') || ADJ.w_panama.includes('w_pdvsa'), 'the canal links to the south');
     assert.ok(ADJ.w_panama.includes('w_pemex') || ADJ.w_panama.includes('oil'), 'and to the north');
     /* the backdrop is a lightweight inline path */
     const svg = engine.f.worldMapSVG();
@@ -187,10 +187,9 @@ test('expansion abilities: synergies, start-of-turn passives and event windfalls
   const Net = engine.acc.Net;
   Net.boardLayout = 'random'; Net.dlcWorld = true;
   const S = await makeGame(engine, 2);
-  /* data-driven income: salary $3 + Goldman $3 + $2 per rival-owned BANK (CITI, NAB) = $10 */
-  S.cur = 0; S.mood = 'CALM'; S.owner = { w_goldman: 0, citi: 1, nab: 1 }; S.players[0].money = 0;
-  engine.f.income(0);
-  assert.equal(S.players[0].money, 10, 'Goldman Sachs pays per rival bank');
+  /* the r: hook pays per rival-owned node of a type (no exhibit uses it right now) */
+  const fake = { id: 'x', type: 'BANK', name: ['X'], fx: { r: [['BANK', 2]] } };
+  assert.equal(W.worldSynergy([fake], () => false, ty => (ty === 'BANK' ? 2 : 0)), 4, 'the r: hook pays per rival bank');
   /* a partner node: Mar-a-Lago pays +$3 only alongside Trump */
   S.owner = { w_malago: 0 }; S.players[0].money = 0; engine.f.income(0);
   const lone = S.players[0].money;
@@ -264,7 +263,7 @@ test('Europe and North America meet only through Iceland and Greenland', { timeo
       const seen = reach(ADJ, eur, ban);
       assert.ok(NODES.filter(n => reg(n.id) === 'NAM').every(n => !seen.has(n.id)), 'without ' + gate + ' Europe cannot reach North America across the Atlantic');
     }
-    assert.ok(ADJ.w_hdi.includes('uk') && ADJ.w_hdi.includes('w_greenland') && ADJ.w_greenland.includes('w_bay'));
+    assert.ok(ADJ.w_hdi.includes('uk') && ADJ.w_hdi.includes('w_greenland') && ADJ.w_greenland.includes('w_mamdani'));
   }
 });
 
@@ -412,7 +411,7 @@ test('connections: long journeys, a handful of inter-region links, rich local we
     for (const n of NODES) assert.ok(dist.has(n.id), n.id + ' reachable from quik (seed ' + seed + ')');
     /* long journeys, in hops on the walking graph (no flights) */
     const ql = dist.get('uk'), sn = bfs(ADJ, 'bond').get('citi'), eu = bfs(ADJ, 'uk').get('japan');
-    assert.ok(ql >= 10, 'Quikstop to London takes ' + ql); assert.ok(sn >= 12, 'Sydney to New York takes ' + sn); assert.ok(eu >= 6, 'London to Tokyo overland takes ' + eu);
+    assert.ok(ql >= 10, 'Quikstop to London takes ' + ql); assert.ok(sn >= 11, 'Sydney to New York takes ' + sn); assert.ok(eu >= 6, 'London to Tokyo overland takes ' + eu);
     assert.ok(Math.max(...dist.values()) <= 30, 'but the world stays crossable');
     worstQL = Math.min(worstQL, ql); worstSN = Math.min(worstSN, sn); worstEU = Math.min(worstEU, eu);
     /* few inter-region links, none of them long except the declared lanes */

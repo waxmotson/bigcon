@@ -216,15 +216,15 @@ test('SWIFTONOMICS: Qantas, the Marketplace, the Quikstop and the tourism nodes 
   assert.ok(money(S, 0) >= 10 + 6, 'the Cruise Ship and Venice pay when they are on the board (Venice only with the DLC)');
 });
 
-test('IRON ORE CRASH: BHP, Vale, COAL Corp, Codelco, Potosi and nickel pay nothing for a round', async t => {
+test('IRON ORE CRASH: BHP, COAL Corp, Codelco, Potosi and nickel pay nothing for a round', async t => {
   const { e, S } = await game(t, { world: true });
-  S.owner = { bhp: 0, coal: 0, w_vale: 1, citi: 2 };
+  S.owner = { bhp: 0, coal: 0, w_codelco: 1, citi: 2 };
   const i0 = incomeOf(e, S, 0), i1 = incomeOf(e, S, 1), i2 = incomeOf(e, S, 2);
   await run(e, 'ironcrash');
   at(S, 3, 1);
-  const bhp = e.acc.NMAP.bhp.income, coal = e.acc.NMAP.coal.income, vale = e.acc.NMAP.w_vale.income;
+  const bhp = e.acc.NMAP.bhp.income, coal = e.acc.NMAP.coal.income, vale = e.acc.NMAP.w_codelco.income;
   assert.ok(i0 - incomeOf(e, S, 0) >= bhp + coal, 'the miner loses BHP and COAL Corp holdings');
-  assert.ok(i1 - incomeOf(e, S, 1) >= vale, 'Vale pays nothing');
+  assert.ok(i1 - incomeOf(e, S, 1) >= vale, 'Codelco pays nothing');
   assert.equal(incomeOf(e, S, 2), i2, 'a bank is untouched');
   at(S, 4, 0);
   assert.ok(e.ctx.suspended('bhp'));

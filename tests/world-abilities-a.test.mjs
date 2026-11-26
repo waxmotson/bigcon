@@ -25,7 +25,7 @@ const armAction = (S, cur = 0) => { S.cur = cur; S.phase = 'action'; S.mode = nu
 
 test('the abilities in this batch are no longer flagged todo', async () => {
   const W = await import('../static/js/world.js');
-  const done = ['w_powell', 'w_svb', 'w_cs', 'w_nordstream', 'w_evergrande', 'w_panama', 'w_hormuz', 'w_suez', 'w_lloyds', 'w_vatican', 'w_antarctica', 'w_svalbard'];
+  const done = ['w_mamdani', 'w_cs', 'w_nordstream', 'w_evergrande', 'w_panama', 'w_hormuz', 'w_suez', 'w_vero', 'w_vatican', 'w_antarctica', 'w_svalbard'];
   for (const id of done) {
     const n = W.WORLD_NODES.find(x => x.id === id);
     assert.ok(n, id + ' exists');
@@ -35,45 +35,37 @@ test('the abilities in this batch are no longer flagged todo', async () => {
   assert.equal(W.WORLD_NODES.filter(n => n.todo).length, 0, 'batch B finished the rest');
 });
 
-/* ---------- POWELL ---------- */
-test('Powell: the first Cortisol each round is cancelled outright, the second lands, a new round resets it', async t => {
+/* ---------- ZOHRAN MAMDANI ---------- */
+test('Mamdani: TAX THE RICH — the richest rival pays $2 at the start of your turn, only if richer than you', async t => {
   const { e, S } = await worldGame(t);
-  S.owner = { w_powell: 0, citi: 0 };
-  const addC = e.ctx.addCortisol;
-  S.players[0].cortisol = 0;
-  addC(0, 2, 'test one');
-  assert.equal(S.players[0].cortisol, 0, 'the first one is cancelled');
-  assert.ok(S.log.some(l => l.includes('TRANSITORY')), 'the table saw it');
-  addC(0, 2, 'test two');
-  assert.equal(S.players[0].cortisol, 2, 'the second lands');
-  addC(0, -1, 'soothing is never cancelled');
-  assert.equal(S.players[0].cortisol, 1);
-  S.turn += 1;
-  addC(0, 3, 'next round');
-  assert.equal(S.players[0].cortisol, 1, 'the new round cancels the first again');
-  /* a rival without Powell is never shielded */
-  S.owner.citi = 1; S.owner.nab = 1;
-  addC(1, 1, 'rival'); assert.equal(S.players[1].cortisol, 1);
-  /* without the node there is no shield */
-  S.owner = { citi: 0, nab: 0 }; S.players[0].cortisol = 0; S.turn += 1;
-  addC(0, 2, 'no powell'); assert.equal(S.players[0].cortisol, 2);
+  S.owner = { w_mamdani: 0, citi: 0 };
+  const P = S.players;
+  P[0].money = 10; P[1].money = 30; P[2] && (P[2].money = 20);
+  S.cur = 0; await e.f.startTurn(); await settle();
+  assert.ok(S.log.some(l => l.includes('TAX THE RICH')), 'the table saw it');
+  assert.equal(P[1].money <= 28 + 5, true);
+  assert.ok(S.log.some(l => l.includes('TAX THE RICH') && l.includes(e.ctx.pname(1))), 'the richest rival pays');
+  /* nobody richer: nothing */
+  S.log.length = 0; P.forEach(p => { p.money = 5; }); P[0].money = 50;
+  S.cur = 0; S.phase = 'move'; await e.f.startTurn(); await settle();
+  assert.ok(!S.log.some(l => l.includes('TAX THE RICH')), 'only a richer rival is taxed');
 });
 
 /* ---------- RUBBLE STARTS ---------- */
-test('SVB, Credit Suisse, Nord Stream and Evergrande open the game as rubble; the board is still connected and winnable', async t => {
+test('Credit Suisse, Nord Stream and Evergrande open the game as rubble; the board is still connected and winnable', async t => {
   const { e, S } = await worldGame(t);
-  for (const id of ['w_svb', 'w_cs', 'w_nordstream', 'w_evergrande']) assert.equal(S.rubble[id], 1, id + ' starts as rubble');
+  for (const id of ['w_cs', 'w_nordstream', 'w_evergrande']) assert.equal(S.rubble[id], 1, id + ' starts as rubble');
   assert.ok(S.log.some(l => l.includes('open the game as RUBBLE')), 'announced in the log');
-  assert.equal(Object.keys(S.rubble).length, 4, 'nothing else starts as rubble');
+  assert.equal(Object.keys(S.rubble).length, 3, 'nothing else starts as rubble');
   /* every node is still reachable from Quikstop (rubble is walkable) */
   const dist = bfs(e.ctx.ADJ, 'quik');
   for (const n of e.ctx.NODES) assert.ok(dist.has(n.id), n.id + ' reachable');
   /* every win type still has plenty of standing nodes, so the goal check is unaffected */
   for (const ty of e.ctx.WIN_TYPES) assert.ok(e.ctx.NODES.filter(n => n.type === ty && !S.rubble[n.id]).length >= 3, ty + ' still available');
   /* rubble cannot be seized */
-  S.players[0].pos = 'w_svb'; S.players[0].money = 50; armAction(S);
+  S.players[0].pos = 'w_nordstream'; S.players[0].money = 50; armAction(S);
   await e.f.applyIntent(0, { act: 'seize' });
-  assert.equal(S.owner.w_svb, undefined, 'a rubble node cannot be seized');
+  assert.equal(S.owner.w_nordstream, undefined, 'a rubble node cannot be seized');
   /* without the expansion the casualties are not rubble */
   e.f.rebuildWorld(true, false);
 });
@@ -81,25 +73,23 @@ test('SVB, Credit Suisse, Nord Stream and Evergrande open the game as rubble; th
 test('rebuilding a world rubble node: list price, returns unowned, fires the Pyongyang Hotel kickback', async t => {
   const { e, S } = await worldGame(t);
   S.owner = { geo_pyothotel: 1 };
-  S.players[0].pos = 'w_svb'; S.players[0].money = 40; S.players[1].money = 10;
+  S.players[0].pos = 'w_nordstream'; S.players[0].money = 40; S.players[1].money = 10;
   armAction(S);
-  const cost = e.ctx.NMAP.w_svb.cost;
+  const cost = e.ctx.NMAP.w_nordstream.cost;
   await e.f.applyIntent(0, { act: 'rebuild' });
   await settle();
-  assert.equal(S.rubble.w_svb, undefined, 'rebuilt');
-  assert.equal(S.owner.w_svb, undefined, 'returns unowned');
+  assert.equal(S.rubble.w_nordstream, undefined, 'rebuilt');
+  assert.equal(S.owner.w_nordstream, undefined, 'returns unowned');
   assert.equal(S.players[0].money, 40 - cost + 2, 'paid list price (+ the quiet quarter)');
   assert.ok(S.log.some(l => l.includes('construction kickbacks')), 'the Pyongyang Hotel kickback fired');
   assert.ok(S.players[1].money >= 10 + 2, 'and the Hotel owner banked it');
 });
 
-test('SVB pays +$1 per CHART, Evergrande +$2 per CORPORATE, Credit Suisse rebuilds as UBS and pays +$2 per BANK', async t => {
+test('Evergrande +$2 per CORPORATE, Credit Suisse rebuilds as UBS and pays +$2 per BANK', async t => {
   const { e, S } = await worldGame(t);
   const W = await import('../static/js/world.js');
   const NM = e.ctx.NMAP;
   const syn = ids => W.worldSynergy(ids.map(id => NM[id]), id => ids.includes(id), () => 0);
-  const charts = e.ctx.NODES.filter(n => n.type === 'CHART' && !n.fx).slice(0, 2).map(n => n.id);
-  assert.equal(syn(['w_svb', ...charts]), 2, 'SVB: $1 per CHART (it is a BANK itself)');
   assert.equal(syn(['w_evergrande']), 2, 'Evergrande counts itself');
   const corp = e.ctx.NODES.find(n => n.type === 'CORPORATE' && !n.fx).id;
   assert.equal(syn(['w_evergrande', corp]), 4, 'two corporates: $2 each');
@@ -205,16 +195,16 @@ test('Suez: the Ever Given blocks the canal for a round, once per game, owner on
 test("Lloyd's: $3 for any missile kill, and the full list price when the destroyed node was its owner's", async t => {
   const { e, S } = await worldGame(t);
   const strike = e.ctx.strikeNode;
-  S.owner = { w_lloyds: 1, oil: 0 }; S.players[1].money = 0; S.players[0].money = 0;
+  S.owner = { w_vero: 1, oil: 0 }; S.players[1].money = 0; S.players[0].money = 0;
   strike(0, 'oil');
   assert.equal(S.players[1].money, 3, "someone else's node: $3");
   assert.equal(S.rubble.oil, 1);
-  S.owner = { w_lloyds: 1, infl: 1 }; S.players[1].money = 0;
+  S.owner = { w_vero: 1, infl: 1 }; S.players[1].money = 0;
   strike(0, 'infl');
   assert.equal(S.players[1].money, e.ctx.NMAP.infl.cost, 'its own node: full list price');
-  S.owner = { w_lloyds: 1 }; S.players[1].money = 0;
-  strike(0, 'w_lloyds');
-  assert.equal(S.players[1].money, e.ctx.NMAP.w_lloyds.cost, 'Lloyd\'s itself is insured too');
+  S.owner = { w_vero: 1 }; S.players[1].money = 0;
+  strike(0, 'w_vero');
+  assert.equal(S.players[1].money, e.ctx.NMAP.w_vero.cost, 'Lloyd\'s itself is insured too');
   S.owner = {}; S.players[1].money = 0;
   strike(0, 'cash');
   assert.equal(S.players[1].money, 0, 'no owner, no payout');
@@ -275,7 +265,7 @@ test('Antarctica cannot be taken over, but anyone can claim it while it is unown
 test('Svalbard: its owner’s nodes survive missiles (Lloyd’s does not pay), and nobody else is protected', async t => {
   const { e, S } = await worldGame(t);
   const strike = e.ctx.strikeNode;
-  S.owner = { w_svalbard: 1, oil: 1, w_lloyds: 0 }; S.players[0].money = 0;
+  S.owner = { w_svalbard: 1, oil: 1, w_vero: 0 }; S.players[0].money = 0;
   strike(0, 'oil');
   assert.equal(S.owner.oil, 1, 'still theirs');
   assert.equal(S.rubble.oil, undefined, 'no rubble');
@@ -310,13 +300,13 @@ test('Svalbard: one free rebuild per game, owner only, and the Pyongyang Hotel s
   assert.ok(S.players[1].money >= 2, 'the Hotel kickback still fires');
   assert.ok(S.log.some(l => l.includes('Seed Vault')));
   /* once per game */
-  S.players[0].pos = 'w_svb'; S.players[0].money = 0; armAction(S);
+  S.players[0].pos = 'w_nordstream'; S.players[0].money = 0; armAction(S);
   assert.equal(e.ctx.botView(0).svalbardFree(0), false);
   await e.f.applyIntent(0, { act: 'rebuild', free: true });
-  assert.equal(S.rubble.w_svb, 1, 'the free rebuild is spent');
+  assert.equal(S.rubble.w_nordstream, 1, 'the free rebuild is spent');
   /* the paid rebuild still works and a broke player cannot rebuild */
   await e.f.applyIntent(0, { act: 'rebuild' });
-  assert.equal(S.rubble.w_svb, 1, 'cannot afford the paid rebuild with $0');
+  assert.equal(S.rubble.w_nordstream, 1, 'cannot afford the paid rebuild with $0');
 });
 
 /* ---------- BOTS ---------- */
@@ -329,7 +319,7 @@ test('an all-bot world game plays on without a bot crash', { timeout: 120000 }, 
   const Net = e.acc.Net;
   Net.boardLayout = 'random'; Net.dlcWorld = true;
   const S = await makeGame(e, 3, { bots: [0, 1, 2], goal: 60, geo: true, seeds: [41] });
-  assert.equal(S.rubble.w_svb, 1);
+  assert.equal(S.rubble.w_nordstream, 1);
   for (let i = 0; i < 6000 && !S.over && S.turn < 40; i++) {
     await pump(2);
     if (e.clock.pending()) e.clock.advance(25);
