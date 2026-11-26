@@ -12,7 +12,7 @@ import { hooks, setHooks } from './hooks.js';
 import { S, setS, Net, pubState } from './state.js';
 import { clampGoal, esc, shuffle } from './util.js';
 import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld, setEdges, rebuildAdj } from './data.js';
-import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState } from './boards.js';
+import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState, worldMapMetrics } from './boards.js';
 import { regionOf, REGION_NAMES } from './world.js';
 import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays, WATER_NODES, TAX_HAVENS, TOURISM_NODES, IRON_NODES, SANCTIONED_NODES, COAL_CHAIN, AGRI_NODES, US_NODES, CHINA_NODES, LIBERATORS, TRADE_BLOCS, BLOC_STEP, BLOC_MAX, BLOC_FREE, AUSNZ, PENINSULA } from './world.js';
 export { hooks, setHooks };
@@ -463,6 +463,7 @@ export function botView(pi){
  out.nmap={};NODES.forEach(n=>{out.nmap[n.id]={id:n.id,type:n.type,income:n.income,cost:n.cost}});
  out.moodRate=(MOODS[S.mood]||{rate:2}).rate;
  out.geo={qantasGrounded:!!(S.dlcGeo&&qantasGrounded())};
+ out.jet=S.dlcWorld?{at:jetAt(),reach:NODES.filter(n=>inFlyRange(n.id)).map(n=>n.id),canFly:seat=>canFly(seat)}:null;
  out.geoUsed={stage5:!!S.geoStage5,crash:!!S.geoCrash,boeing:!!S.geoBoeing};
  out.seizePrice=(seat,nid)=>seizeListPrice(seat,NMAP[nid])+(S.owner[nid]==null?tariffFor(seat,nid)+inflationExtra():0);
  out.takePrice=(seat,nid,base)=>takeoverCost(seat,nid,base)+tariffFor(seat,nid)+inflationExtra();
@@ -563,7 +564,7 @@ export async function applyIntent(pi,m){
    fxAt(pi,'🛈−1 · +1 step','#55c1ff');sync();
   }
   else if(act==='endmove'&&S.phase==='move'){await endMovement()}
-  else if(act==='flymode'&&S.phase==='move'&&!S.mode&&S.owner.qantas===pi&&p.money>=3){S.mode='fly';sync()}
+  else if(act==='flymode'&&S.phase==='move'&&!S.mode&&canFly(pi)&&p.money>=3){S.mode='fly';sync()}
   else if(act==='slip'&&S.phase==='move'&&!S.slipped&&S.owner.f1===pi&&p.money>=2){
    p.money-=2;S.slipped=true;S.steps+=2;
    log('🏎️ '+pname(pi)+' takes the slipstream — +2 steps and $2 off the next seizure.');
@@ -1757,6 +1758,23 @@ export function canMissileNode(me,nid){
 export function ownsMissileLauncher(pi){return !!(S&&S.dlcGeo&&(S.owner.geo_missile===pi||S.owner.geo_shahed===pi))}
 export function canFireMissileFrom(pi){if(!S||!S.players[pi]||!ownsMissileLauncher(pi))return false;const pos=S.players[pi].pos;return (pos==='geo_missile'&&S.owner.geo_missile===pi)||(pos==='geo_shahed'&&S.owner.geo_shahed===pi)||S.owner.geo_kim===pi}
 export function canReach(id){return !(id==='qantas'&&qantasGrounded())}
+/* ✈️ GLOBAL EDITION — the Qantas jet is a real plane. It starts parked at QANTAS and stays wherever it lands. Whoever STANDS on the
+   jet's square can fly it ($3, during movement): the owner flies it, anyone else steals it. A flight has a range (QANTAS_RANGE_PX on the
+   map, about 8,500 km; the date line wraps), so it is no longer a ticket to anywhere. The classic boards keep the old jet: the owner,
+   from anywhere, to anywhere. */
+export const QANTAS_RANGE_PX=2300;
+export function jetAt(){if(!S||!S.dlcWorld)return null;return S.jetAt&&NMAP[S.jetAt]?S.jetAt:'qantas'}
+export function flyDist(a,b){
+ const A=NMAP[a],B=NMAP[b];if(!A||!B)return Infinity;
+ const w=worldMapMetrics().w;let dx=Math.abs(A.x-B.x);dx=Math.min(dx,w-dx);
+ return Math.hypot(dx,A.y-B.y);
+}
+export function inFlyRange(to){if(!S||!S.dlcWorld)return true;const at=jetAt();return !!at&&flyDist(at,to)<=QANTAS_RANGE_PX}
+export function canFly(pi){
+ if(!S||!S.players[pi]||!NMAP.qantas)return false;
+ if(!S.dlcWorld)return S.owner.qantas===pi;
+ return S.players[pi].pos===jetAt()&&!S.rubble.qantas;
+}
 /* 🌐 the three chokepoints charge rivals a $2 transit toll */
 export function chokeToll(id){return !!(S&&S.dlcWorld&&WORLD_CHOKEPOINTS.includes(id))}
 export function nodeName(n){return (S&&S.rebuilt&&S.rebuilt[n.id]&&n.rebuiltName)||n.name}
@@ -1823,6 +1841,9 @@ export async function doFly(pi,id){
  if(!canReach(id)){sysTo(pi,qantasGroundedReason()+' — you cannot land there yet.');S.mode=null;sync();return}
  if(blockaded(id)){sysTo(pi,NMAP[id].name.join(' ')+' is BLOCKADED — you cannot land there.');S.mode=null;sync();return}
  if(p.money<3){sysTo(pi,'The Flying Kangaroo wants $3 for the seat.');S.mode=null;sync();return}
+ if(S.dlcWorld&&!canFly(pi)){sysTo(pi,'The Qantas jet is parked at '+lname(NMAP[jetAt()])+' — stand on it to fly it.');S.mode=null;sync();return}
+ if(!inFlyRange(id)){sysTo(pi,lname(NMAP[id])+' is out of the jet’s range (about 8,500 km).');return}
+ const stolen=S.dlcWorld&&S.owner.qantas!==pi;
  const prevFlyPos=p.pos;
  p.money-=3;fxAt(pi,'−$3','#ff6b5e');S.mode=null;p.pos=id;S.steps=0;
  const flew=projFx('fly',prevFlyPos,id);
@@ -1834,7 +1855,12 @@ export async function doFly(pi,id){
  }
  if(!p.visited)p.visited={};p.visited[id]=true;
  if(prevFlyPos==='sisy'&&id!=='sisy'&&S.owner.back!==pi)S.sisyPayout=10;
- log('✈️ '+pname(pi)+' takes the Qantas jet straight to '+lname(NMAP[id])+'.');
+ if(S.dlcWorld){
+  S.jetAt=id;
+  if(stolen){fxAt(pi,'✈️ STOLEN','#ff9a3c');log('✈️ '+pname(pi)+' STEALS the Qantas jet'+(S.owner.qantas!=null?' from '+pname(S.owner.qantas):'')+' and flies it to '+lname(NMAP[id])+'. It is parked there now.')}
+  else log('✈️ '+pname(pi)+' flies the Qantas jet to '+lname(NMAP[id])+' — it is parked there now (anyone standing on it can take it).');
+ }
+ else log('✈️ '+pname(pi)+' takes the Qantas jet straight to '+lname(NMAP[id])+'.');
  if(flew){sync();await projPause()} /* the jet flies before the landing opens the next phase */
  await endMovement();
 }

@@ -937,7 +937,7 @@ export const BigConBots = (function () {
     }
     if (budgets.fly && me.money >= 3) {
       for (const nid of kill.targets) {
-        if (nid === me.pos || !passable(v, nid)) continue;
+        if (nid === me.pos || !passable(v, nid) || !flyable(v, nid)) continue;
         consider(nid, null, null, nid, 3);
       }
     }
@@ -1101,9 +1101,12 @@ export const BigConBots = (function () {
       steps: v.steps,
       favor: !v.extraStep && me.intel >= 1,
       slip: v.owner['f1'] === pi && me.money >= 2 && !v.slipped,
-      fly: v.owner['qantas'] === pi && me.money >= 3 && !(v.geo && v.geo.qantasGrounded),
+      fly: (v.jet ? v.jet.canFly(pi) : v.owner['qantas'] === pi) && me.money >= 3 && !(v.geo && v.geo.qantasGrounded),
     };
   }
+
+  /* the Global Edition jet has a range: only nodes within it can be flown to */
+  function flyable(v, nid) { return !v.jet || v.jet.reach.includes(nid); }
 
   function pickMovement(v, pi) {
     const kill = killSetup(v, pi);
@@ -1138,7 +1141,7 @@ export const BigConBots = (function () {
     if (budgets.fly) {
       for (const n of v.nodes) {
         if (n.id === v.players[pi].pos) continue;
-        if (!passable(v, n.id)) continue;
+        if (!passable(v, n.id) || !flyable(v, n.id)) continue;
         const cand = scoreStanding(v, pi, n.id);
         if (!cand) continue;
         const val = cand.val - 3 * W.money - 1.5;
@@ -1154,7 +1157,7 @@ export const BigConBots = (function () {
     const keys = Object.keys(reach);
     const pick = keys[Math.floor(r32(pi) * keys.length)];
     if (r32(pi) < 0.3 && budgets.fly) {
-      const nodes = v.nodes.filter(n => passable(v, n.id) && n.id !== v.players[pi].pos);
+      const nodes = v.nodes.filter(n => passable(v, n.id) && flyable(v, n.id) && n.id !== v.players[pi].pos);
       if (nodes.length) return { val: 0, rec: null, flyTo: nodes[Math.floor(r32(pi) * nodes.length)].id, variant: null };
     }
     return { val: 0, rec: reach[pick], flyTo: null, variant: { useFavor: false, useSlip: false } };

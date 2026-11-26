@@ -205,6 +205,7 @@ function worldHome(geo){
  WORLD_SLOT_CACHE={key,map};return map;
 }
 /* ALBANESE's text is rewritten while the Global Edition is on (the blockade can then be a free action; see the Reef and Critical Path nodes) */
+const QANTAS_SP=(BASE_NODES.find(n=>n.id==='qantas')||{}).sp,QANTAS_WORLD_SP='GLOBAL EDITION — THE JET IS A REAL PLANE: it starts parked here and stays wherever it lands. Whoever STANDS on the jet can FLY IT ($3, during movement) to any node within range (about 8,500 km; the map wraps at the date line), ending their movement. The owner flies it; anyone else who reaches it STEALS it and flies away. Hostile takeovers stay at list price forever.';
 const OIL_NODE=BASE_NODES.find(n=>n.id==='oil')||{},OIL_SP=OIL_NODE.sp,OIL_INCOME=OIL_NODE.income,OIL_WORLD_INCOME=11,OIL_WORLD_FX={i:[[OIL_ALL,2]]};
 const OIL_WORLD_SP=OIL_SP?OIL_SP.replace('Pays $8 a turn.','Pays $'+OIL_WORLD_INCOME+' a turn on the Global Edition (the world’s benchmark).')+' GLOBAL EDITION: +$2 income per other oil node you own, and CUSHING, OKLAHOMA doubles its OIL SPIKES windfall for you.':'';
 const ALBO_SP=(BASE_NODES.find(n=>n.id==='albo')||{}).sp;
@@ -214,6 +215,8 @@ export function rebuildWorld(geo,world){
  {const albo=BASE_NODES.find(n=>n.id==='albo');if(albo&&ALBO_SP)albo.sp=world?ALBO_WORLD_SP:ALBO_SP}
  /* WTI CRUDE is the world's benchmark on the Global Edition: it pays more and every other oil node feeds it */
  {const oil=BASE_NODES.find(n=>n.id==='oil');if(oil&&OIL_SP){oil.sp=world?OIL_WORLD_SP:OIL_SP;oil.income=world?OIL_WORLD_INCOME:OIL_INCOME;if(world)oil.fx=OIL_WORLD_FX;else delete oil.fx}}
+ /* the Qantas jet is a real plane on the Global Edition: parked where it lands, flown by whoever stands on it, with a range */
+ {const q=BASE_NODES.find(n=>n.id==='qantas');if(q&&QANTAS_SP)q.sp=world?QANTAS_WORLD_SP:QANTAS_SP}
  NODES=BASE_NODES.concat(geo?GEO_NODES:[],world?WORLD_NODES:[]);
  Object.keys(NMAP).forEach(k=>delete NMAP[k]);
  NODES.forEach(n=>NMAP[n.id]=n);
