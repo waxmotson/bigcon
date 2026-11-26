@@ -8,7 +8,7 @@ import { LOG_SHOWN, Net, S } from './state.js';
 import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
 import { canFly, inFlyRange, jetAt, CLASSIFIED_INTEL, CLASSIFIED_MONEY, classifiedBlocked, hiddenFrom, hiddenInfo, ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost, blocStatus, tariffFor, tariffOwner, blockSources, blockadeFree, reefBleached, fileAuthority, isWaterNode } from './engine.js';
 import { TRADE_BLOCS, blocOfMember, BLOC_FREE } from './world.js';
-import { launderBooks, delayTargets, reworkBlocked, honeypotBan, swissBalance, abductTargets, inflationExtra, pyramidPayout } from './engine.js';
+import { carryDue, CARRY_CAP, launderBooks, delayTargets, reworkBlocked, honeypotBan, swissBalance, abductTargets, inflationExtra, pyramidPayout } from './engine.js';
 import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
 import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
@@ -83,7 +83,7 @@ export function showRules(){
  +'<h4>🎭 Node reworks</h4><ul>'
 +'<li><b>NAB</b> — FEE FOR NO SERVICE: a rival who <i>ends their movement</i> on any node you own pays you an extra $2, on top of tolls. <b>WESTPAC</b> — 23 MILLION BREACHES (free, once per turn): burn 1 Intel for $3, and the laundering adds +1 scrutiny to an ASIC/ACCC file on you (BANKING or MONETARY POLICY, your pick); a file opened this way rules as a fine of 15% of your cash. <b>COMMONWEALTH BANK</b> — CAN’T BE BEAT: once per game you may refuse a hostile takeover of any of your nodes; it fails, they keep their money (but spend their action). <b>ANZ</b> — you are warned privately a turn ahead when BONDMAGEDDON is the next event.</li>'
 +'<li><b>QUIKSTOP</b> — THE SERVO: +$2 a turn for every player at the table (4 players = +$8). <b>THE GOLF CLUB</b> — THE BACK NINE: once per turn, a free action in your action phase: swap one of your nodes for a rival’s, with cash from either side; they accept or decline in private (bugs on both are cleared; the old $1 seizure discount is gone). <b>JIM CHALMERS</b> — TREASURY BRIEF: at your turn start, privately see the next two market events and choose which is drawn next.</li>'
-+'<li><b>Global Edition:</b> <b>BAIKONUR</b> also lets you ESCAPE ON THE ROCKET once per game: a raid on you is cancelled, your pawn flies to the cosmodrome (or a node you choose) and Cortisol drops to 5. <b>ZIMBABWE</b> — PRINT MONEY (once per game, your action): +20% of the goal, then every seizure costs +$1 more for good (inflation; shown on the strip above THE TURN). <b>THE SWISS VAULT</b> — stash cash (your action) beyond the reach of raids, fines, events and loans; withdraw freely once per turn from anywhere; stashed cash does not count toward the goal. <b>AREA 51</b> — ALIEN ABDUCTION (once per game, $4 + 3 Intel, your action): steal a rival’s node remotely; 50% it arrives as rubble. It cannot take Antarctica, MADE, anyone still holding an unused Commonwealth Bank refusal, Seed Vault holdings or Pillars holdings. <b>THE WALL STREET BELL</b> — RING THE BELL ($2, your action, once per turn): the next market event resolves now, and a rival’s regulator file opens or gains +1 scrutiny. <b>THE TURKISH LIRA</b> — once per game, every rival loses 20% of cash above $30. <b>THE BAHT 1997</b> — CONTAGION: when anyone is raided, every rival of the Baht’s owner with a node in the raided pawn’s region takes +1 Cortisol. <b>SRI LANKA</b> — DEFAULT (free, once per game): all your debts are wiped and your tolls this turn are free. <b>THE PYRAMIDS</b> — a rival who seizes a node adjacent to one of yours pays $1, then $2, $4, $8… (doubling each time; reset by THE BOULDER ROLLS BACK DOWN). <b>GREENLAND</b> — with DONALD TRUMP, force-buy Greenland at list price once per game.</li></ul>'
++'<li><b>Global Edition:</b> <b>BAIKONUR</b> also lets you ESCAPE ON THE ROCKET once per game: a raid on you is cancelled, your pawn flies to the cosmodrome (or a node you choose) and Cortisol drops to 5. <b>ZIMBABWE</b> — PRINT MONEY (once per game, your action): +20% of the goal, then every seizure costs +$1 more for good (inflation; shown on the strip above THE TURN). <b>THE SWISS VAULT</b> — stash cash (your action) beyond the reach of raids, fines, events and loans; withdraw freely once per turn from anywhere; stashed cash does not count toward the goal. <b>AREA 51</b> — ALIEN ABDUCTION (once per game, $4 + 3 Intel, your action): steal a rival’s node remotely; 50% it arrives as rubble. It cannot take Antarctica, MADE, anyone still holding an unused Commonwealth Bank refusal, Seed Vault holdings or Pillars holdings. <b>THE WALL STREET BELL</b> — RING THE BELL ($2, your action, once per turn): the next market event resolves now, and a rival’s regulator file opens or gains +1 scrutiny. <b>THE TURKISH LIRA</b> — once per game, every rival loses 20% of cash above $30. <b>THE BAHT 1997</b> — CONTAGION: when anyone is raided, every rival of the Baht’s owner with a node in the raided pawn’s region takes +1 Cortisol. <b>SRI LANKA</b> — DEFAULT (free, once per game): all your debts are wiped and your tolls this turn are free. <b>THE PYRAMIDS</b> — a rival who seizes a node adjacent to one of yours pays $1, then $2, $4, $8… (doubling each time; reset by THE BOULDER ROLLS BACK DOWN). <b>GREENLAND</b> — with DONALD TRUMP, force-buy Greenland at list price once per game. <b>MONACO</b> and <b>MARINA BAY SANDS</b> — PUT IT ALL ON BLACK (free, once per turn): bet any amount, 47% it pays double. <b>THE BIG GAMBLE</b> — own a casino, THE PYRAMIDS and THE SISYPHUS BOULDER: once per game every owned node is dealt out again; you lose those three and nobody is dealt all of them. If two players complete the con at the same moment, the one with the most money takes it. <b>BANK OF JAPAN</b> — the carry trade lends up to $50; every $2 not repaid next turn is +1 Cortisol.</li></ul>'
 +'<h4>🌐 Global Edition — trade blocs, the WTO, the water and the reef</h4>'
  +'<ul><li><b>THE QANTAS JET IS A REAL PLANE</b> — it starts parked at QANTAS and stays wherever it lands (✈️ on the map). Whoever stands on it can fly it for $3 to any node within about 8,500 km: the owner flies it, a rival who reaches it <b>steals it</b>.</li><li><b>TRADE BLOCS</b> — <b>THE EU SINGLE MARKET</b> and <b>BRICS</b>. Own the bloc node and your income from its <b>member nodes</b> (EU: the ECB, Deutsche Bahn, Bunds, Greek Debt, ASML, Tulip, Rotterdam, the Paris master chart, the Brussels Pillars, Venice; BRICS: nodes in Brazil, Russia, India, China and South Africa) is multiplied by <b>1 + 0.25 per member you hold, capped at ×2.5</b>. It is added at income time and logged; hover the bloc node to see your members, multiplier and file. The catch: with <b>4 or more members</b> a <b>WTO file</b> opens on you, each member held <b>beyond 3</b> adds that much scrutiny at each of your turn starts (4 members: +1, 5: +2, 6: +3), and at 3 the ruling lands — you keep 3 members, the rest return to the market, and you pay the usual 10% fine per node. Lobby, sell to the market or drop below 4 members to close it. <b>THE ANTARCTIC TREATY</b> is a third bloc over the nine territorial claims: the same multiplier, but Antarctica is outside the WTO’s jurisdiction, so no file ever opens — and while anyone owns the Treaty, the Peninsula sovereignty disputes are settled, but every other player holding Antarctic territory takes +1 Cortisol at the start of each of their turns (the Treaty recognises only its owner). The owner of <b>THE WTO</b> can <b>REFER</b> a rival’s bloc file ($4, your action, once per turn) for +1 scrutiny.</li>'
  +'<li><b>BLOCKADE</b> — ALBANESE, <b>THE GREAT BARRIER REEF</b> and <b>CRITICAL PATH ANALYSIS</b> each grant it. With one source it is a once-per-turn <b>action</b> (it ends your turn, as ever). Hold <b>any two</b> of the three and it becomes a <b>FREE action</b> — once per turn, in your move or action phase, using neither your action nor your movement. Only one blockade per turn, however many sources you hold. The Reef stops counting while it is bleached.</li>'
@@ -492,7 +492,11 @@ function pinPathTo(id){
 function nodeClass(n,curpos){
  if(!S||S.over)return '';
  if(classifiedTargetable(n))return 'click target';
- if(S.mode==='fly'||S.mode==='launch')return (myTurn()&&n.id!==curpos&&canReach(n.id)&&!blockaded(n.id)&&(S.mode!=='fly'||inFlyRange(n.id)))?'click':'';
+ if(S.mode==='fly'||S.mode==='launch'){
+  const ok=myTurn()&&n.id!==curpos&&canReach(n.id)&&!blockaded(n.id)&&(S.mode!=='fly'||inFlyRange(n.id));
+  /* the Global Edition jet has a range: light up exactly the nodes it can reach (owner or thief alike) */
+  return ok?(S.mode==='fly'&&S.dlcWorld?'click reach':'click'):'';
+ }
  if(S.mode==='cruise')return (myTurn()&&n.id!==curpos&&isWaterNode(n.id)&&canReach(n.id)&&!blockaded(n.id))?'click':'';
  if(S.mode!=='missile'&&S.mode!=='blockade'&&S.phase==='move'&&myTurn()&&S.steps>0&&(ADJ[curpos]||[]).includes(n.id)&&canReach(n.id)&&!blockaded(n.id))return 'click reach';
  if(classifiedTargetable(n)||bugTargetable(n)||missileTargetable(n)||overtourTargetable(n)||blockadeTargetable(n)||worldPickable(n))return 'click target';
@@ -847,7 +851,7 @@ export function renderSide(){
      ['brexit','w_brexit','worldmode:brexit','🇬🇧 TAKE BACK CONTROL — sever an edge (once per game)','Sever any one edge of the board for good. +1 Cortisol.'],
      ['silkroad','w_bri','worldmode:silkroad','🛤️ NEW SILK ROAD — link two nodes, $4','Pay $4 to add a permanent edge from one of your nodes to any other node.'],
      ['advance','w_nigprince','advance','👑 ADVANCE FEE — $2, coin flip for $5','Pay $2: heads you receive $5, tails nothing at all.'],
-     ['carry','w_boj','carry','👛 CARRY TRADE — borrow $6, repay $9 next turn','Borrow $6 now; repay $9 at the start of your next turn or take +3 Cortisol.'],
+     ['carry','w_boj','carry','👛 CARRY TRADE — borrow up to $50, repay 1.5× next turn','Borrow up to $50 now; repay half as much again at the start of your next turn. Every $2 you cannot return is +1 Cortisol.'],
      ['hold','w_bangalore','worldmode:hold','🎧 PUT A RIVAL ON HOLD — they lose 1 🛈','Pick a rival: they lose 1 Intel. Once per turn.'],
      ['carbon','w_amazon','carbon','🌳 SELL CARBON CREDITS — $3 per non-commodity node','Once per turn: $3 for every node of yours that is not a COMMODITY.'],
      ['vanish','w_bermuda','worldmode:vanish','🌀 THE VANISH — reappear anywhere (once per turn)','Disappear until your next turn; rivals cannot target you. You reappear at any node you name.'],
@@ -1002,6 +1006,8 @@ export function reworkButtons(me,p,phase){
  if(own('w_lira'))out.push(rwBtn('lira','💸 ERDOĞANOMICS — every rival loses 20% of cash above $30 (once per game)',reworkBlocked(me,'lira'),'Your action, once per game: each rival loses 20% of the cash they hold above $30.'));
  if(own('trump')&&S.dlcWorld&&NMAP.w_greenland)out.push(rwBtn('greenbuy','🇬🇱 MAKE AN OFFER — force-buy Greenland at list price (once per game)',reworkBlocked(me,'greenbuy'),'Your action, once per game, with DONALD TRUMP: buy Greenland from its owner at list price. They cannot refuse.'));
  if(S.dlcWorld&&own('w_bigyahu')&&own('trump')&&own('w_lockheed'))out.push(rwBtn('liberate','🛢️ LIBERATE OIL — divest all oil, take half of your rivals’ (once per game)',reworkBlocked(me,'liberate'),'Your action, once per game, with BIG YAHU, DONALD TRUMP and LOCKHEED MARTIN: your oil nodes are sold to the market at list price; you take half (rounded up) of your rivals’ oil nodes and the rest go unowned.'));
+ if(S.dlcWorld&&(own('w_monaco')||own('w_mbs')))out.push(rwBtn('black','⚫ PUT IT ALL ON BLACK — bet, 47% pays double (free, once per turn)',reworkBlocked(me,'black'),'FREE, once per turn: name a bet. 47% of the time the wheel lands black and you win the same again; otherwise the house keeps it.'));
+ if(S.dlcWorld&&own('w_pyramids')&&own('sisy')&&(own('w_monaco')||own('w_mbs')))out.push(rwBtn('biggamble','🎲 THE BIG GAMBLE — reshuffle who owns every node (once per game)',reworkBlocked(me,'biggamble'),'Your action, once per game: every owned node is dealt out again (each player keeps the same number of nodes). You lose the Pyramids, the Boulder and your casino, and nobody is dealt all of them. If two players complete the con at once, the richer one takes it.'));
  if(S.dlcWorld&&own('w_jensen'))out.push(rwBtn('honeypot','🍯 HONEYPOT — 2 free Chinese nodes; US nodes stop paying (once per game)',reworkBlocked(me,'honeypot'),'Your action, once per game: take 2 Chinese nodes for free. No US node earns income for 2 rounds, and you cannot buy in South-East Asia or the USA for your next 2 turns.'));
  return out;
 }
@@ -1049,6 +1055,21 @@ export async function delaysFlow(){
  const t=await hooks.modal({title:'DEUTSCHE BAHN — DELAY WHOM?',body:'$3. They can only move 1 space for their next two turns.',options:rivals.map(i=>({label:pname(i),v:i})).concat([{label:'Cancel',v:-1}])});
  if(!S||t==null||t<0||!myTurn())return;
  dispatch({act:'delays',target:t});
+}
+/* 👛 BANK OF JAPAN — how much to borrow (capped at $50) */
+export async function carryFlow(){
+ const opts=[5,10,20,30,40,50].map(x=>({label:'Borrow $'+x+' — repay $'+carryDue(x)+' next turn',v:x})).concat([{label:'Cancel',v:0}]);
+ const n=await hooks.modal({title:'BANK OF JAPAN — THE CARRY TRADE',body:'Borrow up to $'+CARRY_CAP+' at Tokyo’s zero rates. At the start of your next turn you repay half as much again. Every $2 you cannot return is +1 Cortisol.',options:opts});
+ if(!S||!n||!myTurn())return;
+ dispatch({act:'carry',n});
+}
+/* 🎰 PUT IT ALL ON BLACK — the stake */
+export async function blackFlow(){
+ const max=S.players[Net.myIdx].money;if(max<1)return;
+ const set=[...new Set([1,5,10,20,50,max].filter(x=>x>=1&&x<=max))].sort((a,b)=>a-b);
+ const n=await hooks.modal({title:'PUT IT ALL ON BLACK',body:'The wheel lands black 47% of the time: you win the stake again. Otherwise the house keeps it. You have $'+max+'.',options:set.map(x=>({label:(x===max?'ALL IN — $':'Bet $')+x,v:x})).concat([{label:'Walk away',v:0}])});
+ if(!S||!n||!myTurn())return;
+ dispatch({act:'black',n});
 }
 export async function swissFlow(kind){
  const me=Net.myIdx,max=kind==='swissdeposit'?S.players[me].money:swissBalance(me);
@@ -1301,7 +1322,8 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
    case 'venicecool':dispatch({act:'venicecool'});break;
    case 'blockmode':dispatch({act:'blockmode'});break;
    case 'evergiven':dispatch({act:'evergiven'});break;
-   case 'advance':case 'carry':case 'carbon':dispatch({act:b.dataset.act});break;
+   case 'advance':case 'carbon':dispatch({act:b.dataset.act});break;
+   case 'carry':carryFlow();break;
    case 'rebuildfree':dispatch({act:'rebuild',free:true});break;
   case 'spin':dispatch({act:'spin',kind:b.dataset.kind});break;
   case 'cook':dispatch({act:'cook'});break;
@@ -1325,6 +1347,8 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
   case 'ringbell':bellFlow();break;
   case 'delays':delaysFlow();break;
   case 'swissdeposit':case 'swisswithdraw':swissFlow(act);break;
+  case 'black':blackFlow();break;
+  case 'biggamble':dispatch({act});break;
   case 'at1':case 'printmoney':case 'lira':case 'greenbuy':case 'liberate':case 'honeypot':case 'srilankadefault':dispatch({act});break;
   case 'laylowcash':dispatch({act:'laylow',choice:'cash'});break;
   case 'laylowcool':dispatch({act:'laylow',choice:'cool'});break;

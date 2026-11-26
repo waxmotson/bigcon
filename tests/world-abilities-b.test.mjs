@@ -224,7 +224,7 @@ test('Bank of Japan carry trade: borrow $6, repay $9 at the start of your next t
   await e.f.applyIntent(0, { act: 'carry' });
   await settle();
   assert.equal(S.players[0].money, 16 + QUIET);
-  assert.equal(S.carry[0], 1);
+  assert.equal(S.carry[0], 6, 'the default loan is $6');
   /* one loan at a time */
   armAction(S, 0); S.deck = ['quiet', 'quiet'];
   await e.f.applyIntent(0, { act: 'carry' });
@@ -239,7 +239,7 @@ test('Bank of Japan carry trade: borrow $6, repay $9 at the start of your next t
   assert.equal(S.players[0].cortisol, 0);
 });
 
-test('Bank of Japan carry trade: if you cannot repay, +3 Cortisol instead and the debt is gone', async t => {
+test('Bank of Japan carry trade: if you cannot repay, +1 Cortisol per $2 short and the debt is gone', async t => {
   const { e, S } = await worldGame(t);
   S.owner = { w_boj: 0, citi: 0 };
   S.carry = { 0: 1 };
@@ -249,8 +249,11 @@ test('Bank of Japan carry trade: if you cannot repay, +3 Cortisol instead and th
   await e.f.startTurn();
   await settle();
   assert.equal(S.carry[0], undefined);
-  assert.equal(S.players[0].cortisol, 3);
-  assert.ok(S.log.some(l => l.includes('Tokyo collects in Cortisol')));
+  const line = S.log.find(l => l.includes('Tokyo collects the missing'));
+  assert.ok(line, 'the shortfall is collected in Cortisol');
+  const short = +line.match(/missing \$(\d+)/)[1];
+  assert.ok(short > 0 && short <= 9);
+  assert.equal(S.players[0].cortisol, Math.ceil(short / 2), '1 Cortisol for every $2 not returned');
 });
 
 /* ---------- THE BANGALORE CALL CENTRE ---------- */
@@ -357,4 +360,18 @@ test('without the expansion none of the new intents does anything', async t => {
   for (const act of ['carry', 'carbon', 'advance', 'worldmode', 'edgepick', 'vanish', 'hold']) await e.f.applyIntent(0, { act, kind: 'chainsaw', id: 'quik', target: 1 });
   assert.equal(S.mode, null);
   assert.equal(S.players[0].money, 10);
+});
+
+test('Bank of Japan carry trade: borrow any amount up to $50; partial repayment, 1 Cortisol per $2 short', async t => {
+  const { e, S } = await worldGame(t);
+  S.owner = { w_boj: 0 };
+  armAction(S, 0); S.players[0].money = 0;
+  await e.f.applyIntent(0, { act: 'carry', n: 500 });
+  await settle();
+  assert.equal(S.carry[0], 50, 'capped at $50');
+  assert.equal(e.ctx.carryDue(50), 75);
+  /* at the turn start: $40 on hand pays $40 of the $75; $35 short is 18 Cortisol */
+  assert.equal(e.ctx.carryPenalty(35), 18);
+  assert.equal(e.ctx.carryPenalty(2), 1);
+  assert.equal(e.ctx.carryPenalty(1), 1);
 });

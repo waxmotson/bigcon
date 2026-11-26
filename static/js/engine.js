@@ -377,9 +377,12 @@ export async function startTurn(){
  }
  /* 🌐 BANK OF JAPAN (Mrs Watanabe's carry trade): the carry trade comes due */
  if(S.dlcWorld&&S.carry&&S.carry[S.cur]){
+  const loan=S.carry[S.cur]>1?S.carry[S.cur]:CARRY_LOAN,due=carryDue(loan);
   delete S.carry[S.cur];
-  if(p.money>=CARRY_REPAY){p.money-=CARRY_REPAY;fxAt(S.cur,'−$'+CARRY_REPAY,'#ff6b5e');log('👛 The carry trade unwinds: '+pname(S.cur)+' repays $'+CARRY_REPAY+' on the $'+CARRY_LOAN+' borrowed from Tokyo.')}
-  else{log('👛 The carry trade unwinds and '+pname(S.cur)+' cannot repay the $'+CARRY_REPAY+' — Tokyo collects in Cortisol instead.');addCortisol(S.cur,CARRY_CORTISOL,'the carry trade is called in',false,true)}
+  const paid=Math.min(Math.max(0,p.money),due),short=due-paid;
+  if(paid){p.money-=paid;fxAt(S.cur,'−$'+paid,'#ff6b5e')}
+  if(!short)log('👛 The carry trade unwinds: '+pname(S.cur)+' repays $'+due+' on the $'+loan+' borrowed from Tokyo.');
+  else{const c=carryPenalty(short);log('👛 The carry trade unwinds and '+pname(S.cur)+' repays only $'+paid+' of the $'+due+' — Tokyo collects the missing $'+short+' as '+c+' Cortisol (1 for every $2).');addCortisol(S.cur,c,'the carry trade is called in',false,true)}
  }
  if(S.dlcGeo&&own('geo_pillars')&&p.cortisol>0){p.cortisol--;fxAt(S.cur,'🔥−1','#8fbf7f');log('🧱 ESG SHIELD — the Pillars absorb 1 Cortisol (now '+p.cortisol+').')}
  if(S.dlcGeo&&S.ov){
@@ -938,7 +941,12 @@ export function isWaterNode(id){return WATER_NODES.has(id)&&!!NMAP[id]}
 export function ausNzWaiver(pi,from,to){return !!(S&&S.dlcWorld&&S.owner.w_anzcerta===pi&&AUSNZ.has(from)&&AUSNZ.has(to))}
 /* 🌐 World Expansion actives. Each handler runs inside applyIntent (the turn lock held, host-side), validates for itself and ends the action through finishNodeAbility. */
 /* 🌐 the edge graph is part of the game state (S.boardEdges), so cuts and new roads survive sync, reconnects and the 3D snapshot */
-const CARRY_LOAN=6,CARRY_REPAY=9,CARRY_CORTISOL=3;
+/* the carry trade: borrow up to CARRY_CAP; half as much again is due at the start of your next turn; every $2 (or part) you cannot return is 1 Cortisol */
+export const CARRY_LOAN=6,CARRY_CAP=50;
+export const carryDue=loan=>Math.ceil(loan*1.5),carryPenalty=short=>Math.ceil(short/2);
+/* 🎰 PUT IT ALL ON BLACK (Monaco Casino, Marina Bay Sands): a bet that pays double 47% of the time */
+export const BLACK_ODDS=0.47;
+export const CASINOS=['w_monaco','w_mbs'];
 const IMF_LOAN=6,IMF_REPAY=8,IMF_CORTISOL=2,DOHA_PER=2,CRUISE_FARE=2,TARIFF_EXTRA=2;
 export function isVanished(i){return !!(S&&S.dlcWorld&&S.vanished&&S.vanished[i]!=null)}
 export function hasEdge(a,b){return EDGES.some(e=>(e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a))}
@@ -1037,12 +1045,13 @@ const WORLD_ACTS={
   await finishNodeAbility(pi);
  },
  /* BANK OF JAPAN (Mrs Watanabe's carry trade): borrow now, repay (or be punished) at the start of your next turn */
- async carry(pi){
+ async carry(pi,m){
   if(!abilityPhase(pi)||S.mode)return;
   const why=worldBlocked(pi,'carry');if(why){sysTo(pi,why);return}
-  S.players[pi].money+=CARRY_LOAN;(S.carry||(S.carry={}))[pi]=1;
-  fxAt(pi,'+$'+CARRY_LOAN,'#7fe08d');
-  log('👛 '+pname(pi)+' borrows $'+CARRY_LOAN+' against Tokyo’s zero rates — $'+CARRY_REPAY+' is due at the start of their next turn, or '+CARRY_CORTISOL+' Cortisol.');
+  const loan=Math.max(1,Math.min(CARRY_CAP,Math.floor(Number(m&&m.n)||CARRY_LOAN)));
+  S.players[pi].money+=loan;(S.carry||(S.carry={}))[pi]=loan;
+  fxAt(pi,'+$'+loan,'#7fe08d');
+  log('👛 '+pname(pi)+' borrows $'+loan+' against Tokyo’s zero rates — $'+carryDue(loan)+' is due at the start of their next turn; every $2 short is 1 Cortisol.');
   await finishNodeAbility(pi);
  },
  /* THE BANGALORE CALL CENTRE: put a rival on hold */
@@ -1371,6 +1380,15 @@ export function reworkBlocked(pi,kind){
    for(const id of LIBERATORS)if(!own(id))return need(id);
    if(!act)return 'Liberating the oil is your action.';if(gUsed('liberate'))return 'The oil has already been liberated: once per game.';
    if(!oilStanding().some(id=>S.owner[id]!=null))return 'Nobody owns any oil to liberate.';return '';
+  case 'black':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!CASINOS.some(own))return 'You do not own a casino (MONACO or MARINA BAY SANDS).';
+   if(!either||S.cur!==pi)return 'Not now.';if(tUsed('black'))return 'One spin a turn: the wheel has already turned for you.';if(p.money<1)return 'You have nothing to bet.';return '';
+  case 'biggamble':
+   if(!w)return 'The Global Edition exhibits are not in play.';
+   for(const id of ['w_pyramids','sisy'])if(!own(id))return need(id);
+   if(!CASINOS.some(own))return 'You also need a casino: MONACO or MARINA BAY SANDS.';
+   if(!act)return 'THE BIG GAMBLE is your action.';if(gUsed('biggamble'))return 'The big gamble has already been played: once per game.';
+   if(!bigGamblePlan(pi))return 'There is nothing to reshuffle.';return '';
   case 'honeypot':
    if(!w)return 'The Global Edition exhibits are not in play.';if(!own('w_jensen'))return need('w_jensen');if(!act)return 'The HONEYPOT is your action.';if(gUsed('honeypot'))return 'The honeypot has already been set: once per game.';
    if(!honeypotPicks(pi).length)return 'There is no Chinese node to take.';return '';
@@ -1416,6 +1434,26 @@ export function liberatePlan(pi){
  const theirs=oil.filter(id=>S.owner[id]!=null&&S.owner[id]!==pi&&!hiddenFrom(pi,id)&&!isPillarShieldedNode(id)).sort(byPay);
  const k=Math.ceil(theirs.length/2);
  return {mine,taken:theirs.slice(0,k),freed:theirs.slice(k)};
+}
+/* 🎲 THE BIG GAMBLE (THE PYRAMIDS + THE SISYPHUS BOULDER + a casino, once per game, your action): every owned node on the board is
+   dealt out again at once. Each player keeps the same NUMBER of nodes, but who holds what is shuffled. The gambler loses the very nodes
+   that made the play (the Pyramids, the Boulder and their casino(s)), and nobody is dealt all of them together. Returns {nodeId: newOwner}
+   or null when there is nothing to shuffle. */
+export function bigGambleTrio(pi){return ['w_pyramids','sisy'].concat(CASINOS.filter(id=>S.owner[id]===pi))}
+export function bigGamblePlan(pi){
+ const trio=bigGambleTrio(pi);
+ const ids=Object.keys(S.owner).filter(id=>S.owner[id]!=null&&NMAP[id]&&!(S.rubble&&S.rubble[id])).sort();
+ if(ids.length<2)return null;
+ const owners=ids.map(id=>S.owner[id]);
+ const ok=plan=>!trio.some(id=>plan[id]===pi)&&!S.players.some((x,j)=>trio.every(id=>plan[id]===j));
+ let plan=null;
+ for(let t=0;t<600&&!plan;t++){const perm=shuffle(owners.slice()),pl={};ids.forEach((id,i)=>{pl[id]=perm[i]});if(ok(pl))plan=pl}
+ if(!plan){ /* no fair deal exists (say the gambler owns nearly everything): the trio goes back to the market instead */
+  plan={};const perm=shuffle(owners.slice());ids.forEach((id,i)=>{plan[id]=perm[i]});
+  trio.forEach(id=>{if(plan[id]===pi)plan[id]=null});
+  if(!ok(plan))trio.forEach(id=>{plan[id]=null});
+ }
+ return plan;
 }
 /* 🧥 HONEYPOT: the (up to) two Chinese nodes Jensen would take — unowned first, then a rival's (honouring every takeover guard), the best-paying first */
 export function honeypotPicks(pi){
@@ -1683,6 +1721,40 @@ const WORLD_REWORKS={
    +(pl.mine.length?pname(pi)+' divests '+pl.mine.map(nm).join(', ')+' to the market for $'+cash+'. ':'')
    +(pl.taken.length?'Liberated into '+pname(pi)+'’s hands: '+Object.keys(from).map(o=>from[o].join(', ')+' (from '+pname(+o)+')').join('; ')+'. ':'')
    +(pl.freed.length?'Set free (unowned): '+pl.freed.map(nm).join(', ')+'. ':'')+'(Once per game.)');
+  acccReconcile();sync();
+  if(await winCheck())return;
+  await finishNodeAbility(pi);
+ },
+ /* 🎰 PUT IT ALL ON BLACK (own MONACO or MARINA BAY SANDS; free, once per turn): bet m.n — 47% it pays double, otherwise the house keeps it */
+ async black(pi,m){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'black');if(why){sysTo(pi,why);return}
+  const p=S.players[pi],bet=Math.floor(Number(m&&m.n)||0);
+  if(bet<1||bet>p.money){sysTo(pi,'Bet between $1 and your $'+p.money+'.');return}
+  tMark('black');
+  const house=CASINOS.filter(id=>S.owner[id]===pi).map(id=>nodeName(NMAP[id]).join(' ')).join(' / ');
+  if(Math.random()<BLACK_ODDS){
+   p.money+=bet;fxAt(pi,'⚫ +$'+bet,'#7fe08d');
+   log('⚫ '+pname(pi)+' puts $'+bet+' on BLACK at '+house+'… BLACK! The table pays $'+bet+'.');
+  }else{
+   p.money-=bet;fxAt(pi,'🔴 −$'+bet,'#ff6b5e');
+   log('🔴 '+pname(pi)+' puts $'+bet+' on BLACK at '+house+'… RED. The house keeps the $'+bet+'.');
+  }
+  sync();
+  await winCheck();
+ },
+ /* 🎲 THE BIG GAMBLE — reshuffle who owns every node */
+ async biggamble(pi){
+  if(S.mode)return;
+  const why=reworkBlocked(pi,'biggamble');if(why){sysTo(pi,why);return}
+  const plan=bigGamblePlan(pi),trio=bigGambleTrio(pi);
+  gMark('biggamble');
+  let moved=0;
+  Object.keys(plan).forEach(id=>{if(S.owner[id]!==plan[id]){handOver(id,plan[id]);moved++}});
+  fxAt(pi,'🎲 THE BIG GAMBLE','#f5c542');
+  const nm=id=>nodeName(NMAP[id]).join(' ');
+  log('🎲 THE BIG GAMBLE — '+pname(pi)+' bets the house: every owned node on the board is dealt out again ('+moved+' change hands). '
+   +pname(pi)+' gives up '+trio.map(nm).join(', ')+': '+trio.map(id=>nm(id)+' → '+(plan[id]==null?'the market':pname(plan[id]))).join(', ')+'. (Once per game.)');
   acccReconcile();sync();
   if(await winCheck())return;
   await finishNodeAbility(pi);
@@ -2020,6 +2092,9 @@ export async function winCheck(){
  let win=-1;
  S.players.forEach((pl,i)=>{if(pl.money>=goal&&!missingTypes(i).length&&(win<0||pl.money>S.players[win].money))win=i});
  if(win<0)return false;
+ /* two (or more) complete the con at once (say after THE BIG GAMBLE): the deepest pocket takes it */
+ const tied=S.players.map((pl,i)=>i).filter(i=>S.players[i].money>=goal&&!missingTypes(i).length);
+ if(tied.length>1)log('⚖️ '+tied.map(pname).join(' and ')+' complete the con at the same moment — whoever has the most money takes it: '+pname(win)+' with $'+S.players[win].money+'.');
  S.over=true;S.phase='over';sync(true);
  const w=S.players[win];
  hooks.gameOver(w.name,w.char,S.players.map(pl=>({name:pl.name,money:pl.money})));
