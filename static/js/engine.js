@@ -26,7 +26,9 @@ const WORLD_COUNT=WORLD_NODE_IDS.length;
 export function pname(i){return S.players[i].name}
 export function log(t){S.log.push(t);S.logN=(S.logN|0)+1}
 /* ---- floating FX: visible on every screen, driven purely by synced state ---- */
-export function fx(x,y,t,c,big){if(Net.role!=='host'||!S)return;S.fx.push({id:++fxSeq,x,y,t,c,b:big?1:0});if(S.fx.length>40)S.fx.shift()}
+export function fx(x,y,t,c,big){if(Net.role!=='host'||!S)return;S.fx.push({id:++fxSeq,x,y,t,c,b:big?1:0});if(S.fx.length>FX_CAP)S.fx.shift()}
+/* the synced fx buffer: room for a full barrage (LIBERATE OIL launches dozens at once) */
+export const FX_CAP=90;
 export function fxAt(pi,t,c){if(!S||!S.players[pi])return;const n=NMAP[S.players[pi].pos];if(n)fx(n.x,n.y-64,t,c)}
 /* 🌍 Projectile fx: missiles and the Qantas jet fly their route as a rotating
    <image>. Entries ride S.fx (synced by pubState) with proj:1 and carry both
@@ -34,14 +36,18 @@ export function fxAt(pi,t,c){if(!S||!S.players[pi])return;const n=NMAP[S.players
    Rendering happens in #fxg so board re-renders never interrupt the flight. */
 export const PROJ_DEFS={
  missile:{img:'./static/GeographyDLC/missile_travelling.png',w:116,h:125,base:45},
- fly:{img:'./static/qantas_jet_travelling.png',w:150,h:103,base:10}
+ fly:{img:'./static/qantas_jet_travelling.png',w:150,h:103,base:10},
+ f35:{img:'./static/GlobalEdition/fx/f35_travelling.png',w:160,h:104,base:-33} /* the Lockheed photo, sky keyed out, mirrored nose-right (the nose dips 33 degrees) */
 };
-export function projFx(kind,fromId,toId){
+/* opts: {delay, dur} in ms, so a barrage can stagger its launches inside one sync (defaults: at once, 1.1s) */
+export function projFx(kind,fromId,toId,opts){
  if(Net.role!=='host'||!S)return false;
  const d=PROJ_DEFS[kind],a=NMAP[fromId],b=NMAP[toId];
  if(!d||!a||!b||fromId===toId)return false;
- S.fx.push({id:++fxSeq,proj:1,img:d.img,base:d.base,w:d.w,h:d.h,x0:a.x,y0:a.y-40,x1:b.x,y1:b.y-40,x:a.x,y:a.y-40});
- if(S.fx.length>40)S.fx.shift();
+ const e={id:++fxSeq,proj:1,img:d.img,base:d.base,w:d.w,h:d.h,x0:a.x,y0:a.y-40,x1:b.x,y1:b.y-40,x:a.x,y:a.y-40};
+ if(opts&&opts.delay)e.dl=Math.round(opts.delay);if(opts&&opts.dur)e.du=Math.round(opts.dur);
+ S.fx.push(e);
+ if(S.fx.length>FX_CAP)S.fx.shift();
  return true;
 }
 /* 🌍 The table watches the launch: the host holds the turn open for the flight
@@ -1380,6 +1386,30 @@ export function reworkBlocked(pi,kind){
 function oilStanding(){return OIL_ALL.filter(id=>NMAP[id]&&!(S.rubble&&S.rubble[id]))}
 const byPay=(a,b)=>(NMAP[b].income-NMAP[a].income)||(NMAP[b].cost-NMAP[a].cost)||(a<b?-1:1);
 /* the split LIBERATE OIL would make right now: mine (sold to the market), taken (rival oil that comes to me), freed (rival oil that goes unowned) */
+/* 🛢️ LIBERATE OIL on screen — bigger than BONDMAGEDDON: missiles from DONALD TRUMP and BIG YAHU rain on every oil field in the world,
+   then LOCKHEED MARTIN scrambles F-35s that sweep the fields and fly the flag over the rest of the map. Launches are staggered inside one
+   sync; the host holds the turn until the last one lands, then every oil field takes a hit. */
+export const LIBERATE_FLIGHT_MS=1600;
+export async function liberateBarrage(pi){
+ const oil=oilStanding(),src=['trump','w_bigyahu'].filter(id=>NMAP[id]),jet=NMAP.w_lockheed?'w_lockheed':null;
+ if(!oil.length)return;
+ const ny=NMAP.trump,yh=NMAP.w_bigyahu,lm=NMAP.w_lockheed;
+ if(ny)fx(ny.x,ny.y-64,'🇺🇸 FREEDOM','#7fb2ff',true);
+ if(yh)fx(yh.x,yh.y-64,'🚀 LAUNCH','#f5c542',true);
+ let n=0,last=0;
+ /* wave 1: every oil field gets a missile from each launcher */
+ oil.forEach((id,i)=>src.forEach((s,k)=>{const dl=i*110+k*55;if(projFx('missile',s,id,{delay:dl,dur:LIBERATE_FLIGHT_MS}))n++;last=Math.max(last,dl)}));
+ if(jet){
+  if(lm)fx(lm.x,lm.y-64,'✈️ SCRAMBLE THE F-35s','#9ad7ff',true);
+  /* wave 2: the F-35s sweep every field, then fan out across the map */
+  const t0=last+500,far=shuffle(NODES.filter(x=>!oil.includes(x.id)&&x.id!==jet&&x.id.startsWith('w_')).map(x=>x.id)).slice(0,8);
+  oil.concat(far).forEach((id,i)=>{const dl=t0+i*90;if(projFx('f35',jet,id,{delay:dl,dur:LIBERATE_FLIGHT_MS+300}))n++;last=Math.max(last,dl+300)});
+ }
+ if(!n)return;
+ sync();await projPause(last+LIBERATE_FLIGHT_MS+200);
+ oil.forEach(id=>{const x=NMAP[id];fx(x.x,x.y-50,'💥','#ff6b5e',true)});
+ sync();
+}
 export function liberatePlan(pi){
  const oil=oilStanding(),mine=oil.filter(id=>S.owner[id]===pi);
  const theirs=oil.filter(id=>S.owner[id]!=null&&S.owner[id]!==pi&&!hiddenFrom(pi,id)&&!isPillarShieldedNode(id)).sort(byPay);
@@ -1642,6 +1672,7 @@ const WORLD_REWORKS={
   const why=reworkBlocked(pi,'liberate');if(why){sysTo(pi,why);return}
   const p=S.players[pi],pl=liberatePlan(pi),nm=id=>nodeName(NMAP[id]).join(' ');
   gMark('liberate');
+  await liberateBarrage(pi);
   let cash=0;pl.mine.forEach(id=>{cash+=NMAP[id].cost;handOver(id,null)});
   if(cash){p.money+=cash;fxAt(pi,'+$'+cash,'#7fe08d')}
   const from={};pl.taken.forEach(id=>{const o=S.owner[id];(from[o]||(from[o]=[])).push(nm(id));handOver(id,pi);S.seizeCount[id]=(S.seizeCount[id]||0)+1});

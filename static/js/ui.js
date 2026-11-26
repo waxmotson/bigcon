@@ -663,7 +663,7 @@ export function renderBoard(){
    const anim=document.createElementNS('http://www.w3.org/2000/svg','animateTransform');
    anim.setAttribute('attributeName','transform');anim.setAttribute('type','translate');
    anim.setAttribute('from',f.x0+' '+f.y0);anim.setAttribute('to',f.x1+' '+f.y1);
-   anim.setAttribute('dur','1.1s');anim.setAttribute('begin','indefinite');anim.setAttribute('fill','freeze');
+   anim.setAttribute('dur',((f.du||1100)/1000)+'s');anim.setAttribute('begin','indefinite');anim.setAttribute('fill','freeze');
    mover.appendChild(anim);
    const rig=document.createElementNS('http://www.w3.org/2000/svg','g');
    rig.setAttribute('transform',projRig(f));
@@ -672,8 +672,10 @@ export function renderBoard(){
    img.setAttribute('x',-f.w/2);img.setAttribute('y',-f.h/2);
    img.setAttribute('width',f.w);img.setAttribute('height',f.h);
    rig.appendChild(img);mover.appendChild(rig);outer.appendChild(mover);fxg.appendChild(outer);
-   setTimeout(()=>{try{anim.beginElement()}catch(e){}},30);
-   setTimeout(()=>{try{outer.remove()}catch(e){}},1600);
+   /* a staggered barrage: hidden until its own launch, then gone a beat after landing */
+   const dl=f.dl||0;if(dl)outer.style.visibility='hidden';if(dl||f.du){outer.style.animationDelay=dl+'ms';outer.style.animationDuration=((f.du||1100)+300)+'ms'}
+   setTimeout(()=>{outer.style.visibility='';try{anim.beginElement()}catch(e){}},30+dl);
+   setTimeout(()=>{try{outer.remove()}catch(e){}},dl+(f.du||1100)+500);
    return;
   }
   const outer=document.createElementNS('http://www.w3.org/2000/svg','g');

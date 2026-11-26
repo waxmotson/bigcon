@@ -104,3 +104,23 @@ test('HONEYPOT falls back to a rival’s Chinese node when the unowned ones run 
   assert.equal(picks[0], 'w_pboc');
   assert.equal(S.owner[picks[1]], 1, 'the second comes from the rival');
 });
+
+test('LIBERATE OIL on screen: missiles from Trump and Big Yahu on every oil field, then F-35s out of Lockheed, staggered', async t => {
+  const { e, S } = await game(t);
+  S.owner = { w_bigyahu: 0, trump: 0, w_lockheed: 0, w_aramco: 1 };
+  S.fx = [];
+  const seen = [];
+  const push = S.fx.push.bind(S.fx);
+  S.fx.push = (...a) => { seen.push(...a); return push(...a); };
+  await run(e, 0, { act: 'liberate' });
+  assert.ok(S.wGame.liberate);
+  const N = e.acc.NMAP, at = id => f => f.x0 === N[id].x && f.y0 === N[id].y - 40;
+  const proj = seen.filter(f => f.proj);
+  const missiles = proj.filter(f => f.img.includes('missile')), jets = proj.filter(f => f.img.includes('f35'));
+  assert.ok(missiles.some(at('trump')) && missiles.some(at('w_bigyahu')), 'both launchers fire');
+  assert.ok(missiles.length >= 2 * 10, 'every oil field takes a missile from each: ' + missiles.length);
+  assert.ok(jets.length >= 10 && jets.every(at('w_lockheed')), 'the F-35s scramble from Lockheed: ' + jets.length);
+  assert.ok(proj.length > 4, 'a bigger show than BONDMAGEDDON\'s four');
+  assert.ok(new Set(proj.map(f => f.dl || 0)).size > 5, 'launches are staggered');
+  assert.ok(seen.some(f => !f.proj && f.t === '💥'), 'the fields take their hits');
+});

@@ -926,9 +926,11 @@ test('GD-24 projectile fx: synced payload, nose-first rig, mirrored leftward fli
   /* The payload rides the synced state so every mirror animates the same flight. */
   const pub = JSON.parse(JSON.stringify(e.f.pubState(true)));
   assert.ok(pub.fx.some(f => f.proj === 1), 'the flight rides pubState');
-  /* The fx ring buffer still caps at 40. */
-  for (let i = 0; i < 50; i++) e.f.projFx('missile', 'geo_missile', 'geo_pyoncity');
-  assert.ok(S.fx.length <= 40, 'the fx cap holds under projectile spam');
+  /* The fx ring buffer still caps (at FX_CAP: room for a LIBERATE OIL barrage, no more). */
+  const cap = e.ctx.FX_CAP;
+  assert.ok(cap >= 40 && cap <= 120);
+  for (let i = 0; i < cap + 20; i++) e.f.projFx('missile', 'geo_missile', 'geo_pyoncity');
+  assert.ok(S.fx.length <= cap, 'the fx cap holds under projectile spam');
 });
 
 /* ================= GD-25 — the flight plays before the popup ================= */
