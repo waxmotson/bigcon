@@ -1,6 +1,6 @@
 /*
  * GLOBAL EDITION: DEUTSCHE BAHN and UBS.
- * DELAYS (Deutsche Bahn, $3, your action, once per turn): a rival can only move 1 space for their next two turns.
+ * DELAYS (Deutsche Bahn, $3, your action, once per turn): a rival moves 2 steps fewer on their next turn only.
  * UBS (Credit Suisse, rebuilt): $6 income, +$3 per BANK, -1 Cortisol a turn, a banking-file exemption, and the once-per-game AT1 WIPE-OUT.
  * Also: the deleted exhibits are really gone from the board and from every list.
  */
@@ -47,7 +47,7 @@ test('the deleted exhibits are gone from the board and every id list; Deutsche B
   assert.match(e.acc.NMAP.w_burj.sp, /NEOM/, 'Burj Khalifa found a new partner');
 });
 
-test('DELAYS: $3, your action, once per turn; the rival moves 1 space on each of their next two turns, then recovers', async t => {
+test('DELAYS: $3, your action, once per turn; the rival moves 2 steps fewer on their next turn only, then recovers', async t => {
   const { e, S, P } = await game(t);
   S.owner = { w_db: 0 };
   /* only the owner, only on their action, only with the cash */
@@ -63,28 +63,22 @@ test('DELAYS: $3, your action, once per turn; the rival moves 1 space on each of
   act(S, 0); P[0].money = 50;
   assert.equal(e.ctx.reworkBlocked(0, 'delays'), '');
   await run(e, 0, { act: 'delays', target: 1 });
-  /* the ability ends the owner's turn, so the delayed seat's FIRST delayed turn has already begun: one step, one more to come */
-  assert.ok(S.log.some(l => l.includes('DELAYS') && l.includes('only move 1 space')), 'logged');
+  /* the ability ends the owner's turn, so the delayed seat's one delayed turn has already begun */
+  assert.ok(S.log.some(l => l.includes('DELAYS') && l.includes('2 steps fewer')), 'logged');
   assert.equal(S.cur, 1);
   assert.equal(S.delayedNow, true);
-  assert.equal(S.steps, 1, 'one step on the first delayed turn');
-  assert.equal(S.delays[1], 1, 'one delayed turn still to come');
+  assert.ok(S.steps <= 2 && S.steps >= 0, '2 steps fewer: ' + S.steps);
+  assert.equal(S.delays[1], undefined, 'a single delayed turn');
   assert.ok(S.log.some(l => l.includes('DELAYED') && l.includes(P[1].name)), 'the delay is in the log');
-  assert.equal(e.ctx.delayTargets(0).includes(1), false, 'cannot be stacked');
+  assert.equal(e.ctx.delayTargets(0).includes(1), true, 'the delay was spent on that one turn');
   assert.equal(e.ctx.delayTargets(0).includes(2), true);
   /* no favors, no slipstream while delayed */
   {
     const intel = P[1].intel; S.phase = 'move';
     await run(e, 1, { act: 'favor' });
-    assert.equal(S.steps, 1, 'a favor cannot buy extra steps while delayed');
+    assert.ok(S.steps <= 2, 'a favor cannot buy extra steps while delayed');
     assert.equal(P[1].intel, intel);
   }
-  /* the second delayed turn */
-  S.cur = 1; S.phase = 'move'; S.mode = null; S.nTurn = {}; S.delayedNow = false;
-  await e.f.startTurn(); await settle();
-  assert.equal(S.steps, 1, 'one step again');
-  assert.equal(S.delayedNow, true);
-  assert.equal(S.delays[1], undefined, 'the delay has run out');
   /* the third turn is free again */
   S.cur = 1; S.phase = 'move'; S.mode = null; S.delayedNow = false;
   await e.f.startTurn(); await settle();
@@ -92,7 +86,8 @@ test('DELAYS: $3, your action, once per turn; the rival moves 1 space on each of
   assert.equal(S.delayedNow, false);
   /* the owner may delay them again, but only once per turn */
   act(S, 0); P[0].money = 50; await run(e, 0, { act: 'delays', target: 1 });
-  assert.equal(S.delays[1], 1, 'delayed again (the first of the two turns has begun)');
+  assert.equal(S.delays[1], undefined, 'delayed again (its one turn has begun)');
+  assert.equal(S.delayedNow, true);
   S.cur = 0; S.phase = 'action'; S.mode = null; S.delays = {}; S.nTurn = { delays: 1 };
   assert.match(e.ctx.reworkBlocked(0, 'delays'), /already delayed someone this turn/);
 });

@@ -12,7 +12,7 @@ import { hooks, setHooks } from './hooks.js';
 import { S, setS, Net, pubState } from './state.js';
 import { clampGoal, esc, shuffle } from './util.js';
 import { NODES, NMAP, EDGES, ADJ, GEO_NODE_IDS, OIL_IDS, COUNTRY, MOODS, PCOLORS, QUIK_SLOTS, charMeta, charSrc, rebuildWorld, setEdges, rebuildAdj } from './data.js';
-import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState, worldMapMetrics } from './boards.js';
+import { generateRandomBoard, generateRingworldBoard, generateMegaRingBoard, generateWorldMapBoard, applyLayoutFromState, worldMapMetrics, nodeBox } from './boards.js';
 import { regionOf, REGION_NAMES } from './world.js';
 import { WORLD_NODE_IDS, WORLD_START_RUBBLE, WORLD_CHOKEPOINTS, OIL_ALL, worldSynergy, worldStartFx, worldEventPays, WATER_NODES, TAX_HAVENS, TOURISM_NODES, IRON_NODES, SANCTIONED_NODES, COAL_CHAIN, AGRI_NODES, US_NODES, CHINA_NODES, LIBERATORS, TRADE_BLOCS, BLOC_STEP, BLOC_MAX, BLOC_FREE, AUSNZ, PENINSULA } from './world.js';
 export { hooks, setHooks };
@@ -411,12 +411,12 @@ export async function startTurn(){
  const rail=(S.owner.train===S.cur||S.owner.bullet===S.cur)?1:0;
  S.steps=underCaution?1:3+(S.owner.coal===S.cur?1:0)+rail+(S.owner.asics===S.cur?1:0);
  if(windowOn('lockdown')){S.steps=Math.min(S.steps,1);log('😷 LOCKDOWN: everyone moves at most 1 step this round.')}
- /* 🚆 DEUTSCHE BAHN — DELAYS: a delayed seat moves at most 1 space, for its next two turns */
+ /* 🚆 DEUTSCHE BAHN — DELAYS: a delayed seat moves 2 steps fewer (minimum 0) on its next turn only */
  S.delayedNow=false;
  if(S.dlcWorld&&S.delays&&S.delays[S.cur]>0){
-  S.delayedNow=true;S.steps=Math.min(S.steps,1);
+  S.delayedNow=true;S.steps=Math.max(0,S.steps-2);
   const left=--S.delays[S.cur];if(left<=0)delete S.delays[S.cur];
-  log('🚆 DELAYED: '+pname(S.cur)+' can only move 1 space this turn (the 17:42 is running late)'+(left>0?' — '+left+' more delayed turn'+(left>1?'s':'')+' to go.':' — the last delayed turn.'));
+  log('🚆 DELAYED: '+pname(S.cur)+' moves 2 steps fewer this turn ('+S.steps+' left; the 17:42 is running late).');
  }
  p.raided=0;
  sysTo(S.cur,'👁️ YOUR TURN, '+p.name.toUpperCase());
@@ -483,6 +483,11 @@ export function botView(pi){
  out.acccExempt=(seat,ind)=>acccExempt(seat,ind);
  out.svalbardFree=seat=>svalbardFreeRebuild(seat);
  out.missingTypes=seat=>missingTypes(seat);
+ /* the Global Edition gates the bots reuse: '' when this seat may use the ability right now */
+ out.worldBlocked=kind=>worldBlocked(pi,kind);
+ out.reworkBlocked=kind=>reworkBlocked(pi,kind);
+ out.liberatePlan=()=>liberatePlan(pi);
+ out.tariffDuty=seat=>tariffDuty(seat);
  return out;
 }
 export async function runBotTurn(pi){
@@ -565,7 +570,7 @@ export async function applyIntent(pi,m){
    if(!(ADJ[p.pos]||[]).includes(m.id)){sysTo(pi,'You can only move along the red threads.');return}
    await doMove(pi,m.id);
   }
-  else if((act==='favor'||act==='slip')&&S.phase==='move'&&S.delayedNow){sysTo(pi,'🚆 You are DELAYED — you can only move 1 space this turn, no favors or slipstreams.')}
+  else if((act==='favor'||act==='slip')&&S.phase==='move'&&S.delayedNow){sysTo(pi,'🚆 You are DELAYED — 2 steps fewer this turn, no favors or slipstreams.')}
   else if(act==='favor'&&S.phase==='move'&&!S.extraStep&&p.intel>=1){
    p.intel--;S.extraStep=true;S.steps++;
    log('🤝 '+pname(pi)+' cashes a favor — +1 step this turn.');
@@ -1032,7 +1037,6 @@ const WORLD_ACTS={
    await finishNodeAbility(pi);return;
   }
   if(!hasEdge(a,id)){S.edgeA=id;sync();return} /* not a neighbour: start again from here */
-  if(!cutKeepsBoardConnected(a,id)){sysTo(pi,'That cut would strand part of the board from Quikstop — pick another edge.');return}
   const chain=k==='chainsaw';
   commitEdges(EDGES.filter(e=>!((e[0]===a&&e[1]===id)||(e[0]===id&&e[1]===a))));
   S.wGame=S.wGame||{};S.wGame[chain?'milei':'brexit']=1;S.mode=null;S.edgeA=null;
@@ -1233,7 +1237,7 @@ const CLASSIC_ACTS={
    · AREA 51 · THE WALL STREET BELL · THE TURKISH LIRA · THE BAHT 1997 · SRI LANKA · THE PYRAMIDS · GREENLAND.
    Once-per-game flags live in S.wGame, once-per-turn flags in S.nTurn (cleared at every turn start); both ride the synced state.
    The new actives are added to the handler tables below (CLASSIC_ACTS / WORLD_ACTS), never as new `act===` branches. */
-export const NAB_FEE=2,SERVO_PER=2,LAUNDER_CASH=3,BREACH_FINE_PCT=15,BELL_COST=2,DELAYS_COST=3,DELAYS_TURNS=2,AT1_PER_NODE=2,ESCAPE_CORTISOL=5,ABDUCT_INTEL=3,ABDUCT_MONEY=4,ABDUCT_RUBBLE=0.5,ZIM_PCT=20,LIRA_PCT=20,LIRA_FLOOR=30;
+export const NAB_FEE=2,SERVO_PER=2,LAUNDER_CASH=3,BREACH_FINE_PCT=15,BELL_COST=2,DELAYS_COST=3,DELAYS_TURNS=1,AT1_PER_NODE=2,ESCAPE_CORTISOL=5,ABDUCT_INTEL=3,ABDUCT_MONEY=4,ABDUCT_RUBBLE=0.5,ZIM_PCT=20,LIRA_PCT=20,LIRA_FLOOR=30;
 const gUsed=k=>!!(S&&S.wGame&&S.wGame[k]),gMark=k=>{(S.wGame||(S.wGame={}))[k]=1};
 const tUsed=k=>!!(S&&S.nTurn&&S.nTurn[k]),tMark=k=>{(S.nTurn||(S.nTurn={}))[k]=1};
 export function inflationExtra(){return S&&S.inflation>0?S.inflation|0:0}
@@ -1579,7 +1583,7 @@ const CLASSIC_REWORKS={
 };
 Object.assign(CLASSIC_ACTS,CLASSIC_REWORKS);
 const WORLD_REWORKS={
- /* 🚆 DEUTSCHE BAHN — DELAYS ($3, your action, once per turn): a rival moves at most 1 space for their next two turns */
+ /* 🚆 DEUTSCHE BAHN — DELAYS ($3, your action, once per turn): a rival moves 2 steps fewer on their next turn */
  async delays(pi,m){
   if(S.mode)return;
   const why=reworkBlocked(pi,'delays');if(why){sysTo(pi,why);return}
@@ -1588,7 +1592,7 @@ const WORLD_REWORKS={
   S.players[pi].money-=DELAYS_COST;tMark('delays');fxAt(pi,'🚆 −$'+DELAYS_COST,'#f5c542');
   (S.delays||(S.delays={}))[m.target]=DELAYS_TURNS;
   const d=NMAP.w_db;if(d)fx(d.x,d.y-64,'🚆 DELAYED','#f5c542');
-  log('🚆 DELAYS — '+pname(pi)+' (DEUTSCHE BAHN) pays $'+DELAYS_COST+': '+pname(m.target)+' can only move 1 space for their next '+DELAYS_TURNS+' turns. We apologise for the inconvenience.');
+  log('🚆 DELAYS — '+pname(pi)+' (DEUTSCHE BAHN) pays $'+DELAYS_COST+': '+pname(m.target)+' moves 2 steps fewer on their next turn. We apologise for the inconvenience.');
   sync();
   await finishNodeAbility(pi);
  },
@@ -1723,16 +1727,19 @@ const WORLD_REWORKS={
   const why=reworkBlocked(pi,'liberate');if(why){sysTo(pi,why);return}
   const p=S.players[pi],pl=liberatePlan(pi),nm=id=>nodeName(NMAP[id]).join(' ');
   gMark('liberate');
+  const seized=oilStanding().filter(id=>S.owner[id]==null); /* the oil nobody held when the missiles flew */
   await liberateBarrage(pi);
   let cash=0;pl.mine.forEach(id=>{cash+=NMAP[id].cost;handOver(id,null)});
   if(cash){p.money+=cash;fxAt(pi,'+$'+cash,'#7fe08d')}
   const from={};pl.taken.forEach(id=>{const o=S.owner[id];(from[o]||(from[o]=[])).push(nm(id));handOver(id,pi);S.seizeCount[id]=(S.seizeCount[id]||0)+1});
   pl.freed.forEach(id=>handOver(id,null));
+  seized.forEach(id=>{handOver(id,pi);S.seizeCount[id]=(S.seizeCount[id]||0)+1});
   const b=NMAP.w_bigyahu;if(b)fx(b.x,b.y-64,'🛢️ LIBERATED','#f5c542');
   log('🛢️ LIBERATE OIL — '+pname(pi)+' (BIG YAHU, DONALD TRUMP and LOCKHEED MARTIN) brings freedom to the oil fields. '
    +(pl.mine.length?pname(pi)+' divests '+pl.mine.map(nm).join(', ')+' to the market for $'+cash+'. ':'')
    +(pl.taken.length?'Liberated into '+pname(pi)+'’s hands: '+Object.keys(from).map(o=>from[o].join(', ')+' (from '+pname(+o)+')').join('; ')+'. ':'')
-   +(pl.freed.length?'Set free (unowned): '+pl.freed.map(nm).join(', ')+'. ':'')+'(Once per game.)');
+   +(pl.freed.length?'Set free (unowned): '+pl.freed.map(nm).join(', ')+'. ':'')
+   +(seized.length?'🛢️ '+pname(pi)+' SEIZES every unowned oil asset: '+seized.map(nm).join(', ')+'. ':'')+'(Once per game.)');
   acccReconcile();sync();
   if(await winCheck())return;
   await finishNodeAbility(pi);
@@ -2096,7 +2103,30 @@ export async function resolveEvent(card){
   if(cnt)gain(h,cs(2)*cnt,'the Strait of Hormuz taxes '+cnt+' rival oil position'+(cnt>1?'s':''));
  }
 }
-export function nextTurn(){if(!S||S.over)return;S.cur=(S.cur+1)%S.players.length;if(S.cur===0)S.turn++;Promise.resolve(startTurn()).catch(e=>console.error(e))}
+/* 🛳️ THE CRUISE SHIP physically sails: each new round it docks beside a different WATER node (position and threads rewritten in S, so guests and reloads see it) */
+export function sailCruise(){
+ if(!S||!S.dlcWorld||S.layoutKind!=='worldmap'||!NMAP.w_cruise)return null;
+ const c=NMAP.w_cruise,here=EDGES.filter(e=>e[0]==='w_cruise'||e[1]==='w_cruise').map(e=>e[0]==='w_cruise'?e[1]:e[0]);
+ let ports=[...WATER_NODES].filter(id=>id!=='w_cruise'&&NMAP[id]&&!here.includes(id));
+ if(!ports.length)ports=[...WATER_NODES].filter(id=>id!=='w_cruise'&&NMAP[id]);
+ if(!ports.length)return null;
+ const port=ports[Math.floor(Math.random()*ports.length)],pn=NMAP[port],m=worldMapMetrics();
+ const [cw,ch]=nodeBox(c);
+ const free=(x,y)=>x>=110&&x<=m.w-110&&y>=110&&y<=m.h-110&&NODES.every(n=>n.id==='w_cruise'||n.id===port||(()=>{const [w,h]=nodeBox(n);return Math.abs(n.x-x)>=(w+cw)/2+16||Math.abs(n.y-y)>=(h+ch)/2+16})());
+ let best=null;
+ for(let t=0;t<48&&!best;t++){const ang=Math.random()*Math.PI*2,d=200+Math.random()*100,x=Math.round(pn.x+Math.cos(ang)*d),y=Math.round(pn.y+Math.sin(ang)*d);if(free(x,y)&&Math.hypot(x-pn.x,y-pn.y)>=0)best={x,y}}
+ if(!best){const x=Math.max(110,Math.min(m.w-110,Math.round(pn.x+230))),y=Math.max(110,Math.min(m.h-110,Math.round(pn.y+(pn.y>m.h/2?-1:1)*120)));best={x,y}}
+ c.x=best.x;c.y=best.y;
+ if(!S.boardLayout)S.boardLayout=NODES.map(n=>({id:n.id,x:n.x,y:n.y,rot:n.rot||0}));
+ const row=S.boardLayout.find(p=>p.id==='w_cruise');if(row){row.x=c.x;row.y=c.y}else S.boardLayout.push({id:'w_cruise',x:c.x,y:c.y,rot:c.rot||0});
+ const near=NODES.filter(n=>n.id!=='w_cruise'&&n.id!==port).sort((a,b)=>Math.hypot(a.x-c.x,a.y-c.y)-Math.hypot(b.x-c.x,b.y-c.y))[0];
+ const rest=EDGES.filter(e=>e[0]!=='w_cruise'&&e[1]!=='w_cruise');
+ rest.push(['w_cruise',port]);if(near)rest.push(['w_cruise',near.id]);
+ commitEdges(rest);
+ log('🛳️ THE CRUISE SHIP sails on to '+nodeName(pn).join(' ')+'.');
+ return port;
+}
+export function nextTurn(){if(!S||S.over)return;S.cur=(S.cur+1)%S.players.length;if(S.cur===0){S.turn++;try{sailCruise()}catch(e){console.error(e)}}Promise.resolve(startTurn()).catch(e=>console.error(e))}
 export function goalAmount(){return clampGoal(S&&S.goal?S.goal:Net.goal)}
 /* Event-card dollars are written for the default $100 table and scale with the
    host's goal, so the deck matters as much at $20 as at $999 (never below $1). */

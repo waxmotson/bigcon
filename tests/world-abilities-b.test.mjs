@@ -87,24 +87,21 @@ test('Milei: pay $3, cut an edge for good, +$4, once per game, state survives a 
   assert.equal(e.ctx.EDGES.length, n2);
 });
 
-test('Milei: needs $3, and a cut that would strand part of the board from Quikstop is refused', async t => {
+test('Milei: needs $3, and ANY edge can be cut now, even a bridge that strands nodes from Quikstop', async t => {
   const { e, S } = await worldGame(t);
   S.owner = { w_milei: 0 };
   armAction(S, 0); S.players[0].money = 2;
   await e.f.applyIntent(0, { act: 'worldmode', kind: 'chainsaw' });
   assert.equal(S.mode, null, 'cannot afford it');
   const { bridge } = findEdges(e);
-  if (!bridge) return; /* a board without any bridge cannot test the refusal */
+  if (!bridge) return; /* a board without any bridge cannot test this */
   S.players[0].money = 10;
-  const before = JSON.stringify(e.ctx.EDGES);
   await e.f.applyIntent(0, { act: 'worldmode', kind: 'chainsaw' });
   await e.f.applyIntent(0, { act: 'edgepick', id: bridge[0] });
   await e.f.applyIntent(0, { act: 'edgepick', id: bridge[1] });
-  assert.equal(JSON.stringify(e.ctx.EDGES), before, 'the bridge edge is not cut');
-  assert.equal(S.mode, 'chainsaw', 'still choosing');
-  assert.ok(!S.wGame || !S.wGame.milei, 'the chainsaw was not spent');
-  assert.equal(S.players[0].money, 10);
-  assert.ok(connected(e));
+  assert.ok(!edgeKeys(e).has(key(bridge)), 'the bridge edge is cut');
+  assert.ok(S.wGame.milei, 'the chainsaw was spent');
+  assert.ok(!connected(e), 'the board is now in pieces');
 });
 
 test('Milei: a non-adjacent second click just restarts the pick, and clicking the first node again clears it', async t => {

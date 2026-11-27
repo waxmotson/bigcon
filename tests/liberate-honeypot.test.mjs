@@ -4,6 +4,7 @@
  * half of the rivals' (rounded up, best-paying first) go to the liberator and the rest go unowned.
  * HONEYPOT (Jensen Huang, once per game): two free Chinese nodes; no US node pays for 2 rounds; no buying in South-East Asia or the USA for 2 turns.
  */
+import { OIL_ALL } from '../static/js/world.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadEngine, makeGame } from './helpers/harness.mjs';
@@ -123,4 +124,18 @@ test('LIBERATE OIL on screen: missiles from Trump and Big Yahu on every oil fiel
   assert.ok(proj.length > 4, 'a bigger show than BONDMAGEDDON\'s four');
   assert.ok(new Set(proj.map(f => f.dl || 0)).size > 5, 'launches are staggered');
   assert.ok(seen.some(f => !f.proj && f.t === '💥'), 'the fields take their hits');
+});
+
+test('LIBERATE OIL also SEIZES every oil asset nobody owned', async t => {
+  const { e, S } = await game(t);
+  S.owner = { w_bigyahu: 0, trump: 0, w_lockheed: 0, w_aramco: 1 };
+  const free = OIL_ALL.filter(id => e.acc.NMAP[id] && id !== 'w_aramco');
+  assert.ok(free.length > 3);
+  S.rubble = { [free[0]]: true };
+  await run(e, 0, { act: 'liberate' });
+  assert.ok(S.wGame.liberate);
+  for (const id of free.slice(1)) assert.equal(S.owner[id], 0, id + ' was unowned and is seized');
+  assert.notEqual(S.owner[free[0]], 0, 'rubble is not seized');
+  assert.ok(S.log.some(l => l.includes('SEIZES every unowned oil asset')));
+  assert.match(e.acc.NMAP.w_bigyahu.sp, /SEIZED/);
 });

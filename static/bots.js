@@ -830,6 +830,12 @@ export const BigConBots = (function () {
     }
     /* intel cover spends armory intel — price it */
     if (p.money < cost) val -= (cost - p.money) * INTEL + 2;
+    /* THE TARIFF WALL: a node of the walled type owes its wall owner a $1 import duty every turn (up to $4; a tariff war doubles it) */
+    if (v.dlcWorld && v.tariffType === n.type && v.owner['w_tariffwall'] != null && v.owner['w_tariffwall'] !== seat && !v.rubble['w_tariffwall']) {
+      const held = typeCount(v, seat, n.type);
+      const dutyStep = Math.min(4, held + 1) - Math.min(4, held);
+      val -= dutyStep * (v.tariffWarUntil > v.turn ? 2 : 1) * Math.min(horizon(v), 8) * W.money;
+    }
     /* the dossier prelude: taking at list beats paying the doubling */
     if (isTake && !v.dossier && !v.flatSeize(nid) && p.intel >= 3) {
       const saved = cost - base;
@@ -845,7 +851,7 @@ export const BigConBots = (function () {
      the cheapest one it can pay for AND still bank the goal on, and seizes it the
      moment it arrives. If it cannot afford that yet but is close, it hoards:
      nothing but cash-making plays until the money is there. */
-  const KILL_OK = { laylow: 1, sell: 1, push: 1, jog: 1, beach: 1, venicecool: 1, tariff: 1 }; /* the tariff wall is free and keeps the turn going */
+  const KILL_OK = { laylow: 1, sell: 1, push: 1, jog: 1, beach: 1, venicecool: 1, tariff: 1, swisswithdraw: 1, srilankadefault: 1, silkroad: 1 }; /* a road only shortens the walk to the kill */ /* the tariff wall is free and keeps the turn going */
   /* what seizing nid would cost this seat, in the engine's own terms (slipstream
      comes off the list price BEFORE any takeover doubling; the Dossier drops a
      takeover back to list). null when it cannot be taken at all. */
@@ -914,7 +920,7 @@ export const BigConBots = (function () {
     if (budgets.slip) variants.push({ budget: budgets.steps + 2, useFavor: false, useSlip: true, intel: 0, money: 2 });
     if (budgets.favor && budgets.slip && budgets.steps < 8) variants.push({ budget: budgets.steps + 3, useFavor: true, useSlip: true, intel: 1, money: 2 });
     let best = null;
-    const consider = (nid, rec, variant, flyTo, travel) => {
+    const consider = (nid, rec, variant, flyTo, travel, launch) => {
       for (const dossier of [false, true]) {
         const pr = killPrice(v, pi, nid, { slip: !!(variant && variant.useSlip), dossier });
         if (!pr) continue;
@@ -924,7 +930,7 @@ export const BigConBots = (function () {
         if (me.money - spend < kill.goal) continue;
         if (me.money - travel < pr.cost) continue; /* the toll road must not strand it short of the price */
         const score = -spend * 10 - (rec ? rec.hops : 0) - (dossier ? 3 : 0);
-        if (!best || score > best.score) best = { score, nid, rec, variant, flyTo };
+        if (!best || score > best.score) best = { score, nid, rec, variant, flyTo, launch: !!launch };
       }
     };
     for (const variant of variants) {
@@ -940,9 +946,15 @@ export const BigConBots = (function () {
         if (nid === me.pos || !passable(v, nid) || !flyable(v, nid)) continue;
         consider(nid, null, null, nid, 3);
       }
+    } else if (v.dlcWorld && v.owner['w_baikonur'] === pi && wFree(v, 'launch') && me.money >= 3) {
+      /* no jet: the cosmodrome lands the winning seizure anywhere, once */
+      for (const nid of kill.targets) {
+        if (nid === me.pos || !passable(v, nid)) continue;
+        consider(nid, null, null, nid, 3, true);
+      }
     }
     if (!best) return null;
-    return { val: 1e6 + best.score, rec: best.rec, flyTo: best.flyTo, variant: best.variant || { useFavor: false, useSlip: false } };
+    return { val: 1e6 + best.score, rec: best.rec, flyTo: best.flyTo, launch: best.launch, variant: best.variant || { useFavor: false, useSlip: false } };
   }
   /* Saving but not there yet: close the distance to the nearest completing node, tolls permitting. */
   function killApproach(v, pi, kill) {
@@ -1039,7 +1051,13 @@ export const BigConBots = (function () {
       maybeChat(pi, view, api);
       if (view.phase === 'move') {
         const best = B.mode === 'random' ? randomMovement(view, pi) : pickMovement(view, pi);
-        if (best && best.flyTo) {
+        if (best && best.flyTo && best.launch) {
+          /* BAIKONUR: once per game, $3, land anywhere */
+          await tryIntent(api, pi, { act: 'worldmode', kind: 'launch' });
+          const lv = api.viewOf(pi);
+          if (lv && lv.mode === 'launch') await tryIntent(api, pi, { act: 'launch', id: best.flyTo });
+          await dropMode(api, pi, 'launch');
+        } else if (best && best.flyTo) {
           await tryIntent(api, pi, { act: 'flymode' });
           await tryIntent(api, pi, { act: 'fly', id: best.flyTo });
         } else if (best && best.rec) {
@@ -1146,6 +1164,16 @@ export const BigConBots = (function () {
         if (!cand) continue;
         const val = cand.val - 3 * W.money - 1.5;
         if (val > best.val + 2) best = { val: val - 2, rec: null, flyTo: n.id, variant: null };
+      }
+    }
+    /* THE BAIKONUR COSMODROME: once per game, so it must beat the walk by a clear margin */
+    if (v.dlcWorld && v.owner['w_baikonur'] === pi && wFree(v, 'launch')) {
+      for (const n of v.nodes) {
+        if (n.id === v.players[pi].pos || !passable(v, n.id)) continue;
+        const cand = scoreStanding(v, pi, n.id);
+        if (!cand) continue;
+        const val = cand.val - 3 * W.money - 6;
+        if (val > best.val + 4) best = { val: val - 4, rec: null, flyTo: n.id, variant: null, launch: true };
       }
     }
     return best.val === -Infinity ? null : best;
@@ -1488,6 +1516,11 @@ export const BigConBots = (function () {
       if (h.needDossier) { if (!(refused && refused.dossier)) return { kind: 'dossier', val: 1e9, continuing: true }; }
       else if (!(refused && refused.seize)) return { kind: 'seize', nid: h.nid, cost: h.cost, base: h.base, isTake: h.isTake, val: 1e9 };
     }
+    /* BANK OF JAPAN: a full set and the goal within a $50 loan's reach: borrow it, and the win check at the end of the turn pays out before Tokyo collects */
+    if (v.dlcWorld && v.owner['w_boj'] === pi && v.missingTypes(pi).length === 0 && me.money < (v.goal || 100)
+      && (v.goal || 100) - me.money <= 50 && wFree(v, 'carry') && !(refused && refused.carry)) {
+      return { kind: 'carry', n: Math.min(50, (v.goal || 100) - me.money + 2), val: 1e9 };
+    }
     /* ---- convergence pressure: the con has to END ----
        A game only finishes when a seat holds cash >= goal AND the full set of
        node types. So a game running long ramps hostility (+2%/round), a rival
@@ -1667,6 +1700,7 @@ export const BigConBots = (function () {
         if (miss.length && miss.indexOf(v.tariffType) < 0) list.push({ kind: 'tariff', type: miss[0], val: 40 + 20 * closeness(v, lead), continuing: true });
       }
     }
+    if (v.dlcWorld) worldPlays(v, pi, list, { leader, kill, sz, nearGoal });
     if (v.geo) {
       /* STAGE 5 DECLINE: the richest rival skips a whole income turn */
       if (v.owner['geo_stage5'] === pi && me.intel >= 2 && !v.geoUsed.stage5) {
@@ -1783,7 +1817,7 @@ export const BigConBots = (function () {
     }
     /* apply the character's temperament: hostility through urg, cash plays
        through cashRush (see the convergence block at the top) */
-    const ATTACK = { refer: 1, leak: 1, audit: 1, tweet: 1, roast: 1, targetpanic: 1, masspanic: 1, bondmageddon: 1, pressure: 1, stage5: 1, qantasdown: 1, oilcrash: 1, missile: 1, overtour: 1, divestmade: 1, blockade: 1, bailout: 1, delays: 1 };
+    const ATTACK = { refer: 1, leak: 1, audit: 1, tweet: 1, roast: 1, targetpanic: 1, masspanic: 1, bondmageddon: 1, pressure: 1, stage5: 1, qantasdown: 1, oilcrash: 1, missile: 1, overtour: 1, divestmade: 1, blockade: 1, bailout: 1, delays: 1, hold: 1, at1: 1, lira: 1 };
     for (const c of list) {
       if (ATTACK[c.kind]) c.val *= urg;
       else if (c.kind === 'bug') c.val *= 1 + (urg - 1) * 0.5;
@@ -1801,12 +1835,223 @@ export const BigConBots = (function () {
     }
     const open = refused ? list.filter(c => !refused[c.kind]) : list;
     /* a FREE play that keeps the turn going (the Tariff Wall, a free blockade) comes first: the main action still follows */
-    const freebie = open.find(c => (c.kind === 'tariff' || (c.kind === 'blockade' && c.free)) && c.val > 1);
+    const freebie = open.find(c => (c.kind === 'tariff' || (c.kind === 'blockade' && c.free) || (c.free && c.world)) && c.val > 1);
     if (freebie) return freebie;
     let best = null;
     for (const c of open) if (!best || c.val > best.val) best = c;
     if (best && best.val < 0.55 && !(refused && refused.laylow)) return { kind: 'laylow', choice: me.cortisol >= 3 ? 'cool' : 'cash' };
     return best;
+  }
+
+  /* ================= GLOBAL EDITION ACTIVES =================
+     The view carries the engine's own gates (worldBlocked / reworkBlocked), so a play is only listed when the
+     engine would let the seat make it. Free plays carry {free, world}: the freebie rule in pickAction takes them
+     first and the turn goes on; the rest end the action like any other. */
+  function wFree(v, kind) { return typeof v.worldBlocked === 'function' && v.worldBlocked(kind) === ''; }
+  function rFree(v, kind) { return typeof v.reworkBlocked === 'function' && v.reworkBlocked(kind) === ''; }
+  /* never leave a half-open targeting mode behind */
+  async function dropMode(api, pi, kind) {
+    const mv = api.viewOf(pi);
+    if (mv && !mv.over && mv.curSeat === pi && mv.mode === kind) await tryIntent(api, pi, { act: 'cancel' });
+  }
+  /* hop distances (and the BFS tree) from a node over the live edges, optionally without one edge */
+  function bfsTree(A, from, skipA, skipB) {
+    const dist = { [from]: 0 }, par = {};
+    const q = [from];
+    for (let h = 0; h < q.length; h++) {
+      const c = q[h];
+      for (const nb of (A[c] || [])) {
+        if (dist[nb] !== undefined) continue;
+        if ((c === skipA && nb === skipB) || (c === skipB && nb === skipA)) continue;
+        dist[nb] = dist[c] + 1; par[nb] = c; q.push(nb);
+      }
+    }
+    return { dist, par };
+  }
+  function nearestOf(dist, targets, cap) {
+    let best = cap;
+    for (const t of targets) if (dist[t] !== undefined && dist[t] < best) best = dist[t];
+    return best;
+  }
+  /* the nodes of the types a seat still needs for its set */
+  function neededNodes(v, seat) {
+    const miss = v.missingTypes(seat);
+    if (!miss.length) return [];
+    return v.nodes.filter(n => miss.indexOf(n.type) >= 0 && !v.rubble[n.id] && v.owner[n.id] !== seat).map(n => n.id);
+  }
+  /* the edge on the leader's shortest road to a node it needs whose loss slows it most, never one that slows me */
+  function pickCut(v, pi, lead) {
+    const A = buildAdj(v);
+    const tg = neededNodes(v, lead);
+    if (!tg.length) return null;
+    const lp = v.players[lead].pos, CAP = 14;
+    const t0 = bfsTree(A, lp);
+    let tgt = null, d0 = CAP;
+    for (const t of tg) if (t0.dist[t] !== undefined && t0.dist[t] < d0) { d0 = t0.dist[t]; tgt = t; }
+    if (tgt == null || d0 === 0) return null;
+    const mt = neededNodes(v, pi), mp = v.players[pi].pos;
+    const myBase = mt.length ? nearestOf(bfsTree(A, mp).dist, mt, CAP) : 0;
+    const lc = closeness(v, lead);
+    let best = null;
+    for (let cur = tgt; cur !== lp; cur = t0.par[cur]) {
+      const a = t0.par[cur], b = cur;
+      const d1 = nearestOf(bfsTree(A, lp, a, b).dist, tg, CAP);
+      const delta = d1 - d0;
+      const mine = mt.length ? nearestOf(bfsTree(A, mp, a, b).dist, mt, CAP) - myBase : 0;
+      if (mine > 0) continue;
+      const score = delta * (1 + 2 * lc);
+      if (!best || score > best.score) best = { a, b, score, delta };
+    }
+    return best;
+  }
+  /* a road from one of mine to a node I need that is out of walking range */
+  function pickRoad(v, pi) {
+    const me = v.players[pi];
+    const A = buildAdj(v);
+    const dm = bfsTree(A, me.pos).dist;
+    const reach = stepsOf(v, pi) + 1;
+    const owned = myNodes(v, pi).filter(id => dm[id] !== undefined && !v.rubble[id]);
+    let best = null;
+    for (const t of neededNodes(v, pi)) {
+      if (v.blockades && v.blockades[t] > v.turn) continue;
+      const d0 = dm[t] === undefined ? 40 : dm[t];
+      if (d0 <= reach) continue;
+      const price = v.owner[t] != null ? v.takePrice(pi, t, v.seizePrice(pi, t)) : v.seizePrice(pi, t);
+      if (me.money - 4 + projectIncome(v, pi) < price) continue;
+      for (const o of owned) {
+        if ((A[o] || []).indexOf(t) >= 0) continue;
+        const nd = dm[o] + 1, gain = d0 - nd;
+        if (gain >= 3 && nd <= reach && (!best || gain > best.gain)) best = { from: o, nid: t, gain };
+      }
+    }
+    return best;
+  }
+
+  function worldPlays(v, pi, list, c) {
+    const me = v.players[pi];
+    const goal = v.goal || 100;
+    const lead = c.leader, kill = c.kill, sz = c.sz;
+    const leadClose = lead >= 0 ? closeness(v, lead) : 0;
+    const myClose = closeness(v, pi);
+    const behind = lead >= 0 && leadClose >= 0.45 && myClose < leadClose - 0.3;
+    const hopeless = lead >= 0 && leadClose >= 0.8 && myClose < 0.15 && v.turn > gameLength(v) * 1.1;
+    const ev = x => x * W.money;
+
+    /* PUT IT ALL ON BLACK / ALL IN ON GREEN (free, once a turn): small stakes, bigger when behind, never the money a seizure needs */
+    if (rFree(v, 'black') && me.money >= 1) {
+      const reserve = kill ? (kill.saving ? me.money : kill.minPrice) : (sz ? sz.cost : 0);
+      const spare = me.money - reserve;
+      if (hopeless) list.push({ kind: 'black', color: 'green', val: 6, free: true, world: true });
+      else if (me.money <= 3 && !sz && !(kill && kill.saving) && myClose < 0.5) list.push({ kind: 'black', color: 'green', val: 3, free: true, world: true });
+      else if (spare >= 4 && !(lead >= 0 && myClose >= leadClose && myClose > 0.5) && !(kill && kill.saving)) {
+        const n = clamp(Math.floor(spare * (behind ? 0.4 : 0.15)), 1, spare);
+        list.push({ kind: 'black', n, val: 3, free: true, world: true });
+      }
+    }
+    /* THE SWISS VAULT: free withdrawal once the heat is off; a deposit only when a raid is one step away */
+    const vault = (v.vault && v.vault[pi]) || 0;
+    if (vault > 0 && rFree(v, 'swisswithdraw') && (me.cortisol <= 6 || (kill && kill.saving) || vault + me.money >= goal)) {
+      list.push({ kind: 'swisswithdraw', val: 40, free: true, world: true });
+    }
+    if (me.cortisol >= 8 && me.money >= 10 && vulnerable(v, pi) && rFree(v, 'swissdeposit')) {
+      list.push({ kind: 'swissdeposit', n: me.money - 1, val: Math.min(8, Math.floor(me.money * 0.3)) });
+    }
+    /* SRI LANKA DEFAULT: wipe a debt for nothing */
+    const debt = (v.carry && v.carry[pi] ? Math.ceil(v.carry[pi] * 1.5) : 0) + (v.imf && v.imf[pi] ? 8 : 0);
+    if (debt >= 6 && rFree(v, 'srilankadefault')) list.push({ kind: 'srilankadefault', val: 20 + debt, free: true, world: true });
+    /* THE BIG GAMBLE: reshuffle every node, but only from behind */
+    if (behind && rFree(v, 'biggamble')) list.push({ kind: 'biggamble', val: 12 + 40 * leadClose });
+    /* THE CHAINSAW and BREXIT: cut the line the front-runner needs */
+    const chain = v.owner['w_milei'] === pi && wFree(v, 'chainsaw');
+    const brex = v.owner['w_brexit'] === pi && wFree(v, 'brexit');
+    if (lead >= 0 && lead !== pi && (chain || brex)) {
+      const cut = pickCut(v, pi, lead);
+      if (cut) {
+        if (chain) list.push({ kind: 'chainsaw', a: cut.a, b: cut.b, val: 1.5 + 5 * cut.score });
+        if (brex && cut.score >= 2 && leadClose >= 0.35) list.push({ kind: 'brexit', a: cut.a, b: cut.b, val: 3 * cut.score - 3 });
+      }
+    }
+    /* THE NEW SILK ROAD */
+    if (v.owner['w_bri'] === pi && me.money >= 4 && wFree(v, 'silkroad')) {
+      const road = pickRoad(v, pi);
+      if (road) list.push({ kind: 'silkroad', from: road.from, nid: road.nid, val: Math.min(22, 3 * road.gain) - 2 });
+    }
+    /* THE VANISH: dodge a squeeze, or skip the walk to a far prize */
+    if (v.owner['w_bermuda'] === pi && wFree(v, 'vanish') && v.turn - ((B.lastVanish && B.lastVanish[pi]) || -99) >= 4) {
+      let bestN = null, bestV = -Infinity;
+      for (const n of v.nodes) {
+        if (!passable(v, n.id) || n.id === me.pos) continue;
+        const cand = scoreStanding(v, pi, n.id);
+        if (cand && cand.val > bestV) { bestV = cand.val; bestN = n.id; }
+      }
+      /* one leak from a rival with Intel at 8+ Cortisol is a raid; a vanished seat cannot be targeted */
+      const attackers = v.players.filter((pl, j) => j !== pi && pl.intel >= 2 && !(v.vanished && v.vanished[j] != null)).length;
+      const squeezed = me.cortisol >= 8 && vulnerable(v, pi) && attackers > 1; /* a lay-low beats one attacker; two can still push past it */
+      const tele = bestN && !sz && bestV > 12;
+      let val = -Infinity;
+      if (tele) val = bestV * 0.5 - 2;
+      if (squeezed) val = Math.max(val, Math.min(60, 0.45 * raidValue(v, pi)));
+      if (val > 1) list.push({ kind: 'vanish', nid: tele ? bestN : me.pos, val });
+    }
+    /* THE NIGERIAN PRINCE: $2 for a coin flip at $5 */
+    if (v.owner['w_nigprince'] === pi && me.money >= 8 && me.cortisol < 3 && wFree(v, 'advance')) list.push({ kind: 'advance', val: 1.1 });
+    /* THE AMAZON: $3 per non-commodity node */
+    if (v.owner['w_amazon'] === pi && wFree(v, 'carbon')) {
+      const cnt = myNodes(v, pi).filter(id => v.nmap[id] && v.nmap[id].type !== 'COMMODITY').length;
+      if (cnt) list.push({ kind: 'carbon', val: ev(3 * cnt) * (c.nearGoal ? 1.4 : 1) });
+    }
+    /* THE DOHA ROUND: $2 per COMMODITY node for three turns */
+    if (v.owner['w_doha'] === pi && wFree(v, 'doha')) {
+      const cm = typeCount(v, pi, 'COMMODITY');
+      if (cm) list.push({ kind: 'doha', val: ev(Math.min(3, horizon(v)) * 2 * cm) - 1 });
+    }
+    /* THE BANGALORE CALL CENTRE: a rival on hold loses an Intel */
+    if (v.owner['w_bangalore'] === pi && wFree(v, 'hold')) {
+      let hb = null;
+      for (let j = 0; j < v.players.length; j++) {
+        if (j === pi || (v.vanished && v.vanished[j] != null) || v.players[j].intel < 1) continue;
+        const val = v.players[j].intel * 0.7 * INTEL * (1 + closeness(v, j)) - 0.5;
+        if (!hb || val > hb.val) hb = { kind: 'hold', target: j, val };
+      }
+      if (hb && hb.val > 1.5) list.push(hb);
+    }
+    /* UBS AT1 WIPE-OUT and ERDOGANOMICS: take cash off the table */
+    if (rFree(v, 'at1')) {
+      let tot = 0;
+      v.players.forEach((pl, j) => {
+        if (j === pi || (v.vanished && v.vanished[j] != null)) return;
+        const k = myNodes(v, j).filter(id => v.nmap[id] && (v.nmap[id].type === 'BANK' || v.nmap[id].type === 'CHART') && !v.rubble[id]).length;
+        tot += Math.min(pl.money, 2 * k) * (1 + 0.5 * closeness(v, j));
+      });
+      if (tot >= 5) list.push({ kind: 'at1', val: ev(tot) });
+    }
+    if (rFree(v, 'lira')) {
+      let tot = 0;
+      v.players.forEach((pl, j) => {
+        if (j === pi || (v.vanished && v.vanished[j] != null)) return;
+        tot += Math.floor(Math.max(0, pl.money - 30) * 0.2) * (1 + closeness(v, j));
+      });
+      if (tot >= 6) list.push({ kind: 'lira', val: ev(tot) });
+    }
+    /* ZIMBABWE: 20% of the goal, once */
+    if (rFree(v, 'printmoney')) list.push({ kind: 'printmoney', val: ev(Math.max(1, Math.round(goal * 0.2))) - 3 });
+    /* JENSEN HUANG: two Chinese nodes for free */
+    if (rFree(v, 'honeypot')) list.push({ kind: 'honeypot', val: 16 });
+    /* BIG YAHU: LIBERATE OIL */
+    if (rFree(v, 'liberate') && typeof v.liberatePlan === 'function') {
+      const pl = v.liberatePlan();
+      let val = 0;
+      for (const id of pl.mine) val += ev(v.nmap[id].cost) - marginalIncome(v, pi, id) * horizon(v);
+      for (const id of pl.taken) val += nodeOwnValue(v, pi, id) - 0.5 * ev(v.nmap[id].cost);
+      for (const id of pl.freed) val += 0.5 * nodeOwnValue(v, v.owner[id], id);
+      if (val > 8) list.push({ kind: 'liberate', val });
+    }
+    /* TRUMP: buy Greenland, whether its owner likes it or not */
+    if (rFree(v, 'greenbuy') && v.nmap['w_greenland']) {
+      const o = v.owner['w_greenland'];
+      const val = nodeOwnValue(v, pi, 'w_greenland') + 0.5 * nodeOwnValue(v, o, 'w_greenland') - ev(v.nmap['w_greenland'].cost);
+      if (val > 4) list.push({ kind: 'greenbuy', val });
+    }
   }
 
   /* CLASSIFIED: hide the node a front-runner needs for the last piece of its set (so it
@@ -2057,6 +2302,52 @@ export const BigConBots = (function () {
         return !pick.free; /* two blockade sources make it a free action: the turn goes on */
       case 'tariff': await tryIntent(api, pi, { act: 'tariff', kind: pick.type }); return false;
       case 'delays': await tryIntent(api, pi, { act: 'delays', target: pick.target }); return true;
+      /* ---- Global Edition actives (see worldPlays) ---- */
+      case 'black':
+        await tryIntent(api, pi, pick.color === 'green' ? { act: 'black', color: 'green' } : { act: 'black', n: pick.n });
+        return false; /* free: the turn goes on */
+      case 'swisswithdraw': await tryIntent(api, pi, { act: 'swisswithdraw' }); return false;
+      case 'srilankadefault': await tryIntent(api, pi, { act: 'srilankadefault' }); return false;
+      case 'swissdeposit': await tryIntent(api, pi, { act: 'swissdeposit', n: pick.n }); return true;
+      case 'carry': await tryIntent(api, pi, { act: 'carry', n: pick.n }); return true;
+      case 'biggamble': case 'advance': case 'carbon': case 'doha': case 'at1': case 'lira': case 'printmoney':
+      case 'honeypot': case 'liberate': case 'greenbuy':
+        await tryIntent(api, pi, { act: pick.kind });
+        return true;
+      case 'chainsaw': case 'brexit': {
+        await tryIntent(api, pi, { act: 'worldmode', kind: pick.kind });
+        const cv = api.viewOf(pi);
+        if (!cv || cv.mode !== pick.kind) return false;
+        await tryIntent(api, pi, { act: 'edgepick', a: pick.a, id: pick.b }); /* one call names the thread and cuts it */
+        await dropMode(api, pi, pick.kind);
+        return true;
+      }
+      case 'silkroad': {
+        await tryIntent(api, pi, { act: 'worldmode', kind: 'silkroad' });
+        const sv = api.viewOf(pi);
+        if (!sv || sv.mode !== 'silkroad') return false;
+        await tryIntent(api, pi, { act: 'edgepick', id: pick.from });
+        await tryIntent(api, pi, { act: 'edgepick', id: pick.nid });
+        await dropMode(api, pi, 'silkroad');
+        return true;
+      }
+      case 'vanish': {
+        (B.lastVanish || (B.lastVanish = {}))[pi] = v.turn;
+        await tryIntent(api, pi, { act: 'worldmode', kind: 'vanish' });
+        const vv = api.viewOf(pi);
+        if (!vv || vv.mode !== 'vanish') return false;
+        await tryIntent(api, pi, { act: 'vanish', id: pick.nid });
+        await dropMode(api, pi, 'vanish');
+        return true;
+      }
+      case 'hold': {
+        await tryIntent(api, pi, { act: 'worldmode', kind: 'hold' });
+        const hv = api.viewOf(pi);
+        if (!hv || hv.mode !== 'hold') return false;
+        await tryIntent(api, pi, { act: 'hold', target: pick.target });
+        await dropMode(api, pi, 'hold');
+        return true;
+      }
       case 'bailout': {
         await tryIntent(api, pi, { act: 'worldmode', kind: 'bailout' });
         const bv = api.viewOf(pi);
@@ -2221,6 +2512,7 @@ export const BigConBots = (function () {
     B.turnStamp = 1;
     B.throttle = false;
     B.pacedTurn = {};
+    B.lastVanish = {};
   }
 
   /* exports */

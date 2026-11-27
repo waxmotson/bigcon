@@ -10,6 +10,7 @@
    hands, missiles fly, the regulators raid, and the engine's own pop-ups float up. */
 import * as THREE from 'three';
 import { createWorld, sm, clamp01 } from './world.js';
+import { mountGlobe } from './globe3d.js';
 
 const PX = 0.01;          // world units per board pixel, as on the landing pages
 const EL = 1.0;           // camera elevation (world.cam adds a little)
@@ -56,7 +57,7 @@ function fitCam(c, w) {
 }
 
 /* wrap: the element the board fills. first: the opening boardScene(). api: {tap, hover, pin, unpin, fail} */
-export async function mountBoard3D(wrap, first, api) {
+async function mountFlat(wrap, first, api) {
   if (!document.getElementById('b3d-style')) { const st = document.createElement('style'); st.id = 'b3d-style'; st.textContent = STYLE; document.head.appendChild(st); }
   const root = document.createElement('div'); root.className = 'b3d-root';
   const tip = document.createElement('div'); tip.className = 'b3d-tip'; root.appendChild(tip);
@@ -366,5 +367,25 @@ export async function mountBoard3D(wrap, first, api) {
       if (world) world.destroy();
       root.remove();
     },
+  };
+}
+
+/* The Global Edition's world map is a globe (globe3d.js); every other board is the flat table above. A snapshot that flips between
+   the two (a new game on another layout) swaps the view in place. */
+export async function mountBoard3D(wrap, first, api) {
+  if (!document.getElementById('b3d-style')) { const st = document.createElement('style'); st.id = 'b3d-style'; st.textContent = STYLE; document.head.appendChild(st); }
+  const mount = s => (s.globe ? mountGlobe : mountFlat)(wrap, s, api);
+  let mode = !!first.globe, inner = await mount(first), swapping = null, dead = false, latest = first;
+  return {
+    update(s) {
+      latest = s;
+      if (!!s.globe === mode) { if (!swapping) inner.update(s); return; }
+      if (swapping) return;
+      mode = !!s.globe; inner.destroy();
+      swapping = mount(s).then(v => { swapping = null; if (dead) { v.destroy(); return; } inner = v; if (!!latest.globe !== mode) this.update(latest); else v.update(latest); }).catch(e => { swapping = null; console.warn('[board3d]', e); api.fail && api.fail(); });
+    },
+    zoom: f => inner.zoom && inner.zoom(f),
+    reset: () => inner.reset && inner.reset(),
+    destroy() { dead = true; inner.destroy(); },
   };
 }

@@ -9,7 +9,7 @@ import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
 import { canFly, inFlyRange, jetAt, CLASSIFIED_INTEL, CLASSIFIED_MONEY, classifiedBlocked, hiddenFrom, hiddenInfo, ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost, blocStatus, tariffFor, tariffOwner, blockSources, blockadeFree, reefBleached, fileAuthority, isWaterNode } from './engine.js';
 import { TRADE_BLOCS, blocOfMember, BLOC_FREE } from './world.js';
 import { carryDue, CARRY_CAP, launderBooks, delayTargets, reworkBlocked, honeypotBan, swissBalance, abductTargets, inflationExtra, pyramidPayout } from './engine.js';
-import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
+import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, nodeLatLon, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
 import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
 const shownFx=new Set();
@@ -162,6 +162,17 @@ export function placeholderCardSVG(n,w,h){
   +lines.map((l,i)=>'<text x="'+(w/2-(w-46)/2+2)+'" y="'+(ty+i*fs*1.1+6)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" font-weight="800" fill="#f4f0e6" font-family="Tomkins Display, Bricolage Grotesque, sans-serif">'+esc(l)+'</text>').join('')
   +'</g>';
 }
+/* a BLOCKADED node: dimmed card, a hazard-striped frame, a pulsing red outline, a big 🚧 and the turns it has left */
+function blockadeOverlay(id,w,h){
+ const left=Math.max(1,(S.blockades[id]||0)-S.turn);
+ const bw=Math.round(Math.max(10,w*0.09));
+ return '<g class="blockade" pointer-events="none"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="rgba(10,0,0,.5)"/>'
+  +'<rect x="'+(-w/2-bw/2)+'" y="'+(-h/2-bw/2)+'" width="'+(w+bw)+'" height="'+(h+bw)+'" fill="none" stroke="#000" stroke-width="'+(bw+4)+'"/>'
+  +'<rect x="'+(-w/2-bw/2)+'" y="'+(-h/2-bw/2)+'" width="'+(w+bw)+'" height="'+(h+bw)+'" fill="none" stroke="url(#hazard)" stroke-width="'+bw+'"/>'
+  +'<rect class="blockpulse" x="'+(-w/2-bw-4)+'" y="'+(-h/2-bw-4)+'" width="'+(w+2*bw+8)+'" height="'+(h+2*bw+8)+'" fill="none" stroke="#ff2a1a" stroke-width="4"/>'
+  +'<text x="0" y="'+Math.round(h*0.14)+'" text-anchor="middle" font-size="'+Math.round(h*0.62)+'">🚧</text>'
+  +'<g transform="translate(0,'+(h/2-13)+')"><rect x="-'+Math.round(w*0.36)+'" y="-11" width="'+Math.round(w*0.72)+'" height="22" fill="#b3120a" stroke="#000" stroke-width="2"/><text y="5" text-anchor="middle" font-size="12" font-weight="900" letter-spacing="1.5" fill="#fff">BLOCKADED · '+left+' TURN'+(left===1?'':'S')+'</text></g></g>';
+}
 export function nodeSVG(n,cls){
  const me=S&&S.players[Net.myIdx];
  const classified=hiddenFromMe(n.id);
@@ -200,12 +211,13 @@ export function nodeSVG(n,cls){
  const bugTag=bug?'<text x="'+(w/2-24)+'" y="'+(-h/2+18)+'" font-size="12">🐛</text>':'';
  const bl=S&&blockaded(n.id);
  const filed=hiddenInfo(n.id)&&!hiddenFromMe(n.id);
- const badges=(filed?'<text x="'+(w/2-48)+'" y="'+(-h/2+18)+'" font-size="12">🗂️</text>':'')+(ot?'<text x="'+(w/2-36)+'" y="'+(-h/2+18)+'" font-size="12">🛳️</text>':'')+(gq?'<text x="'+(-w/2+6)+'" y="'+(-h/2+18)+'" font-size="12">⛔</text>':'')+(bl?'<text x="'+(-w/2+7)+'" y="'+(-h/2+18)+'" font-size="15" font-weight="900">🚧</text>':'')+(S&&S.dlcWorld&&n.id==='w_pyramids'?'<text x="0" y="'+(h/2-6)+'" text-anchor="middle" font-size="15" font-weight="900" fill="#ffd34d" stroke="#000" stroke-width="3" paint-order="stroke">🔺 $'+pyramidPayout()+'</text>':'')+(S&&S.dlcWorld&&n.id==='w_zim'&&inflationExtra()>0?'<text x="0" y="'+(h/2-6)+'" text-anchor="middle" font-size="15" font-weight="900" fill="#ff9a8a" stroke="#000" stroke-width="3" paint-order="stroke">📈 +$'+inflationExtra()+'</text>':'');
+ const badges=(filed?'<text x="'+(w/2-48)+'" y="'+(-h/2+18)+'" font-size="12">🗂️</text>':'')+(ot?'<text x="'+(w/2-36)+'" y="'+(-h/2+18)+'" font-size="12">🛳️</text>':'')+(gq?'<text x="'+(-w/2+6)+'" y="'+(-h/2+18)+'" font-size="12">⛔</text>':'')+(S&&S.dlcWorld&&n.id==='w_pyramids'?'<text x="0" y="'+(h/2-6)+'" text-anchor="middle" font-size="15" font-weight="900" fill="#ffd34d" stroke="#000" stroke-width="3" paint-order="stroke">🔺 $'+pyramidPayout()+'</text>':'')+(S&&S.dlcWorld&&n.id==='w_zim'&&inflationExtra()>0?'<text x="0" y="'+(h/2-6)+'" text-anchor="middle" font-size="15" font-weight="900" fill="#ff9a8a" stroke="#000" stroke-width="3" paint-order="stroke">📈 +$'+inflationExtra()+'</text>':'');
  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
  return '<g class="node '+cls+'" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+') rotate('+n.rot+')">'
   +ownerGlow+moodGlow+halo
   +(n.image?'<image class="node-image" href="'+n.image+'" x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" preserveAspectRatio="'+(n.crop?'xMidYMid slice':'none')+'"/>':placeholderCardSVG(n,w,h))
   +(rb?'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="rgba(8,6,6,0.72)"/><text x="0" y="-4" text-anchor="middle" font-size="22">💥</text><text x="0" y="16" text-anchor="middle" font-size="9" font-weight="900" fill="#ffb08a" letter-spacing="1">REBUILD $'+n.cost+'</text>':'')
+  +(bl?blockadeOverlay(n.id,w,h):'')
   +ownerTag+bugTag+badges
   +(S&&S.dlcWorld&&n.id===jetAt()?'<image class="parked-jet" href="./static/qantas_jet_travelling.png" x="'+(-w/2-22)+'" y="'+(-h/2-30)+'" width="62" height="43"><title>The Qantas jet is parked here — stand on it to fly it (or steal it)</title></image>':'')
   +'<title>'+esc(nodeTip(n)).replace(/\n/g,'&#10;')+'</title></g>';
@@ -332,7 +344,7 @@ function worldPickPanel(powline){
    const lab={chainsaw:'🪚 CHAINSAW — $3 · +$4 · ONCE PER GAME',brexit:'🇬🇧 TAKE BACK CONTROL — ONCE PER GAME · +1 🔥',silkroad:'🛤️ NEW SILK ROAD — $4'}[S.mode];
    const a=S.edgeA!=null&&NMAP[S.edgeA]?nodeName(NMAP[S.edgeA]).join(' '):null;
    const how=S.mode==='silkroad'?(a?'Now click <b>any other node</b> to link it to <b>'+a+'</b> (click '+a+' again to start over).':'Click <b>one of your own nodes</b> to start the road.'):(a?'Now click one of the <b>neighbours</b> of <b>'+a+'</b> to cut the line between them (click '+a+' again to start over).':'Click the <b>thread</b> you want to cut (or its first node, then one of its neighbours).');
-   phaseHtml='<div class="phlabel">'+lab+'</div>'+powline+'<p>'+how+(S.mode==='silkroad'?'':' A cut that would strand part of the board from Quikstop is refused.')+'</p><button class="act" data-act="cancel">Cancel</button>';
+   phaseHtml='<div class="phlabel">'+lab+'</div>'+powline+'<p>'+how+''+'</p><button class="act" data-act="cancel">Cancel</button>';
  } else if(S.mode==='vanish'){
    phaseHtml='<div class="phlabel">🌀 THE VANISH — ONCE PER GAME</div>'+powline+'<p>Click <b>any node</b>: you disappear until the start of your next turn, then reappear there. Rivals cannot target you meanwhile.</p><button class="act" data-act="cancel">Cancel</button>';
  } else if(S.mode==='hold'){
@@ -558,10 +570,12 @@ export function boardScene(){
  ensureEdgeIndex();
  const curpos=S.players[S.cur].pos,viewer=S.players[Net.myIdx];
  const known=id=>discoveredNode(id);
+ const globe=!!(S.layoutKind==='worldmap');
  const nodes=NODES.map(n=>{
   const cls=nodeClass(n,curpos),k=known(n.id);
   /* ring layouts turn cards along the ring; standing up, every card faces the camera instead */
-  return {id:n.id,x:n.x,y:n.y,rot:Math.abs(n.rot||0)<=20?n.rot||0:0,type:n.type,name:nodeName(n).join(' '),known:k,click:cls.indexOf('click')>=0,reach:cls.indexOf('reach')>=0,target:cls.indexOf('target')>=0,tip:k?nodeTip(n):''};
+  const ll=globe?nodeLatLon(n):null;
+  return {id:n.id,icon:n.icon||'',lat:ll?ll[0]:0,lon:ll?ll[1]:0,x:n.x,y:n.y,rot:Math.abs(n.rot||0)<=20?n.rot||0:0,type:n.type,name:nodeName(n).join(' '),known:k,click:cls.indexOf('click')>=0,reach:cls.indexOf('reach')>=0,target:cls.indexOf('target')>=0,tip:k?nodeTip(n):''};
  });
  const seats=S.players.map((p,i)=>{
   const seen=!S.fogOfWar||i===Net.myIdx||!!(viewer&&viewer.visited&&viewer.visited[p.pos]);
@@ -579,7 +593,7 @@ export function boardScene(){
  const {hov,path,links}=highlightState();
  const sisyO=S.owner.sisy;
  return {
-  fog:!!S.fogOfWar,
+  fog:!!S.fogOfWar,globe,
   key:[S.layoutKind||'',S.dlcGeo?1:0,S.dlcWorld?1:0,S.fogOfWar?1:0,NODES.map(n=>n.id+','+n.x+','+n.y+','+(n.rot||0)).join(';'),S.players.map(p=>p.color+'|'+p.char).join(';')].join('#'),
   edgesKey:edges.map(e=>e[0]+'-'+e[1]).join(','),
   bounds:boardViewBounds(),nodes,edges,seats,owner,rubble,bugs,
@@ -614,12 +628,13 @@ export function renderBoard(){
  const metrics=wm?{cx:bounds.w/2,cy:bounds.h/2}:mega?megaRingMetrics(Math.max(3,(S.boardLayout||[]).length-1)):(ring?ringworldMetrics(Math.max(3,(S.boardLayout||[]).length-1)):null);
  const curpos=S?S.players[S.cur].pos:null;
  let s='';
- s+='<defs><pattern id="dots" width="'+(special?56:26)+'" height="'+(special?56:26)+'" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="rgba(22,131,136,0.18)"/></pattern></defs>';
+ s+='<defs><pattern id="hazard" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="22" height="22" fill="#f5c542"/><rect width="11" height="22" fill="#c4140c"/></pattern><pattern id="dots" width="'+(special?56:26)+'" height="'+(special?56:26)+'" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="rgba(22,131,136,0.18)"/></pattern></defs>';
  s+='<rect x="0" y="0" width="'+bounds.w+'" height="'+bounds.h+'" fill="#1d201f"/><rect x="0" y="0" width="'+bounds.w+'" height="'+bounds.h+'" fill="url(#dots)"/>';
  s+='<rect x="0" y="0" width="'+bounds.w+'" height="'+bounds.h+'" fill="'+md.tint+'" pointer-events="none"/>';
  s+='<rect x="7" y="7" width="'+(bounds.w-14)+'" height="'+(bounds.h-14)+'" rx="0" fill="none" stroke="#168388" stroke-width="'+(special?8:3)+'" opacity=".7"/>';
  if(wm)s+=worldMapSVG();
  const cutMode=!!(S&&!S.over&&S.dlcWorld&&(S.mode==='chainsaw'||S.mode==='brexit')&&myTurn()&&(S.phase==='action'||S.phase==='move'));
+ let hitS='';
  EDGES.forEach((e,i)=>{
   if(!edgeVisible(e))return;
   const c=edgeCurve(e,i);
@@ -633,8 +648,19 @@ export function renderBoard(){
      screen, so clicking the line itself walks you to the other end */
   const go=hot&&myTurn()?(e[0]===curpos?e[1]:e[0]):null;
   /* CHAINSAW / BREXIT: click any thread to cut it (the two-node pick still works) */
-  if(cutMode){const sel=S.edgeA!=null&&(e[0]===S.edgeA||e[1]===S.edgeA);s+='<path class="edgecut" data-a="'+e[0]+'" data-b="'+e[1]+'" d="'+d+'" fill="none" stroke="#ff6b5e" stroke-opacity="'+(sel?'.45':'0')+'" stroke-width="26" pointer-events="stroke" style="cursor:crosshair"><title>Cut '+esc(nodeName(NMAP[e[0]]).join(' '))+' ⇄ '+esc(nodeName(NMAP[e[1]]).join(' '))+'</title></path>'}
-  if(go)s+='<path class="edgehit" data-to="'+go+'" d="'+d+'" fill="none" stroke="#000" stroke-opacity="0" stroke-width="30" pointer-events="stroke" style="cursor:pointer"><title>Move to '+esc(nodeName(NMAP[go]).join(' '))+'</title></path>';
+  /* the hit paths are collected and drawn AFTER the node cards (on top), so a thread passing under an unrelated card is still clickable
+     in a narrow band. Each is trimmed (dash gap) by the card half-extent at both ends, so it never swallows a click on its own endpoint cards. */
+  const hitAttrs=(()=>{
+   if(c.wrap)return 'stroke-width="30"';
+   const A=NMAP[e[0]],B=NMAP[e[1]],ux=(B.x-A.x)/len,uy=(B.y-A.y)/len;
+   const ext=(nd)=>{const bx=nodeBox(nd);return Math.min(Math.abs(ux)>1e-6?bx[0]/2/Math.abs(ux):1e9,Math.abs(uy)>1e-6?bx[1]/2/Math.abs(uy):1e9)+8};
+   const t0=ext(A),t1=ext(B),mid=len-t0-t1;
+   return mid>12?'pathLength="'+len+'" stroke-dasharray="0 '+t0+' '+mid+' 99999" stroke-width="20"':null;
+  })();
+  if(hitAttrs){
+   if(cutMode){const sel=S.edgeA!=null&&(e[0]===S.edgeA||e[1]===S.edgeA);hitS+='<path class="edgecut" data-a="'+e[0]+'" data-b="'+e[1]+'" d="'+d+'" fill="none" stroke="#ff6b5e" stroke-opacity="'+(sel?'.45':'0')+'" '+hitAttrs+' pointer-events="stroke" style="cursor:crosshair"><title>Cut '+esc(nodeName(NMAP[e[0]]).join(' '))+' ⇄ '+esc(nodeName(NMAP[e[1]]).join(' '))+'</title></path>'}
+   if(go)hitS+='<path class="edgehit" data-to="'+go+'" d="'+d+'" fill="none" stroke="#000" stroke-opacity="0" '+hitAttrs+' pointer-events="stroke" style="cursor:pointer"><title>Move to '+esc(nodeName(NMAP[go]).join(' '))+'</title></path>';
+  }
   if(c.wrap){const nm=q=>nodeName(q).join(' '),tx=(go?'class="edgehit" data-to="'+go+'" style="cursor:pointer" ':'pointer-events="none" ')+'font-size="34" font-weight="900" fill="#f5c542" stroke="#000" stroke-width="6" paint-order="stroke" font-family="Tomkins Display, sans-serif"';s+='<text x="'+(c.W-30)+'" y="'+(c.y0-18)+'" text-anchor="end" '+tx+'>⟶ WRAPS TO '+esc(nm(c.L))+'</text><text x="30" y="'+(c.y0-18)+'" '+tx+'>⟶ FROM '+esc(nm(c.R))+'</text>'}
  });
  if(wm){
@@ -672,6 +698,7 @@ export function renderBoard(){
  s+='<g transform="translate('+footerX+','+footerY+')"><rect x="-800" y="-14" width="1600" height="25" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="'+(special?14:10.5)+'" font-weight="700" letter-spacing="1" fill="#fff">WIN CONDITION: $'+goalNow+' AND ONE OF EVERY NODE TYPE TAKES THE CON</text></g>';
  s+='<g transform="translate('+footerX+','+(footerY+38)+')"><rect x="-800" y="-12" width="1600" height="23" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="'+(special?13:10)+'" font-weight="700" letter-spacing="1" fill="aqua">FRONT RUNNER: '+esc(String(leader.name).toUpperCase())+' — $'+leader.money+' · $'+Math.max(0,goalNow-leader.money)+' TO GO</text></g>';
  NODES.forEach(n=>{s+=nodeSVG(n,nodeClass(n,curpos))});
+ if(hitS)s+='<g id="edgehits">'+hitS+'</g>';
  if(S)s+=tokenLayer();
  root.innerHTML=s;
  drawHighlights();
@@ -952,8 +979,8 @@ export function worldStrip(){
  if(me!=null&&S.players[me]&&!Net.spect){
   blocStatus(me).forEach(b=>bits.push(b.icon+' <b>'+esc(b.name)+'</b>: '+b.k+' member'+(b.k===1?'':'s')+' · income ×'+b.mult.toFixed(2)+' (+$'+b.bonus+'/turn)'+(b.noWto?' · no WTO jurisdiction':b.file?' · 🌐 WTO file '+b.file.s+'/'+ACCC_RULING:(b.k>BLOC_FREE?' · 🌐 file about to open':''))+(b.step?' · +'+b.step+' scrutiny a turn':'')));
    {const dl=S.delays&&S.delays[me]>0?S.delays[me]:0;
-   if(S.delayedNow&&S.cur===me)bits.push('🚆 you are DELAYED: 1 space this turn'+(dl?' and for '+dl+' more turn'+(dl>1?'s':''):''));
-   else if(dl)bits.push('🚆 you are DELAYED: 1 space a turn for your next '+dl+' turn'+(dl>1?'s':''))}
+   if(S.delayedNow&&S.cur===me)bits.push('🚆 you are DELAYED: 2 steps fewer this turn');
+   else if(dl)bits.push('🚆 you are DELAYED: 2 steps fewer on your next turn')}
   if(S.imf&&S.imf[me])bits.push('🆘 you owe the IMF ($8 to '+esc(pname(S.imf[me].by))+', due in '+S.imf[me].left+' of your turns)');
  }
  return bits.length?'<div class="moodstrip" style="border-color:#7fa7b3;flex-wrap:wrap;gap:4px 14px">'+bits.map(b=>'<span>'+b+'</span>').join('')+'</div>':'';
@@ -1030,7 +1057,7 @@ export function reworkButtons(me,p,phase){
  if(own('w_zim'))out.push(rwBtn('printmoney','🧾 PRINT MONEY — +$'+Math.max(1,Math.round(goalAmount()*0.2))+' now, +$1 on every seizure forever (once per game)',reworkBlocked(me,'printmoney'),'Your action, once per game: gain 20% of the game’s target. From then on every seizure on the board costs +$1 (inflation).'));
  if(own('w_area51'))out.push(rwBtn('abduct','👽 ALIEN ABDUCTION — $4 + 3 🛈, steal a rival’s node (50% rubble, once per game)',reworkBlocked(me,'abduct'),'Your action, once per game: steal any rival node remotely. A coin flip: intact, or it arrives as rubble.'));
  if(own('w_bell'))out.push(rwBtn('ringbell','🔔 RING THE BELL — $2: the next event NOW + investigate a rival',reworkBlocked(me,'ringbell'),'Your action, once per turn: the next market event is drawn and resolved right now, and an ASIC/ACCC file on a rival you choose opens or gains +1 scrutiny.'));
- if(S.dlcWorld&&own('w_db'))out.push(rwBtn('delays','🚆 DELAYS — $3: a rival moves only 1 space for 2 turns (once per turn)',reworkBlocked(me,'delays'),'Your action, once per turn: a rival you choose can only move 1 space on each of their next two turns (no favors or slipstream).'));
+ if(S.dlcWorld&&own('w_db'))out.push(rwBtn('delays','🚆 DELAYS — $3: a rival moves 2 steps fewer next turn (once per turn)',reworkBlocked(me,'delays'),'Your action, once per turn: a rival you choose moves 2 steps fewer on their next turn (no favors or slipstream).'));
  if(S.dlcWorld&&own('w_cs')&&S.rebuilt&&S.rebuilt.w_cs)out.push(rwBtn('at1','🏔️ AT1 WIPE-OUT — every rival pays $2 per BANK/CHART node (once per game)',reworkBlocked(me,'at1'),'Your action, once per game: the Credit Suisse AT1 bonds are written to zero. Every rival pays you $2 for each BANK or CHART node they hold (capped at their cash).'));
  if(own('w_lira'))out.push(rwBtn('lira','💸 ERDOĞANOMICS — every rival loses 20% of cash above $30 (once per game)',reworkBlocked(me,'lira'),'Your action, once per game: each rival loses 20% of the cash they hold above $30.'));
  if(own('trump')&&S.dlcWorld&&NMAP.w_greenland)out.push(rwBtn('greenbuy','🇬🇱 MAKE AN OFFER — force-buy Greenland at list price (once per game)',reworkBlocked(me,'greenbuy'),'Your action, once per game, with DONALD TRUMP: buy Greenland from its owner at list price. They cannot refuse.'));
@@ -1081,7 +1108,7 @@ export async function bellFlow(){
 export async function delaysFlow(){
  const me=Net.myIdx,rivals=delayTargets(me);
  if(!rivals.length){hooks.toast('Every rival is already delayed.');return}
- const t=await hooks.modal({title:'DEUTSCHE BAHN — DELAY WHOM?',body:'$3. They can only move 1 space for their next two turns.',options:rivals.map(i=>({label:pname(i),v:i})).concat([{label:'Cancel',v:-1}])});
+ const t=await hooks.modal({title:'DEUTSCHE BAHN — DELAY WHOM?',body:'$3. They move 2 steps fewer on their next turn.',options:rivals.map(i=>({label:pname(i),v:i})).concat([{label:'Cancel',v:-1}])});
  if(!S||t==null||t<0||!myTurn())return;
  dispatch({act:'delays',target:t});
 }

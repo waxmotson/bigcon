@@ -167,3 +167,7 @@ body.game-open{overflow:hidden}
  #board{height:100%}
  #side{flex:1 1 auto;width:100%;max-width:none;height:auto;overflow:visible;padding:10px}
 }
+
+@keyframes blockpulse{0%,100%{opacity:.25}50%{opacity:1}}
+.blockpulse{animation:blockpulse 1.1s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.blockpulse{animation:none;opacity:.9}}
