@@ -20,7 +20,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 #hole{background:#000}
 #fx{inset:0}
 #trails{left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.node{width:var(--nw);aspect-ratio:4/3;left:0;top:0;background:#111 center/cover no-repeat;border:2px solid #000;
+.node{width:var(--nw);aspect-ratio:4/3;left:0;top:0;background:#111 center/100% 100% no-repeat;border:2px solid #000;
  box-shadow:0 0 0 2px rgba(22,131,136,.9),0 8px 18px rgba(0,0,0,.7);will-change:transform,filter}
 .node .glow{inset:-6px;border:3px solid var(--gold);box-shadow:0 0 18px var(--gold);opacity:0}
 .pawn{left:0;top:0;width:var(--pw);height:var(--pw);border-radius:50%;overflow:hidden;background:#000;border:3px solid var(--gold);
@@ -32,6 +32,14 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .boom{left:0;top:0;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1) 0 0 calc(var(--s)*-.1);border-radius:50%;
  background:radial-gradient(circle,#fff 0 12%,#ffe066 22%,#ff9a1f 42%,rgba(255,59,48,.85) 58%,rgba(80,10,0,0) 72%);mix-blend-mode:screen;pointer-events:none}
 .shield{left:0;top:0;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1) 0 0 calc(var(--s)*-.1);border-radius:50%;border:4px solid #7ff6fb;box-shadow:0 0 22px #7ff6fb,inset 0 0 22px rgba(127,246,251,.6);pointer-events:none}
+.emo{left:0;top:0;font-size:calc(var(--s)*.07);line-height:1;width:1.2em;height:1.2em;margin:-.6em 0 0 -.6em;text-align:center;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.7))}
+.cash{left:0;top:0;font-weight:900;color:var(--gold);font-size:calc(var(--s)*.05);text-shadow:0 2px 0 #000;pointer-events:none}
+.boulder{left:0;top:0;width:calc(var(--s)*.06);height:calc(var(--s)*.06);margin:calc(var(--s)*-.03) 0 0 calc(var(--s)*-.03);border-radius:50%;
+ background:radial-gradient(circle at 35% 30%,#d8d2c4,#8d8577 45%,#4a453d 80%);box-shadow:0 4px 8px rgba(0,0,0,.7)}
+.wheel{left:0;top:0;width:calc(var(--s)*.11);height:calc(var(--s)*.11);margin:calc(var(--s)*-.055) 0 0 calc(var(--s)*-.055);border-radius:50%;border:3px solid var(--gold);
+ background:radial-gradient(circle,#3a2a12 0 18%,transparent 19%),repeating-conic-gradient(#c0161b 0 10deg,#111 10deg 20deg);box-shadow:0 4px 12px rgba(0,0,0,.8)}
+.plane{left:0;top:0;width:calc(var(--s)*.19);height:calc(var(--s)*.08);margin:calc(var(--s)*-.04) 0 0 calc(var(--s)*-.095);filter:drop-shadow(0 6px 5px rgba(0,0,0,.6))}
+.plane svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .ring{left:0;top:0;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1) 0 0 calc(var(--s)*-.1);border-radius:50%;border:3px solid #ffd27a;pointer-events:none}
 #tile{background-repeat:no-repeat;opacity:0;transform-origin:50% 50%}
 #tile .cv{background:#fff}
@@ -82,13 +90,13 @@ const ROWS=[[172,213],[232,273],[295,335]],COLS=[[172,220],[244,280],[304,347]];
 const NODES={
  quik:{img:P+'quikstop.png',rc:[0,0]},          qantas:{img:P+'qantas.png',rc:[0,1]},           wti:{img:P+'wti crude.png',rc:[0,2],kind:'oil'},
  barrels:{img:P+'blue oil barrels.png',rc:[0,3],kind:'oil'}, aramco:{img:G+'saudi-aramco.jpg',rc:[0,4],kind:'oil'},
- cba:{img:P+'cba.png',rc:[1,0],kind:'bank'},    made:{img:P+'made logo.png',rc:[1,1]},          trump:{img:P+'trump.png',rc:[1,2],kind:'lib'},
+ milei:{img:G+'javier-milei.avif',rc:[1,0],kind:'target'},    made:{img:P+'made logo.png',rc:[1,1]},          trump:{img:P+'trump.png',rc:[1,2],kind:'lib'},
  tanker:{img:P+'tanker fleet.png',rc:[1,3],kind:'oil'}, petronas:{img:P+'petronas.png',rc:[1,4],kind:'oil'},
- nab:{img:P+'nab.png',rc:[2,0],kind:'bank'},    bond:{img:P+'bond desk.png',rc:[2,1],kind:'bond'}, yahu:{img:G+'big-yahu.jpg',rc:[2,2],kind:'lib'},
+ bermuda:{img:G+'bermuda-triangle.jpg',rc:[2,0],kind:'target'},    bond:{img:P+'bond desk.png',rc:[2,1],kind:'bond'}, yahu:{img:G+'big-yahu.jpg',rc:[2,2],kind:'lib'},
  sisy:{img:P+'sisyphus.webp',rc:[2,3]},          cushing:{img:G+'cushing-oklahoma.jpg',rc:[2,4],kind:'oil'},
- anz:{img:P+'anz.png',rc:[3,0],kind:'bank'},    leak:{img:P+'bondmageddon 2.png',rc:[3,1],kind:'bond'}, lockheed:{img:G+'lockheed-martin.jpg',rc:[3,2],kind:'lib'},
+ monaco:{img:G+'monaco-casino.jpg',rc:[3,0],kind:'target'},    leak:{img:P+'bondmageddon 2.png',rc:[3,1],kind:'bond'}, lockheed:{img:G+'lockheed-martin.jpg',rc:[3,2],kind:'lib'},
  oilgraph:{img:P+'oil price increase.png',rc:[3,3],kind:'oil'}, pemex:{img:G+'pemex.png',rc:[3,4],kind:'oil'},
- westpac:{img:P+'westpac.png',rc:[4,0],kind:'bank'}, rock:{img:P+'the rock.gif',rc:[4,1]},     missile:{img:P+'GeographyDLC/nk_missile.jpg',rc:[4,2]},
+ baikonur:{img:G+'baikonur.jpg',rc:[4,0],kind:'target'}, rock:{img:P+'the rock.gif',rc:[4,1]},     missile:{img:P+'GeographyDLC/nk_missile.jpg',rc:[4,2]},
  tuvalu:{img:P+'GeographyDLC/geo_tuvalu.png',rc:[4,3]}, petrobras:{img:G+'petrobras.jpg',rc:[4,4],kind:'oil'},
 };
 /* who stands where: DJT on Trump fires LIBERATE OIL, the CEO of Coal on the Bond Desk fires BONDMAGEDDON, the soldier minds Lockheed */
@@ -114,7 +122,7 @@ function layout(){
 /* the threads: right and down neighbours, a few gaps and a few diagonals */
 const EDGES=(()=>{const ids=Object.keys(NODES),at={};ids.forEach(id=>at[NODES[id].rc.join()]=id);const out=[];
  ids.forEach(id=>{const [r,c]=NODES[id].rc;[[0,1],[1,0]].forEach(([dr,dc])=>{const o=at[(r+dr)+','+(c+dc)];if(o&&(r*7+c*3+dr)%5!==2)out.push([id,o])})});
- out.push(['quik','made'],['trump','tanker'],['yahu','oilgraph'],['bond','anz'],['lockheed','tuvalu'],['sisy','petronas']);return out})();
+ out.push(['quik','made'],['trump','tanker'],['yahu','oilgraph'],['bond','monaco'],['lockheed','tuvalu'],['sisy','petronas']);return out})();
 
 function build(){
  S=stage.clientWidth;k=S/L;layout();
@@ -125,7 +133,7 @@ function build(){
  EDGES.forEach(([a,b])=>{const p=document.createElementNS('http://www.w3.org/2000/svg','line');
   const long=Math.hypot(C[a][0]-C[b][0],C[a][1]-C[b][1])>S*0.25;
   Object.entries({x1:C[a][0],y1:C[a][1],x2:C[b][0],y2:C[b][1],stroke:'#168388','stroke-width':long?1.6:2.4,opacity:.9}).forEach(([k2,v])=>p.setAttribute(k2,v));
-  p.dataset.long=long?1:0;threads.appendChild(p)});
+  p.dataset.long=long?1:0;p.dataset.a=a;p.dataset.b=b;threads.appendChild(p)});
  nodeEl={};Object.entries(NODES).forEach(([id,n])=>{const d=document.createElement('div');d.className='node';d.style.backgroundImage='url("'+n.img+'")';
   d.innerHTML='<div class="glow"></div>';table.appendChild(d);nodeEl[id]=d});
  pawnEl={};Object.keys(PAWNS).forEach(ch=>{const d=document.createElement('div');d.className='pawn';d.innerHTML='<img src="./characters/'+ch+'.png" alt="">';
@@ -169,6 +177,11 @@ function jet(t,pts,at,dur){
  gsap.set(j,{x:pts[0][0],y:pts[0][1],opacity:0});
  t.set(j,{opacity:1},at).to(j,{motionPath:{path:pts.map(([x,y])=>({x,y})),curviness:1.3,autoRotate:true},duration:dur,ease:'none'},at).set(j,{opacity:0},at+dur);
 }
+function el(cls,html){const d=document.createElement('div');d.className=cls;if(html)d.innerHTML=html;fx.appendChild(d);return d}
+const PLANE='<svg viewBox="0 0 120 50"><path d="M8 25 Q10 18 30 18 L96 18 Q116 20 116 25 Q116 30 96 32 L30 32 Q10 32 8 25 Z" fill="#f4f4f4" stroke="#000" stroke-width="2"/>'
+ +'<path d="M50 30 L72 30 L44 50 L36 50 Z" fill="#cfd4d8" stroke="#000" stroke-width="1.5"/><path d="M50 20 L72 20 L44 0 L36 0 Z" fill="#cfd4d8" stroke="#000" stroke-width="1.5"/>'
+ +'<path d="M8 25 L2 6 L20 6 L30 19 Z" fill="#e0001b" stroke="#000" stroke-width="1.5"/><circle cx="13" cy="12" r="3" fill="#fff"/>'
+ +'<path d="M96 21 L106 21 Q110 23 110 25 L96 25 Z" fill="#1a2b3c"/></svg>';
 const shake=(t,at,n=4,a=7)=>t.to(stage,{x:a,y:-a*.6,duration:0.04,yoyo:true,repeat:n,clearProps:'x,y'},at);
 /* a node reduced to rubble: it stays on the board, burnt out */
 const rubble=(t,id,at)=>t.to(nodeEl[id],{filter:'grayscale(1) brightness(.4) contrast(1.5)',rotation:'+='+R(-12,12),scale:.92,duration:0.3,ease:'power2.out'},at);
@@ -207,8 +220,11 @@ function play(){
  tl.to(pawnEl.jimchalmers,{motionPath:{path:[pawnXY('tuvalu'),{x:(pawnXY('tuvalu').x+pawnXY('missile').x)/2,y:pawnXY('tuvalu').y-S*0.07},pawnXY('missile')],curviness:1},duration:0.35},T('crew')+1.15)
    .to(pawnEl.jimchalmers,{motionPath:{path:[pawnXY('missile'),{x:(pawnXY('tuvalu').x+pawnXY('missile').x)/2,y:pawnXY('tuvalu').y-S*0.07},pawnXY('tuvalu')],curviness:1},duration:0.35},'>+0.05');
 
+ /* MAXIMUM CHAOS — everything goes off at once */
+ tl.addLabel('chaos',T('crew')+1.9);
+ const CH=T('chaos');
  /* MISSILE COMMAND vs TUVALU: the silo fires on Tuvalu, Tuvalu reflects the warhead, and it comes home */
- tl.addLabel('mvt',T('crew')+2.0);
+ tl.addLabel('mvt',CH);
  fire(tl,'japsnchen',['missile'],T('mvt'));
  const mc=[C.missile[0],C.missile[1]-nw()*0.3],tv=C.tuvalu;
  missile(tl,mc,tv,T('mvt')+0.3,0.6,true,0.3);
@@ -220,10 +236,76 @@ function play(){
  rubble(tl,'missile',T('mvt')+1.5);
  shake(tl,T('mvt')+1.5,5,5);
 
- /* ACT THREE — BONDMAGEDDON: the Bond Desk and “Bond Markets Revolt” fire four missiles, one at each bank */
- tl.addLabel('bond',T('mvt')+2.0);
+ /* QANTAS: Calvin flies the jet across the board; it stays parked where it lands */
+ {const a=pawnXY('qantas'),b=pawnXY('petrobras'),pa=C.qantas,pb=[C.petrobras[0]-nw()*0.55,C.petrobras[1]+nw()*0.42];
+  const plane=el('plane',PLANE);gsap.set(plane,{x:pa[0],y:pa[1],opacity:0,scale:.6});
+  const mid={x:S*0.62,y:S*0.08};
+  tl.to(plane,{opacity:1,scale:1,duration:0.15},CH+0.15)
+    .to(plane,{motionPath:{path:[{x:pa[0],y:pa[1]},mid,{x:pb[0],y:pb[1]}],curviness:1.2,autoRotate:true},duration:1.3,ease:'power1.inOut'},CH+0.2)
+    .to(pawnEl.calvinathanasius,{motionPath:{path:[a,{x:mid.x,y:mid.y-S*0.04},b],curviness:1.2},duration:1.3,ease:'power1.inOut'},CH+0.2)
+    .to(plane,{rotation:0,scale:.75,duration:0.2},CH+1.5);}
+
+ /* THE SISYPHUS BOULDER: up the hill… and back down. Twice. */
+ {const c=C.sisy,b=el('boulder'),lo=[c[0]-nw()*0.42,c[1]+nw()*0.25],hi=[c[0]+nw()*0.35,c[1]-nw()*0.2],P0=pawnXY('sisy');
+  gsap.set(b,{x:lo[0],y:lo[1],opacity:0});
+  tl.to(b,{opacity:1,duration:0.15},CH+0.05).to(pawnEl.denialswan,{x:lo[0]-pw()*1.1,y:lo[1]-pw()*0.5,duration:0.2},CH+0.05);
+  for(let n=0;n<2;n++){const t0=CH+0.25+n*0.95;
+   tl.to(b,{x:hi[0],y:hi[1],rotation:'+=300',duration:0.55,ease:'power1.inOut'},t0)
+     .to(pawnEl.denialswan,{x:hi[0]-pw()*1.1,y:hi[1]-pw()*0.5,duration:0.55,ease:'power1.inOut'},t0)
+     .to(b,{x:lo[0],y:lo[1],rotation:'-=300',duration:0.3,ease:'power2.in'},t0+0.6)
+     .to(pawnEl.denialswan,{x:lo[0]-pw()*1.1,y:lo[1]-pw()*0.5,rotation:-20,duration:0.3,ease:'power2.in'},t0+0.62)
+     .to(pawnEl.denialswan,{rotation:0,duration:0.1},t0+0.92);}
+  tl.to(pawnEl.denialswan,{x:P0.x,y:P0.y,duration:0.25},CH+2.2).to(b,{opacity:0,duration:0.2},CH+2.2);}
+
+ /* THE ROCK cooks the books */
+ {const c=C.rock,pan=el('emo','🍳'),book=el('emo','📒'),fire1=el('emo','🔥'),fire2=el('emo','🔥');
+  gsap.set(pan,{x:c[0],y:c[1]+nw()*0.12,scale:0,opacity:1});gsap.set(book,{x:c[0],y:c[1]-S*0.25,opacity:0,scale:.7});
+  gsap.set([fire1,fire2],{x:c[0],y:c[1]+nw()*0.2,scale:0,opacity:1});
+  tl.to(pan,{scale:1.2,duration:0.25,ease:'back.out(3)'},CH+0.45)
+    .to(book,{y:c[1]+nw()*0.05,opacity:1,duration:0.35,ease:'bounce.out'},CH+0.6)
+    .to(fire1,{x:c[0]-S*0.025,scale:1,duration:0.15},CH+0.9).to(fire2,{x:c[0]+S*0.025,scale:.9,duration:0.15},CH+0.95)
+    .to([fire1,fire2],{scaleY:1.35,duration:0.12,yoyo:true,repeat:9,stagger:0.05},CH+1.05)
+    .to(book,{filter:'brightness(.4) sepia(1)',duration:0.6},CH+1.1);
+  for(let n=0;n<5;n++){const m=el('cash',n%2?'$':'💵');gsap.set(m,{x:c[0]+R(-.04,.04)*S,y:c[1],opacity:0});
+   tl.to(m,{y:'-='+S*R(.12,.2),opacity:1,duration:0.25},CH+1.1+n*0.15).to(m,{opacity:0,duration:0.3},CH+1.4+n*0.15)}
+  tl.to([pan,book,fire1,fire2],{opacity:0,scale:.3,duration:0.3},CH+2.2);}
+
+ /* MILEI: the chainsaw cuts a thread for good */
+ {const line=[...threads.children].find(l=>l.dataset.a==='milei'||l.dataset.b==='milei'),saw=el('emo','🪚');
+  const mx=(line.x1.baseVal.value+line.x2.baseVal.value)/2,my=(line.y1.baseVal.value+line.y2.baseVal.value)/2;
+  gsap.set(saw,{x:C.milei[0],y:C.milei[1],scale:0,opacity:1});
+  tl.to(saw,{scale:1.1,duration:0.15},CH+0.35).to(saw,{x:mx,y:my,duration:0.35,ease:'power2.in'},CH+0.5)
+    .to(saw,{rotation:25,duration:0.05,yoyo:true,repeat:7},CH+0.85)
+    .to(line,{attr:{stroke:'#ff3b30'},duration:0.1},CH+0.85).to(line,{opacity:0,duration:0.25},CH+1.25)
+    .to(saw,{opacity:0,y:'-='+S*0.05,duration:0.3},CH+1.3);
+  boom(tl,[mx,my],CH+1.2);}
+
+ /* THE BERMUDA TRIANGLE swallows the pawn on MADE (it turns up again later) */
+ {const sw=el('emo','🌀'),c=C.bermuda,al=pawnEl.Alexander_Lane;
+  gsap.set(sw,{x:c[0],y:c[1],scale:0,opacity:1,rotation:0});
+  tl.to(sw,{scale:2.2,rotation:720,duration:1.2,ease:'none'},CH+0.6)
+    .to(al,{x:c[0]-pw()/2,y:c[1]-pw()/2,scale:0.1,rotation:900,duration:0.7,ease:'power2.in'},CH+0.85)
+    .set(al,{opacity:0},CH+1.55)
+    .to(sw,{scale:0,opacity:0,duration:0.3},CH+1.8);}
+
+ /* MONACO: the roulette wheel spins, the chips fly */
+ {const w=el('wheel'),c=C.monaco;gsap.set(w,{x:c[0],y:c[1],scale:0,opacity:1});
+  tl.to(w,{scale:1,duration:0.2,ease:'back.out(2)'},CH+0.3).to(w,{rotation:1440,duration:1.4,ease:'power3.out'},CH+0.35);
+  for(let n=0;n<4;n++){const ch=el('emo','🪙');gsap.set(ch,{x:c[0],y:c[1],scale:.6,opacity:0});
+   tl.to(ch,{x:'+='+S*R(-.08,.12),y:'-='+S*R(.06,.14),opacity:1,rotation:R(-180,180),duration:0.35,ease:'power2.out'},CH+1.5+n*0.05).to(ch,{opacity:0,duration:0.25},CH+1.9+n*0.05)}
+  tl.to(w,{scale:0,opacity:0,duration:0.25},CH+2.1);}
+
+ /* BAIKONUR: the rocket goes up */
+ {const r=el('emo','🚀'),c=C.baikonur;gsap.set(r,{x:c[0],y:c[1],rotation:-45,scale:0,opacity:1});
+  tl.to(r,{scale:1.2,duration:0.15},CH+0.9).to(r,{y:-S*0.15,duration:1.0,ease:'power2.in'},CH+1.05);
+  for(let n=0;n<8;n++){const sm=el('emo','💨');gsap.set(sm,{x:c[0],y:c[1],scale:0,opacity:0});
+   tl.set(sm,{opacity:.85,y:c[1]-n*S*0.09},CH+1.05+n*0.1).to(sm,{scale:R(.7,1.2),opacity:0,x:'+='+S*R(-.03,.03),duration:0.7},CH+1.05+n*0.1)}
+  shake(tl,CH+1.0,3,3);}
+
+ /* ACT THREE — BONDMAGEDDON: the Bond Desk and “Bond Markets Revolt” fire four missiles, one at each of them */
+ tl.addLabel('bond',CH+2.45);
  fire(tl,'markwatson',['bond','leak'],T('bond'));
- ['cba','nab','anz','westpac'].forEach((b,i)=>{
+ ['milei','bermuda','monaco','baikonur'].forEach((b,i)=>{
   const src=C[i%2?'leak':'bond'];
   missile(tl,[src[0]+nw()*0.4,src[1]],C[b],T('bond')+0.35+i*0.14,0.55);
   rubble(tl,b,T('bond')+0.9+i*0.14);
@@ -244,7 +326,9 @@ function play(){
 
  /* ACT FIVE — the crew steps off the board and forms the logo; the four who are not in it are CONNED off the table */
  tl.addLabel('form',T('oil')+2.35);
+ {const p=pawnXY('made');tl.set(pawnEl.Alexander_Lane,{x:p.x,y:p.y,rotation:0},T('form')-0.35).to(pawnEl.Alexander_Lane,{opacity:1,scale:1,duration:0.2,ease:'back.out(3)'},T('form')-0.3);}
  tl.to(table,{opacity:0,scale:0.9,filter:'blur(3px)',duration:0.7,ease:'power2.in'},T('form')+0.15);
+ tl.to(fx.querySelectorAll('.plane,.emo,.boulder,.wheel'),{opacity:0,duration:0.4},T('form')+0.15);
  Object.keys(PAWNS).forEach(ch=>{
   const s=SLOTS[ch],d=pawnEl[ch];
   if(s){const sz=FACE*k;tl.to(d,{x:s[0]*k-pw()/2,y:s[1]*k-pw()/2,scale:sz/pw(),borderRadius:'0%',borderWidth:0,rotation:0,duration:0.7,ease:'back.out(1.2)'},T('form')+R(0,0.2))}
