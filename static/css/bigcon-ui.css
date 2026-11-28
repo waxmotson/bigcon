@@ -171,3 +171,35 @@ body.game-open{overflow:hidden}
 @keyframes blockpulse{0%,100%{opacity:.25}50%{opacity:1}}
 .blockpulse{animation:blockpulse 1.1s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.blockpulse{animation:none;opacity:.9}}
+/* ---- the splash intro (static/js/intro.js): a board of nodes, the crew as pawns, then the logo ---- */
+.splash-logo.intro{position:relative;display:block;--teal:#168388;--gold:#f5c542;cursor:pointer;will-change:transform}
+.splash-logo.intro>*,.splash-logo.intro .i-fx>*,.splash-logo.intro .i-table>*,.splash-logo.intro .i-tile>*,.splash-logo.intro .i-pawn>*,.splash-logo.intro .i-node>*{position:absolute}
+.splash-logo.intro .i-logo{inset:0;width:100%;height:100%}
+.splash-logo .i-table{inset:0;background:#1d201f radial-gradient(circle,rgba(22,131,136,.18) 1px,transparent 1.5px) 0 0/22px 22px;transform-origin:50% 50%}
+.splash-logo .i-threads,.splash-logo .i-trails{left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.splash-logo .i-hole{background:#000}
+.splash-logo .i-fx{inset:0;pointer-events:none}
+.splash-logo .i-node{width:var(--nw);aspect-ratio:4/3;left:0;top:0;background:#111 center/100% 100% no-repeat;border:2px solid #000;
+ box-shadow:0 0 0 2px rgba(22,131,136,.9),0 8px 18px rgba(0,0,0,.7);will-change:transform,filter}
+.splash-logo .i-glow{inset:-6px;border:3px solid var(--gold);box-shadow:0 0 18px var(--gold);opacity:0}
+.splash-logo .i-pawn{left:0;top:0;width:var(--pw);height:var(--pw);border-radius:50%;overflow:hidden;background:#000;border:3px solid var(--gold);box-shadow:0 4px 10px rgba(0,0,0,.8);will-change:transform}
+.splash-logo .i-pawn img{inset:0;width:100%;height:100%;object-fit:cover}
+.splash-logo .i-msl{left:0;top:0;width:calc(var(--s)*.07);height:calc(var(--s)*.022);margin:calc(var(--s)*-.011) 0 0 calc(var(--s)*-.035)}
+.splash-logo .i-msl svg,.splash-logo .i-plane svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.splash-logo .i-jet{left:0;top:0;width:calc(var(--s)*.2);height:auto;margin:calc(var(--s)*-.04) 0 0 calc(var(--s)*-.1);filter:drop-shadow(0 6px 6px rgba(0,0,0,.6))}
+.splash-logo .i-plane{left:0;top:0;width:calc(var(--s)*.19);height:calc(var(--s)*.08);margin:calc(var(--s)*-.04) 0 0 calc(var(--s)*-.095);filter:drop-shadow(0 6px 5px rgba(0,0,0,.6))}
+.splash-logo .i-boom,.splash-logo .i-ring,.splash-logo .i-shield{left:0;top:0;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1) 0 0 calc(var(--s)*-.1);border-radius:50%}
+.splash-logo .i-boom{background:radial-gradient(circle,#fff 0 12%,#ffe066 22%,#ff9a1f 42%,rgba(255,59,48,.85) 58%,rgba(80,10,0,0) 72%);mix-blend-mode:screen}
+.splash-logo .i-ring{border:3px solid #ffd27a}
+.splash-logo .i-shield{border:4px solid #7ff6fb;box-shadow:0 0 22px #7ff6fb,inset 0 0 22px rgba(127,246,251,.6)}
+.splash-logo .i-emo{left:0;top:0;font-size:calc(var(--s)*.07);line-height:1;width:1.2em;height:1.2em;margin:-.6em 0 0 -.6em;text-align:center;filter:drop-shadow(0 3px 4px rgba(0,0,0,.7))}
+.splash-logo .i-cash{left:0;top:0;font-weight:900;color:var(--gold);font-size:calc(var(--s)*.05);text-shadow:0 2px 0 #000}
+.splash-logo .i-boulder{left:0;top:0;width:calc(var(--s)*.06);height:calc(var(--s)*.06);margin:calc(var(--s)*-.03) 0 0 calc(var(--s)*-.03);border-radius:50%;
+ background:radial-gradient(circle at 35% 30%,#d8d2c4,#8d8577 45%,#4a453d 80%);box-shadow:0 4px 8px rgba(0,0,0,.7)}
+.splash-logo .i-wheel{left:0;top:0;width:calc(var(--s)*.11);height:calc(var(--s)*.11);margin:calc(var(--s)*-.055) 0 0 calc(var(--s)*-.055);border-radius:50%;border:3px solid var(--gold);
+ background:radial-gradient(circle,#3a2a12 0 18%,transparent 19%),repeating-conic-gradient(#c0161b 0 10deg,#111 10deg 20deg);box-shadow:0 4px 12px rgba(0,0,0,.8)}
+.splash-logo .i-tile{background-repeat:no-repeat;opacity:0;transform-origin:50% 50%}
+.splash-logo .i-cv{background:#fff}
+.splash-logo .i-stamp{left:50%;top:50%;padding:.2em .5em;border:.12em solid #ff3b30;color:#ff3b30;font-weight:900;letter-spacing:.12em;font-size:calc(var(--s)*.09);opacity:0;mix-blend-mode:screen;white-space:nowrap}
+.splash-logo .i-flash{inset:0;background:#fff;opacity:0;pointer-events:none}
+.splash-logo .i-shine{top:-20%;bottom:-20%;width:30%;left:-40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);pointer-events:none;transform:skewX(-12deg)}

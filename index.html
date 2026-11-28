@@ -19,7 +19,7 @@
 
 <div id="setup">
  <div class="setupcard">
-  <div class="splash-logo"><img id="splashLogo" src="https://raw.githubusercontent.com/waxmotson/The-big-con-desktop/master/whatsappbigcon_1.gif" alt="THE BIG CON"></div>
+  <div class="splash-logo" id="splashIntro" title="Click to skip"><img id="splashLogo" src="./big con logo.png" alt="THE BIG CON"></div>
   <div class="chooserow">
    <button class="modebtn" id="btnHost">HOST</button>
    <button class="modebtn" id="btnJoin">JOIN</button>
@@ -88,6 +88,9 @@
 /* Placeholder: scripts/build.mjs stamps the real commit into dist/index.html. */
 const BUILD_COMMIT = 'dev';
 </script>
+<!-- the splash intro (static/js/intro.js) animates with GSAP; without it the static logo shows -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
 <script type="module" src="./static/js/main.js"></script>
 </body>
 </html>

@@ -8,6 +8,7 @@ import { setHooks } from './hooks.js';
 import { announceAll, askPlayer, loadTransportSettings, revealAll, sendBegin, sync, sysTo } from './net.js';
 import { initUI, modal, render, showGame, toast } from './ui.js';
 import { Presence, initCore } from './core.js';
+import { mountIntro } from './intro.js';
 
 /* `extra` carries optional hooks the page decides on, e.g. {bots: () => BigConBots}. */
 export function installHooks(extra) {
@@ -29,4 +30,5 @@ export function boot() {
   initCore();            /* build stamp + splash-logo fallback */
   loadTransportSettings(); /* restore the saved connection system */
   initUI();              /* listeners, setup screen, Discord join bridge, presence menu */
+  if (typeof document !== 'undefined' && document.getElementById) mountIntro(document.getElementById('splashIntro')); /* the splash animation */
 }
