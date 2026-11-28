@@ -1055,6 +1055,7 @@ export function reworkButtons(me,p,phase){
  if(own('w_lira'))out.push(rwBtn('lira','💸 ERDOĞANOMICS — every rival loses 20% of cash above $30 (once per game)',reworkBlocked(me,'lira'),'Your action, once per game: each rival loses 20% of the cash they hold above $30.'));
  if(own('trump')&&S.dlcWorld&&NMAP.w_greenland)out.push(rwBtn('greenbuy','🇬🇱 MAKE AN OFFER — force-buy Greenland at list price (once per game)',reworkBlocked(me,'greenbuy'),'Your action, once per game, with DONALD TRUMP: buy Greenland from its owner at list price. They cannot refuse.'));
  if(S.dlcWorld&&own('w_bigyahu')&&own('trump')&&own('w_lockheed'))out.push(rwBtn('liberate','🛢️ LIBERATE OIL — seize all unowned oil, destroy your rivals’ (once per game)',reworkBlocked(me,'liberate'),'Your action, once per game, with BIG YAHU, DONALD TRUMP and LOCKHEED MARTIN: every unowned oil node is seized by you and every rival’s oil node is destroyed (rubble, no payout).'));
+ if(S.dlcWorld&&phase==='action'&&own('qantas'))out.push(rwBtn('summon','✈️ SUMMON THE JET to your square (free, end of turn)',reworkBlocked(me,'summon'),'FREE, once per turn: the Qantas jet flies from wherever it is parked to the square you are standing on.'));
  if(S.dlcWorld&&(own('w_monaco')||own('w_mbs')))out.push(rwBtn('black','⚫ PUT IT ALL ON BLACK / 🟢 GREEN — bet, 47% pays double; all in on green pays 35× (free, once per turn)',reworkBlocked(me,'black'),'FREE, once per turn: name a bet. 47% of the time the wheel lands black and you win the same again; otherwise the house keeps it. Or go ALL IN ON GREEN: 1 in 37, pays 35 to 1.'));
  if(S.dlcWorld&&own('w_pyramids')&&own('sisy')&&(own('w_monaco')||own('w_mbs')))out.push(rwBtn('biggamble','🎲 THE BIG GAMBLE — reshuffle who owns every node (once per game)',reworkBlocked(me,'biggamble'),'Your action, once per game: every owned node is dealt out again (each player keeps the same number of nodes). You lose the Pyramids, the Boulder and your casino, and nobody is dealt all of them. If two players complete the con at once, the richer one takes it.'));
  if(S.dlcWorld&&own('w_jensen'))out.push(rwBtn('honeypot','🍯 HONEYPOT — 2 free Chinese nodes; US nodes stop paying (once per game)',reworkBlocked(me,'honeypot'),'Your action, once per game: take 2 Chinese nodes for free. No US node earns income for 2 rounds, and you cannot buy in South-East Asia or the USA for your next 2 turns.'));
@@ -1406,6 +1407,7 @@ window.addEventListener('pointerup',e=>{if(drag&&e.target&&e.target!==svgEl&&!sv
   case 'swissdeposit':case 'swisswithdraw':swissFlow(act);break;
   case 'black':blackFlow();break;
   case 'biggamble':dispatch({act});break;
+  case 'summon':dispatch({act});break;
   case 'at1':case 'printmoney':case 'lira':case 'greenbuy':case 'liberate':case 'honeypot':case 'srilankadefault':dispatch({act});break;
   case 'laylowcash':dispatch({act:'laylow',choice:'cash'});break;
   case 'laylowcool':dispatch({act:'laylow',choice:'cool'});break;

@@ -98,3 +98,47 @@ test('classic board: the owner still flies from anywhere, to anywhere', async t 
   assert.equal(P[0].pos, 'rba');
   assert.equal(S.jetAt, undefined);
 });
+
+test('Global Edition: two flights in a row by the same player send the jet home for MAINTENANCE', async t => {
+  const { e, S, P } = await game(t, true);
+  const c = e.ctx;
+  const hops = e.acc.NODES.filter(n => n.id !== 'qantas' && c.flyDist('qantas', n.id) < c.QANTAS_RANGE_PX * 0.45).map(n => n.id);
+  assert.ok(hops.length >= 2);
+  const [a, b] = hops;
+  /* flight 1: qantas -> a; the jet stays at a */
+  P[0].pos = 'qantas'; moving(S, 0);
+  await run(e, 0, { act: 'flymode' }); await run(e, 0, { act: 'fly', id: a });
+  assert.equal(c.jetAt(), a);
+  /* flight 2 by the same player: lands at b, then the jet goes home */
+  P[0].pos = a; moving(S, 0);
+  await run(e, 0, { act: 'flymode' }); await run(e, 0, { act: 'fly', id: b });
+  assert.equal(P[0].pos, b, 'the passenger is dropped off');
+  assert.equal(c.jetAt(), 'qantas', 'the jet is home for a service');
+  assert.ok(S.log.some(l => l.includes('MAINTENANCE')));
+  /* a different player in between resets the count */
+  P[1].pos = 'qantas'; moving(S, 1);
+  await run(e, 1, { act: 'flymode' }); await run(e, 1, { act: 'fly', id: a });
+  P[0].pos = a; moving(S, 0);
+  await run(e, 0, { act: 'flymode' }); await run(e, 0, { act: 'fly', id: b });
+  assert.equal(c.jetAt(), b, 'one flight each: no maintenance yet');
+});
+
+test('Global Edition: the QANTAS owner summons the jet to their square at the end of their turn (free, once per turn)', async t => {
+  const { e, S, P } = await game(t, true);
+  const c = e.ctx;
+  S.jetAt = 'qantas';
+  P[1].pos = 'citi'; S.cur = 1; S.phase = 'action'; S.mode = null;
+  await run(e, 1, { act: 'summon' });
+  assert.equal(c.jetAt(), 'qantas', 'only the owner can summon it');
+  S.owner.qantas = 1;
+  await run(e, 1, { act: 'summon' });
+  assert.equal(c.jetAt(), 'citi', 'the jet is parked on the owner’s square');
+  assert.equal(S.phase, 'action', 'free: the action phase carries on');
+  P[1].pos = 'quik';
+  await run(e, 1, { act: 'summon' });
+  assert.equal(c.jetAt(), 'citi', 'once per turn');
+  /* not during movement */
+  S.nTurn = {}; S.phase = 'move'; S.steps = 3;
+  await run(e, 1, { act: 'summon' });
+  assert.equal(c.jetAt(), 'citi');
+});

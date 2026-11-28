@@ -1396,6 +1396,10 @@ export function reworkBlocked(pi,kind){
    for(const id of LIBERATORS)if(!own(id))return need(id);
    if(!act)return 'Liberating the oil is your action.';if(gUsed('liberate'))return 'The oil has already been liberated: once per game.';
    {const pl=liberatePlan(pi);if(!pl.seize.length&&!pl.destroy.length)return 'There is no oil left to liberate.'}return '';
+  case 'summon':
+   if(!w)return 'The Global Edition exhibits are not in play.';if(!own('qantas'))return need('qantas');
+   if(S.phase!=='action'||S.cur!==pi||S.mode)return 'You summon the jet at the end of your turn (your action phase).';
+   if(tUsed('summon'))return 'The jet has already been called this turn.';if(jetAt()===p.pos)return 'The jet is already parked on your square.';return '';
   case 'black':
    if(!w)return 'The Global Edition exhibits are not in play.';if(!CASINOS.some(own))return 'You do not own a casino (MONACO or MARINA BAY SANDS).';
    if(!either||S.cur!==pi)return 'Not now.';if(tUsed('black'))return 'One spin a turn: the wheel has already turned for you.';if(p.money<1)return 'You have nothing to bet.';return '';
@@ -1745,6 +1749,18 @@ const WORLD_REWORKS={
   await finishNodeAbility(pi);
  },
  /* 🎰 PUT IT ALL ON BLACK (own MONACO or MARINA BAY SANDS; free, once per turn): bet m.n — 47% it pays double, otherwise the house keeps it */
+ /* ✈️ QANTAS — the owner calls the jet to their own square at the end of their turn (free, once per turn) */
+ async summon(pi){
+  const why=reworkBlocked(pi,'summon');if(why){sysTo(pi,why);return}
+  tMark('summon');
+  const from=jetAt(),to=S.players[pi].pos;
+  const flew=projFx('fly',from,to);
+  S.jetAt=to;S.jetRun=null;
+  fxAt(pi,'✈️ JET SUMMONED','#9ad7ff');
+  log('✈️ '+pname(pi)+' (QANTAS) summons the jet from '+lname(NMAP[from])+' to '+lname(NMAP[to])+'. It is parked there now.');
+  if(flew){sync();await projPause()}
+  sync();
+ },
  async black(pi,m){
   if(S.mode)return;
   const why=reworkBlocked(pi,'black');if(why){sysTo(pi,why);return}
@@ -1862,6 +1878,8 @@ export function canReach(id){return !(id==='qantas'&&qantasGrounded())}
    map, about 8,500 km; the date line wraps), so it is no longer a ticket to anywhere. The classic boards keep the old jet: the owner,
    from anywhere, to anywhere. */
 export const QANTAS_RANGE_PX=2300;
+/* MAINTENANCE: after the same player flies the jet twice in a row it goes home to QANTAS for a service */
+export const QANTAS_MAINT_FLIGHTS=2;
 export function jetAt(){if(!S||!S.dlcWorld)return null;return S.jetAt&&NMAP[S.jetAt]?S.jetAt:'qantas'}
 export function flyDist(a,b){
  const A=NMAP[a],B=NMAP[b];if(!A||!B)return Infinity;
@@ -1956,8 +1974,14 @@ export async function doFly(pi,id){
  if(prevFlyPos==='sisy'&&id!=='sisy'&&S.owner.back!==pi)S.sisyPayout=10;
  if(S.dlcWorld){
   S.jetAt=id;
+  const run=S.jetRun&&S.jetRun.pi===pi?S.jetRun.n+1:1;S.jetRun={pi,n:run};
   if(stolen){fxAt(pi,'✈️ STOLEN','#ff9a3c');log('✈️ '+pname(pi)+' STEALS the Qantas jet'+(S.owner.qantas!=null?' from '+pname(S.owner.qantas):'')+' and flies it to '+lname(NMAP[id])+'. It is parked there now.')}
   else log('✈️ '+pname(pi)+' flies the Qantas jet to '+lname(NMAP[id])+' — it is parked there now (anyone standing on it can take it).');
+  if(run>=QANTAS_MAINT_FLIGHTS&&id!=='qantas'){
+   S.jetAt='qantas';S.jetRun=null;
+   const q=NMAP.qantas;if(q)fx(q.x,q.y-64,'🔧 MAINTENANCE','#9ad7ff');
+   log('🔧 MAINTENANCE — that was '+pname(pi)+'’s '+QANTAS_MAINT_FLIGHTS+'nd flight in a row: the jet drops them off and flies home to QANTAS for a service.');
+  }
  }
  else log('✈️ '+pname(pi)+' takes the Qantas jet straight to '+lname(NMAP[id])+'.');
  if(flew){sync();await projPause()} /* the jet flies before the landing opens the next phase */
