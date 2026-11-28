@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BIG CON — intro test</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="./static/css/fonts.css">
+<style>
+:root{--teal:#168388;--gold:#f5c542;--red:#ff3b30;--bg:#0b0d0c}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:#fff;font-family:'Bricolage Grotesque',system-ui,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:16px}
+#stage{position:relative;width:min(92vw,620px,78vh);aspect-ratio:1/1;background:#000;overflow:hidden;cursor:pointer;
+ box-shadow:0 0 0 2px #000,0 0 0 4px var(--teal),0 30px 80px rgba(0,0,0,.6)}
+#stage *{position:absolute}
+#logo{inset:0;width:100%;height:100%;opacity:0;image-rendering:auto}
+.card{width:var(--cw);height:var(--cw);left:0;top:0;transform-style:preserve-3d;will-change:transform}
+.card .f,.card .b{inset:0;backface-visibility:hidden;border-radius:6%;overflow:hidden}
+.card .b{background:
+  radial-gradient(circle at 50% 50%,rgba(245,197,66,.9) 0 12%,transparent 13%),
+  repeating-linear-gradient(45deg,#0f5e62 0 6px,#168388 6px 12px);
+ border:3px solid #000;box-shadow:inset 0 0 0 3px var(--gold)}
+.card .b::after{content:'$';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:calc(var(--cw)*.17);color:#000}
+.card .f{transform:rotateY(180deg);background:#000;border:3px solid var(--gold)}
+.card .f img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#hole{background:#000}
+#tile{background-repeat:no-repeat;opacity:0;transform-origin:50% 50%}
+#tile .cv{background:#fff}
+#line{left:0;right:0;top:46%;text-align:center;font-family:ui-monospace,Consolas,monospace;font-weight:700;letter-spacing:.18em;
+ font-size:calc(var(--s)*.034);color:var(--gold);white-space:nowrap}
+#line .cur{position:static;display:inline-block;width:.6em;background:var(--gold);color:transparent;animation:blink .5s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+#stamp{left:50%;top:50%;padding:.2em .5em;border:.12em solid var(--red);color:var(--red);font-weight:900;letter-spacing:.12em;
+ font-size:calc(var(--s)*.09);transform:translate(-50%,-50%) rotate(-14deg) scale(3);opacity:0;mix-blend-mode:screen;white-space:nowrap}
+#flash{inset:0;background:#fff;opacity:0;pointer-events:none}
+#shine{top:-20%;bottom:-20%;width:30%;left:-40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);pointer-events:none;transform:skewX(-12deg)}
+.grain{inset:0;pointer-events:none;opacity:.08;background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+.ctl{display:flex;gap:10px}
+.ctl button{background:#000;color:#fff;border:1px solid var(--teal);padding:8px 16px;font:inherit;font-weight:800;letter-spacing:.1em;cursor:pointer}
+.ctl button:hover{background:var(--teal)}
+.note{font-size:12px;color:#9ad;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div id="stage" aria-label="THE BIG CON intro animation">
+ <img id="logo" src="./big con logo.png" alt="THE BIG CON">
+ <div id="hole"></div>
+ <div id="line"></div>
+ <div id="tile"></div>
+ <div id="stamp">CONNED</div>
+ <div id="shine"></div>
+ <div id="flash"></div>
+ <div class="grain"></div>
+</div>
+<div class="ctl"><button id="replay">↻ REPLAY</button><button id="skip">SKIP ⏭</button></div>
+<div class="note">intro test · click the stage to skip · not wired into the game yet</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(()=>{
+const stage=document.getElementById('stage'),logo=document.getElementById('logo'),tile=document.getElementById('tile'),
+ line=document.getElementById('line'),stamp=document.getElementById('stamp'),flash=document.getElementById('flash'),shine=document.getElementById('shine');
+/* the logo's own geometry (big con logo.png is 512×512): the eight faces around the white tile and the tile's letter cells */
+const L=512;
+const SLOTS={bessock:[85,88],calvinathanasius:[255,85],denialswan:[425,85],japsnchen:[85,255],thousandyardwax:[425,255],jimchalmers:[85,425],markwatson:[255,425],tomkins:[425,425]};
+const EXTRA=['Alexander_Lane','DJT','thebigag','thebigwegrzyn'];
+const FACE=160; /* a face's footprint in the logo */
+const BOX={x:166,y:170,w:186,h:174};
+const ROWS=[[172,213],[232,273],[295,335]],COLS=[[172,220],[244,280],[304,347]];
+const ORDER=[0,1,2,3,4,5,6,7,8]; /* T H E / B I G / C O N, read in order */
+const ALL=Object.keys(SLOTS).concat(EXTRA);
+let tl=null,cards=[],S=0,k=1;
+
+function build(){
+ S=stage.clientWidth;k=S/L;
+ stage.style.setProperty('--s',S+'px');stage.style.setProperty('--cw',Math.round(S*0.2)+'px');
+ stage.querySelectorAll('.card').forEach(c=>c.remove());
+ cards=ALL.map(id=>{
+  const c=document.createElement('div');c.className='card';c.dataset.id=id;
+  c.innerHTML='<div class="b"></div><div class="f"><img src="./characters/'+id+'.png" alt=""></div>';
+  stage.insertBefore(c,tile);return c;
+ });
+ /* the tile shows the logo's own centre crop; nine white covers hide its letters until they are spelled out */
+ Object.assign(tile.style,{left:BOX.x*k+'px',top:BOX.y*k+'px',width:BOX.w*k+'px',height:BOX.h*k+'px',
+  backgroundImage:'url("./big con logo.png")',backgroundSize:S+'px '+S+'px',backgroundPosition:(-BOX.x*k)+'px '+(-BOX.y*k)+'px'});
+ const hole=document.getElementById('hole');Object.assign(hole.style,{left:BOX.x*k+'px',top:BOX.y*k+'px',width:BOX.w*k+'px',height:BOX.h*k+'px'});gsap.set(hole,{opacity:1});
+ tile.innerHTML='';
+ ROWS.forEach(r=>COLS.forEach(c=>{const d=document.createElement('div');d.className='cv';
+  Object.assign(d.style,{left:(c[0]-BOX.x)*k+'px',top:(r[0]-BOX.y)*k+'px',width:(c[1]-c[0])*k+'px',height:(r[1]-r[0])*k+'px'});tile.appendChild(d)}));
+}
+const cw=()=>S*0.2;
+const centre=(x,y)=>({x:x-cw()/2,y:y-cw()/2});
+function type(el,text,dur){
+ const o={n:0};
+ return gsap.to(o,{n:text.length,duration:dur,ease:'none',onUpdate(){el.innerHTML=text.slice(0,Math.round(o.n))+'<span class="cur">_</span>'}});
+}
+function shuffled(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function play(){
+ if(tl)tl.kill();
+ build();
+ gsap.set([logo,tile,stamp,flash],{opacity:0});gsap.set(stamp,{scale:3,xPercent:-50,yPercent:-50,rotate:-14,left:'50%',top:'50%',x:0,y:0});
+ gsap.set(tile,{scale:1,x:0,y:0});gsap.set(stage,{x:0,y:0});gsap.set(shine,{left:'-40%'});line.innerHTML='';
+ /* a 4×3 table of cards, face down, dealt from below */
+ const grid=cards.map((c,i)=>{const col=i%4,row=Math.floor(i/4);return centre(S*(0.17+col*0.22),S*(0.27+row*0.23))});
+ gsap.set(stage.querySelectorAll('.card .f,.card .b'),{opacity:1});
+ cards.forEach(c=>gsap.set(c,{x:S/2-cw()/2,y:S*1.2,rotation:gsap.utils.random(-30,30),rotationY:0,scale:1,opacity:1}));
+
+ tl=gsap.timeline();
+ tl.add(type(line,'EVERY CON NEEDS A CREW',0.9))
+   .to(line,{opacity:0,duration:0.15,delay:0.35})
+   .set(line,{innerHTML:'',opacity:1});
+ /* the deal */
+ cards.forEach((c,i)=>tl.to(c,{x:grid[i].x,y:grid[i].y,rotation:gsap.utils.random(-4,4),duration:0.42,ease:'power3.out'},0.95+i*0.055+(i===0?0:0)));
+ /* face up, one by one */
+ tl.to(cards,{rotationY:180,duration:0.35,ease:'power2.inOut',stagger:0.045},'>-0.05');
+ /* three-card monte: face down again and swap the cards around */
+ tl.to(cards,{rotationY:0,duration:0.25,ease:'power2.in',stagger:0.015},'+=0.35');
+ let pos=grid.slice();
+ for(let r=0;r<4;r++){
+  pos=shuffled(pos);
+  const at='>'+(r?'-0.02':'+0.02');
+  cards.forEach((c,i)=>tl.to(c,{x:pos[i].x,y:pos[i].y,rotation:gsap.utils.random(-8,8),duration:0.28-r*0.03,ease:'power2.inOut'},i?'<':at));
+ }
+ /* gather into one stack, a beat */
+ tl.to(cards,{x:S/2-cw()/2,y:S/2-cw()/2,rotation:()=>gsap.utils.random(-6,6),duration:0.3,ease:'power3.in',stagger:0.01},'+=0.05');
+ tl.to(stage,{x:4,duration:0.04,yoyo:true,repeat:3});
+ /* the deal that matters: eight to their places, face up; four flicked off the table */
+ const sz=FACE*k/cw();
+ tl.addLabel('deal','>');
+ cards.forEach(c=>{
+  const id=c.dataset.id,s=SLOTS[id];
+  if(s){const p=centre(s[0]*k,s[1]*k);
+   tl.to(c,{x:p.x,y:p.y,scale:sz,rotation:0,rotationY:180,duration:0.55,ease:'back.out(1.4)'},'deal+='+(gsap.utils.random(0,0.18)));}
+  else{const a=gsap.utils.random(0,Math.PI*2);
+   tl.to(c,{x:S/2+Math.cos(a)*S*1.1,y:S/2+Math.sin(a)*S*1.1,rotation:gsap.utils.random(-540,540),rotationY:180,duration:0.6,ease:'power2.in'},'deal');}
+ });
+ tl.to(stamp,{opacity:1,scale:1,duration:0.18,ease:'power4.in'},'deal+=0.12')
+   .to(stage,{x:-6,y:3,duration:0.05,yoyo:true,repeat:3},'<0.18')
+   .to(stamp,{opacity:0,duration:0.25},'+=0.25');
+ /* the cards melt into the real logo */
+ tl.to(logo,{opacity:1,duration:0.45},'deal+=0.75')
+   .to(cards.map(c=>c.querySelector('.f')),{opacity:0,duration:0.45},'<') /* fade the face, not the 3D card (opacity would flatten it and show the back) */
+   .set(cards.map(c=>c.querySelector('.b')),{opacity:0},'<');
+ /* the white tile slams in */
+ tl.fromTo(tile,{opacity:0,scale:2.4,rotation:-6},{opacity:1,scale:1,rotation:0,duration:0.32,ease:'power4.in'},'<0.1')
+   .set('#hole',{opacity:0})
+   .to(flash,{opacity:0.55,duration:0.04})
+   .to(flash,{opacity:0,duration:0.3})
+   .to(stage,{x:7,y:-4,duration:0.04,yoyo:true,repeat:5},'<');
+ /* and spells THE / BIG / CON */
+ const covers=[...tile.children];
+ ORDER.forEach((n,i)=>tl.to(covers[n],{scaleY:0,transformOrigin:'50% 0%',duration:0.08,ease:'steps(3)'},(i?'>+0.05':'>+0.15')));
+ tl.to(tile,{scale:1.06,duration:0.08,yoyo:true,repeat:1,ease:'power2.out'},'>+0.05');
+ tl.to(shine,{left:'130%',duration:0.8,ease:'power2.inOut'},'>+0.1');
+ tl.add(()=>{tile.style.opacity=1});
+}
+window.__introTl=()=>tl;
+function skip(){if(tl)tl.progress(1)}
+document.getElementById('replay').onclick=play;
+document.getElementById('skip').onclick=skip;
+stage.onclick=skip;
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const p=tl?tl.progress():1;play();tl.progress(p)},150)});
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const go=()=>{play();if(reduce)skip()};
+if(logo.complete)go();else logo.onload=go;
+})();
+</script>
+</body>
+</html>
