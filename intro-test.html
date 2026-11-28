@@ -25,12 +25,8 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .card .f{transform:rotateY(180deg);background:#000;border:3px solid var(--gold)}
 .card .f img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #hole{background:#000}
-#stage .ex .ph,#stage .ex .cap{position:relative}
 #ex{inset:0;transform-origin:50% 50%}
-.ex{width:var(--ew);left:0;top:0;background:#f4efe4;padding:calc(var(--ew)*.045) calc(var(--ew)*.045) 0;box-shadow:0 10px 30px rgba(0,0,0,.7);will-change:transform}
-.ex .ph{position:relative;width:100%;aspect-ratio:4/3;background:#111 center/cover no-repeat;border:2px solid #000}
-.ex .cap{position:relative;display:block;padding:.35em .2em .45em;text-align:center;color:#000;font-weight:900;letter-spacing:.06em;font-size:calc(var(--ew)*.075);line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ex .ty{position:absolute;top:calc(var(--ew)*.07);left:calc(var(--ew)*.07);background:var(--teal);color:#fff;font-weight:900;font-size:calc(var(--ew)*.05);letter-spacing:.12em;padding:.15em .45em}
+.ex{width:var(--ew);aspect-ratio:4/3;left:0;top:0;background:#111 center/cover no-repeat;border:3px solid #000;box-shadow:0 0 0 2px rgba(22,131,136,.9),0 12px 30px rgba(0,0,0,.75);will-change:transform}
 #tile{background-repeat:no-repeat;opacity:0;transform-origin:50% 50%}
 #tile .cv{background:#fff}
 #line{left:0;right:0;top:46%;text-align:center;font-family:ui-monospace,Consolas,monospace;font-weight:700;letter-spacing:.18em;
@@ -79,13 +75,22 @@ const ORDER=[0,1,2,3,4,5,6,7,8]; /* T H E / B I G / C O N, read in order */
 const ALL=Object.keys(SLOTS).concat(EXTRA);
 /* the exhibits that open the con, each with its own entrance; [x, y] is where it settles in the collage (fractions of the stage) */
 const EXHIBITS=[
- {img:'./static/made logo.png',name:'MADE (???)',type:'WILD',at:[.27,.27],r:-7,in:'flicker'},
- {img:'./static/qantas.png',name:'QANTAS',type:'CORPORATE',at:[.73,.22],r:5,in:'fly'},
- {img:'./static/GeographyDLC/nk_missile.jpg',name:'MISSILE COMMAND',type:'REGULATOR',at:[.25,.72],r:4,in:'launch'},
- {img:'./static/GeographyDLC/geo_tuvalu.png',name:'TUVALU · .TV',type:'WILD',at:[.76,.74],r:-5,in:'sink'},
- {img:'./static/bond desk.png',name:'THE BOND DESK',type:'BANK',at:[.52,.5],r:2,in:'drop'},
- {img:'./static/sisyphus.webp',name:'SISYPHUS',type:'CHART',at:[.5,.18],r:-3,in:'roll'},
- {img:'./static/the rock.gif',name:'THE ROCK',type:'WILD',at:[.5,.8],r:6,in:'slam'},
+ {img:'./static/made logo.png',at:[.22,.2],r:-7,in:'flicker'},
+ {img:'./static/qantas.png',at:[.78,.16],r:5,in:'fly'},
+ {img:'./static/GeographyDLC/nk_missile.jpg',at:[.2,.8],r:4,in:'launch'},
+ {img:'./static/GeographyDLC/geo_tuvalu.png',at:[.8,.82],r:-5,in:'sink'},
+ {img:'./static/quikstop.png',at:[.5,.12],r:-2,in:'drop'},
+ {img:'./static/f1.png',at:[.24,.5],r:-4,in:'zoom'},
+ {img:'./static/GeographyDLC/shahed drone.webp',at:[.78,.48],r:7,in:'dive'},
+ {img:'./static/gold coloured coin.jpg',at:[.5,.86],r:3,in:'spin'},
+ {img:'./static/james bond.png',at:[.36,.33],r:5,in:'slide'},
+ {img:'./static/the jim reaper.png',at:[.66,.34],r:-6,in:'slam'},
+ {img:'./static/the big short.png',at:[.34,.66],r:-3,in:'roll'},
+ {img:'./static/GeographyDLC/nk_kimjongun.png',at:[.66,.66],r:4,in:'launch'},
+ {img:'./static/bond desk.png',at:[.5,.5],r:2,in:'drop'},
+ {img:'./static/trump.png',at:[.15,.36],r:-8,in:'slam'},
+ {img:'./static/sisyphus.webp',at:[.86,.33],r:-3,in:'roll'},
+ {img:'./static/the rock.gif',at:[.5,.5],r:6,in:'slam'},
 ];
 let exs=[];
 let tl=null,cards=[],S=0,k=1;
@@ -97,7 +102,7 @@ function build(){
  stage.style.setProperty('--ew',Math.round(S*0.36)+'px');
  const exWrap=document.getElementById('ex');exWrap.innerHTML='';
  exs=EXHIBITS.map(e=>{const d=document.createElement('div');d.className='ex';
-  d.innerHTML='<div class="ph" style="background-image:url(&quot;'+e.img+'&quot;)"></div><span class="ty">'+e.type+'</span><span class="cap">'+e.name+'</span>';
+  d.style.backgroundImage='url("'+e.img+'")';
   exWrap.appendChild(d);return d});
  cards=ALL.map(id=>{
   const c=document.createElement('div');c.className='card';c.dataset.id=id;
@@ -134,13 +139,11 @@ function play(){
  /* ACT ONE — the marks: the exhibits slam onto the table, one entrance each */
  const exWrap=document.getElementById('ex');
  gsap.set(exWrap,{scale:1,opacity:1,filter:'none',x:0,y:0});
- const ew=S*0.36,eh=ew*1.0;
+ const ew=S*0.3,eh=ew*0.75;
  exs.forEach(d=>gsap.set(d,{x:-9999,y:0,opacity:1,rotation:0,scale:1}));
- tl.add(type(line,'EVERY CON NEEDS A MARK',0.75))
-   .to(line,{opacity:0,duration:0.12,delay:0.25})
-   .set(line,{innerHTML:'',opacity:1});
+ tl.to({},{duration:0.3});
  EXHIBITS.forEach((e,i)=>{
-  const d=exs[i],x=e.at[0]*S-ew/2,y=e.at[1]*S-eh/2,at=i?'>-0.08':'>';
+  const d=exs[i],x=e.at[0]*S-ew/2,y=e.at[1]*S-eh/2,at=i?'>-'+(i<4?0.08:0.16):'>';
   const land={x,y,rotation:e.r,scale:1,opacity:1};
   if(e.in==='flicker'){tl.set(d,{x,y,rotation:e.r,opacity:0},at).to(d,{opacity:1,duration:0.04,repeat:5,yoyo:true,ease:'steps(1)'}).set(d,{opacity:1})}
   else if(e.in==='fly')tl.fromTo(d,{x:-ew*1.4,y:y+S*0.25,rotation:-25,scale:.7},{...land,duration:0.4,ease:'power3.out'},at);
@@ -148,14 +151,15 @@ function play(){
   else if(e.in==='sink')tl.fromTo(d,{x,y:y-S*0.05,rotation:e.r,scale:1.1,opacity:0},{...land,duration:0.3,ease:'power2.out'},at).to(d,{y:y+S*0.012,duration:0.18,yoyo:true,repeat:1,ease:'sine.inOut'});
   else if(e.in==='drop')tl.fromTo(d,{x,y:-eh*1.3,rotation:e.r*4},{...land,duration:0.34,ease:'bounce.out'},at);
   else if(e.in==='roll')tl.fromTo(d,{x:S*1.05,y,rotation:360,scale:.8},{...land,duration:0.45,ease:'power2.out'},at).to(d,{x:x+S*0.03,duration:0.12,yoyo:true,repeat:1,ease:'sine.inOut'});
+  else if(e.in==='zoom')tl.fromTo(d,{x:S*1.2,y,rotation:0,scale:1,skewX:-25},{...land,skewX:0,duration:0.3,ease:'expo.out'},at);
+  else if(e.in==='dive')tl.fromTo(d,{x:S*1.1,y:-eh*1.5,rotation:40,scale:.6},{...land,duration:0.32,ease:'power3.out'},at);
+  else if(e.in==='spin')tl.fromTo(d,{x,y,rotation:e.r,scale:.2,rotationY:720,opacity:0},{...land,rotationY:0,duration:0.45,ease:'power2.out'},at);
+  else if(e.in==='slide')tl.fromTo(d,{x:-ew*1.2,y,rotation:0},{...land,duration:0.3,ease:'back.out(1.2)'},at);
   else tl.fromTo(d,{x,y,rotation:e.r,scale:2.6,opacity:0},{...land,duration:0.22,ease:'power4.in'},at).to(stage,{x:6,y:-4,duration:0.04,yoyo:true,repeat:3});
  });
  /* the marks become the table the crew plays on */
  tl.to(exWrap,{scale:0.92,opacity:0.28,filter:'blur(1.5px) grayscale(.4)',duration:0.45,ease:'power2.inOut'},'+=0.35');
- tl.add(type(line,'…AND A CREW',0.5),'<0.1')
-   .to(line,{opacity:0,duration:0.12,delay:0.25})
-   .set(line,{innerHTML:'',opacity:1});
- tl.addLabel('crew','<-0.3');
+ tl.addLabel('crew','<0.15');
  /* the deal */
  cards.forEach((c,i)=>tl.to(c,{x:grid[i].x,y:grid[i].y,rotation:gsap.utils.random(-4,4),duration:0.42,ease:'power3.out'},'crew+='+(i*0.055)));
  /* face up, one by one */
