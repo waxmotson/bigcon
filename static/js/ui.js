@@ -690,11 +690,6 @@ export function renderBoard(){
   lx+=14+k.length*6.2+16;
  });
  s+='</g>';
- const goalNow=goalAmount();
- const leader=S.players.reduce((a,b)=>b.money>a.money?b:a,S.players[0]);
- const footerX=special?metrics.cx:1200,footerY=special?bounds.h-155:1490;
- s+='<g transform="translate('+footerX+','+footerY+')"><rect x="-800" y="-14" width="1600" height="25" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="'+(special?14:10.5)+'" font-weight="700" letter-spacing="1" fill="#fff">WIN CONDITION: $'+goalNow+' AND ONE OF EVERY NODE TYPE TAKES THE CON</text></g>';
- s+='<g transform="translate('+footerX+','+(footerY+38)+')"><rect x="-800" y="-12" width="1600" height="23" fill="#000" stroke="#168388" stroke-width="1.5"/><text text-anchor="middle" y="3" font-size="'+(special?13:10)+'" font-weight="700" letter-spacing="1" fill="aqua">FRONT RUNNER: '+esc(String(leader.name).toUpperCase())+' — $'+leader.money+' · $'+Math.max(0,goalNow-leader.money)+' TO GO</text></g>';
  NODES.forEach(n=>{s+=nodeSVG(n,nodeClass(n,curpos))});
  if(hitS)s+='<g id="edgehits">'+hitS+'</g>';
  if(S)s+=tokenLayer();
