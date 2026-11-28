@@ -14,7 +14,21 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 #stage{position:relative;width:min(92vw,620px,78vh);aspect-ratio:1/1;background:#000;overflow:hidden;cursor:pointer;
  box-shadow:0 0 0 2px #000,0 0 0 4px var(--teal),0 30px 80px rgba(0,0,0,.6)}
 #stage *{position:absolute}
-#logo{inset:0;width:100%;height:100%;opacity:0;image-rendering:auto}
+#boardWrap{inset:0;background:#1d201f}
+#board{left:0;top:0;transform-origin:0 0;max-width:none;will-change:transform}
+#logo{inset:0;width:100%;height:100%;opacity:0}
+#hole{background:#000}
+#ex,#fx{inset:0}
+#trails{left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.ex{width:var(--ew);aspect-ratio:4/3;left:0;top:0;background:#111 center/cover no-repeat;border:3px solid #000;
+ box-shadow:0 0 0 2px rgba(22,131,136,.9),0 12px 30px rgba(0,0,0,.75);will-change:transform,filter}
+.ex.big{width:calc(var(--ew)*1.25)}
+.msl{left:0;top:0;width:calc(var(--s)*.07);height:calc(var(--s)*.022);margin:calc(var(--s)*-.011) 0 0 calc(var(--s)*-.035);will-change:transform}
+.msl svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.jet{left:0;top:0;width:calc(var(--s)*.2);margin:calc(var(--s)*-.04) 0 0 calc(var(--s)*-.1);will-change:transform;filter:drop-shadow(0 6px 6px rgba(0,0,0,.6))}
+.boom{left:0;top:0;width:calc(var(--s)*.22);height:calc(var(--s)*.22);margin:calc(var(--s)*-.11) 0 0 calc(var(--s)*-.11);border-radius:50%;
+ background:radial-gradient(circle,#fff 0 12%,#ffe066 22%,#ff9a1f 42%,rgba(255,59,48,.85) 58%,rgba(80,10,0,0) 72%);mix-blend-mode:screen;pointer-events:none}
+.ring{left:0;top:0;width:calc(var(--s)*.22);height:calc(var(--s)*.22);margin:calc(var(--s)*-.11) 0 0 calc(var(--s)*-.11);border-radius:50%;border:3px solid #ffd27a;pointer-events:none}
 .card{width:var(--cw);height:var(--cw);left:0;top:0;transform-style:preserve-3d;will-change:transform}
 .card .f,.card .b{inset:0;backface-visibility:hidden;border-radius:6%;overflow:hidden}
 .card .b{background:
@@ -24,15 +38,8 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .card .b::after{content:'$';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:calc(var(--cw)*.17);color:#000}
 .card .f{transform:rotateY(180deg);background:#000;border:3px solid var(--gold)}
 .card .f img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-#hole{background:#000}
-#ex{inset:0;transform-origin:50% 50%}
-.ex{width:var(--ew);aspect-ratio:4/3;left:0;top:0;background:#111 center/cover no-repeat;border:3px solid #000;box-shadow:0 0 0 2px rgba(22,131,136,.9),0 12px 30px rgba(0,0,0,.75);will-change:transform}
 #tile{background-repeat:no-repeat;opacity:0;transform-origin:50% 50%}
 #tile .cv{background:#fff}
-#line{left:0;right:0;top:46%;text-align:center;font-family:ui-monospace,Consolas,monospace;font-weight:700;letter-spacing:.18em;
- font-size:calc(var(--s)*.034);color:var(--gold);white-space:nowrap}
-#line .cur{position:static;display:inline-block;width:.6em;background:var(--gold);color:transparent;animation:blink .5s steps(1) infinite}
-@keyframes blink{50%{opacity:0}}
 #stamp{left:50%;top:50%;padding:.2em .5em;border:.12em solid var(--red);color:var(--red);font-weight:900;letter-spacing:.12em;
  font-size:calc(var(--s)*.09);transform:translate(-50%,-50%) rotate(-14deg) scale(3);opacity:0;mix-blend-mode:screen;white-space:nowrap}
 #flash{inset:0;background:#fff;opacity:0;pointer-events:none}
@@ -46,10 +53,11 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 </head>
 <body>
 <div id="stage" aria-label="THE BIG CON intro animation">
+ <div id="boardWrap"><img id="board" src="./static/intro/board.jpg" alt=""></div>
  <img id="logo" src="./big con logo.png" alt="THE BIG CON">
  <div id="hole"></div>
  <div id="ex"></div>
- <div id="line"></div>
+ <div id="fx"><svg id="trails"></svg></div>
  <div id="tile"></div>
  <div id="stamp">CONNED</div>
  <div id="shine"></div>
@@ -60,161 +68,263 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 <div class="note">intro test · click the stage to skip · not wired into the game yet</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
 <script>
 (()=>{
-const stage=document.getElementById('stage'),logo=document.getElementById('logo'),tile=document.getElementById('tile'),
- line=document.getElementById('line'),stamp=document.getElementById('stamp'),flash=document.getElementById('flash'),shine=document.getElementById('shine');
-/* the logo's own geometry (big con logo.png is 512×512): the eight faces around the white tile and the tile's letter cells */
+gsap.registerPlugin(MotionPathPlugin);
+const $=id=>document.getElementById(id);
+const stage=$('stage'),board=$('board'),boardWrap=$('boardWrap'),logo=$('logo'),tile=$('tile'),stamp=$('stamp'),flash=$('flash'),shine=$('shine'),
+ exWrap=$('ex'),fx=$('fx'),trails=$('trails');
+const G='./static/GlobalEdition/',P='./static/';
+
+/* ---- the board: a full random board with both DLCs (static/intro/board.jpg, 4200×2730); the zoom starts on QUIKSTOP ---- */
+const BW=4200,BH=2730,QUIK=[1225,479];
+
+/* ---- the logo's own geometry (big con logo.png is 512×512) ---- */
 const L=512;
 const SLOTS={bessock:[85,88],calvinathanasius:[255,85],denialswan:[425,85],japsnchen:[85,255],thousandyardwax:[425,255],jimchalmers:[85,425],markwatson:[255,425],tomkins:[425,425]};
 const EXTRA=['Alexander_Lane','DJT','thebigag','thebigwegrzyn'];
-const FACE=160; /* a face's footprint in the logo */
-const BOX={x:166,y:170,w:186,h:174};
+const FACE=160,BOX={x:166,y:170,w:186,h:174};
 const ROWS=[[172,213],[232,273],[295,335]],COLS=[[172,220],[244,280],[304,347]];
-const ORDER=[0,1,2,3,4,5,6,7,8]; /* T H E / B I G / C O N, read in order */
 const ALL=Object.keys(SLOTS).concat(EXTRA);
-/* the exhibits that open the con, each with its own entrance; [x, y] is where it settles in the collage (fractions of the stage) */
-const EXHIBITS=[
- {img:'./static/made logo.png',at:[.22,.2],r:-7,in:'flicker'},
- {img:'./static/qantas.png',at:[.78,.16],r:5,in:'fly'},
- {img:'./static/GeographyDLC/nk_missile.jpg',at:[.2,.8],r:4,in:'launch'},
- {img:'./static/GeographyDLC/geo_tuvalu.png',at:[.8,.82],r:-5,in:'sink'},
- {img:'./static/quikstop.png',at:[.5,.12],r:-2,in:'drop'},
- {img:'./static/f1.png',at:[.24,.5],r:-4,in:'zoom'},
- {img:'./static/GeographyDLC/shahed drone.webp',at:[.78,.48],r:7,in:'dive'},
- {img:'./static/gold coloured coin.jpg',at:[.5,.86],r:3,in:'spin'},
- {img:'./static/james bond.png',at:[.36,.33],r:5,in:'slide'},
- {img:'./static/the jim reaper.png',at:[.66,.34],r:-6,in:'slam'},
- {img:'./static/the big short.png',at:[.34,.66],r:-3,in:'roll'},
- {img:'./static/GeographyDLC/nk_kimjongun.png',at:[.66,.66],r:4,in:'launch'},
- {img:'./static/bond desk.png',at:[.5,.5],r:2,in:'drop'},
- {img:'./static/trump.png',at:[.15,.36],r:-8,in:'slam'},
- {img:'./static/sisyphus.webp',at:[.86,.33],r:-3,in:'roll'},
- {img:'./static/the rock.gif',at:[.5,.5],r:6,in:'slam'},
+
+/* ---- act two: the nodes with special abilities, each with its own entrance ([x, y] = where it lands, as stage fractions) ---- */
+const ABILITIES=[
+ {img:P+'made logo.png',at:[.2,.18],r:-7,in:'flicker'},
+ {img:P+'qantas.png',at:[.5,.14],r:4,in:'fly'},
+ {img:P+'GeographyDLC/nk_missile.jpg',at:[.8,.18],r:5,in:'launch'},
+ {img:G+'javier-milei.avif',at:[.18,.42],r:5,in:'slam'},
+ {img:P+'james bond.png',at:[.43,.38],r:-4,in:'slide'},
+ {img:G+'brexit.jpg',at:[.7,.4],r:-6,in:'drop'},
+ {img:G+'bermuda-triangle.jpg',at:[.86,.5],r:6,in:'spin'},
+ {img:P+'GeographyDLC/geo_tuvalu.png',at:[.22,.66],r:-5,in:'sink'},
+ {img:G+'monaco-casino.jpg',at:[.5,.58],r:3,in:'spin'},
+ {img:G+'pyramids.jpg',at:[.78,.7],r:-3,in:'drop'},
+ {img:P+'backroom deals.png',at:[.3,.86],r:4,in:'slide'},
+ {img:G+'jensen-huang.jpg',at:[.58,.82],r:-5,in:'slam'},
+ {img:G+'baikonur.jpg',at:[.86,.88],r:5,in:'launch'},
+ {img:G+'suez-canal-ever-given.jpg',at:[.12,.86],r:-4,in:'zoom'},
+ {img:G+'deutsche-bahn.jpg',at:[.4,.7],r:3,in:'zoom'},
+ {img:P+'sisyphus.webp',at:[.62,.26],r:-3,in:'roll'},
+ {img:G+'nigerian-prince.png',at:[.32,.24],r:6,in:'flicker'},
+ {img:P+'the rock.gif',at:[.5,.5],r:6,in:'slam'},
 ];
-let exs=[];
+/* ---- BONDMAGEDDON: the Bond Desk + “Bond Markets Revolt” fire four missiles at the banks ---- */
+const BOND={desk:{img:P+'bond desk.png',at:[.25,.36],r:-3},leak:{img:P+'bondmageddon 2.png',at:[.25,.66],r:4},
+ banks:[{img:P+'cba.png',at:[.76,.16],r:3},{img:P+'nab.png',at:[.8,.4],r:-4},{img:P+'anz.png',at:[.74,.62],r:5},{img:P+'westpac.png',at:[.79,.85],r:-3}]};
+/* ---- LIBERATE OIL: missiles from Trump and Big Yahu, F-35s from Lockheed Martin, on every oil field ---- */
+const OIL={trump:{img:P+'trump.png',at:[.18,.2],r:-4},yahu:{img:G+'big-yahu.jpg',at:[.18,.5],r:3},lockheed:{img:G+'lockheed-martin.jpg',at:[.18,.8],r:-3},
+ fields:[{img:P+'wti crude.png',at:[.66,.14],r:4},{img:P+'blue oil barrels.png',at:[.86,.3],r:-5},{img:G+'saudi-aramco.jpg',at:[.62,.42],r:3},
+  {img:P+'tanker fleet.png',at:[.84,.58],r:-3},{img:P+'petronas.png',at:[.64,.72],r:5},{img:G+'cushing-oklahoma.jpg',at:[.84,.88],r:-4}]};
+const F35=G+'fx/f35_travelling.png';
+
 let tl=null,cards=[],S=0,k=1;
+const MISSILE='<svg viewBox="0 0 70 22"><path d="M0 11 L-26 6 L-26 16 Z" fill="#ffb347" opacity=".9"/><path d="M-10 11 L-30 8 L-30 14 Z" fill="#fff3b0"/>'
+ +'<rect x="4" y="7" width="50" height="8" rx="3" fill="#d9dde0" stroke="#000" stroke-width="1.5"/><path d="M54 7 Q68 11 54 15 Z" fill="#ff3b30" stroke="#000" stroke-width="1.5"/>'
+ +'<path d="M8 7 L2 1 L14 7 Z M8 15 L2 21 L14 15 Z" fill="#8a9196" stroke="#000" stroke-width="1"/></svg>';
+
+const cw=()=>S*0.2;
+const centre=(x,y)=>({x:x-cw()/2,y:y-cw()/2});
+const shuffled=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const R=gsap.utils.random;
+
+function exCard(img,big){const d=document.createElement('div');d.className='ex'+(big?' big':'');d.style.backgroundImage='url("'+img+'")';exWrap.appendChild(d);return d}
+function exSize(d){return d.classList.contains('big')?S*0.36:S*0.29}
+/* where a card's centre sits, in stage pixels */
+const spot=e=>[e.at[0]*S,e.at[1]*S];
+function placeAt(d,e){const w=exSize(d),h=w*.75;return {x:e.at[0]*S-w/2,y:e.at[1]*S-h/2,rotation:e.r,scale:1,opacity:1}}
 
 function build(){
  S=stage.clientWidth;k=S/L;
- stage.style.setProperty('--s',S+'px');stage.style.setProperty('--cw',Math.round(S*0.2)+'px');
+ stage.style.setProperty('--s',S+'px');stage.style.setProperty('--cw',Math.round(S*0.2)+'px');stage.style.setProperty('--ew',Math.round(S*0.29)+'px');
+ exWrap.innerHTML='';fx.querySelectorAll(':scope > :not(svg)').forEach(n=>n.remove());trails.innerHTML='';trails.setAttribute('viewBox','0 0 '+S+' '+S);
  stage.querySelectorAll('.card').forEach(c=>c.remove());
- stage.style.setProperty('--ew',Math.round(S*0.36)+'px');
- const exWrap=document.getElementById('ex');exWrap.innerHTML='';
- exs=EXHIBITS.map(e=>{const d=document.createElement('div');d.className='ex';
-  d.style.backgroundImage='url("'+e.img+'")';
-  exWrap.appendChild(d);return d});
  cards=ALL.map(id=>{
   const c=document.createElement('div');c.className='card';c.dataset.id=id;
   c.innerHTML='<div class="b"></div><div class="f"><img src="./characters/'+id+'.png" alt=""></div>';
   stage.insertBefore(c,tile);return c;
  });
- /* the tile shows the logo's own centre crop; nine white covers hide its letters until they are spelled out */
  Object.assign(tile.style,{left:BOX.x*k+'px',top:BOX.y*k+'px',width:BOX.w*k+'px',height:BOX.h*k+'px',
   backgroundImage:'url("./big con logo.png")',backgroundSize:S+'px '+S+'px',backgroundPosition:(-BOX.x*k)+'px '+(-BOX.y*k)+'px'});
- const hole=document.getElementById('hole');Object.assign(hole.style,{left:BOX.x*k+'px',top:BOX.y*k+'px',width:BOX.w*k+'px',height:BOX.h*k+'px'});gsap.set(hole,{opacity:1});
+ const hole=$('hole');Object.assign(hole.style,{left:BOX.x*k+'px',top:BOX.y*k+'px',width:BOX.w*k+'px',height:BOX.h*k+'px'});
  tile.innerHTML='';
  ROWS.forEach(r=>COLS.forEach(c=>{const d=document.createElement('div');d.className='cv';
   Object.assign(d.style,{left:(c[0]-BOX.x)*k+'px',top:(r[0]-BOX.y)*k+'px',width:(c[1]-c[0])*k+'px',height:(r[1]-r[0])*k+'px'});tile.appendChild(d)}));
 }
-const cw=()=>S*0.2;
-const centre=(x,y)=>({x:x-cw()/2,y:y-cw()/2});
-function type(el,text,dur){
- const o={n:0};
- return gsap.to(o,{n:text.length,duration:dur,ease:'none',onUpdate(){el.innerHTML=text.slice(0,Math.round(o.n))+'<span class="cur">_</span>'}});
+
+/* the board camera: zoom z (stage px per board-image px) centred on image point (cx, cy) */
+function cam(z,cx,cy){gsap.set(board,{scale:z,x:S/2-cx*z,y:S/2-cy*z})}
+
+/* an entrance for a card (the same moves as the board's own pieces: flicker, fly, launch, sink, drop, roll, zoom, dive, spin, slide, slam) */
+function enter(t,d,e,at){
+ const land=placeAt(d,e),{x,y}=land,w=exSize(d),h=w*.75;
+ switch(e.in){
+  case 'flicker':t.set(d,{x,y,rotation:e.r,opacity:0},at).to(d,{opacity:1,duration:0.04,repeat:5,yoyo:true,ease:'steps(1)'}).set(d,{opacity:1});break;
+  case 'fly':t.fromTo(d,{x:-w*1.4,y:y+S*0.25,rotation:-25,scale:.7},{...land,duration:0.38,ease:'power3.out'},at);break;
+  case 'launch':t.fromTo(d,{x,y:S*1.15,rotation:0,scale:.8},{...land,duration:0.36,ease:'back.out(1.6)'},at);break;
+  case 'sink':t.fromTo(d,{x,y:y-S*0.05,scale:1.1,opacity:0},{...land,duration:0.28,ease:'power2.out'},at);break;
+  case 'drop':t.fromTo(d,{x,y:-h*1.3,rotation:e.r*4},{...land,duration:0.32,ease:'bounce.out'},at);break;
+  case 'roll':t.fromTo(d,{x:S*1.05,y,rotation:360,scale:.8},{...land,duration:0.42,ease:'power2.out'},at);break;
+  case 'zoom':t.fromTo(d,{x:S*1.2,y,rotation:0,skewX:-25},{...land,skewX:0,duration:0.3,ease:'expo.out'},at);break;
+  case 'spin':t.fromTo(d,{x,y,scale:.2,rotationY:720,opacity:0},{...land,rotationY:0,duration:0.42,ease:'power2.out'},at);break;
+  case 'slide':t.fromTo(d,{x:-w*1.2,y,rotation:0},{...land,duration:0.3,ease:'back.out(1.2)'},at);break;
+  default:t.fromTo(d,{x,y,scale:2.6,opacity:0},{...land,duration:0.22,ease:'power4.in'},at).to(stage,{x:6,y:-4,duration:0.04,yoyo:true,repeat:3});
+ }
 }
-function shuffled(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+/* a missile on an arc from a to b, with a smoke trail and a blast */
+function missile(t,a,b,at,dur){
+ const m=document.createElement('div');m.className='msl';m.innerHTML=MISSILE;fx.appendChild(m);
+ const mid=[(a[0]+b[0])/2+R(-.12,.12)*S,Math.min(a[1],b[1])-R(.12,.3)*S];
+ const path='M'+a[0]+','+a[1]+' Q'+mid[0]+','+mid[1]+' '+b[0]+','+b[1];
+ const tr=document.createElementNS('http://www.w3.org/2000/svg','path');tr.setAttribute('d',path);
+ Object.entries({fill:'none',stroke:'rgba(230,230,230,.55)','stroke-width':S*0.008,'stroke-linecap':'round'}).forEach(([k2,v])=>tr.setAttribute(k2,v));
+ trails.appendChild(tr);const len=tr.getTotalLength();gsap.set(tr,{strokeDasharray:len,strokeDashoffset:len,opacity:1});
+ gsap.set(m,{x:a[0],y:a[1],opacity:0});
+ t.set(m,{opacity:1},at)
+  .to(m,{motionPath:{path:[{x:a[0],y:a[1]},{x:mid[0],y:mid[1]},{x:b[0],y:b[1]}],type:'quadratic',autoRotate:true},duration:dur,ease:'power1.in'},at)
+  .to(tr,{strokeDashoffset:0,duration:dur,ease:'power1.in'},at)
+  .set(m,{opacity:0},'>')
+  .to(tr,{opacity:0,duration:0.5},'>');
+ boom(t,b,at+dur);
+}
+function boom(t,p,at,big){
+ const o=document.createElement('div');o.className='boom';fx.appendChild(o);
+ const r=document.createElement('div');r.className='ring';fx.appendChild(r);
+ gsap.set([o,r],{x:p[0],y:p[1],scale:0,opacity:0});
+ const sc=big?1.6:1;
+ t.fromTo(o,{scale:.1,opacity:1},{scale:sc,duration:0.22,ease:'power3.out',immediateRender:false},at)
+  .to(o,{opacity:0,scale:sc*1.25,duration:0.35},'>')
+  .fromTo(r,{scale:.2,opacity:1},{scale:sc*1.5,opacity:0,duration:0.45,ease:'power2.out',immediateRender:false},at);
+}
+/* a jet sweeping across the stage along a curve */
+function jet(t,pts,at,dur){
+ const j=document.createElement('img');j.className='jet';j.src=F35;fx.appendChild(j);
+ gsap.set(j,{x:pts[0][0],y:pts[0][1],opacity:0});
+ t.set(j,{opacity:1},at).to(j,{motionPath:{path:pts.map(([x,y])=>({x,y})),curviness:1.3,autoRotate:true},duration:dur,ease:'none'},at).set(j,{opacity:0},'>');
+}
+const shake=(t,at,n=4,a=7)=>t.to(stage,{x:a,y:-a*.6,duration:0.04,yoyo:true,repeat:n,clearProps:'x,y'},at);
+const rubble=(t,d,at)=>t.to(d,{filter:'grayscale(1) brightness(.45) contrast(1.4)',rotation:'+='+R(-25,25),y:'+='+S*0.05,duration:0.3,ease:'power2.out'},at)
+ .to(d,{y:'+='+S*0.5,opacity:0,rotation:'+='+R(-40,40),duration:0.6,ease:'power2.in'},at+0.45);
 
 function play(){
  if(tl)tl.kill();
  build();
  gsap.set([logo,tile,stamp,flash],{opacity:0});gsap.set(stamp,{scale:3,xPercent:-50,yPercent:-50,rotate:-14,left:'50%',top:'50%',x:0,y:0});
- gsap.set(tile,{scale:1,x:0,y:0});gsap.set(stage,{x:0,y:0});gsap.set(shine,{left:'-40%'});line.innerHTML='';
- /* a 4×3 table of cards, face down, dealt from below */
- const grid=cards.map((c,i)=>{const col=i%4,row=Math.floor(i/4);return centre(S*(0.17+col*0.22),S*(0.27+row*0.23))});
+ gsap.set(tile,{scale:1,x:0,y:0});gsap.set(stage,{x:0,y:0});gsap.set(shine,{left:'-40%'});gsap.set($('hole'),{opacity:0});
+ gsap.set(boardWrap,{opacity:1,filter:'none'});
  gsap.set(stage.querySelectorAll('.card .f,.card .b'),{opacity:1});
- cards.forEach(c=>gsap.set(c,{x:S/2-cw()/2,y:S*1.2,rotation:gsap.utils.random(-30,30),rotationY:0,scale:1,opacity:1}));
-
+ cards.forEach(c=>gsap.set(c,{x:S/2-cw()/2,y:S*1.2,rotation:R(-30,30),rotationY:0,scale:1,opacity:1}));
  tl=gsap.timeline();
- /* ACT ONE — the marks: the exhibits slam onto the table, one entrance each */
- const exWrap=document.getElementById('ex');
- gsap.set(exWrap,{scale:1,opacity:1,filter:'none',x:0,y:0});
- const ew=S*0.3,eh=ew*0.75;
- exs.forEach(d=>gsap.set(d,{x:-9999,y:0,opacity:1,rotation:0,scale:1}));
- tl.to({},{duration:0.3});
- EXHIBITS.forEach((e,i)=>{
-  const d=exs[i],x=e.at[0]*S-ew/2,y=e.at[1]*S-eh/2,at=i?'>-'+(i<4?0.08:0.16):'>';
-  const land={x,y,rotation:e.r,scale:1,opacity:1};
-  if(e.in==='flicker'){tl.set(d,{x,y,rotation:e.r,opacity:0},at).to(d,{opacity:1,duration:0.04,repeat:5,yoyo:true,ease:'steps(1)'}).set(d,{opacity:1})}
-  else if(e.in==='fly')tl.fromTo(d,{x:-ew*1.4,y:y+S*0.25,rotation:-25,scale:.7},{...land,duration:0.4,ease:'power3.out'},at);
-  else if(e.in==='launch')tl.fromTo(d,{x,y:S*1.15,rotation:0,scale:.8},{...land,duration:0.38,ease:'back.out(1.6)'},at);
-  else if(e.in==='sink')tl.fromTo(d,{x,y:y-S*0.05,rotation:e.r,scale:1.1,opacity:0},{...land,duration:0.3,ease:'power2.out'},at).to(d,{y:y+S*0.012,duration:0.18,yoyo:true,repeat:1,ease:'sine.inOut'});
-  else if(e.in==='drop')tl.fromTo(d,{x,y:-eh*1.3,rotation:e.r*4},{...land,duration:0.34,ease:'bounce.out'},at);
-  else if(e.in==='roll')tl.fromTo(d,{x:S*1.05,y,rotation:360,scale:.8},{...land,duration:0.45,ease:'power2.out'},at).to(d,{x:x+S*0.03,duration:0.12,yoyo:true,repeat:1,ease:'sine.inOut'});
-  else if(e.in==='zoom')tl.fromTo(d,{x:S*1.2,y,rotation:0,scale:1,skewX:-25},{...land,skewX:0,duration:0.3,ease:'expo.out'},at);
-  else if(e.in==='dive')tl.fromTo(d,{x:S*1.1,y:-eh*1.5,rotation:40,scale:.6},{...land,duration:0.32,ease:'power3.out'},at);
-  else if(e.in==='spin')tl.fromTo(d,{x,y,rotation:e.r,scale:.2,rotationY:720,opacity:0},{...land,rotationY:0,duration:0.45,ease:'power2.out'},at);
-  else if(e.in==='slide')tl.fromTo(d,{x:-ew*1.2,y,rotation:0},{...land,duration:0.3,ease:'back.out(1.2)'},at);
-  else tl.fromTo(d,{x,y,rotation:e.r,scale:2.6,opacity:0},{...land,duration:0.22,ease:'power4.in'},at).to(stage,{x:6,y:-4,duration:0.04,yoyo:true,repeat:3});
+ const T=l=>tl.labels[l];
+
+ /* ACT ONE — the board. Start close on QUIKSTOP and pull out until the whole board is in view. */
+ const z0=S/520,z1=S/BW,full=[BW/2,BH/2],o={t:0};
+ cam(z0,QUIK[0],QUIK[1]);
+ tl.to({},{duration:0.35});
+ tl.to(o,{t:1,duration:2.6});
+ /* the camera follows the timeline clock (so seeking and skipping always land right) */
+ const e1=gsap.parseEase('power2.inOut'),e2=gsap.parseEase('power1.inOut');
+ tl.eventCallback('onUpdate',()=>{
+  const u=e1(Math.min(1,Math.max(0,(tl.time()-0.35)/2.6))),z=z0*Math.pow(z1/z0,u),f=e2(u);
+  cam(z,QUIK[0]+(full[0]-QUIK[0])*f,QUIK[1]+(full[1]-QUIK[1])*f);
  });
- /* the marks become the table the crew plays on */
- tl.to(exWrap,{scale:0.92,opacity:0.28,filter:'blur(1.5px) grayscale(.4)',duration:0.45,ease:'power2.inOut'},'+=0.35');
- tl.addLabel('crew','<0.15');
- /* the deal */
- cards.forEach((c,i)=>tl.to(c,{x:grid[i].x,y:grid[i].y,rotation:gsap.utils.random(-4,4),duration:0.42,ease:'power3.out'},'crew+='+(i*0.055)));
- /* face up, one by one */
- tl.to(cards,{rotationY:180,duration:0.35,ease:'power2.inOut',stagger:0.045},'>-0.05');
- /* three-card monte: face down again and swap the cards around */
- tl.to(cards,{rotationY:0,duration:0.25,ease:'power2.in',stagger:0.015},'+=0.35');
+ tl.to({},{duration:0.35});
+ tl.to(boardWrap,{opacity:0.22,filter:'blur(2px)',duration:0.4});
+
+ /* ACT TWO — the nodes with special abilities pile onto the table */
+ const abil=ABILITIES.map(e=>{const d=exCard(e.img);gsap.set(d,{x:-9999,opacity:1});return d});
+ ABILITIES.forEach((e,i)=>enter(tl,abil[i],e,i?'>-0.17':'<0.1'));
+ tl.to({},{duration:0.4});
+ abil.forEach(d=>{const a=R(0,Math.PI*2);tl.to(d,{x:'+='+Math.cos(a)*S*1.7,y:'+='+Math.sin(a)*S*1.7,rotation:'+='+R(-180,180),duration:0.45,ease:'power2.in'},i0(abil,d))});
+ function i0(list,d){return list.indexOf(d)?'<0.012':'>'}
+
+ /* ACT THREE — BONDMAGEDDON: the Bond Desk and the Leak launch four missiles at the banks */
+ const desk=exCard(BOND.desk.img,true),leak=exCard(BOND.leak.img,true),banks=BOND.banks.map(e=>exCard(e.img));
+ [desk,leak,...banks].forEach(d=>gsap.set(d,{x:-9999}));
+ tl.addLabel('bond','>-0.1');
+ enter(tl,desk,{...BOND.desk,in:'slam'},'bond');
+ enter(tl,leak,{...BOND.leak,in:'slam'},'bond+=0.22');
+ banks.forEach((d,i)=>enter(tl,d,{...BOND.banks[i],in:'drop'},'bond+='+(0.45+i*0.08)));
+ tl.addLabel('fire','bond+=1.05');
+ BOND.banks.forEach((e,i)=>{
+  const from=spot(i%2?BOND.leak:BOND.desk),to=spot(e);
+  missile(tl,[from[0]+S*0.12,from[1]],to,T('fire')+i*0.13,0.55);
+  rubble(tl,banks[i],T('fire')+i*0.13+0.55);
+ });
+ shake(tl,'fire+=0.6',8,6);
+ tl.to([desk,leak],{x:'-='+S*0.8,rotation:'-=30',duration:0.45,ease:'power2.in'},'fire+=1.4');
+
+ /* ACT FOUR — LIBERATE OIL: Trump and Big Yahu fire on every oil field, Lockheed scrambles the F-35s */
+ const trump=exCard(OIL.trump.img),yahu=exCard(OIL.yahu.img),lock=exCard(OIL.lockheed.img),fields=OIL.fields.map(e=>exCard(e.img));
+ [trump,yahu,lock,...fields].forEach(d=>gsap.set(d,{x:-9999}));
+ tl.addLabel('oil','fire+=1.55');
+ enter(tl,trump,{...OIL.trump,in:'slam'},'oil');
+ enter(tl,yahu,{...OIL.yahu,in:'slam'},'oil+=0.18');
+ enter(tl,lock,{...OIL.lockheed,in:'slide'},'oil+=0.36');
+ fields.forEach((d,i)=>enter(tl,d,{...OIL.fields[i],in:i%2?'drop':'sink'},'oil+='+(0.5+i*0.07)));
+ tl.addLabel('salvo','oil+=1.15');
+ OIL.fields.forEach((e,i)=>{
+  [OIL.trump,OIL.yahu].forEach((src,j)=>{const a=spot(src);missile(tl,[a[0]+S*0.13,a[1]+R(-.03,.03)*S],[spot(e)[0]+R(-.04,.04)*S,spot(e)[1]+R(-.03,.03)*S],T('salvo')+i*0.11+j*0.05,0.6)});
+ });
+ /* the F-35s scramble from Lockheed: low over the fields and off the edge */
+ const L0=spot(OIL.lockheed);
+ for(let n=0;n<6;n++){
+  const f=OIL.fields[n%OIL.fields.length],t1=spot(f);
+  jet(tl,[[L0[0]+S*0.1,L0[1]],[S*0.42,S*R(.2,.85)],[t1[0],t1[1]-S*0.05],[S*1.25,S*R(-.2,1.1)]],'salvo+='+(0.15+n*0.14),1.15);
+ }
+ OIL.fields.forEach((e,i)=>{boom(tl,spot(e),T('salvo')+0.75+i*0.11,true);rubble(tl,fields[i],T('salvo')+0.78+i*0.11)});
+ shake(tl,'salvo+=0.8',14,8);
+ tl.to(flash,{opacity:0.85,duration:0.08},'salvo+=1.6').to(flash,{opacity:0,duration:0.5},'>');
+ tl.to([trump,yahu,lock],{x:'-='+S*0.8,rotation:'-=40',duration:0.4,ease:'power2.in'},'salvo+=1.6');
+ tl.to(boardWrap,{opacity:0,duration:0.5},'salvo+=1.65');
+
+ /* ACT FIVE — the crew: dealt, shuffled like three-card monte, four CONNED off the table, eight form the logo */
+ const grid=cards.map((c,i)=>{const col=i%4,row=Math.floor(i/4);return centre(S*(0.17+col*0.22),S*(0.27+row*0.23))});
+ tl.addLabel('crew','salvo+=1.95');
+ cards.forEach((c,i)=>tl.to(c,{x:grid[i].x,y:grid[i].y,rotation:R(-4,4),duration:0.4,ease:'power3.out'},'crew+='+(i*0.045)));
+ tl.to(cards,{rotationY:180,duration:0.32,ease:'power2.inOut',stagger:0.04},'>-0.05');
+ tl.to(cards,{rotationY:0,duration:0.24,ease:'power2.in',stagger:0.012},'+=0.3');
  let pos=grid.slice();
- for(let r=0;r<4;r++){
+ for(let r=0;r<3;r++){
   pos=shuffled(pos);
   const at='>'+(r?'-0.02':'+0.02');
-  cards.forEach((c,i)=>tl.to(c,{x:pos[i].x,y:pos[i].y,rotation:gsap.utils.random(-8,8),duration:0.28-r*0.03,ease:'power2.inOut'},i?'<':at));
+  cards.forEach((c,i)=>tl.to(c,{x:pos[i].x,y:pos[i].y,rotation:R(-8,8),duration:0.27-r*0.03,ease:'power2.inOut'},i?'<':at));
  }
- /* gather into one stack, a beat */
- tl.to(cards,{x:S/2-cw()/2,y:S/2-cw()/2,rotation:()=>gsap.utils.random(-6,6),duration:0.3,ease:'power3.in',stagger:0.01},'+=0.05');
- tl.to(stage,{x:4,duration:0.04,yoyo:true,repeat:3});
- /* the deal that matters: eight to their places, face up; four flicked off the table */
+ tl.to(cards,{x:S/2-cw()/2,y:S/2-cw()/2,rotation:()=>R(-6,6),duration:0.3,ease:'power3.in',stagger:0.01},'+=0.05');
+ shake(tl,'>',3,4);
  const sz=FACE*k/cw();
  tl.addLabel('deal','>');
  cards.forEach(c=>{
-  const id=c.dataset.id,s=SLOTS[id];
-  if(s){const p=centre(s[0]*k,s[1]*k);
-   tl.to(c,{x:p.x,y:p.y,scale:sz,rotation:0,rotationY:180,duration:0.55,ease:'back.out(1.4)'},'deal+='+(gsap.utils.random(0,0.18)));}
-  else{const a=gsap.utils.random(0,Math.PI*2);
-   tl.to(c,{x:S/2+Math.cos(a)*S*1.1,y:S/2+Math.sin(a)*S*1.1,rotation:gsap.utils.random(-540,540),rotationY:180,duration:0.6,ease:'power2.in'},'deal');}
+  const s=SLOTS[c.dataset.id];
+  if(s){const p=centre(s[0]*k,s[1]*k);tl.to(c,{x:p.x,y:p.y,scale:sz,rotation:0,rotationY:180,duration:0.55,ease:'back.out(1.4)'},'deal+='+R(0,0.18))}
+  else{const a=R(0,Math.PI*2);tl.to(c,{x:S/2+Math.cos(a)*S*1.1,y:S/2+Math.sin(a)*S*1.1,rotation:R(-540,540),rotationY:180,duration:0.6,ease:'power2.in'},'deal')}
  });
- exs.forEach(d=>{const a=gsap.utils.random(0,Math.PI*2);tl.to(d,{x:'+='+Math.cos(a)*S,y:'+='+Math.sin(a)*S,rotation:'+='+gsap.utils.random(-200,200),duration:0.7,ease:'power2.in'},'deal')});
- tl.to(stamp,{opacity:1,scale:1,duration:0.18,ease:'power4.in'},'deal+=0.12')
-   .to(stage,{x:-6,y:3,duration:0.05,yoyo:true,repeat:3},'<0.18')
-   .to(stamp,{opacity:0,duration:0.25},'+=0.25');
- /* the cards melt into the real logo */
+ tl.to(stamp,{opacity:1,scale:1,duration:0.18,ease:'power4.in'},'deal+=0.12');
+ shake(tl,'deal+=0.3',3,6);
+ tl.to(stamp,{opacity:0,duration:0.25},'deal+=0.65');
+ tl.set('#hole',{opacity:1},'deal+=0.7');
  tl.to(logo,{opacity:1,duration:0.45},'deal+=0.75')
-   .to(cards.map(c=>c.querySelector('.f')),{opacity:0,duration:0.45},'<') /* fade the face, not the 3D card (opacity would flatten it and show the back) */
+   .to(cards.map(c=>c.querySelector('.f')),{opacity:0,duration:0.45},'<') /* fade the face, not the 3D card (opacity would flatten it) */
    .set(cards.map(c=>c.querySelector('.b')),{opacity:0},'<');
- /* the white tile slams in */
  tl.fromTo(tile,{opacity:0,scale:2.4,rotation:-6},{opacity:1,scale:1,rotation:0,duration:0.32,ease:'power4.in'},'<0.1')
    .set('#hole',{opacity:0})
-   .to(flash,{opacity:0.55,duration:0.04})
-   .to(flash,{opacity:0,duration:0.3})
-   .to(stage,{x:7,y:-4,duration:0.04,yoyo:true,repeat:5},'<');
- /* and spells THE / BIG / CON */
+   .to(flash,{opacity:0.55,duration:0.04},'>')
+   .to(flash,{opacity:0,duration:0.3},'>');
+ shake(tl,'<',5,7);
  const covers=[...tile.children];
- ORDER.forEach((n,i)=>tl.to(covers[n],{scaleY:0,transformOrigin:'50% 0%',duration:0.08,ease:'steps(3)'},(i?'>+0.05':'>+0.15')));
+ covers.forEach((cv,i)=>tl.to(cv,{scaleY:0,transformOrigin:'50% 0%',duration:0.08,ease:'steps(3)'},(i?'>+0.05':'>+0.15')));
  tl.to(tile,{scale:1.06,duration:0.08,yoyo:true,repeat:1,ease:'power2.out'},'>+0.05');
  tl.to(shine,{left:'130%',duration:0.8,ease:'power2.inOut'},'>+0.1');
- tl.add(()=>{tile.style.opacity=1});
 }
 window.__introTl=()=>tl;
 function skip(){if(tl)tl.progress(1)}
-document.getElementById('replay').onclick=play;
-document.getElementById('skip').onclick=skip;
+$('replay').onclick=play;
+$('skip').onclick=skip;
 stage.onclick=skip;
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const p=tl?tl.progress():1;play();tl.progress(p)},150)});
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const go=()=>{play();if(reduce)skip()};
-if(logo.complete)go();else logo.onload=go;
+let ready=0;const go=()=>{if(++ready<2)return;play();if(reduce)skip()};
+[logo,board].forEach(im=>{if(im.complete)go();else{im.onload=go;im.onerror=go}});
 })();
 </script>
 </body>
