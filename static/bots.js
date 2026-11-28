@@ -1967,7 +1967,7 @@ export const BigConBots = (function () {
     if (lead >= 0 && lead !== pi && (chain || brex)) {
       const cut = pickCut(v, pi, lead);
       if (cut) {
-        if (chain) list.push({ kind: 'chainsaw', a: cut.a, b: cut.b, val: 1.5 + 5 * cut.score });
+        if (chain) list.push({ kind: 'chainsaw', a: cut.a, b: cut.b, val: 4 + 5 * cut.score }); /* +$1 and a thinner road for the leader, even when one cut slows nobody on a hub-heavy board */
         if (brex && cut.score >= 2 && leadClose >= 0.35) list.push({ kind: 'brexit', a: cut.a, b: cut.b, val: 3 * cut.score - 3 });
       }
     }
@@ -2041,9 +2041,8 @@ export const BigConBots = (function () {
     if (rFree(v, 'liberate') && typeof v.liberatePlan === 'function') {
       const pl = v.liberatePlan();
       let val = 0;
-      for (const id of pl.mine) val += ev(v.nmap[id].cost) - marginalIncome(v, pi, id) * horizon(v);
-      for (const id of pl.taken) val += nodeOwnValue(v, pi, id) - 0.5 * ev(v.nmap[id].cost);
-      for (const id of pl.freed) val += 0.5 * nodeOwnValue(v, v.owner[id], id);
+      for (const id of pl.seize) val += nodeOwnValue(v, pi, id);
+      for (const id of pl.destroy) val += 0.7 * nodeOwnValue(v, v.owner[id], id);
       if (val > 8) list.push({ kind: 'liberate', val });
     }
     /* TRUMP: buy Greenland, whether its owner likes it or not */

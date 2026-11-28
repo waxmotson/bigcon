@@ -3,7 +3,7 @@
 import { NODES, NMAP, EDGES, WORLD_EDGES, WORLD_EXP, worldRandomBounds, ORIGINAL_NODE_LAYOUT, ORIGINAL_LAYOUT_BY_ID, HIGH_VALUE_NODE_IDS, HIGH_VALUE_BASE_IDS, GEO_HIGH_VALUE_IDS, QUIK_SLOTS, rebuildAdj, setEdges } from './data.js';
 import { S } from './state.js';
 import { shuffle } from './util.js';
-import { LAND, WATER, WORLD_ROUTES, WORLD_RANDOM_SCALE, WORLD_FLOATING, FLOAT_ZONES, onLand, GATEWAY_REGIONS, geoOf, regionOf } from './world.js';
+import { WORLD_CHOKEPOINTS, LAND, WATER, WORLD_ROUTES, WORLD_RANDOM_SCALE, WORLD_FLOATING, FLOAT_ZONES, onLand, GATEWAY_REGIONS, geoOf, regionOf } from './world.js';
 export function nodeBox(n){
  const sizes={card:[150,84],photo:[140,92],wide:[170,100],bubble:[150,80],logo:[150,80],chart:[130,64],news:[150,84],made:[140,74],mpc:[164,96],sat:[170,90]};
  return sizes[n.shape]||[150,80];
@@ -57,6 +57,9 @@ export function applyLayoutFromState(){
   rebuildAdj();
  }else applyQuikSlot(slot);
 }
+/* random boards: these start far apart from each other; Quikstop and the chokepoints are hubs */
+export const SPREAD_APART=['trump','w_bigyahu','w_lockheed','geo_missile','bond','leak'];
+export const QUIK_LINKS=10,CHOKE_LINKS=11;
 export function generateRandomBoard(slot){
  const q=NMAP.quik;
  /* with the WORLD EXPANSION the canvas (and so every Quikstop neighbourhood) is scaled up */
@@ -81,6 +84,20 @@ export function generateRandomBoard(slot){
  geoPrized.forEach(id=>{const p=takeMostSpaced(geoPool,baseAnchors);assignment[id]=p;baseAnchors.push(p)});
  const ordinaryPositions=shuffle(remaining);
  ordinary.forEach((id,i)=>{assignment[id]=ordinaryPositions[i]});
+ /* the heavy hitters (the LIBERATE OIL trio, MISSILE COMMAND and BONDMAGEDDON's pair) start far apart from each other:
+    each takes, by swapping with an ordinary exhibit, the free spot farthest from the ones already placed */
+ const SPREAD=shuffle(SPREAD_APART.filter(id=>assignment[id]));
+ if(SPREAD.length>1){
+  /* the prized ones (the Bond Desk, Missile Command) are already max-min spaced: they stay and anchor the rest */
+  const fixed=new Set(SPREAD.filter(id=>HIGH_VALUE_NODE_IDS.has(id))),anchors=[...fixed].map(id=>assignment[id]);
+  const swappable=ids.filter(id=>id!=='made'&&assignment[id]&&!HIGH_VALUE_NODE_IDS.has(id));
+  SPREAD.filter(id=>!fixed.has(id)).forEach(id=>{
+   let best=id,bd=-1;
+   if(anchors.length)swappable.forEach(o=>{if(fixed.has(o))return;const p=assignment[o],d=Math.min(...anchors.map(a=>Math.hypot(p.x-a.x,p.y-a.y)));if(d>bd){bd=d;best=o}});
+   if(best!==id){const t=assignment[id];assignment[id]=assignment[best];assignment[best]=t}
+   fixed.add(id);anchors.push(assignment[id]);
+  });
+ }
  NODES.forEach(n=>{const p=assignment[n.id]||ORIGINAL_LAYOUT_BY_ID[n.id];n.x=p.x;n.y=p.y;n.rot=p.rot});
  /* High-value nodes keep the max-min spacing assigned above. */
  /* Randomized nearest-neighbour spanning tree, then extra local links. */
@@ -103,7 +120,13 @@ export function generateRandomBoard(slot){
   shuffle(near).slice(0,2+Math.floor(Math.random()*2)).forEach(v=>add(id,v.id));
  }
  const nearest=ids.map(id=>({id,d:Math.hypot(NMAP[id].x-q.x,NMAP[id].y-q.y)})).sort((a,b)=>a.d-b.d);
- nearest.slice(0,5).forEach(v=>add('quik',v.id));
+ /* Quikstop is a hub: it links to its ten nearest exhibits */
+ nearest.slice(0,QUIK_LINKS).forEach(v=>add('quik',v.id));
+ /* so are the CHOKEPOINTS (Panama, Hormuz, Suez, Malacca): a lot of threads run into each */
+ WORLD_CHOKEPOINTS.filter(id=>NMAP[id]&&ids.includes(id)).forEach(c=>{
+  const n=NMAP[c];
+  ids.filter(o=>o!==c&&o!=='made').map(o=>({id:o,d:Math.hypot(NMAP[o].x-n.x,NMAP[o].y-n.y)})).sort((a,b)=>a.d-b.d).slice(0,CHOKE_LINKS).forEach(v=>add(c,v.id));
+ });
  /* Cap MADE to 1-2 connections: trim extras, ensure at least one. */
  let madeEdges=edges.filter(e=>e[0]==='made'||e[1]==='made');
  if(madeEdges.length>2){const kept=[];let c=0;for(const e of edges){if(e[0]==='made'||e[1]==='made'){if(c<2){c++;kept.push(e)}}else kept.push(e)};edges.length=0;edges.push(...kept)}

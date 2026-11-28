@@ -1395,7 +1395,7 @@ export function reworkBlocked(pi,kind){
    if(!w)return 'The Global Edition exhibits are not in play.';
    for(const id of LIBERATORS)if(!own(id))return need(id);
    if(!act)return 'Liberating the oil is your action.';if(gUsed('liberate'))return 'The oil has already been liberated: once per game.';
-   if(!oilStanding().some(id=>S.owner[id]!=null))return 'Nobody owns any oil to liberate.';return '';
+   {const pl=liberatePlan(pi);if(!pl.seize.length&&!pl.destroy.length)return 'There is no oil left to liberate.'}return '';
   case 'black':
    if(!w)return 'The Global Edition exhibits are not in play.';if(!CASINOS.some(own))return 'You do not own a casino (MONACO or MARINA BAY SANDS).';
    if(!either||S.cur!==pi)return 'Not now.';if(tUsed('black'))return 'One spin a turn: the wheel has already turned for you.';if(p.money<1)return 'You have nothing to bet.';return '';
@@ -1445,11 +1445,13 @@ export async function liberateBarrage(pi){
  oil.forEach(id=>{const x=NMAP[id];fx(x.x,x.y-50,'💥','#ff6b5e',true)});
  sync();
 }
+/* LIBERATE OIL's plan: every unowned oil node is SEIZED; every rival's oil node is DESTROYED (rubble, no payout) unless a shield
+   holds (the Pillars, the Seed Vault) or it is classified from you; your own oil is left alone. */
 export function liberatePlan(pi){
  const oil=oilStanding(),mine=oil.filter(id=>S.owner[id]===pi);
- const theirs=oil.filter(id=>S.owner[id]!=null&&S.owner[id]!==pi&&!hiddenFrom(pi,id)&&!isPillarShieldedNode(id)).sort(byPay);
- const k=Math.ceil(theirs.length/2);
- return {mine,taken:theirs.slice(0,k),freed:theirs.slice(k)};
+ const seize=oil.filter(id=>S.owner[id]==null);
+ const destroy=oil.filter(id=>S.owner[id]!=null&&S.owner[id]!==pi&&!hiddenFrom(pi,id)&&!isPillarShieldedNode(id)&&!rubbleShielded(id)).sort(byPay);
+ return {mine,seize,destroy};
 }
 /* 🎲 THE BIG GAMBLE (THE PYRAMIDS + THE SISYPHUS BOULDER + a casino, once per game, your action): every owned node on the board is
    dealt out again at once. Each player keeps the same NUMBER of nodes, but who holds what is shuffled. The gambler loses the very nodes
@@ -1725,21 +1727,19 @@ const WORLD_REWORKS={
  async liberate(pi){
   if(S.mode)return;
   const why=reworkBlocked(pi,'liberate');if(why){sysTo(pi,why);return}
-  const p=S.players[pi],pl=liberatePlan(pi),nm=id=>nodeName(NMAP[id]).join(' ');
+  const pl=liberatePlan(pi),nm=id=>nodeName(NMAP[id]).join(' ');
   gMark('liberate');
-  const seized=oilStanding().filter(id=>S.owner[id]==null); /* the oil nobody held when the missiles flew */
   await liberateBarrage(pi);
-  let cash=0;pl.mine.forEach(id=>{cash+=NMAP[id].cost;handOver(id,null)});
-  if(cash){p.money+=cash;fxAt(pi,'+$'+cash,'#7fe08d')}
-  const from={};pl.taken.forEach(id=>{const o=S.owner[id];(from[o]||(from[o]=[])).push(nm(id));handOver(id,pi);S.seizeCount[id]=(S.seizeCount[id]||0)+1});
-  pl.freed.forEach(id=>handOver(id,null));
-  seized.forEach(id=>{handOver(id,pi);S.seizeCount[id]=(S.seizeCount[id]||0)+1});
+  /* every rival's oil field is flattened: expropriated with no payout, rubble until someone rebuilds it */
+  const from={};
+  pl.destroy.forEach(id=>{const o=S.owner[id];(from[o]||(from[o]=[])).push(nm(id));handOver(id,null);delete S.bugs[id];S.rubble[id]=1;if(S.ov&&S.ov.nid===id)S.ov=null});
+  /* and every oil field nobody held is SEIZED */
+  pl.seize.forEach(id=>{handOver(id,pi);S.seizeCount[id]=(S.seizeCount[id]||0)+1});
   const b=NMAP.w_bigyahu;if(b)fx(b.x,b.y-64,'🛢️ LIBERATED','#f5c542');
   log('🛢️ LIBERATE OIL — '+pname(pi)+' (BIG YAHU, DONALD TRUMP and LOCKHEED MARTIN) brings freedom to the oil fields. '
-   +(pl.mine.length?pname(pi)+' divests '+pl.mine.map(nm).join(', ')+' to the market for $'+cash+'. ':'')
-   +(pl.taken.length?'Liberated into '+pname(pi)+'’s hands: '+Object.keys(from).map(o=>from[o].join(', ')+' (from '+pname(+o)+')').join('; ')+'. ':'')
-   +(pl.freed.length?'Set free (unowned): '+pl.freed.map(nm).join(', ')+'. ':'')
-   +(seized.length?'🛢️ '+pname(pi)+' SEIZES every unowned oil asset: '+seized.map(nm).join(', ')+'. ':'')+'(Once per game.)');
+   +(pl.seize.length?'🛢️ '+pname(pi)+' SEIZES every unowned oil asset: '+pl.seize.map(nm).join(', ')+'. ':'')
+   +(pl.destroy.length?'💥 Destroyed, no payout: '+Object.keys(from).map(o=>from[o].join(', ')+' (from '+pname(+o)+')').join('; ')+'. ':'')
+   +(pl.mine.length?pname(pi)+' keeps '+pl.mine.map(nm).join(', ')+'. ':'')+'(Once per game.)');
   acccReconcile();sync();
   if(await winCheck())return;
   await finishNodeAbility(pi);

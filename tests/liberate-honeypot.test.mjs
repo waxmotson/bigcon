@@ -38,9 +38,8 @@ test('the three new exhibits are on the Global Edition board at real places, wit
   assert.ok(e.ctx.US_NODES.includes('w_lockheed'));
 });
 
-test('LIBERATE OIL: needs all three; own oil sold at list, half of rivals’ oil taken (rounded up, best first), the rest freed; once per game', async t => {
+test('LIBERATE OIL: needs all three; seizes every unowned oil node, destroys every rival oil node (no payout), keeps your own; once per game', async t => {
   const { e, S, P } = await game(t);
-  const N = e.acc.NMAP;
   S.owner = { w_bigyahu: 0, trump: 0, w_cushing: 0, w_aramco: 1, w_dangote: 1, w_pemex: 2, w_petrobras: 2, w_pdvsa: 1 };
   /* without Lockheed: refused */
   await run(e, 0, { act: 'liberate' });
@@ -49,17 +48,17 @@ test('LIBERATE OIL: needs all three; own oil sold at list, half of rivals’ oil
   S.owner.w_lockheed = 0; act(S, 0);
   const plan = e.ctx.liberatePlan(0);
   assert.deepEqual(plan.mine, ['w_cushing']);
-  assert.equal(plan.taken.length, 3, 'half of five, rounded up');
-  assert.equal(plan.taken[0], 'w_aramco', 'the best-paying oil comes first');
+  assert.equal(plan.destroy.length, 5, 'all five rival oil nodes');
+  assert.ok(plan.seize.length > 0 && plan.seize.every(id => S.owner[id] == null));
   const before = P[0].money;
   await run(e, 0, { act: 'liberate' });
   assert.ok(S.wGame.liberate);
-  assert.equal(S.owner.w_cushing, undefined, 'my own oil is divested');
-  assert.ok(P[0].money >= before + N.w_cushing.cost, 'sold at list price');
-  for (const id of plan.taken) assert.equal(S.owner[id], 0, id + ' is liberated into my hands');
-  for (const id of plan.freed) assert.equal(S.owner[id], undefined, id + ' is set free');
+  assert.equal(S.owner.w_cushing, 0, 'my own oil is kept');
+  for (const id of plan.destroy) { assert.equal(S.owner[id], undefined, id + ' is expropriated'); assert.ok(S.rubble[id], id + ' is rubble'); }
+  for (const id of plan.seize) assert.equal(S.owner[id], 0, id + ' is seized');
+  assert.ok(P[0].money <= before + 10, 'no divestment payout');
   /* once per game */
-  S.owner.w_pemex = 2; act(S, 0);
+  S.owner.w_pemex = 2; delete S.rubble.w_pemex; act(S, 0);
   await run(e, 0, { act: 'liberate' });
   assert.equal(S.owner.w_pemex, 2);
 });
