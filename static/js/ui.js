@@ -9,7 +9,7 @@ import { GOAL_MAX, GOAL_MIN, clampGoal, esc } from './util.js';
 import { canFly, inFlyRange, jetAt, CLASSIFIED_INTEL, CLASSIFIED_MONEY, classifiedBlocked, hiddenFrom, hiddenInfo, ACCC_RULING, INDBYID, WIN_TYPES, addChat, applyIntent, filesOf, ownedInIndustry, blockaded, canFireMissileFrom, canMissileNode, canReach, flatSeize, goalAmount, hasType, initGame, missingTypes, nodeName, noTakeover, worldBlocked, hasEdge, isVanished, chokeToll, svalbardFreeRebuild, ownsMissileLauncher, pname, projRig, qantasGrounded, qantasGroundedReason, seizeListPrice, takeoverCost, blocStatus, tariffFor, tariffOwner, blockSources, blockadeFree, reefBleached, fileAuthority, isWaterNode } from './engine.js';
 import { TRADE_BLOCS, blocOfMember, BLOC_FREE } from './world.js';
 import { carryDue, CARRY_CAP, launderBooks, delayTargets, reworkBlocked, honeypotBan, swissBalance, abductTargets, inflationExtra, pyramidPayout } from './engine.js';
-import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, nodeLatLon, ringworldMetrics, worldMapSVG } from './boards.js';
+import { applyLayoutFromState, boardViewBounds, megaRingMetrics, nodeBox, ringworldMetrics, worldMapSVG } from './boards.js';
 import { ADJ, BUZZWORDS, EDGES, MOODS, NMAP, NODES, QUIK_SLOTS, TYPE_COLORS, charSrc, codeLabel, matchBuzzword } from './data.js';
 import { addBotSeat, applyChar, backToLobby, broadcastLobby, cleanName, guestJoin, hostCreate, kickBotSeat, sendAll, setBoardLayout, setFogUI, setGeoUI, setGoalUI, setWorldUI, setNetStatus, toggleSpectate } from './net.js';
 const shownFx=new Set();
@@ -570,12 +570,10 @@ export function boardScene(){
  ensureEdgeIndex();
  const curpos=S.players[S.cur].pos,viewer=S.players[Net.myIdx];
  const known=id=>discoveredNode(id);
- const globe=!!(S.layoutKind==='worldmap');
  const nodes=NODES.map(n=>{
   const cls=nodeClass(n,curpos),k=known(n.id);
   /* ring layouts turn cards along the ring; standing up, every card faces the camera instead */
-  const ll=globe?nodeLatLon(n):null;
-  return {id:n.id,icon:n.icon||'',lat:ll?ll[0]:0,lon:ll?ll[1]:0,x:n.x,y:n.y,rot:Math.abs(n.rot||0)<=20?n.rot||0:0,type:n.type,name:nodeName(n).join(' '),known:k,click:cls.indexOf('click')>=0,reach:cls.indexOf('reach')>=0,target:cls.indexOf('target')>=0,tip:k?nodeTip(n):''};
+  return {id:n.id,x:n.x,y:n.y,rot:Math.abs(n.rot||0)<=20?n.rot||0:0,type:n.type,name:nodeName(n).join(' '),known:k,click:cls.indexOf('click')>=0,reach:cls.indexOf('reach')>=0,target:cls.indexOf('target')>=0,tip:k?nodeTip(n):''};
  });
  const seats=S.players.map((p,i)=>{
   const seen=!S.fogOfWar||i===Net.myIdx||!!(viewer&&viewer.visited&&viewer.visited[p.pos]);
@@ -593,7 +591,7 @@ export function boardScene(){
  const {hov,path,links}=highlightState();
  const sisyO=S.owner.sisy;
  return {
-  fog:!!S.fogOfWar,globe,
+  fog:!!S.fogOfWar,
   key:[S.layoutKind||'',S.dlcGeo?1:0,S.dlcWorld?1:0,S.fogOfWar?1:0,NODES.map(n=>n.id+','+n.x+','+n.y+','+(n.rot||0)).join(';'),S.players.map(p=>p.color+'|'+p.char).join(';')].join('#'),
   edgesKey:edges.map(e=>e[0]+'-'+e[1]).join(','),
   bounds:boardViewBounds(),nodes,edges,seats,owner,rubble,bugs,

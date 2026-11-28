@@ -288,21 +288,6 @@ export function projectGeo(lat,lon){
  const m=worldMapMetrics(),[la,lo]=warpGeo(lat,lon);
  return {x:(lo+180)*WM_K+m.ox,y:(WM_TOP-la)*WM_K+m.oy};
 }
-/* the inverse of projectGeo (board pixels back to [lat, lon]), by damped fixed-point iteration: the warp is smooth */
-export function unprojectGeo(x,y){
- const m=worldMapMetrics();
- let lat=WM_TOP-(y-m.oy)/WM_K,lon=(x-m.ox)/WM_K-180;
- for(let i=0;i<60;i++){
-  const p=projectGeo(lat,lon);
-  lon-=0.35*(p.x-x)/WM_K;lat+=0.35*(p.y-y)/WM_K;
- }
- return [Math.max(-89,Math.min(89,lat)),((lon+540)%360)-180];
-}
-/* where a node really lives on Earth (the 3D globe pins it there): its geo anchor, else wherever the floater was dropped */
-export function nodeLatLon(n){
- const g=geoOf(n);
- return g?[g[0],g[1]]:unprojectGeo(n.x,n.y);
-}
 /* The backdrop: land masses, inland seas and a faint graticule, as one inline <g>. No images, a few KB of path data. */
 export function worldMapSVG(){
  const ring=r=>'M'+densify(r).map(([lon,lat])=>{const p=projectGeo(lat,lon);return Math.round(p.x)+','+Math.round(p.y)}).join('L')+'Z';
