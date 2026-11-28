@@ -14,30 +14,24 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 #stage{position:relative;width:min(92vw,620px,78vh);aspect-ratio:1/1;background:#000;overflow:hidden;cursor:pointer;
  box-shadow:0 0 0 2px #000,0 0 0 4px var(--teal),0 30px 80px rgba(0,0,0,.6)}
 #stage *{position:absolute}
-#boardWrap{inset:0;background:#1d201f}
-#board{left:0;top:0;transform-origin:0 0;max-width:none;will-change:transform}
+#table{inset:0;background:#1d201f radial-gradient(circle,rgba(22,131,136,.18) 1px,transparent 1.5px) 0 0/22px 22px;transform-origin:50% 50%}
+#threads{left:0;top:0;width:100%;height:100%;overflow:visible}
 #logo{inset:0;width:100%;height:100%;opacity:0}
 #hole{background:#000}
-#ex,#fx{inset:0}
+#fx{inset:0}
 #trails{left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.ex{width:var(--ew);aspect-ratio:4/3;left:0;top:0;background:#111 center/cover no-repeat;border:3px solid #000;
- box-shadow:0 0 0 2px rgba(22,131,136,.9),0 12px 30px rgba(0,0,0,.75);will-change:transform,filter}
-.ex.big{width:calc(var(--ew)*1.25)}
+.node{width:var(--nw);aspect-ratio:4/3;left:0;top:0;background:#111 center/cover no-repeat;border:2px solid #000;
+ box-shadow:0 0 0 2px rgba(22,131,136,.9),0 8px 18px rgba(0,0,0,.7);will-change:transform,filter}
+.node .glow{inset:-6px;border:3px solid var(--gold);box-shadow:0 0 18px var(--gold);opacity:0}
+.pawn{left:0;top:0;width:var(--pw);height:var(--pw);border-radius:50%;overflow:hidden;background:#000;border:3px solid var(--gold);
+ box-shadow:0 4px 10px rgba(0,0,0,.8);will-change:transform}
+.pawn img{inset:0;width:100%;height:100%;object-fit:cover}
 .msl{left:0;top:0;width:calc(var(--s)*.07);height:calc(var(--s)*.022);margin:calc(var(--s)*-.011) 0 0 calc(var(--s)*-.035);will-change:transform}
 .msl svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .jet{left:0;top:0;width:calc(var(--s)*.2);margin:calc(var(--s)*-.04) 0 0 calc(var(--s)*-.1);will-change:transform;filter:drop-shadow(0 6px 6px rgba(0,0,0,.6))}
-.boom{left:0;top:0;width:calc(var(--s)*.22);height:calc(var(--s)*.22);margin:calc(var(--s)*-.11) 0 0 calc(var(--s)*-.11);border-radius:50%;
+.boom{left:0;top:0;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1) 0 0 calc(var(--s)*-.1);border-radius:50%;
  background:radial-gradient(circle,#fff 0 12%,#ffe066 22%,#ff9a1f 42%,rgba(255,59,48,.85) 58%,rgba(80,10,0,0) 72%);mix-blend-mode:screen;pointer-events:none}
-.ring{left:0;top:0;width:calc(var(--s)*.22);height:calc(var(--s)*.22);margin:calc(var(--s)*-.11) 0 0 calc(var(--s)*-.11);border-radius:50%;border:3px solid #ffd27a;pointer-events:none}
-.card{width:var(--cw);height:var(--cw);left:0;top:0;transform-style:preserve-3d;will-change:transform}
-.card .f,.card .b{inset:0;backface-visibility:hidden;border-radius:6%;overflow:hidden}
-.card .b{background:
-  radial-gradient(circle at 50% 50%,rgba(245,197,66,.9) 0 12%,transparent 13%),
-  repeating-linear-gradient(45deg,#0f5e62 0 6px,#168388 6px 12px);
- border:3px solid #000;box-shadow:inset 0 0 0 3px var(--gold)}
-.card .b::after{content:'$';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:calc(var(--cw)*.17);color:#000}
-.card .f{transform:rotateY(180deg);background:#000;border:3px solid var(--gold)}
-.card .f img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ring{left:0;top:0;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1) 0 0 calc(var(--s)*-.1);border-radius:50%;border:3px solid #ffd27a;pointer-events:none}
 #tile{background-repeat:no-repeat;opacity:0;transform-origin:50% 50%}
 #tile .cv{background:#fff}
 #stamp{left:50%;top:50%;padding:.2em .5em;border:.12em solid var(--red);color:var(--red);font-weight:900;letter-spacing:.12em;
@@ -53,10 +47,9 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 </head>
 <body>
 <div id="stage" aria-label="THE BIG CON intro animation">
- <div id="boardWrap"><img id="board" src="./static/intro/board.jpg" alt=""></div>
+ <div id="table"><svg id="threads"></svg></div>
  <img id="logo" src="./big con logo.png" alt="THE BIG CON">
  <div id="hole"></div>
- <div id="ex"></div>
  <div id="fx"><svg id="trails"></svg></div>
  <div id="tile"></div>
  <div id="stamp">CONNED</div>
@@ -73,247 +66,190 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 (()=>{
 gsap.registerPlugin(MotionPathPlugin);
 const $=id=>document.getElementById(id);
-const stage=$('stage'),board=$('board'),boardWrap=$('boardWrap'),logo=$('logo'),tile=$('tile'),stamp=$('stamp'),flash=$('flash'),shine=$('shine'),
- exWrap=$('ex'),fx=$('fx'),trails=$('trails');
+const stage=$('stage'),table=$('table'),threads=$('threads'),logo=$('logo'),tile=$('tile'),stamp=$('stamp'),flash=$('flash'),shine=$('shine'),
+ fx=$('fx'),trails=$('trails');
 const G='./static/GlobalEdition/',P='./static/';
-
-/* ---- the board: a full random board with both DLCs (static/intro/board.jpg, 4200×2730); the zoom starts on QUIKSTOP ---- */
-const BW=4200,BH=2730,QUIK=[1225,479];
 
 /* ---- the logo's own geometry (big con logo.png is 512×512) ---- */
 const L=512;
 const SLOTS={bessock:[85,88],calvinathanasius:[255,85],denialswan:[425,85],japsnchen:[85,255],thousandyardwax:[425,255],jimchalmers:[85,425],markwatson:[255,425],tomkins:[425,425]};
-const EXTRA=['Alexander_Lane','DJT','thebigag','thebigwegrzyn'];
 const FACE=160,BOX={x:166,y:170,w:186,h:174};
 const ROWS=[[172,213],[232,273],[295,335]],COLS=[[172,220],[244,280],[304,347]];
-const ALL=Object.keys(SLOTS).concat(EXTRA);
 
-/* ---- act two: the nodes with special abilities, each with its own entrance ([x, y] = where it lands, as stage fractions) ---- */
-const ABILITIES=[
- {img:P+'made logo.png',at:[.2,.18],r:-7,in:'flicker'},
- {img:P+'qantas.png',at:[.5,.14],r:4,in:'fly'},
- {img:P+'GeographyDLC/nk_missile.jpg',at:[.8,.18],r:5,in:'launch'},
- {img:G+'javier-milei.avif',at:[.18,.42],r:5,in:'slam'},
- {img:P+'james bond.png',at:[.43,.38],r:-4,in:'slide'},
- {img:G+'brexit.jpg',at:[.7,.4],r:-6,in:'drop'},
- {img:G+'bermuda-triangle.jpg',at:[.86,.5],r:6,in:'spin'},
- {img:P+'GeographyDLC/geo_tuvalu.png',at:[.22,.66],r:-5,in:'sink'},
- {img:G+'monaco-casino.jpg',at:[.5,.58],r:3,in:'spin'},
- {img:G+'pyramids.jpg',at:[.78,.7],r:-3,in:'drop'},
- {img:P+'backroom deals.png',at:[.3,.86],r:4,in:'slide'},
- {img:G+'jensen-huang.jpg',at:[.58,.82],r:-5,in:'slam'},
- {img:G+'baikonur.jpg',at:[.86,.88],r:5,in:'launch'},
- {img:G+'suez-canal-ever-given.jpg',at:[.12,.86],r:-4,in:'zoom'},
- {img:G+'deutsche-bahn.jpg',at:[.4,.7],r:3,in:'zoom'},
- {img:P+'sisyphus.webp',at:[.62,.26],r:-3,in:'roll'},
- {img:G+'nigerian-prince.png',at:[.32,.24],r:6,in:'flicker'},
- {img:P+'the rock.gif',at:[.5,.5],r:6,in:'slam'},
-];
-/* ---- BONDMAGEDDON: the Bond Desk + “Bond Markets Revolt” fire four missiles at the banks ---- */
-const BOND={desk:{img:P+'bond desk.png',at:[.25,.36],r:-3},leak:{img:P+'bondmageddon 2.png',at:[.25,.66],r:4},
- banks:[{img:P+'cba.png',at:[.76,.16],r:3},{img:P+'nab.png',at:[.8,.4],r:-4},{img:P+'anz.png',at:[.74,.62],r:5},{img:P+'westpac.png',at:[.79,.85],r:-3}]};
-/* ---- LIBERATE OIL: missiles from Trump and Big Yahu, F-35s from Lockheed Martin, on every oil field ---- */
-const OIL={trump:{img:P+'trump.png',at:[.18,.2],r:-4},yahu:{img:G+'big-yahu.jpg',at:[.18,.5],r:3},lockheed:{img:G+'lockheed-martin.jpg',at:[.18,.8],r:-3},
- fields:[{img:P+'wti crude.png',at:[.66,.14],r:4},{img:P+'blue oil barrels.png',at:[.86,.3],r:-5},{img:G+'saudi-aramco.jpg',at:[.62,.42],r:3},
-  {img:P+'tanker fleet.png',at:[.84,.58],r:-3},{img:P+'petronas.png',at:[.64,.72],r:5},{img:G+'cushing-oklahoma.jpg',at:[.84,.88],r:-4}]};
+/* ---- the board: a 5×5 grid of nodes [row, col]. kind: bond (BONDMAGEDDON's two), bank (its targets),
+   lib (LIBERATE OIL: Trump, Big Yahu, Lockheed), oil (its targets) ---- */
+const NODES={
+ quik:{img:P+'quikstop.png',rc:[0,0]},          qantas:{img:P+'qantas.png',rc:[0,1]},           wti:{img:P+'wti crude.png',rc:[0,2],kind:'oil'},
+ barrels:{img:P+'blue oil barrels.png',rc:[0,3],kind:'oil'}, aramco:{img:G+'saudi-aramco.jpg',rc:[0,4],kind:'oil'},
+ cba:{img:P+'cba.png',rc:[1,0],kind:'bank'},    made:{img:P+'made logo.png',rc:[1,1]},          trump:{img:P+'trump.png',rc:[1,2],kind:'lib'},
+ tanker:{img:P+'tanker fleet.png',rc:[1,3],kind:'oil'}, petronas:{img:P+'petronas.png',rc:[1,4],kind:'oil'},
+ nab:{img:P+'nab.png',rc:[2,0],kind:'bank'},    bond:{img:P+'bond desk.png',rc:[2,1],kind:'bond'}, yahu:{img:G+'big-yahu.jpg',rc:[2,2],kind:'lib'},
+ sisy:{img:P+'sisyphus.webp',rc:[2,3]},          cushing:{img:G+'cushing-oklahoma.jpg',rc:[2,4],kind:'oil'},
+ anz:{img:P+'anz.png',rc:[3,0],kind:'bank'},    leak:{img:P+'bondmageddon 2.png',rc:[3,1],kind:'bond'}, lockheed:{img:G+'lockheed-martin.jpg',rc:[3,2],kind:'lib'},
+ oilgraph:{img:P+'oil price increase.png',rc:[3,3],kind:'oil'}, pemex:{img:G+'pemex.png',rc:[3,4],kind:'oil'},
+ westpac:{img:P+'westpac.png',rc:[4,0],kind:'bank'}, rock:{img:P+'the rock.gif',rc:[4,1]},     missile:{img:P+'GeographyDLC/nk_missile.jpg',rc:[4,2]},
+ tuvalu:{img:P+'GeographyDLC/geo_tuvalu.png',rc:[4,3]}, petrobras:{img:G+'petrobras.jpg',rc:[4,4],kind:'oil'},
+};
+/* who stands where: DJT on Trump fires LIBERATE OIL, the CEO of Coal on the Bond Desk fires BONDMAGEDDON, the soldier minds Lockheed */
+const PAWNS={markwatson:'bond',tomkins:'leak',DJT:'trump',thebigwegrzyn:'yahu',thousandyardwax:'lockheed',bessock:'quik',
+ calvinathanasius:'qantas',Alexander_Lane:'made',denialswan:'sisy',thebigag:'rock',japsnchen:'missile',jimchalmers:'tuvalu'};
 const F35=G+'fx/f35_travelling.png';
-
-let tl=null,cards=[],S=0,k=1;
 const MISSILE='<svg viewBox="0 0 70 22"><path d="M0 11 L-26 6 L-26 16 Z" fill="#ffb347" opacity=".9"/><path d="M-10 11 L-30 8 L-30 14 Z" fill="#fff3b0"/>'
  +'<rect x="4" y="7" width="50" height="8" rx="3" fill="#d9dde0" stroke="#000" stroke-width="1.5"/><path d="M54 7 Q68 11 54 15 Z" fill="#ff3b30" stroke="#000" stroke-width="1.5"/>'
  +'<path d="M8 7 L2 1 L14 7 Z M8 15 L2 21 L14 15 Z" fill="#8a9196" stroke="#000" stroke-width="1"/></svg>';
 
-const cw=()=>S*0.2;
-const centre=(x,y)=>({x:x-cw()/2,y:y-cw()/2});
-const shuffled=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let tl=null,S=0,k=1,nodeEl={},pawnEl={},C={};
 const R=gsap.utils.random;
+const nw=()=>S*0.155,pw=()=>S*0.085;
 
-function exCard(img,big){const d=document.createElement('div');d.className='ex'+(big?' big':'');d.style.backgroundImage='url("'+img+'")';exWrap.appendChild(d);return d}
-function exSize(d){return d.classList.contains('big')?S*0.36:S*0.29}
-/* where a card's centre sits, in stage pixels */
-const spot=e=>[e.at[0]*S,e.at[1]*S];
-function placeAt(d,e){const w=exSize(d),h=w*.75;return {x:e.at[0]*S-w/2,y:e.at[1]*S-h/2,rotation:e.r,scale:1,opacity:1}}
+/* a node's centre on the stage (a little jitter so it reads as a board, not a spreadsheet) */
+const JIT={};
+function layout(){
+ C={};Object.entries(NODES).forEach(([id,n])=>{
+  const j=JIT[id]||(JIT[id]=[R(-.018,.018),R(-.018,.018)]);
+  C[id]=[S*(0.1+n.rc[1]*0.2+j[0]),S*(0.1+n.rc[0]*0.2+j[1])];
+ });
+}
+/* the threads: right and down neighbours, a few gaps and a few diagonals */
+const EDGES=(()=>{const ids=Object.keys(NODES),at={};ids.forEach(id=>at[NODES[id].rc.join()]=id);const out=[];
+ ids.forEach(id=>{const [r,c]=NODES[id].rc;[[0,1],[1,0]].forEach(([dr,dc])=>{const o=at[(r+dr)+','+(c+dc)];if(o&&(r*7+c*3+dr)%5!==2)out.push([id,o])})});
+ out.push(['quik','made'],['trump','tanker'],['yahu','oilgraph'],['bond','anz'],['lockheed','tuvalu'],['sisy','petronas']);return out})();
 
 function build(){
- S=stage.clientWidth;k=S/L;
- stage.style.setProperty('--s',S+'px');stage.style.setProperty('--cw',Math.round(S*0.2)+'px');stage.style.setProperty('--ew',Math.round(S*0.29)+'px');
- exWrap.innerHTML='';fx.querySelectorAll(':scope > :not(svg)').forEach(n=>n.remove());trails.innerHTML='';trails.setAttribute('viewBox','0 0 '+S+' '+S);
- stage.querySelectorAll('.card').forEach(c=>c.remove());
- cards=ALL.map(id=>{
-  const c=document.createElement('div');c.className='card';c.dataset.id=id;
-  c.innerHTML='<div class="b"></div><div class="f"><img src="./characters/'+id+'.png" alt=""></div>';
-  stage.insertBefore(c,tile);return c;
- });
+ S=stage.clientWidth;k=S/L;layout();
+ stage.style.setProperty('--s',S+'px');stage.style.setProperty('--nw',nw()+'px');stage.style.setProperty('--pw',pw()+'px');
+ table.querySelectorAll('.node').forEach(n=>n.remove());stage.querySelectorAll('.pawn').forEach(n=>n.remove());
+ fx.querySelectorAll(':scope > :not(svg)').forEach(n=>n.remove());trails.innerHTML='';threads.innerHTML='';
+ trails.setAttribute('viewBox','0 0 '+S+' '+S);threads.setAttribute('viewBox','0 0 '+S+' '+S);
+ EDGES.forEach(([a,b])=>{const p=document.createElementNS('http://www.w3.org/2000/svg','line');
+  const long=Math.hypot(C[a][0]-C[b][0],C[a][1]-C[b][1])>S*0.25;
+  Object.entries({x1:C[a][0],y1:C[a][1],x2:C[b][0],y2:C[b][1],stroke:'#168388','stroke-width':long?1.6:2.4,opacity:.9}).forEach(([k2,v])=>p.setAttribute(k2,v));
+  p.dataset.long=long?1:0;threads.appendChild(p)});
+ nodeEl={};Object.entries(NODES).forEach(([id,n])=>{const d=document.createElement('div');d.className='node';d.style.backgroundImage='url("'+n.img+'")';
+  d.innerHTML='<div class="glow"></div>';table.appendChild(d);nodeEl[id]=d});
+ pawnEl={};Object.keys(PAWNS).forEach(ch=>{const d=document.createElement('div');d.className='pawn';d.innerHTML='<img src="./characters/'+ch+'.png" alt="">';
+  stage.insertBefore(d,tile);pawnEl[ch]=d});
  Object.assign(tile.style,{left:BOX.x*k+'px',top:BOX.y*k+'px',width:BOX.w*k+'px',height:BOX.h*k+'px',
   backgroundImage:'url("./big con logo.png")',backgroundSize:S+'px '+S+'px',backgroundPosition:(-BOX.x*k)+'px '+(-BOX.y*k)+'px'});
- const hole=$('hole');Object.assign(hole.style,{left:BOX.x*k+'px',top:BOX.y*k+'px',width:BOX.w*k+'px',height:BOX.h*k+'px'});
+ Object.assign($('hole').style,{left:BOX.x*k+'px',top:BOX.y*k+'px',width:BOX.w*k+'px',height:BOX.h*k+'px'});
  tile.innerHTML='';
  ROWS.forEach(r=>COLS.forEach(c=>{const d=document.createElement('div');d.className='cv';
   Object.assign(d.style,{left:(c[0]-BOX.x)*k+'px',top:(r[0]-BOX.y)*k+'px',width:(c[1]-c[0])*k+'px',height:(r[1]-r[0])*k+'px'});tile.appendChild(d)}));
 }
+const nodeXY=id=>({x:C[id][0]-nw()/2,y:C[id][1]-nw()*0.375});
+/* a pawn stands on the top-right corner of its node, so the picture stays readable */
+const pawnXY=id=>({x:C[id][0]+nw()*0.5-pw()*0.75,y:C[id][1]-nw()*0.375-pw()*0.35});
 
-/* the board camera: zoom z (stage px per board-image px) centred on image point (cx, cy) */
-function cam(z,cx,cy){gsap.set(board,{scale:z,x:S/2-cx*z,y:S/2-cy*z})}
-
-/* an entrance for a card (the same moves as the board's own pieces: flicker, fly, launch, sink, drop, roll, zoom, dive, spin, slide, slam) */
-function enter(t,d,e,at){
- const land=placeAt(d,e),{x,y}=land,w=exSize(d),h=w*.75;
- switch(e.in){
-  case 'flicker':t.set(d,{x,y,rotation:e.r,opacity:0},at).to(d,{opacity:1,duration:0.04,repeat:5,yoyo:true,ease:'steps(1)'}).set(d,{opacity:1});break;
-  case 'fly':t.fromTo(d,{x:-w*1.4,y:y+S*0.25,rotation:-25,scale:.7},{...land,duration:0.38,ease:'power3.out'},at);break;
-  case 'launch':t.fromTo(d,{x,y:S*1.15,rotation:0,scale:.8},{...land,duration:0.36,ease:'back.out(1.6)'},at);break;
-  case 'sink':t.fromTo(d,{x,y:y-S*0.05,scale:1.1,opacity:0},{...land,duration:0.28,ease:'power2.out'},at);break;
-  case 'drop':t.fromTo(d,{x,y:-h*1.3,rotation:e.r*4},{...land,duration:0.32,ease:'bounce.out'},at);break;
-  case 'roll':t.fromTo(d,{x:S*1.05,y,rotation:360,scale:.8},{...land,duration:0.42,ease:'power2.out'},at);break;
-  case 'zoom':t.fromTo(d,{x:S*1.2,y,rotation:0,skewX:-25},{...land,skewX:0,duration:0.3,ease:'expo.out'},at);break;
-  case 'spin':t.fromTo(d,{x,y,scale:.2,rotationY:720,opacity:0},{...land,rotationY:0,duration:0.42,ease:'power2.out'},at);break;
-  case 'slide':t.fromTo(d,{x:-w*1.2,y,rotation:0},{...land,duration:0.3,ease:'back.out(1.2)'},at);break;
-  default:t.fromTo(d,{x,y,scale:2.6,opacity:0},{...land,duration:0.22,ease:'power4.in'},at).to(stage,{x:6,y:-4,duration:0.04,yoyo:true,repeat:3});
- }
-}
-/* a missile on an arc from a to b, with a smoke trail and a blast */
 function missile(t,a,b,at,dur){
  const m=document.createElement('div');m.className='msl';m.innerHTML=MISSILE;fx.appendChild(m);
- const mid=[(a[0]+b[0])/2+R(-.12,.12)*S,Math.min(a[1],b[1])-R(.12,.3)*S];
- const path='M'+a[0]+','+a[1]+' Q'+mid[0]+','+mid[1]+' '+b[0]+','+b[1];
- const tr=document.createElementNS('http://www.w3.org/2000/svg','path');tr.setAttribute('d',path);
- Object.entries({fill:'none',stroke:'rgba(230,230,230,.55)','stroke-width':S*0.008,'stroke-linecap':'round'}).forEach(([k2,v])=>tr.setAttribute(k2,v));
+ const mid=[(a[0]+b[0])/2+R(-.1,.1)*S,Math.min(a[1],b[1])-R(.1,.26)*S];
+ const tr=document.createElementNS('http://www.w3.org/2000/svg','path');tr.setAttribute('d','M'+a[0]+','+a[1]+' Q'+mid[0]+','+mid[1]+' '+b[0]+','+b[1]);
+ Object.entries({fill:'none',stroke:'rgba(230,230,230,.55)','stroke-width':S*0.007,'stroke-linecap':'round'}).forEach(([k2,v])=>tr.setAttribute(k2,v));
  trails.appendChild(tr);const len=tr.getTotalLength();gsap.set(tr,{strokeDasharray:len,strokeDashoffset:len,opacity:1});
  gsap.set(m,{x:a[0],y:a[1],opacity:0});
  t.set(m,{opacity:1},at)
   .to(m,{motionPath:{path:[{x:a[0],y:a[1]},{x:mid[0],y:mid[1]},{x:b[0],y:b[1]}],type:'quadratic',autoRotate:true},duration:dur,ease:'power1.in'},at)
   .to(tr,{strokeDashoffset:0,duration:dur,ease:'power1.in'},at)
-  .set(m,{opacity:0},'>')
-  .to(tr,{opacity:0,duration:0.5},'>');
+  .set(m,{opacity:0},at+dur)
+  .to(tr,{opacity:0,duration:0.5},at+dur);
  boom(t,b,at+dur);
 }
 function boom(t,p,at,big){
  const o=document.createElement('div');o.className='boom';fx.appendChild(o);
  const r=document.createElement('div');r.className='ring';fx.appendChild(r);
  gsap.set([o,r],{x:p[0],y:p[1],scale:0,opacity:0});
- const sc=big?1.6:1;
+ const sc=big?1.5:1;
  t.fromTo(o,{scale:.1,opacity:1},{scale:sc,duration:0.22,ease:'power3.out',immediateRender:false},at)
-  .to(o,{opacity:0,scale:sc*1.25,duration:0.35},'>')
+  .to(o,{opacity:0,scale:sc*1.25,duration:0.35},at+0.22)
   .fromTo(r,{scale:.2,opacity:1},{scale:sc*1.5,opacity:0,duration:0.45,ease:'power2.out',immediateRender:false},at);
 }
-/* a jet sweeping across the stage along a curve */
 function jet(t,pts,at,dur){
  const j=document.createElement('img');j.className='jet';j.src=F35;fx.appendChild(j);
  gsap.set(j,{x:pts[0][0],y:pts[0][1],opacity:0});
- t.set(j,{opacity:1},at).to(j,{motionPath:{path:pts.map(([x,y])=>({x,y})),curviness:1.3,autoRotate:true},duration:dur,ease:'none'},at).set(j,{opacity:0},'>');
+ t.set(j,{opacity:1},at).to(j,{motionPath:{path:pts.map(([x,y])=>({x,y})),curviness:1.3,autoRotate:true},duration:dur,ease:'none'},at).set(j,{opacity:0},at+dur);
 }
 const shake=(t,at,n=4,a=7)=>t.to(stage,{x:a,y:-a*.6,duration:0.04,yoyo:true,repeat:n,clearProps:'x,y'},at);
-const rubble=(t,d,at)=>t.to(d,{filter:'grayscale(1) brightness(.45) contrast(1.4)',rotation:'+='+R(-25,25),y:'+='+S*0.05,duration:0.3,ease:'power2.out'},at)
- .to(d,{y:'+='+S*0.5,opacity:0,rotation:'+='+R(-40,40),duration:0.6,ease:'power2.in'},at+0.45);
+/* a node reduced to rubble: it stays on the board, burnt out */
+const rubble=(t,id,at)=>t.to(nodeEl[id],{filter:'grayscale(1) brightness(.4) contrast(1.5)',rotation:'+='+R(-12,12),scale:.92,duration:0.3,ease:'power2.out'},at);
+/* a pawn fires its ability: it jumps, and its node(s) light up */
+function fire(t,ch,ids,at){
+ t.to(pawnEl[ch],{y:'-='+S*0.05,scale:1.35,duration:0.18,yoyo:true,repeat:1,ease:'power2.out'},at);
+ ids.forEach(id=>t.to(nodeEl[id].firstChild,{opacity:1,duration:0.15,yoyo:true,repeat:3},at));
+}
 
 function play(){
  if(tl)tl.kill();
  build();
- gsap.set([logo,tile,stamp,flash],{opacity:0});gsap.set(stamp,{scale:3,xPercent:-50,yPercent:-50,rotate:-14,left:'50%',top:'50%',x:0,y:0});
- gsap.set(tile,{scale:1,x:0,y:0});gsap.set(stage,{x:0,y:0});gsap.set(shine,{left:'-40%'});gsap.set($('hole'),{opacity:0});
- gsap.set(boardWrap,{opacity:1,filter:'none'});
- gsap.set(stage.querySelectorAll('.card .f,.card .b'),{opacity:1});
- cards.forEach(c=>gsap.set(c,{x:S/2-cw()/2,y:S*1.2,rotation:R(-30,30),rotationY:0,scale:1,opacity:1}));
+ gsap.set([logo,tile,stamp,flash,$('hole')],{opacity:0});gsap.set(stamp,{scale:3,xPercent:-50,yPercent:-50,rotate:-14,left:'50%',top:'50%',x:0,y:0});
+ gsap.set(tile,{scale:1,x:0,y:0});gsap.set(stage,{x:0,y:0});gsap.set(shine,{left:'-40%'});
+ gsap.set(table,{opacity:1,scale:1.35,filter:'none'});
+ const ids=Object.keys(NODES);
+ ids.forEach(id=>{const p=nodeXY(id);gsap.set(nodeEl[id],{...p,scale:0,rotation:R(-6,6),opacity:1,filter:'none'})});
+ gsap.set([...threads.children],{opacity:0});
+ Object.entries(PAWNS).forEach(([ch,id])=>{const p=pawnXY(id);gsap.set(pawnEl[ch],{x:p.x,y:p.y-S*0.6,scale:1,opacity:0,rotation:0,borderRadius:'50%',borderWidth:3})});
  tl=gsap.timeline();
  const T=l=>tl.labels[l];
 
- /* ACT ONE — the board. Start close on QUIKSTOP and pull out until the whole board is in view. */
- const z0=S/520,z1=S/BW,full=[BW/2,BH/2],o={t:0};
- cam(z0,QUIK[0],QUIK[1]);
- tl.to({},{duration:0.35});
- tl.to(o,{t:1,duration:2.6});
- /* the camera follows the timeline clock (so seeking and skipping always land right) */
- const e1=gsap.parseEase('power2.inOut'),e2=gsap.parseEase('power1.inOut');
- tl.eventCallback('onUpdate',()=>{
-  const u=e1(Math.min(1,Math.max(0,(tl.time()-0.35)/2.6))),z=z0*Math.pow(z1/z0,u),f=e2(u);
-  cam(z,QUIK[0]+(full[0]-QUIK[0])*f,QUIK[1]+(full[1]-QUIK[1])*f);
- });
- tl.to({},{duration:0.35});
- tl.to(boardWrap,{opacity:0.22,filter:'blur(2px)',duration:0.4});
+ /* ACT ONE — the board deals itself: nodes pop in as a diagonal wave from Quikstop, the threads draw between them, the camera pulls back */
+ tl.to(table,{scale:1,duration:2.6,ease:'power2.inOut'},0.1);
+ ids.forEach(id=>{const [r,c]=NODES[id].rc;tl.to(nodeEl[id],{scale:1,duration:0.32,ease:'back.out(2)'},0.15+(r+c)*0.13+R(0,0.05))});
+ [...threads.children].forEach((ln,i)=>{const len=Math.hypot(ln.x2.baseVal.value-ln.x1.baseVal.value,ln.y2.baseVal.value-ln.y1.baseVal.value);
+  gsap.set(ln,{strokeDasharray:ln.dataset.long==='1'?'8 6':len,strokeDashoffset:ln.dataset.long==='1'?0:len});
+  tl.to(ln,{opacity:.9,strokeDashoffset:0,duration:0.35,ease:'power1.out'},0.5+i*0.025)});
 
- /* ACT TWO — the nodes with special abilities pile onto the table */
- const abil=ABILITIES.map(e=>{const d=exCard(e.img);gsap.set(d,{x:-9999,opacity:1});return d});
- ABILITIES.forEach((e,i)=>enter(tl,abil[i],e,i?'>-0.17':'<0.1'));
- tl.to({},{duration:0.4});
- abil.forEach(d=>{const a=R(0,Math.PI*2);tl.to(d,{x:'+='+Math.cos(a)*S*1.7,y:'+='+Math.sin(a)*S*1.7,rotation:'+='+R(-180,180),duration:0.45,ease:'power2.in'},i0(abil,d))});
- function i0(list,d){return list.indexOf(d)?'<0.012':'>'}
+ /* ACT TWO — the crew drops onto the board, one pawn per node */
+ tl.addLabel('crew',2.3);
+ Object.keys(PAWNS).forEach((ch,i)=>tl.to(pawnEl[ch],{y:'+='+S*0.6,opacity:1,duration:0.42,ease:'bounce.out'},T('crew')+i*0.07));
+ /* a couple of hops along the threads, to show they move */
+ tl.to(pawnEl.bessock,{motionPath:{path:[pawnXY('quik'),{x:(pawnXY('quik').x+pawnXY('qantas').x)/2,y:pawnXY('quik').y-S*0.07},pawnXY('qantas')],curviness:1},duration:0.35},T('crew')+1.05)
+   .to(pawnEl.bessock,{motionPath:{path:[pawnXY('qantas'),{x:(pawnXY('quik').x+pawnXY('qantas').x)/2,y:pawnXY('quik').y-S*0.07},pawnXY('quik')],curviness:1},duration:0.35},'>+0.05');
+ tl.to(pawnEl.jimchalmers,{motionPath:{path:[pawnXY('tuvalu'),{x:(pawnXY('tuvalu').x+pawnXY('missile').x)/2,y:pawnXY('tuvalu').y-S*0.07},pawnXY('missile')],curviness:1},duration:0.35},T('crew')+1.15)
+   .to(pawnEl.jimchalmers,{motionPath:{path:[pawnXY('missile'),{x:(pawnXY('tuvalu').x+pawnXY('missile').x)/2,y:pawnXY('tuvalu').y-S*0.07},pawnXY('tuvalu')],curviness:1},duration:0.35},'>+0.05');
 
- /* ACT THREE — BONDMAGEDDON: the Bond Desk and the Leak launch four missiles at the banks */
- const desk=exCard(BOND.desk.img,true),leak=exCard(BOND.leak.img,true),banks=BOND.banks.map(e=>exCard(e.img));
- [desk,leak,...banks].forEach(d=>gsap.set(d,{x:-9999}));
- tl.addLabel('bond','>-0.1');
- enter(tl,desk,{...BOND.desk,in:'slam'},'bond');
- enter(tl,leak,{...BOND.leak,in:'slam'},'bond+=0.22');
- banks.forEach((d,i)=>enter(tl,d,{...BOND.banks[i],in:'drop'},'bond+='+(0.45+i*0.08)));
- tl.addLabel('fire','bond+=1.05');
- BOND.banks.forEach((e,i)=>{
-  const from=spot(i%2?BOND.leak:BOND.desk),to=spot(e);
-  missile(tl,[from[0]+S*0.12,from[1]],to,T('fire')+i*0.13,0.55);
-  rubble(tl,banks[i],T('fire')+i*0.13+0.55);
+ /* ACT THREE — BONDMAGEDDON: the Bond Desk and “Bond Markets Revolt” fire four missiles, one at each bank */
+ tl.addLabel('bond',T('crew')+2.05);
+ fire(tl,'markwatson',['bond','leak'],T('bond'));
+ ['cba','nab','anz','westpac'].forEach((b,i)=>{
+  const src=C[i%2?'leak':'bond'];
+  missile(tl,[src[0]+nw()*0.4,src[1]],C[b],T('bond')+0.35+i*0.14,0.55);
+  rubble(tl,b,T('bond')+0.9+i*0.14);
  });
- shake(tl,'fire+=0.6',8,6);
- tl.to([desk,leak],{x:'-='+S*0.8,rotation:'-=30',duration:0.45,ease:'power2.in'},'fire+=1.4');
+ shake(tl,T('bond')+0.95,8,6);
 
- /* ACT FOUR — LIBERATE OIL: Trump and Big Yahu fire on every oil field, Lockheed scrambles the F-35s */
- const trump=exCard(OIL.trump.img),yahu=exCard(OIL.yahu.img),lock=exCard(OIL.lockheed.img),fields=OIL.fields.map(e=>exCard(e.img));
- [trump,yahu,lock,...fields].forEach(d=>gsap.set(d,{x:-9999}));
- tl.addLabel('oil','fire+=1.55');
- enter(tl,trump,{...OIL.trump,in:'slam'},'oil');
- enter(tl,yahu,{...OIL.yahu,in:'slam'},'oil+=0.18');
- enter(tl,lock,{...OIL.lockheed,in:'slide'},'oil+=0.36');
- fields.forEach((d,i)=>enter(tl,d,{...OIL.fields[i],in:i%2?'drop':'sink'},'oil+='+(0.5+i*0.07)));
- tl.addLabel('salvo','oil+=1.15');
- OIL.fields.forEach((e,i)=>{
-  [OIL.trump,OIL.yahu].forEach((src,j)=>{const a=spot(src);missile(tl,[a[0]+S*0.13,a[1]+R(-.03,.03)*S],[spot(e)[0]+R(-.04,.04)*S,spot(e)[1]+R(-.03,.03)*S],T('salvo')+i*0.11+j*0.05,0.6)});
- });
- /* the F-35s scramble from Lockheed: low over the fields and off the edge */
- const L0=spot(OIL.lockheed);
- for(let n=0;n<6;n++){
-  const f=OIL.fields[n%OIL.fields.length],t1=spot(f);
-  jet(tl,[[L0[0]+S*0.1,L0[1]],[S*0.42,S*R(.2,.85)],[t1[0],t1[1]-S*0.05],[S*1.25,S*R(-.2,1.1)]],'salvo+='+(0.15+n*0.14),1.15);
- }
- OIL.fields.forEach((e,i)=>{boom(tl,spot(e),T('salvo')+0.75+i*0.11,true);rubble(tl,fields[i],T('salvo')+0.78+i*0.11)});
- shake(tl,'salvo+=0.8',14,8);
- tl.to(flash,{opacity:0.85,duration:0.08},'salvo+=1.6').to(flash,{opacity:0,duration:0.5},'>');
- tl.to([trump,yahu,lock],{x:'-='+S*0.8,rotation:'-=40',duration:0.4,ease:'power2.in'},'salvo+=1.6');
- tl.to(boardWrap,{opacity:0,duration:0.5},'salvo+=1.65');
+ /* ACT FOUR — LIBERATE OIL: Trump and Big Yahu fire on every oil node, Lockheed scrambles the F-35s */
+ tl.addLabel('oil',T('bond')+1.85);
+ fire(tl,'DJT',['trump','yahu','lockheed'],T('oil'));
+ const oils=ids.filter(id=>NODES[id].kind==='oil');
+ oils.forEach((o,i)=>['trump','yahu'].forEach((src,j)=>missile(tl,[C[src][0]+R(-.02,.02)*S,C[src][1]-nw()*0.3],[C[o][0]+R(-.03,.03)*S,C[o][1]+R(-.02,.02)*S],T('oil')+0.3+i*0.09+j*0.045,0.6)));
+ const lk=C.lockheed;
+ for(let n=0;n<6;n++){const o=C[oils[(n*3)%oils.length]];
+  jet(tl,[[lk[0],lk[1]],[S*R(.45,.6),S*R(.55,.9)],[o[0],o[1]],[S*1.3,S*R(-.3,1.2)]],T('oil')+0.25+n*0.13,1.1)}
+ oils.forEach((o,i)=>{boom(tl,C[o],T('oil')+0.95+i*0.09,true);rubble(tl,o,T('oil')+0.98+i*0.09)});
+ shake(tl,T('oil')+1.0,16,8);
+ tl.to(flash,{opacity:0.8,duration:0.08},T('oil')+1.9).to(flash,{opacity:0,duration:0.5},T('oil')+1.98);
 
- /* ACT FIVE — the crew: dealt, shuffled like three-card monte, four CONNED off the table, eight form the logo */
- const grid=cards.map((c,i)=>{const col=i%4,row=Math.floor(i/4);return centre(S*(0.17+col*0.22),S*(0.27+row*0.23))});
- tl.addLabel('crew','salvo+=1.95');
- cards.forEach((c,i)=>tl.to(c,{x:grid[i].x,y:grid[i].y,rotation:R(-4,4),duration:0.4,ease:'power3.out'},'crew+='+(i*0.045)));
- tl.to(cards,{rotationY:180,duration:0.32,ease:'power2.inOut',stagger:0.04},'>-0.05');
- tl.to(cards,{rotationY:0,duration:0.24,ease:'power2.in',stagger:0.012},'+=0.3');
- let pos=grid.slice();
- for(let r=0;r<3;r++){
-  pos=shuffled(pos);
-  const at='>'+(r?'-0.02':'+0.02');
-  cards.forEach((c,i)=>tl.to(c,{x:pos[i].x,y:pos[i].y,rotation:R(-8,8),duration:0.27-r*0.03,ease:'power2.inOut'},i?'<':at));
- }
- tl.to(cards,{x:S/2-cw()/2,y:S/2-cw()/2,rotation:()=>R(-6,6),duration:0.3,ease:'power3.in',stagger:0.01},'+=0.05');
- shake(tl,'>',3,4);
- const sz=FACE*k/cw();
- tl.addLabel('deal','>');
- cards.forEach(c=>{
-  const s=SLOTS[c.dataset.id];
-  if(s){const p=centre(s[0]*k,s[1]*k);tl.to(c,{x:p.x,y:p.y,scale:sz,rotation:0,rotationY:180,duration:0.55,ease:'back.out(1.4)'},'deal+='+R(0,0.18))}
-  else{const a=R(0,Math.PI*2);tl.to(c,{x:S/2+Math.cos(a)*S*1.1,y:S/2+Math.sin(a)*S*1.1,rotation:R(-540,540),rotationY:180,duration:0.6,ease:'power2.in'},'deal')}
+ /* ACT FIVE — the crew steps off the board and forms the logo; the four who are not in it are CONNED off the table */
+ tl.addLabel('form',T('oil')+2.35);
+ tl.to(table,{opacity:0,scale:0.9,filter:'blur(3px)',duration:0.7,ease:'power2.in'},T('form')+0.15);
+ Object.keys(PAWNS).forEach(ch=>{
+  const s=SLOTS[ch],d=pawnEl[ch];
+  if(s){const sz=FACE*k;tl.to(d,{x:s[0]*k-pw()/2,y:s[1]*k-pw()/2,scale:sz/pw(),borderRadius:'0%',borderWidth:0,rotation:0,duration:0.7,ease:'back.out(1.2)'},T('form')+R(0,0.2))}
+  else{const a=R(0,Math.PI*2);tl.to(d,{x:'+='+Math.cos(a)*S*1.2,y:'+='+Math.sin(a)*S*1.2,rotation:R(-540,540),duration:0.6,ease:'power2.in'},T('form')+0.1)}
  });
- tl.to(stamp,{opacity:1,scale:1,duration:0.18,ease:'power4.in'},'deal+=0.12');
- shake(tl,'deal+=0.3',3,6);
- tl.to(stamp,{opacity:0,duration:0.25},'deal+=0.65');
- tl.set('#hole',{opacity:1},'deal+=0.7');
- tl.to(logo,{opacity:1,duration:0.45},'deal+=0.75')
-   .to(cards.map(c=>c.querySelector('.f')),{opacity:0,duration:0.45},'<') /* fade the face, not the 3D card (opacity would flatten it) */
-   .set(cards.map(c=>c.querySelector('.b')),{opacity:0},'<');
- tl.fromTo(tile,{opacity:0,scale:2.4,rotation:-6},{opacity:1,scale:1,rotation:0,duration:0.32,ease:'power4.in'},'<0.1')
-   .set('#hole',{opacity:0})
-   .to(flash,{opacity:0.55,duration:0.04},'>')
-   .to(flash,{opacity:0,duration:0.3},'>');
- shake(tl,'<',5,7);
+ tl.to(stamp,{opacity:1,scale:1,duration:0.18,ease:'power4.in'},T('form')+0.2);
+ shake(tl,T('form')+0.38,3,6);
+ tl.to(stamp,{opacity:0,duration:0.25},T('form')+0.75);
+ tl.set('#hole',{opacity:1},T('form')+0.95);
+ tl.to(logo,{opacity:1,duration:0.45},T('form')+1.0);
+ tl.to(Object.keys(SLOTS).map(ch=>pawnEl[ch]),{opacity:0,duration:0.45},T('form')+1.0);
+ tl.fromTo(tile,{opacity:0,scale:2.4,rotation:-6},{opacity:1,scale:1,rotation:0,duration:0.32,ease:'power4.in',immediateRender:false},T('form')+1.1)
+   .set('#hole',{opacity:0},T('form')+1.42)
+   .to(flash,{opacity:0.55,duration:0.04},T('form')+1.42)
+   .to(flash,{opacity:0,duration:0.3},T('form')+1.46);
+ shake(tl,T('form')+1.42,5,7);
  const covers=[...tile.children];
- covers.forEach((cv,i)=>tl.to(cv,{scaleY:0,transformOrigin:'50% 0%',duration:0.08,ease:'steps(3)'},(i?'>+0.05':'>+0.15')));
- tl.to(tile,{scale:1.06,duration:0.08,yoyo:true,repeat:1,ease:'power2.out'},'>+0.05');
+ covers.forEach((cv,i)=>tl.to(cv,{scaleY:0,transformOrigin:'50% 0%',duration:0.08,ease:'steps(3)'},T('form')+1.7+i*0.13));
+ tl.to(tile,{scale:1.06,duration:0.08,yoyo:true,repeat:1,ease:'power2.out'},T('form')+1.7+9*0.13);
  tl.to(shine,{left:'130%',duration:0.8,ease:'power2.inOut'},'>+0.1');
 }
 window.__introTl=()=>tl;
@@ -323,8 +259,8 @@ $('skip').onclick=skip;
 stage.onclick=skip;
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const p=tl?tl.progress():1;play();tl.progress(p)},150)});
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-let ready=0;const go=()=>{if(++ready<2)return;play();if(reduce)skip()};
-[logo,board].forEach(im=>{if(im.complete)go();else{im.onload=go;im.onerror=go}});
+const go=()=>{play();if(reduce)skip()};
+if(logo.complete)go();else{logo.onload=go;logo.onerror=go}
 })();
 </script>
 </body>
