@@ -31,6 +31,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .jet{left:0;top:0;width:calc(var(--s)*.2);margin:calc(var(--s)*-.04) 0 0 calc(var(--s)*-.1);will-change:transform;filter:drop-shadow(0 6px 6px rgba(0,0,0,.6))}
 .boom{left:0;top:0;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1) 0 0 calc(var(--s)*-.1);border-radius:50%;
  background:radial-gradient(circle,#fff 0 12%,#ffe066 22%,#ff9a1f 42%,rgba(255,59,48,.85) 58%,rgba(80,10,0,0) 72%);mix-blend-mode:screen;pointer-events:none}
+.shield{left:0;top:0;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1) 0 0 calc(var(--s)*-.1);border-radius:50%;border:4px solid #7ff6fb;box-shadow:0 0 22px #7ff6fb,inset 0 0 22px rgba(127,246,251,.6);pointer-events:none}
 .ring{left:0;top:0;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1) 0 0 calc(var(--s)*-.1);border-radius:50%;border:3px solid #ffd27a;pointer-events:none}
 #tile{background-repeat:no-repeat;opacity:0;transform-origin:50% 50%}
 #tile .cv{background:#fff}
@@ -100,7 +101,7 @@ const MISSILE='<svg viewBox="0 0 70 22"><path d="M0 11 L-26 6 L-26 16 Z" fill="#
 
 let tl=null,S=0,k=1,nodeEl={},pawnEl={},C={};
 const R=gsap.utils.random;
-const nw=()=>S*0.155,pw=()=>S*0.085;
+const nw=()=>S*0.155,pw=()=>S*0.068;
 
 /* a node's centre on the stage (a little jitter so it reads as a board, not a spreadsheet) */
 const JIT={};
@@ -140,9 +141,9 @@ const nodeXY=id=>({x:C[id][0]-nw()/2,y:C[id][1]-nw()*0.375});
 /* a pawn stands on the top-right corner of its node, so the picture stays readable */
 const pawnXY=id=>({x:C[id][0]+nw()*0.5-pw()*0.75,y:C[id][1]-nw()*0.375-pw()*0.35});
 
-function missile(t,a,b,at,dur){
+function missile(t,a,b,at,dur,noBoom,lift){
  const m=document.createElement('div');m.className='msl';m.innerHTML=MISSILE;fx.appendChild(m);
- const mid=[(a[0]+b[0])/2+R(-.1,.1)*S,Math.min(a[1],b[1])-R(.1,.26)*S];
+ const mid=[(a[0]+b[0])/2+(lift?0:R(-.1,.1)*S),Math.min(a[1],b[1])-(lift||R(.1,.26))*S];
  const tr=document.createElementNS('http://www.w3.org/2000/svg','path');tr.setAttribute('d','M'+a[0]+','+a[1]+' Q'+mid[0]+','+mid[1]+' '+b[0]+','+b[1]);
  Object.entries({fill:'none',stroke:'rgba(230,230,230,.55)','stroke-width':S*0.007,'stroke-linecap':'round'}).forEach(([k2,v])=>tr.setAttribute(k2,v));
  trails.appendChild(tr);const len=tr.getTotalLength();gsap.set(tr,{strokeDasharray:len,strokeDashoffset:len,opacity:1});
@@ -152,7 +153,7 @@ function missile(t,a,b,at,dur){
   .to(tr,{strokeDashoffset:0,duration:dur,ease:'power1.in'},at)
   .set(m,{opacity:0},at+dur)
   .to(tr,{opacity:0,duration:0.5},at+dur);
- boom(t,b,at+dur);
+ if(!noBoom)boom(t,b,at+dur);
 }
 function boom(t,p,at,big){
  const o=document.createElement('div');o.className='boom';fx.appendChild(o);
@@ -206,8 +207,21 @@ function play(){
  tl.to(pawnEl.jimchalmers,{motionPath:{path:[pawnXY('tuvalu'),{x:(pawnXY('tuvalu').x+pawnXY('missile').x)/2,y:pawnXY('tuvalu').y-S*0.07},pawnXY('missile')],curviness:1},duration:0.35},T('crew')+1.15)
    .to(pawnEl.jimchalmers,{motionPath:{path:[pawnXY('missile'),{x:(pawnXY('tuvalu').x+pawnXY('missile').x)/2,y:pawnXY('tuvalu').y-S*0.07},pawnXY('tuvalu')],curviness:1},duration:0.35},'>+0.05');
 
+ /* MISSILE COMMAND vs TUVALU: the silo fires on Tuvalu, Tuvalu reflects the warhead, and it comes home */
+ tl.addLabel('mvt',T('crew')+2.0);
+ fire(tl,'japsnchen',['missile'],T('mvt'));
+ const mc=[C.missile[0],C.missile[1]-nw()*0.3],tv=C.tuvalu;
+ missile(tl,mc,tv,T('mvt')+0.3,0.6,true,0.3);
+ const sh=document.createElement('div');sh.className='shield';fx.appendChild(sh);gsap.set(sh,{x:tv[0],y:tv[1],scale:0,opacity:0});
+ tl.fromTo(sh,{scale:.3,opacity:1},{scale:1.15,duration:0.22,ease:'back.out(3)',immediateRender:false},T('mvt')+0.85)
+   .to(sh,{opacity:0,scale:1.5,duration:0.4},T('mvt')+1.1)
+   .to(nodeEl.tuvalu,{scale:1.12,duration:0.1,yoyo:true,repeat:1},T('mvt')+0.88);
+ missile(tl,[tv[0],tv[1]-nw()*0.2],[C.missile[0],C.missile[1]],T('mvt')+0.95,0.55,false,0.24);
+ rubble(tl,'missile',T('mvt')+1.5);
+ shake(tl,T('mvt')+1.5,5,5);
+
  /* ACT THREE — BONDMAGEDDON: the Bond Desk and “Bond Markets Revolt” fire four missiles, one at each bank */
- tl.addLabel('bond',T('crew')+2.05);
+ tl.addLabel('bond',T('mvt')+2.0);
  fire(tl,'markwatson',['bond','leak'],T('bond'));
  ['cba','nab','anz','westpac'].forEach((b,i)=>{
   const src=C[i%2?'leak':'bond'];
