@@ -170,7 +170,7 @@ export async function createWorld({ canvas, overlay, quality = null, board = nul
 
   /* ---------- the card texture: every exhibit's picture with its name strip underneath ---------- */
   const atlasImg = await new Promise(res => new THREE.ImageLoader().load(new URL('./atlas.webp', import.meta.url).href, res, undefined, () => res(null)));
-  try { await Promise.all([document.fonts.load('700 26px "Bricolage Grotesque"'), document.fonts.load('30px "Tomkins Display"')]); } catch (e) { /* system font */ }
+  try { await Promise.all([document.fonts.load('700 26px "Bricolage Grotesque"'), document.fonts.load('30px "Calvinium Serif"')]); } catch (e) { /* system font */ }
   const TW = ATLAS.tileW, TH = ATLAS.tileH, CHp = TH + LBL, COLS = ATLAS.cols, ROWS = Math.ceil(BN.length / COLS);
   const cc = document.createElement('canvas'); cc.width = COLS * TW; cc.height = ROWS * CHp;
   const c2 = cc.getContext('2d'); c2.textAlign = 'center'; c2.textBaseline = 'middle';

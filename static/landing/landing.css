@@ -1,6 +1,6 @@
 /* landing.html — the highlight reel. The 3D stage is one fixed canvas; everything else scrolls over it. */
 :root{--bg:#060d0c;--ink:#f4f0e6;--mute:#a3b8b5;--teal:#168388;--teal2:#2fd1c5;--red:#ff4a3d;--gold:#f5c542;--line:rgba(47,209,197,.26);--glass:rgba(6,13,12,.9);
-  --display:'Tomkins Display','Bricolage Grotesque',system-ui,sans-serif;--body:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
+  --display:'Calvinium Serif','Bricolage Grotesque',system-ui,sans-serif;--body:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;overflow-x:hidden}

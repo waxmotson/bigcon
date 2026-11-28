@@ -27,7 +27,7 @@ const STYLE = `
 .b3d-pops{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .b3d-pops .pop{position:absolute;left:0;top:0;white-space:nowrap;font-weight:800;font-size:14px;letter-spacing:.07em;text-shadow:0 2px 0 #000,0 0 14px rgba(0,0,0,.9);will-change:transform,opacity;opacity:0}
 .b3d-pops .pop.big{font-size:19px}
-.b3d-pops .pop.huge{font-family:"Tomkins Display",system-ui,sans-serif;font-weight:400;font-size:clamp(22px,3vw,40px);letter-spacing:.04em}
+.b3d-pops .pop.huge{font-family:"Calvinium Serif",system-ui,sans-serif;font-weight:400;font-size:clamp(22px,3vw,40px);letter-spacing:.04em}
 .b3d-pops .pop.tag{font-size:11px;letter-spacing:.14em;padding:3px 8px;background:rgba(6,13,12,.86);border:1px solid currentColor;text-shadow:none}
 .b3d-pops .pop.step{font-size:13px;font-weight:900;padding:1px 7px;color:#000!important;background:#ff5e9c;border:2px solid #000;text-shadow:none}
 .b3d-tip{position:absolute;z-index:3;max-width:330px;pointer-events:none;display:none;white-space:pre-line;background:#101418;border:1px solid #2a4a55;padding:8px 10px;font:12px/1.5 Inconsolata,ui-monospace,monospace;color:#cfe6ee;box-shadow:0 8px 30px rgba(0,0,0,.55)}
